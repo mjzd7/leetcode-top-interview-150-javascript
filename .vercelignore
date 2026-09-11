@@ -1,0 +1,8 @@
+# Never deploy raw media, agent scratch, or local installs.
+# (Git already ignores these via .gitignore; Vercel CLI needs its own list.)
+node_modules
+.omo
+.git
+00-foundations/video-transcripts/*/download
+00-foundations/video-transcripts/*/frames
+*.log
