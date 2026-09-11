@@ -1,0 +1,1846 @@
+[0:02] What comes to your mind when you hear
+[0:02] What comes to your mind when you hear the<c> term</c><c> bread</c><c> first</c><c> search?</c><c> If</c><c> you're</c>
+[0:04] the term bread first search? If you're
+[0:04] the term bread first search? If you're thinking<c> about</c><c> a</c><c> graph,</c><c> that</c><c> might</c><c> be</c>
+[0:06] thinking about a graph, that might be
+[0:06] thinking about a graph, that might be the<c> reason</c><c> you</c><c> find</c><c> some</c><c> problems</c><c> tricky</c>
+[0:08] the reason you find some problems tricky
+[0:08] the reason you find some problems tricky to<c> solve.</c><c> What</c><c> I</c><c> want</c><c> to</c><c> show</c><c> you</c><c> is</c>
+[0:11] to solve. What I want to show you is
+[0:11] to solve. What I want to show you is that<c> if</c><c> you</c><c> think</c><c> about</c><c> a</c><c> Q,</c><c> that</c><c> can</c>
+[0:14] that if you think about a Q, that can
+[0:14] that if you think about a Q, that can make<c> your</c><c> life</c><c> a</c><c> little</c><c> easier.</c><c> Hello</c>
+[0:16] make your life a little easier. Hello
+[0:16] make your life a little easier. Hello friends,<c> welcome</c><c> back</c><c> to</c><c> my</c><c> channel.</c>
+[0:20] friends, welcome back to my channel.
+[0:20] friends, welcome back to my channel. To<c> get</c><c> a</c><c> better</c><c> understanding</c><c> on</c><c> the</c>
+[0:22] To get a better understanding on the
+[0:22] To get a better understanding on the bread<c> first</c><c> search</c><c> coding</c><c> pattern,</c><c> you</c>
+[0:24] bread first search coding pattern, you
+[0:24] bread first search coding pattern, you must<c> first</c><c> lay</c><c> down</c><c> the</c><c> foundation</c><c> on</c>
+[0:27] must first lay down the foundation on
+[0:27] must first lay down the foundation on which<c> a</c><c> bread</c><c> first</c><c> search</c><c> actually</c>
+[0:28] which a bread first search actually
+[0:28] which a bread first search actually works.<c> So</c><c> let</c><c> us</c><c> go</c><c> back</c><c> to</c><c> the</c><c> basics</c><c> a</c>
+[0:31] works. So let us go back to the basics a
+[0:32] works. So let us go back to the basics a little<c> bit</c><c> and</c><c> try</c><c> to</c><c> understand</c><c> what</c><c> is</c>
+[0:34] little bit and try to understand what is
+[0:34] little bit and try to understand what is actually<c> happening.</c><c> For</c><c> example,</c><c> when</c>
+[0:36] actually happening. For example, when
+[0:36] actually happening. For example, when you<c> see</c><c> bread</c><c> first</c><c> search,</c><c> you</c><c> can</c>
+[0:39] you see bread first search, you can
+[0:39] you see bread first search, you can apply<c> it</c><c> at</c><c> a</c><c> lot</c><c> of</c><c> different</c><c> places.</c>
+[0:41] apply it at a lot of different places.
+[0:41] apply it at a lot of different places. The<c> first</c><c> example</c><c> that</c><c> you</c><c> can</c><c> think</c><c> of</c>
+[0:43] The first example that you can think of
+[0:43] The first example that you can think of is<c> a</c><c> binary</c><c> tree.</c><c> So</c><c> what</c><c> happens</c><c> when</c>
+[0:47] is a binary tree. So what happens when
+[0:47] is a binary tree. So what happens when you<c> do</c><c> a</c><c> breadth</c><c> first</c><c> search</c><c> in</c><c> a</c>
+[0:49] you do a breadth first search in a
+[0:49] you do a breadth first search in a binary<c> tree?</c><c> The</c><c> idea</c><c> of</c><c> a</c><c> breadth</c><c> first</c>
+[0:51] binary tree? The idea of a breadth first
+[0:51] binary tree? The idea of a breadth first search<c> is</c><c> actually</c><c> very</c><c> very</c><c> simple.</c>
+[0:53] search is actually very very simple.
+[0:54] search is actually very very simple. What<c> you</c><c> need</c><c> to</c><c> do</c><c> is</c><c> you</c><c> need</c><c> to</c><c> start</c>
+[0:56] What you need to do is you need to start
+[0:56] What you need to do is you need to start somewhere.<c> Let</c><c> us</c><c> say</c><c> this</c><c> is</c><c> the</c><c> node</c>
+[0:58] somewhere. Let us say this is the node
+[0:58] somewhere. Let us say this is the node that<c> I'm</c><c> starting</c><c> with</c><c> and</c><c> then</c><c> you</c><c> try</c>
+[1:01] that I'm starting with and then you try
+[1:01] that I'm starting with and then you try to<c> find</c><c> out</c><c> all</c><c> of</c><c> the</c><c> connected</c>
+[1:03] to find out all of the connected
+[1:03] to find out all of the connected components<c> of</c><c> the</c><c> first</c><c> node</c><c> that</c><c> you</c>
+[1:06] components of the first node that you
+[1:06] components of the first node that you started<c> with.</c><c> I</c><c> have</c><c> identified</c><c> two</c>
+[1:08] started with. I have identified two
+[1:08] started with. I have identified two connected<c> components.</c><c> What</c><c> is</c><c> the</c><c> next</c>
+[1:10] connected components. What is the next
+[1:10] connected components. What is the next step?<c> you</c><c> iterate</c><c> over</c><c> each</c><c> of</c><c> the</c>
+[1:13] step? you iterate over each of the
+[1:13] step? you iterate over each of the connected<c> components</c><c> and</c><c> then</c><c> find</c><c> out</c>
+[1:16] connected components and then find out
+[1:16] connected components and then find out okay<c> what</c><c> other</c><c> nodes</c><c> are</c><c> connected.</c><c> So</c>
+[1:19] okay what other nodes are connected. So
+[1:19] okay what other nodes are connected. So this<c> time</c><c> I'm</c><c> going</c><c> to</c><c> find</c><c> out</c><c> more</c>
+[1:20] this time I'm going to find out more
+[1:20] this time I'm going to find out more nodes.<c> Once</c><c> you</c><c> are</c><c> done</c><c> with</c><c> these</c><c> also</c>
+[1:23] nodes. Once you are done with these also
+[1:23] nodes. Once you are done with these also now<c> is</c><c> the</c><c> time</c><c> for</c><c> these</c><c> new</c><c> nodes</c><c> and</c>
+[1:26] now is the time for these new nodes and
+[1:26] now is the time for these new nodes and once<c> again</c><c> you</c><c> will</c><c> try</c><c> to</c><c> find</c><c> out</c><c> the</c>
+[1:28] once again you will try to find out the
+[1:28] once again you will try to find out the connected<c> components.</c>
+[1:30] connected components.
+[1:30] connected components. So<c> this</c><c> is</c><c> actually</c><c> bread</c><c> first</c><c> search</c>
+[1:33] So this is actually bread first search
+[1:33] So this is actually bread first search and<c> I</c><c> want</c><c> you</c><c> to</c><c> remember</c><c> it</c><c> in</c><c> this</c>
+[1:36] and I want you to remember it in this
+[1:36] and I want you to remember it in this particular<c> way</c><c> and</c><c> you're</c><c> shortly</c><c> going</c>
+[1:38] particular way and you're shortly going
+[1:38] particular way and you're shortly going to<c> see</c><c> how</c><c> this</c><c> will</c><c> simplify</c>
+[1:40] to see how this will simplify
+[1:40] to see how this will simplify everything.<c> What</c><c> happens</c><c> if</c><c> you</c><c> have</c><c> an</c>
+[1:43] everything. What happens if you have an
+[1:43] everything. What happens if you have an ner<c> tree</c><c> that</c><c> means</c><c> a</c><c> child</c><c> could</c><c> have</c><c> n</c>
+[1:47] ner tree that means a child could have n
+[1:47] ner tree that means a child could have n number<c> of</c><c> branches.</c><c> How</c><c> do</c><c> you</c><c> apply</c>
+[1:49] number of branches. How do you apply
+[1:49] number of branches. How do you apply bread<c> for</c><c> search</c><c> over</c><c> there?</c><c> If</c><c> your</c>
+[1:51] bread for search over there? If your
+[1:51] bread for search over there? If your fundamental<c> concepts</c><c> are</c><c> clear</c><c> it</c>
+[1:53] fundamental concepts are clear it
+[1:53] fundamental concepts are clear it shouldn't<c> be</c><c> a</c><c> problem</c><c> for</c><c> you.</c><c> So</c><c> over</c>
+[1:55] shouldn't be a problem for you. So over
+[1:55] shouldn't be a problem for you. So over here<c> I</c><c> start</c><c> off</c><c> with</c><c> my</c><c> first</c><c> node.</c>
+[1:57] here I start off with my first node.
+[1:57] here I start off with my first node. Okay.<c> And</c><c> now</c><c> find</c><c> out</c><c> all</c><c> of</c><c> the</c>
+[2:00] Okay. And now find out all of the
+[2:00] Okay. And now find out all of the connected<c> components</c><c> directly</c><c> to</c><c> the</c>
+[2:02] connected components directly to the
+[2:02] connected components directly to the first<c> node.</c><c> You</c><c> identified</c><c> these.</c><c> Now</c><c> is</c>
+[2:06] first node. You identified these. Now is
+[2:06] first node. You identified these. Now is the<c> time</c><c> that</c><c> you</c><c> iterate</c><c> over</c><c> each</c><c> of</c>
+[2:08] the time that you iterate over each of
+[2:08] the time that you iterate over each of these<c> nodes.</c><c> And</c><c> once</c><c> you</c><c> do</c><c> that,</c><c> which</c>
+[2:11] these nodes. And once you do that, which
+[2:11] these nodes. And once you do that, which nodes<c> will</c><c> you</c><c> look?</c><c> These</c><c> are</c><c> all</c><c> the</c>
+[2:13] nodes will you look? These are all the
+[2:13] nodes will you look? These are all the four<c> nodes</c><c> that</c><c> you</c><c> will</c><c> look</c><c> upon.</c><c> Do</c>
+[2:16] four nodes that you will look upon. Do
+[2:16] four nodes that you will look upon. Do you<c> still</c><c> have</c><c> nodes</c><c> remaining?</c><c> You</c><c> will</c>
+[2:18] you still have nodes remaining? You will
+[2:18] you still have nodes remaining? You will iterate<c> over</c><c> each</c><c> of</c><c> these</c><c> nodes</c><c> and</c><c> try</c>
+[2:20] iterate over each of these nodes and try
+[2:20] iterate over each of these nodes and try to<c> find</c><c> out</c><c> the</c><c> connected</c><c> components.</c>
+[2:22] to find out the connected components.
+[2:22] to find out the connected components. And<c> then</c><c> you</c><c> found</c><c> out</c><c> okay</c><c> these</c><c> are</c><c> my</c>
+[2:25] And then you found out okay these are my
+[2:25] And then you found out okay these are my connected<c> nodes.</c><c> And</c><c> this</c><c> is</c><c> the</c><c> way</c><c> you</c>
+[2:28] connected nodes. And this is the way you
+[2:28] connected nodes. And this is the way you conducted<c> bread's</c><c> first</c><c> search</c><c> at</c><c> each</c>
+[2:31] conducted bread's first search at each
+[2:31] conducted bread's first search at each of<c> the</c><c> levels</c><c> even</c><c> in</c><c> your</c><c> nertory.</c><c> Now</c>
+[2:33] of the levels even in your nertory. Now
+[2:33] of the levels even in your nertory. Now comes<c> the</c><c> interesting</c><c> part.</c><c> What</c><c> happens</c>
+[2:36] comes the interesting part. What happens
+[2:36] comes the interesting part. What happens in<c> the</c><c> case</c><c> of</c><c> a</c><c> graph?</c><c> And</c><c> does</c><c> this</c>
+[2:39] in the case of a graph? And does this
+[2:39] in the case of a graph? And does this logic<c> to</c><c> do</c><c> a</c><c> breadth</c><c> for</c><c> search</c><c> also</c>
+[2:41] logic to do a breadth for search also
+[2:41] logic to do a breadth for search also apply<c> over</c><c> here?</c><c> The</c><c> interesting</c><c> part</c>
+[2:43] apply over here? The interesting part
+[2:43] apply over here? The interesting part and<c> the</c><c> fun</c><c> part</c><c> is</c><c> yes.</c><c> How</c><c> do</c><c> you</c>
+[2:45] and the fun part is yes. How do you
+[2:45] and the fun part is yes. How do you approach<c> it?</c><c> Start</c><c> anywhere</c><c> that</c><c> you</c>
+[2:47] approach it? Start anywhere that you
+[2:47] approach it? Start anywhere that you want<c> to.</c><c> Let</c><c> us</c><c> say</c><c> I'm</c><c> starting</c><c> off</c>
+[2:50] want to. Let us say I'm starting off
+[2:50] want to. Let us say I'm starting off from<c> my</c><c> first</c><c> node</c><c> over</c><c> here</c><c> and</c><c> I</c><c> have</c>
+[2:52] from my first node over here and I have
+[2:52] from my first node over here and I have to<c> do</c><c> a</c><c> breakfast</c><c> search.</c><c> What</c><c> concept</c>
+[2:55] to do a breakfast search. What concept
+[2:55] to do a breakfast search. What concept did<c> we</c><c> follow?</c><c> You</c><c> need</c><c> to</c><c> look</c><c> at</c><c> all</c>
+[2:57] did we follow? You need to look at all
+[2:57] did we follow? You need to look at all of<c> the</c><c> connected</c><c> components.</c><c> So</c><c> this</c>
+[2:59] of the connected components. So this
+[2:59] of the connected components. So this node<c> is</c><c> connected</c><c> and</c><c> this</c><c> node</c><c> is</c>
+[3:01] node is connected and this node is
+[3:01] node is connected and this node is connected.<c> For</c><c> the</c><c> next</c><c> iteration,</c><c> what</c>
+[3:03] connected. For the next iteration, what
+[3:03] connected. For the next iteration, what do<c> you</c><c> do?</c><c> Look</c><c> at</c><c> each</c><c> of</c><c> these</c><c> nodes</c>
+[3:06] do you do? Look at each of these nodes
+[3:06] do you do? Look at each of these nodes and<c> find</c><c> out</c><c> all</c><c> of</c><c> the</c><c> connected</c>
+[3:08] and find out all of the connected
+[3:08] and find out all of the connected components.<c> So</c><c> this</c><c> is</c><c> connected.</c><c> Then</c>
+[3:10] components. So this is connected. Then
+[3:10] components. So this is connected. Then this<c> node</c><c> is</c><c> also</c><c> connected</c><c> to</c><c> this</c>
+[3:12] this node is also connected to this
+[3:12] this node is also connected to this node.<c> This</c><c> node</c><c> is</c><c> also</c><c> connected</c><c> to</c>
+[3:15] node. This node is also connected to
+[3:15] node. This node is also connected to this<c> node.</c><c> And</c><c> that</c><c> is</c><c> it.</c><c> This</c>
+[3:17] this node. And that is it. This
+[3:17] this node. And that is it. This particular<c> node</c><c> isn't</c><c> connected</c>
+[3:19] particular node isn't connected
+[3:19] particular node isn't connected anywhere.<c> So</c><c> that</c><c> is</c><c> where</c><c> you</c><c> stop.</c><c> But</c>
+[3:23] anywhere. So that is where you stop. But
+[3:23] anywhere. So that is where you stop. But you<c> still</c><c> have</c><c> more</c><c> nodes</c><c> to</c><c> visit.</c><c> So</c>
+[3:26] you still have more nodes to visit. So
+[3:26] you still have more nodes to visit. So this<c> time</c><c> you</c><c> are</c><c> going</c><c> to</c><c> look</c><c> at</c>
+[3:27] this time you are going to look at
+[3:27] this time you are going to look at another<c> nodes.</c><c> This</c><c> particular</c><c> node</c><c> is</c>
+[3:30] another nodes. This particular node is
+[3:30] another nodes. This particular node is connected<c> to</c><c> this</c><c> node</c><c> and</c><c> this</c><c> last</c>
+[3:32] connected to this node and this last
+[3:32] connected to this node and this last node<c> is</c><c> connected</c><c> to</c><c> this</c><c> node</c><c> over</c>
+[3:35] node is connected to this node over
+[3:35] node is connected to this node over here.<c> And</c><c> now</c><c> you</c><c> have</c><c> covered</c><c> every</c>
+[3:37] here. And now you have covered every
+[3:37] here. And now you have covered every node<c> in</c><c> your</c><c> graph.</c><c> And</c><c> you</c><c> were</c><c> able</c><c> to</c>
+[3:40] node in your graph. And you were able to
+[3:40] node in your graph. And you were able to do<c> a</c><c> breadth</c><c> first</c><c> search</c><c> once</c><c> again.</c><c> So</c>
+[3:43] do a breadth first search once again. So
+[3:43] do a breadth first search once again. So your<c> idea</c><c> still</c><c> remained</c><c> the</c><c> same.</c><c> You</c>
+[3:46] your idea still remained the same. You
+[3:46] your idea still remained the same. You started<c> off</c><c> at</c><c> a</c><c> particular</c><c> node,</c><c> look</c>
+[3:48] started off at a particular node, look
+[3:48] started off at a particular node, look at<c> the</c><c> connected</c><c> components</c><c> and</c><c> then</c><c> you</c>
+[3:50] at the connected components and then you
+[3:50] at the connected components and then you go<c> from</c><c> over</c><c> there.</c><c> That</c><c> is</c><c> the</c><c> idea</c><c> and</c>
+[3:53] go from over there. That is the idea and
+[3:53] go from over there. That is the idea and that<c> is</c><c> the</c><c> pattern</c><c> you</c><c> have</c><c> to</c><c> follow</c>
+[3:55] that is the pattern you have to follow
+[3:55] that is the pattern you have to follow to<c> solve</c><c> a</c><c> lot</c><c> of</c><c> different</c><c> questions.</c>
+[3:58] to solve a lot of different questions.
+[3:58] to solve a lot of different questions. If<c> you</c><c> remember</c><c> I</c><c> told</c><c> you</c><c> in</c><c> the</c>
+[4:00] If you remember I told you in the
+[4:00] If you remember I told you in the beginning<c> you</c><c> need</c><c> to</c><c> think</c><c> about</c><c> a</c>
+[4:02] beginning you need to think about a
+[4:02] beginning you need to think about a bread<c> first</c><c> search</c><c> in</c><c> form</c><c> of</c><c> a</c><c> Q</c><c> data</c>
+[4:04] bread first search in form of a Q data
+[4:04] bread first search in form of a Q data structure.<c> How?</c><c> Let</c><c> us</c><c> say</c><c> I</c><c> have</c><c> this</c>
+[4:07] structure. How? Let us say I have this
+[4:07] structure. How? Let us say I have this graph<c> in</c><c> front</c><c> of</c><c> me.</c><c> How</c><c> can</c><c> you</c>
+[4:09] graph in front of me. How can you
+[4:09] graph in front of me. How can you implement<c> a</c><c> bread</c><c> for</c><c> search</c><c> first</c><c> using</c>
+[4:11] implement a bread for search first using
+[4:11] implement a bread for search first using a<c> Q?</c><c> Take</c><c> up</c><c> this</c><c> Q</c><c> data</c><c> structure</c><c> and</c>
+[4:14] a Q? Take up this Q data structure and
+[4:14] a Q? Take up this Q data structure and let<c> us</c><c> say</c><c> I'm</c><c> starting</c><c> off</c><c> with</c><c> a</c>
+[4:16] let us say I'm starting off with a
+[4:16] let us say I'm starting off with a particular<c> node.</c><c> What</c><c> you</c><c> do</c><c> is</c><c> you</c><c> put</c>
+[4:19] particular node. What you do is you put
+[4:19] particular node. What you do is you put this<c> node</c><c> in</c><c> your</c><c> queue</c><c> and</c><c> now</c><c> you</c><c> want</c>
+[4:22] this node in your queue and now you want
+[4:22] this node in your queue and now you want to<c> iterate</c><c> over</c><c> this</c><c> entire</c><c> cube</c><c> until</c>
+[4:25] to iterate over this entire cube until
+[4:25] to iterate over this entire cube until it<c> is</c><c> completely</c><c> empty.</c><c> And</c><c> what</c><c> do</c><c> you</c>
+[4:27] it is completely empty. And what do you
+[4:27] it is completely empty. And what do you do<c> at</c><c> every</c><c> iteration?</c><c> You</c><c> pop</c><c> out</c><c> an</c>
+[4:30] do at every iteration? You pop out an
+[4:30] do at every iteration? You pop out an element.<c> I</c><c> will</c><c> pop</c><c> out</c><c> this</c><c> element.</c><c> It</c>
+[4:33] element. I will pop out this element. It
+[4:33] element. I will pop out this element. It means<c> I</c><c> need</c><c> to</c><c> look</c><c> at</c><c> this</c><c> particular</c>
+[4:35] means I need to look at this particular
+[4:35] means I need to look at this particular element<c> and</c><c> find</c><c> out</c><c> all</c><c> of</c><c> the</c>
+[4:37] element and find out all of the
+[4:37] element and find out all of the connected<c> components.</c><c> How</c><c> many</c><c> nodes</c><c> do</c>
+[4:39] connected components. How many nodes do
+[4:39] connected components. How many nodes do I<c> have</c><c> connected</c><c> to</c><c> one?</c><c> I</c><c> have</c><c> two</c>
+[4:41] I have connected to one? I have two
+[4:41] I have connected to one? I have two connected.<c> I</c><c> have</c><c> three</c><c> connected.</c><c> I</c>
+[4:43] connected. I have three connected. I
+[4:43] connected. I have three connected. I have<c> seven</c><c> connected</c><c> and</c><c> I</c><c> have</c><c> six</c>
+[4:45] have seven connected and I have six
+[4:45] have seven connected and I have six connected.<c> So</c><c> if</c><c> I</c><c> will</c><c> be</c><c> doing</c><c> a</c><c> bread</c>
+[4:48] connected. So if I will be doing a bread
+[4:48] connected. So if I will be doing a bread for<c> search,</c><c> I</c><c> have</c><c> two</c><c> 7</c><c> 3</c><c> and</c><c> then</c><c> a</c>
+[4:51] for search, I have two 7 3 and then a
+[4:51] for search, I have two 7 3 and then a six.<c> The</c><c> algorithm</c><c> says</c><c> that</c><c> whatever</c>
+[4:54] six. The algorithm says that whatever
+[4:54] six. The algorithm says that whatever node<c> you</c><c> popped</c><c> out,</c><c> get</c><c> all</c><c> of</c><c> its</c>
+[4:57] node you popped out, get all of its
+[4:57] node you popped out, get all of its connected<c> neighbors</c><c> and</c><c> put</c><c> them</c><c> in</c><c> your</c>
+[4:59] connected neighbors and put them in your
+[4:59] connected neighbors and put them in your queue.<c> So</c><c> what</c><c> will</c><c> happen</c><c> over</c><c> here?</c><c> I</c>
+[5:02] queue. So what will happen over here? I
+[5:02] queue. So what will happen over here? I will<c> get</c><c> four</c><c> nodes</c><c> added</c><c> in</c><c> my</c><c> queue.</c>
+[5:05] will get four nodes added in my queue.
+[5:05] will get four nodes added in my queue. You<c> are</c><c> now</c><c> done</c><c> with</c><c> node</c><c> number</c><c> one.</c>
+[5:07] You are now done with node number one.
+[5:07] You are now done with node number one. So<c> you</c><c> can</c><c> safely</c><c> remove</c><c> it.</c><c> Remember</c>
+[5:09] So you can safely remove it. Remember
+[5:09] So you can safely remove it. Remember how<c> long</c><c> do</c><c> you</c><c> have</c><c> to</c><c> run</c><c> until</c><c> your</c>
+[5:11] how long do you have to run until your
+[5:11] how long do you have to run until your queue<c> is</c><c> completely</c><c> empty.</c><c> So</c><c> now</c><c> what</c>
+[5:14] queue is completely empty. So now what
+[5:14] queue is completely empty. So now what you<c> can</c><c> do?</c><c> Remove</c><c> node</c><c> number</c><c> two</c><c> over</c>
+[5:16] you can do? Remove node number two over
+[5:16] you can do? Remove node number two over here.<c> And</c><c> what</c><c> do</c><c> you</c><c> see?</c><c> You</c><c> want</c><c> to</c>
+[5:18] here. And what do you see? You want to
+[5:18] here. And what do you see? You want to see<c> all</c><c> of</c><c> its</c><c> connected</c><c> components.</c><c> You</c>
+[5:21] see all of its connected components. You
+[5:21] see all of its connected components. You have<c> already</c><c> visited</c><c> node</c><c> one.</c><c> You</c><c> have</c>
+[5:23] have already visited node one. You have
+[5:24] have already visited node one. You have node<c> five.</c><c> This</c><c> is</c><c> the</c><c> next</c><c> level.</c><c> So</c>
+[5:27] node five. This is the next level. So
+[5:27] node five. This is the next level. So what<c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I'm</c><c> going</c><c> to</c>
+[5:28] what I'm going to do is I'm going to
+[5:28] what I'm going to do is I'm going to take<c> this</c><c> node</c><c> and</c><c> I'm</c><c> going</c><c> to</c><c> add</c><c> it</c>
+[5:30] take this node and I'm going to add it
+[5:30] take this node and I'm going to add it in<c> my</c><c> que.</c><c> What</c><c> is</c><c> happening</c><c> over</c><c> here?</c>
+[5:33] in my que. What is happening over here?
+[5:33] in my que. What is happening over here? This<c> Q</c><c> is</c><c> ensuring</c><c> that</c><c> I</c><c> will</c><c> iterate</c>
+[5:37] This Q is ensuring that I will iterate
+[5:37] This Q is ensuring that I will iterate all<c> of</c><c> these</c><c> elements</c><c> in</c><c> the</c><c> order</c><c> that</c>
+[5:40] all of these elements in the order that
+[5:40] all of these elements in the order that I<c> appeared.</c><c> So</c><c> this</c><c> particular</c><c> node</c>
+[5:43] I appeared. So this particular node
+[5:43] I appeared. So this particular node appeared<c> first.</c><c> Then</c><c> I</c><c> had</c><c> all</c><c> of</c><c> these</c>
+[5:45] appeared first. Then I had all of these
+[5:45] appeared first. Then I had all of these nodes.<c> So</c><c> my</c><c> cube</c><c> will</c><c> process</c><c> all</c><c> of</c>
+[5:47] nodes. So my cube will process all of
+[5:47] nodes. So my cube will process all of these<c> nodes.</c><c> Then</c><c> the</c><c> next</c><c> level.</c><c> These</c>
+[5:50] these nodes. Then the next level. These
+[5:50] these nodes. Then the next level. These are<c> all</c><c> of</c><c> the</c><c> nodes</c><c> I</c><c> am</c><c> going</c><c> to</c><c> cover</c>
+[5:52] are all of the nodes I am going to cover
+[5:52] are all of the nodes I am going to cover next.<c> So</c><c> just</c><c> watch</c><c> what</c><c> happens.</c><c> I</c><c> am</c>
+[5:55] next. So just watch what happens. I am
+[5:55] next. So just watch what happens. I am now<c> done</c><c> with</c><c> node</c><c> two.</c><c> So</c><c> what</c><c> I</c><c> can</c><c> do</c>
+[5:58] now done with node two. So what I can do
+[5:58] now done with node two. So what I can do is<c> I</c><c> can</c><c> safely</c><c> remove</c><c> it.</c><c> Time</c><c> to</c><c> pop</c>
+[6:00] is I can safely remove it. Time to pop
+[6:00] is I can safely remove it. Time to pop out<c> another</c><c> node.</c><c> I</c><c> popped</c><c> out</c><c> three.</c><c> So</c>
+[6:02] out another node. I popped out three. So
+[6:02] out another node. I popped out three. So I<c> look</c><c> over</c><c> here.</c><c> I</c><c> have</c><c> already</c><c> visited</c>
+[6:04] I look over here. I have already visited
+[6:04] I look over here. I have already visited one.<c> But</c><c> I</c><c> still</c><c> need</c><c> to</c><c> visit</c><c> four.</c><c> And</c>
+[6:07] one. But I still need to visit four. And
+[6:07] one. But I still need to visit four. And I<c> will</c><c> add</c><c> it</c><c> in</c><c> my</c><c> queue.</c><c> I'm</c><c> done</c><c> with</c>
+[6:09] I will add it in my queue. I'm done with
+[6:09] I will add it in my queue. I'm done with node<c> three</c><c> now.</c><c> And</c><c> this</c><c> is</c><c> how</c><c> you</c><c> are</c>
+[6:12] node three now. And this is how you are
+[6:12] node three now. And this is how you are going<c> to</c><c> continue.</c><c> The</c><c> next</c><c> note</c><c> I</c><c> have</c>
+[6:14] going to continue. The next note I have
+[6:14] going to continue. The next note I have is<c> six.</c><c> How</c><c> many</c><c> neighbors</c><c> does</c><c> six</c>
+[6:16] is six. How many neighbors does six
+[6:16] is six. How many neighbors does six have?<c> Six</c><c> has</c><c> one</c><c> as</c><c> a</c><c> neighbor,</c><c> but</c><c> you</c>
+[6:18] have? Six has one as a neighbor, but you
+[6:18] have? Six has one as a neighbor, but you have<c> already</c><c> visited.</c><c> Then</c><c> you</c><c> have</c>
+[6:19] have already visited. Then you have
+[6:19] have already visited. Then you have eight<c> as</c><c> a</c><c> neighbor.</c><c> This</c><c> eight</c><c> also</c>
+[6:22] eight as a neighbor. This eight also
+[6:22] eight as a neighbor. This eight also gets<c> added</c><c> to</c><c> the</c><c> queue.</c><c> You</c><c> are</c><c> now</c>
+[6:24] gets added to the queue. You are now
+[6:24] gets added to the queue. You are now done<c> with</c><c> node</c><c> six.</c><c> So</c><c> remove</c><c> it.</c><c> And</c>
+[6:27] done with node six. So remove it. And
+[6:27] done with node six. So remove it. And now<c> you</c><c> pop</c><c> out</c><c> node</c><c> 7.</c><c> So</c><c> seven</c><c> has</c><c> one</c>
+[6:30] now you pop out node 7. So seven has one
+[6:30] now you pop out node 7. So seven has one neighbor,<c> but</c><c> you</c><c> have</c><c> already</c><c> visited</c>
+[6:32] neighbor, but you have already visited
+[6:32] neighbor, but you have already visited it.<c> It</c><c> doesn't</c><c> have</c><c> any</c><c> more</c><c> neighbors.</c>
+[6:34] it. It doesn't have any more neighbors.
+[6:34] it. It doesn't have any more neighbors. So<c> you</c><c> can</c><c> remove</c><c> it.</c><c> Now</c><c> pop</c><c> out</c><c> five.</c>
+[6:37] So you can remove it. Now pop out five.
+[6:37] So you can remove it. Now pop out five. Five<c> doesn't</c><c> have</c><c> any</c><c> neighbors.</c>
+[6:39] Five doesn't have any neighbors.
+[6:39] Five doesn't have any neighbors. Similarly,<c> you</c><c> will</c><c> pop</c><c> out</c><c> four</c><c> and</c>
+[6:41] Similarly, you will pop out four and
+[6:41] Similarly, you will pop out four and eight.<c> They</c><c> don't</c><c> have</c><c> any</c><c> neighbors.</c>
+[6:43] eight. They don't have any neighbors.
+[6:43] eight. They don't have any neighbors. Your<c> queue</c><c> will</c><c> be</c><c> finally</c><c> completely</c>
+[6:45] Your queue will be finally completely
+[6:45] Your queue will be finally completely empty.<c> And</c><c> that</c><c> is</c><c> how</c><c> you</c><c> know</c><c> you</c><c> have</c>
+[6:48] empty. And that is how you know you have
+[6:48] empty. And that is how you know you have traversed<c> your</c><c> entire</c><c> graph.</c><c> You</c><c> did</c><c> a</c>
+[6:51] traversed your entire graph. You did a
+[6:51] traversed your entire graph. You did a breadth<c> of</c><c> search.</c><c> And</c><c> you</c><c> can</c><c> see</c><c> that</c>
+[6:53] breadth of search. And you can see that
+[6:53] breadth of search. And you can see that this<c> concept</c><c> will</c><c> apply</c><c> to</c><c> any</c><c> tree,</c><c> any</c>
+[6:56] this concept will apply to any tree, any
+[6:56] this concept will apply to any tree, any ner<c> tree</c><c> or</c><c> even</c><c> any</c><c> graph.</c><c> And</c><c> that</c><c> is</c>
+[7:00] ner tree or even any graph. And that is
+[7:00] ner tree or even any graph. And that is the<c> idea</c><c> we</c><c> will</c><c> be</c><c> using.</c><c> Even</c><c> if</c><c> you</c>
+[7:02] the idea we will be using. Even if you
+[7:02] the idea we will be using. Even if you think<c> about</c><c> a</c><c> grid,</c><c> this</c><c> is</c><c> a</c><c> very</c><c> good</c>
+[7:05] think about a grid, this is a very good
+[7:05] think about a grid, this is a very good indication<c> that</c><c> this</c><c> will</c><c> involve</c><c> a</c>
+[7:08] indication that this will involve a
+[7:08] indication that this will involve a bread<c> for</c><c> search.</c><c> Why?</c><c> Because</c><c> a</c><c> grid</c><c> is</c>
+[7:11] bread for search. Why? Because a grid is
+[7:11] bread for search. Why? Because a grid is nothing<c> but</c><c> a</c><c> graph.</c><c> You</c><c> can</c><c> think</c><c> about</c>
+[7:14] nothing but a graph. You can think about
+[7:14] nothing but a graph. You can think about all<c> of</c><c> these</c><c> cells</c><c> just</c><c> as</c><c> different</c>
+[7:17] all of these cells just as different
+[7:17] all of these cells just as different nodes<c> and</c><c> all</c><c> these</c><c> nodes</c><c> are</c><c> connected.</c>
+[7:20] nodes and all these nodes are connected.
+[7:20] nodes and all these nodes are connected. So<c> when</c><c> you</c><c> would</c><c> do</c><c> a</c><c> breads</c><c> for</c>
+[7:22] So when you would do a breads for
+[7:22] So when you would do a breads for search,<c> just</c><c> remember</c><c> your</c><c> basics</c><c> again.</c>
+[7:25] search, just remember your basics again.
+[7:25] search, just remember your basics again. Let<c> us</c><c> say</c><c> I'm</c><c> starting</c><c> with</c><c> this</c>
+[7:27] Let us say I'm starting with this
+[7:27] Let us say I'm starting with this particular<c> cell.</c><c> What</c><c> do</c><c> you</c><c> do?</c><c> put</c>
+[7:29] particular cell. What do you do? put
+[7:29] particular cell. What do you do? put this<c> cell</c><c> in</c><c> a</c><c> que</c><c> and</c><c> look</c><c> at</c><c> all</c><c> of</c>
+[7:32] this cell in a que and look at all of
+[7:32] this cell in a que and look at all of the<c> adjacent</c><c> neighbors.</c><c> These</c><c> are</c><c> all</c><c> of</c>
+[7:34] the adjacent neighbors. These are all of
+[7:34] the adjacent neighbors. These are all of the<c> neighbors</c><c> which</c><c> get</c><c> added</c><c> to</c><c> the</c>
+[7:36] the neighbors which get added to the
+[7:36] the neighbors which get added to the que.<c> Now</c><c> what</c><c> will</c><c> you</c><c> do?</c><c> You</c><c> will</c><c> pop</c>
+[7:39] que. Now what will you do? You will pop
+[7:39] que. Now what will you do? You will pop out<c> each</c><c> neighbor</c><c> one</c><c> at</c><c> a</c><c> time</c><c> and</c><c> look</c>
+[7:41] out each neighbor one at a time and look
+[7:41] out each neighbor one at a time and look at<c> all</c><c> of</c><c> its</c><c> neighbors.</c><c> So</c><c> what</c><c> will</c>
+[7:44] at all of its neighbors. So what will
+[7:44] at all of its neighbors. So what will happen?<c> Now</c><c> you</c><c> are</c><c> going</c><c> to</c><c> cover</c><c> all</c>
+[7:46] happen? Now you are going to cover all
+[7:46] happen? Now you are going to cover all of<c> these</c><c> elements.</c><c> Once</c><c> you're</c><c> done</c><c> with</c>
+[7:48] of these elements. Once you're done with
+[7:48] of these elements. Once you're done with this<c> level,</c><c> now</c><c> you</c><c> will</c><c> cover</c><c> the</c><c> next</c>
+[7:51] this level, now you will cover the next
+[7:51] this level, now you will cover the next level.<c> You</c><c> can</c><c> see</c><c> that</c><c> how</c><c> you</c><c> are</c>
+[7:54] level. You can see that how you are
+[7:54] level. You can see that how you are going<c> to</c><c> expand</c><c> your</c><c> entire</c><c> search</c><c> space</c>
+[7:56] going to expand your entire search space
+[7:56] going to expand your entire search space and<c> eventually</c><c> you</c><c> will</c><c> be</c><c> navigating</c>
+[7:59] and eventually you will be navigating
+[7:59] and eventually you will be navigating your<c> entire</c><c> matrix.</c><c> It</c><c> just</c><c> might</c><c> be</c>
+[8:02] your entire matrix. It just might be
+[8:02] your entire matrix. It just might be possible<c> that</c><c> you</c><c> will</c><c> have</c><c> separate</c>
+[8:04] possible that you will have separate
+[8:04] possible that you will have separate conditions.<c> That</c><c> means</c><c> you</c><c> could</c><c> only</c>
+[8:06] conditions. That means you could only
+[8:06] conditions. That means you could only have<c> once</c><c> available</c><c> in</c><c> this</c><c> matrix</c><c> and</c>
+[8:08] have once available in this matrix and
+[8:08] have once available in this matrix and you<c> can</c><c> only</c><c> go</c><c> over</c><c> there.</c><c> You</c><c> could</c>
+[8:10] you can only go over there. You could
+[8:10] you can only go over there. You could only<c> go</c><c> horizontally</c><c> and</c><c> vertically.</c><c> You</c>
+[8:13] only go horizontally and vertically. You
+[8:13] only go horizontally and vertically. You cannot<c> go</c><c> diagonally.</c><c> These</c><c> are</c><c> all</c><c> the</c>
+[8:16] cannot go diagonally. These are all the
+[8:16] cannot go diagonally. These are all the constraints<c> which</c><c> you</c><c> will</c><c> find</c><c> in</c>
+[8:18] constraints which you will find in
+[8:18] constraints which you will find in different<c> set</c><c> of</c><c> problems</c><c> and</c><c> we</c><c> are</c>
+[8:20] different set of problems and we are
+[8:20] different set of problems and we are certainly<c> going</c><c> to</c><c> see</c><c> all</c><c> of</c><c> that.</c><c> But</c>
+[8:22] certainly going to see all of that. But
+[8:22] certainly going to see all of that. But what<c> I</c><c> want</c><c> you</c><c> to</c><c> focus</c><c> right</c><c> now</c><c> is</c>
+[8:24] what I want you to focus right now is
+[8:24] what I want you to focus right now is the<c> idea</c><c> we</c><c> are</c><c> choosing.</c><c> How</c><c> we</c><c> are</c>
+[8:27] the idea we are choosing. How we are
+[8:27] the idea we are choosing. How we are thinking<c> about</c><c> a</c><c> bread</c><c> for</c><c> search.</c><c> How</c><c> a</c>
+[8:29] thinking about a bread for search. How a
+[8:29] thinking about a bread for search. How a Q<c> data</c><c> structure</c><c> will</c><c> actually</c><c> help</c><c> to</c>
+[8:32] Q data structure will actually help to
+[8:32] Q data structure will actually help to implement<c> all</c><c> of</c><c> this.</c><c> Let</c><c> us</c><c> now</c>
+[8:34] implement all of this. Let us now
+[8:34] implement all of this. Let us now quickly<c> start</c><c> taking</c><c> at</c><c> a</c><c> list</c><c> of</c>
+[8:36] quickly start taking at a list of
+[8:36] quickly start taking at a list of problems<c> that</c><c> you</c><c> can</c><c> easily</c><c> solve</c><c> with</c>
+[8:38] problems that you can easily solve with
+[8:38] problems that you can easily solve with a<c> bread</c><c> for</c><c> search</c><c> algorithm.</c><c> You</c><c> might</c>
+[8:41] a bread for search algorithm. You might
+[8:41] a bread for search algorithm. You might have<c> already</c><c> guessed</c><c> the</c><c> first</c><c> problem</c>
+[8:42] have already guessed the first problem
+[8:42] have already guessed the first problem that<c> is</c><c> doing</c><c> a</c><c> level</c><c> order</c><c> traversal</c><c> in</c>
+[8:45] that is doing a level order traversal in
+[8:45] that is doing a level order traversal in a<c> binary</c><c> tree.</c><c> I</c><c> don't</c><c> know</c><c> why</c><c> it</c><c> is</c>
+[8:47] a binary tree. I don't know why it is
+[8:48] a binary tree. I don't know why it is written<c> as</c><c> a</c><c> different</c><c> problem.</c><c> You</c><c> all</c>
+[8:50] written as a different problem. You all
+[8:50] written as a different problem. You all know<c> about</c><c> an</c><c> inorder</c><c> traversal</c><c> and</c><c> post</c>
+[8:52] know about an inorder traversal and post
+[8:52] know about an inorder traversal and post order<c> traversal</c><c> and</c><c> a</c><c> pre-order</c>
+[8:53] order traversal and a pre-order
+[8:53] order traversal and a pre-order traversal.<c> How</c><c> is</c><c> a</c><c> level</c><c> order</c>
+[8:55] traversal. How is a level order
+[8:55] traversal. How is a level order traversal<c> different?</c><c> Well,</c><c> the</c><c> idea</c><c> is</c>
+[8:57] traversal different? Well, the idea is
+[8:58] traversal different? Well, the idea is you<c> are</c><c> not</c><c> following</c><c> any</c><c> tree</c><c> property.</c>
+[9:00] you are not following any tree property.
+[9:00] you are not following any tree property. What<c> you're</c><c> doing</c><c> is</c><c> you</c><c> are</c><c> going</c><c> level</c>
+[9:02] What you're doing is you are going level
+[9:02] What you're doing is you are going level by<c> level.</c><c> And</c><c> if</c><c> you</c><c> think</c><c> about</c><c> it,</c><c> it</c>
+[9:05] by level. And if you think about it, it
+[9:05] by level. And if you think about it, it is<c> just</c><c> a</c><c> breath</c><c> for</c><c> search.</c><c> So</c><c> what</c><c> I'm</c>
+[9:07] is just a breath for search. So what I'm
+[9:08] is just a breath for search. So what I'm doing,<c> I</c><c> start</c><c> off</c><c> with</c><c> the</c><c> first</c><c> node</c>
+[9:09] doing, I start off with the first node
+[9:09] doing, I start off with the first node and<c> this</c><c> gets</c><c> added</c><c> to</c><c> my</c><c> que.</c><c> This</c><c> is</c>
+[9:12] and this gets added to my que. This is
+[9:12] and this gets added to my que. This is your<c> beginning</c><c> point.</c><c> And</c><c> for</c><c> every</c>
+[9:15] your beginning point. And for every
+[9:15] your beginning point. And for every question<c> that</c><c> involves</c><c> BFS,</c><c> this</c><c> will</c><c> be</c>
+[9:17] question that involves BFS, this will be
+[9:17] question that involves BFS, this will be your<c> starting</c><c> point.</c><c> Just</c><c> take</c><c> up</c><c> a</c>
+[9:19] your starting point. Just take up a
+[9:19] your starting point. Just take up a value<c> and</c><c> put</c><c> up</c><c> in</c><c> your</c><c> queue.</c><c> And</c><c> now</c>
+[9:22] value and put up in your queue. And now
+[9:22] value and put up in your queue. And now you<c> want</c><c> to</c><c> run</c><c> a</c><c> while</c><c> loop</c><c> until</c><c> this</c>
+[9:24] you want to run a while loop until this
+[9:24] you want to run a while loop until this Q<c> is</c><c> completely</c><c> empty.</c><c> And</c><c> what</c><c> do</c><c> you</c>
+[9:27] Q is completely empty. And what do you
+[9:27] Q is completely empty. And what do you do<c> in</c><c> your</c><c> loop?</c><c> You</c><c> pop</c><c> out</c><c> an</c><c> element</c>
+[9:29] do in your loop? You pop out an element
+[9:29] do in your loop? You pop out an element and<c> then</c><c> look</c><c> at</c><c> all</c><c> of</c><c> the</c><c> neighbors</c><c> of</c>
+[9:32] and then look at all of the neighbors of
+[9:32] and then look at all of the neighbors of this<c> particular</c><c> element.</c><c> Whatever</c>
+[9:34] this particular element. Whatever
+[9:34] this particular element. Whatever neighbors<c> do</c><c> you</c><c> get?</c><c> Just</c><c> take</c><c> those</c>
+[9:36] neighbors do you get? Just take those
+[9:36] neighbors do you get? Just take those neighbors<c> and</c><c> add</c><c> it</c><c> in</c><c> your</c><c> que.</c><c> Once</c>
+[9:39] neighbors and add it in your que. Once
+[9:39] neighbors and add it in your que. Once you're<c> done</c><c> traversing</c><c> all</c><c> of</c><c> the</c>
+[9:40] you're done traversing all of the
+[9:40] you're done traversing all of the neighbors,<c> just</c><c> remove</c><c> the</c><c> element</c><c> that</c>
+[9:42] neighbors, just remove the element that
+[9:42] neighbors, just remove the element that you<c> popped</c><c> out.</c><c> Now</c><c> remember,</c><c> you</c><c> are</c>
+[9:45] you popped out. Now remember, you are
+[9:45] you popped out. Now remember, you are running<c> a</c><c> while</c><c> loop</c><c> until</c><c> your</c><c> que</c><c> is</c>
+[9:47] running a while loop until your que is
+[9:47] running a while loop until your que is completely<c> empty.</c><c> So</c><c> pop</c><c> out</c><c> a</c><c> new</c>
+[9:49] completely empty. So pop out a new
+[9:49] completely empty. So pop out a new element.<c> So</c><c> you</c><c> want</c><c> to</c><c> look</c><c> at</c><c> its</c>
+[9:52] element. So you want to look at its
+[9:52] element. So you want to look at its neighbors<c> also.</c><c> So</c><c> these</c><c> elements</c><c> will</c>
+[9:55] neighbors also. So these elements will
+[9:55] neighbors also. So these elements will also<c> get</c><c> added</c><c> to</c><c> the</c><c> que.</c><c> This</c><c> element</c>
+[9:57] also get added to the que. This element
+[9:57] also get added to the que. This element is<c> now</c><c> gone.</c><c> This</c><c> time</c><c> you're</c><c> going</c><c> to</c>
+[9:59] is now gone. This time you're going to
+[9:59] is now gone. This time you're going to pop<c> out</c><c> six.</c><c> Six</c><c> has</c><c> the</c><c> neighbor</c><c> seven.</c>
+[10:02] pop out six. Six has the neighbor seven.
+[10:02] pop out six. Six has the neighbor seven. So<c> seven</c><c> also</c><c> gets</c><c> added</c><c> to</c><c> the</c><c> cube.</c>
+[10:05] So seven also gets added to the cube.
+[10:05] So seven also gets added to the cube. you<c> will</c><c> continue</c><c> on</c><c> this</c><c> way</c><c> and</c>
+[10:07] you will continue on this way and
+[10:07] you will continue on this way and eventually<c> you</c><c> will</c><c> traverse</c><c> all</c><c> of</c><c> the</c>
+[10:10] eventually you will traverse all of the
+[10:10] eventually you will traverse all of the nodes<c> in</c><c> a</c><c> certain</c><c> order.</c><c> So</c><c> what</c><c> did</c>
+[10:12] nodes in a certain order. So what did
+[10:12] nodes in a certain order. So what did you<c> do?</c><c> You</c><c> determined</c><c> a</c><c> level</c><c> order</c>
+[10:15] you do? You determined a level order
+[10:15] you do? You determined a level order traversal<c> of</c><c> your</c><c> binary</c><c> tree.</c><c> All</c><c> you</c>
+[10:18] traversal of your binary tree. All you
+[10:18] traversal of your binary tree. All you need<c> to</c><c> make</c><c> sure</c><c> is</c><c> that</c><c> you</c><c> insert</c><c> the</c>
+[10:20] need to make sure is that you insert the
+[10:20] need to make sure is that you insert the left<c> element</c><c> first</c><c> and</c><c> then</c><c> the</c><c> right</c>
+[10:22] left element first and then the right
+[10:22] left element first and then the right element.<c> You</c><c> insert</c><c> the</c><c> left</c><c> element</c>
+[10:25] element. You insert the left element
+[10:25] element. You insert the left element first<c> and</c><c> then</c><c> the</c><c> right</c><c> element.</c><c> This</c>
+[10:27] first and then the right element. This
+[10:27] first and then the right element. This way<c> you</c><c> are</c><c> ensuring</c><c> that</c><c> you</c><c> are</c><c> going</c>
+[10:29] way you are ensuring that you are going
+[10:29] way you are ensuring that you are going in<c> a</c><c> left</c><c> to</c><c> right</c><c> direction.</c><c> If</c><c> you</c>
+[10:32] in a left to right direction. If you
+[10:32] in a left to right direction. If you don't<c> look</c><c> at</c><c> this</c><c> ordering,</c><c> it</c><c> might</c><c> be</c>
+[10:34] don't look at this ordering, it might be
+[10:34] don't look at this ordering, it might be possible<c> that</c><c> you</c><c> enter</c><c> one</c><c> in</c><c> your</c>
+[10:35] possible that you enter one in your
+[10:35] possible that you enter one in your queue,<c> then</c><c> six</c><c> might</c><c> get</c><c> added</c><c> and</c><c> then</c>
+[10:37] queue, then six might get added and then
+[10:37] queue, then six might get added and then two.<c> So</c><c> this</c><c> doesn't</c><c> become</c><c> a</c><c> level</c>
+[10:39] two. So this doesn't become a level
+[10:39] two. So this doesn't become a level order<c> traversal.</c><c> You</c><c> might</c><c> get</c><c> another</c>
+[10:42] order traversal. You might get another
+[10:42] order traversal. You might get another question.<c> Okay,</c><c> how</c><c> many</c><c> levels</c><c> do</c><c> I</c>
+[10:44] question. Okay, how many levels do I
+[10:44] question. Okay, how many levels do I have<c> in</c><c> the</c><c> tree?</c><c> As</c><c> soon</c><c> as</c><c> you</c><c> have</c>
+[10:47] have in the tree? As soon as you have
+[10:47] have in the tree? As soon as you have found<c> out</c><c> all</c><c> of</c><c> the</c><c> neighbors,</c><c> just</c>
+[10:49] found out all of the neighbors, just
+[10:49] found out all of the neighbors, just insert<c> some</c><c> kind</c><c> of</c><c> a</c><c> marker</c><c> in</c><c> your</c>
+[10:51] insert some kind of a marker in your
+[10:51] insert some kind of a marker in your view<c> or</c><c> a</c><c> dummy</c><c> value.</c><c> As</c><c> soon</c><c> as</c><c> you</c>
+[10:53] view or a dummy value. As soon as you
+[10:53] view or a dummy value. As soon as you get<c> this</c><c> dummy</c><c> value,</c><c> it</c><c> means</c><c> a</c><c> level</c>
+[10:55] get this dummy value, it means a level
+[10:55] get this dummy value, it means a level has<c> been</c><c> completed.</c><c> Once</c><c> you</c><c> encounter</c>
+[10:57] has been completed. Once you encounter
+[10:57] has been completed. Once you encounter these<c> two</c><c> values,</c><c> again,</c><c> insert</c><c> a</c><c> dummy</c>
+[10:59] these two values, again, insert a dummy
+[10:59] these two values, again, insert a dummy value.<c> Once</c><c> you</c><c> encounter</c><c> these</c><c> three</c>
+[11:01] value. Once you encounter these three
+[11:01] value. Once you encounter these three again<c> insert</c><c> a</c><c> dummy</c><c> value.</c><c> This</c><c> way</c><c> you</c>
+[11:04] again insert a dummy value. This way you
+[11:04] again insert a dummy value. This way you are<c> finding</c><c> the</c><c> number</c><c> of</c><c> levels</c><c> in</c><c> a</c>
+[11:05] are finding the number of levels in a
+[11:05] are finding the number of levels in a binary<c> tree.</c><c> What</c><c> about</c><c> a</c><c> zigzag</c>
+[11:07] binary tree. What about a zigzag
+[11:08] binary tree. What about a zigzag traversal?<c> It</c><c> means</c><c> you</c><c> are</c><c> traversing</c>
+[11:10] traversal? It means you are traversing
+[11:10] traversal? It means you are traversing like<c> this</c><c> then</c><c> like</c><c> this</c><c> then</c><c> like</c><c> this</c>
+[11:12] like this then like this then like this
+[11:12] like this then like this then like this and<c> then</c><c> like</c><c> this.</c><c> So</c><c> what</c><c> do</c><c> you</c><c> do?</c>
+[11:15] and then like this. So what do you do?
+[11:15] and then like this. So what do you do? For<c> the</c><c> first</c><c> level</c><c> insert</c><c> the</c><c> right</c><c> and</c>
+[11:17] For the first level insert the right and
+[11:17] For the first level insert the right and the<c> left.</c><c> For</c><c> the</c><c> next</c><c> level</c><c> insert</c><c> a</c>
+[11:19] the left. For the next level insert a
+[11:19] the left. For the next level insert a left<c> and</c><c> then</c><c> the</c><c> right.</c><c> And</c><c> then</c><c> for</c>
+[11:21] left and then the right. And then for
+[11:21] left and then the right. And then for subsequent<c> levels</c><c> you</c><c> just</c><c> keep</c><c> on</c>
+[11:23] subsequent levels you just keep on
+[11:23] subsequent levels you just keep on alternating<c> the</c><c> order.</c><c> That</c><c> is</c><c> the</c><c> idea.</c>
+[11:26] alternating the order. That is the idea.
+[11:26] alternating the order. That is the idea. But<c> the</c><c> basic</c><c> concept</c><c> of</c><c> maintaining</c><c> a</c>
+[11:28] But the basic concept of maintaining a
+[11:28] But the basic concept of maintaining a cube<c> and</c><c> popping</c><c> out</c><c> elements</c><c> will</c>
+[11:30] cube and popping out elements will
+[11:30] cube and popping out elements will remain<c> the</c><c> same.</c><c> Another</c><c> problem</c><c> that</c>
+[11:32] remain the same. Another problem that
+[11:32] remain the same. Another problem that you<c> might</c><c> have</c><c> seen</c><c> is</c><c> minimum</c><c> depth</c><c> of</c>
+[11:34] you might have seen is minimum depth of
+[11:34] you might have seen is minimum depth of a<c> binary</c><c> tree.</c><c> How</c><c> do</c><c> you</c><c> measure</c><c> the</c>
+[11:36] a binary tree. How do you measure the
+[11:36] a binary tree. How do you measure the depth?<c> So</c><c> a</c><c> tree</c><c> can</c><c> have</c><c> several</c>
+[11:38] depth? So a tree can have several
+[11:38] depth? So a tree can have several branches.<c> But</c><c> what</c><c> is</c><c> the</c><c> terminating</c>
+[11:41] branches. But what is the terminating
+[11:41] branches. But what is the terminating node?<c> Any</c><c> node</c><c> which</c><c> doesn't</c><c> have</c><c> any</c>
+[11:44] node? Any node which doesn't have any
+[11:44] node? Any node which doesn't have any more<c> children</c><c> that</c><c> is</c><c> a</c><c> terminating</c><c> node</c>
+[11:48] more children that is a terminating node
+[11:48] more children that is a terminating node and<c> that</c><c> is</c><c> telling</c><c> you</c><c> a</c><c> particular</c>
+[11:50] and that is telling you a particular
+[11:50] and that is telling you a particular depth.<c> So</c><c> this</c><c> node</c><c> is</c><c> at</c><c> a</c><c> different</c>
+[11:52] depth. So this node is at a different
+[11:52] depth. So this node is at a different depth.<c> This</c><c> node</c><c> is</c><c> at</c><c> a</c><c> different</c><c> depth</c>
+[11:54] depth. This node is at a different depth
+[11:54] depth. This node is at a different depth and<c> this</c><c> node</c><c> is</c><c> at</c><c> a</c><c> different</c><c> depth.</c>
+[11:57] and this node is at a different depth.
+[11:57] and this node is at a different depth. You<c> have</c><c> to</c><c> tell</c><c> me</c><c> the</c><c> minimum</c><c> depth</c>
+[11:58] You have to tell me the minimum depth
+[11:58] You have to tell me the minimum depth and<c> you</c><c> can</c><c> see</c><c> that</c><c> this</c><c> is</c><c> the</c><c> minimum</c>
+[12:01] and you can see that this is the minimum
+[12:01] and you can see that this is the minimum depth.<c> So</c><c> how</c><c> can</c><c> you</c><c> approach</c><c> this?</c><c> Can</c>
+[12:04] depth. So how can you approach this? Can
+[12:04] depth. So how can you approach this? Can you<c> apply</c><c> the</c><c> level</c><c> order</c><c> traversal</c>
+[12:05] you apply the level order traversal
+[12:05] you apply the level order traversal here?<c> Yes.</c><c> Because</c><c> if</c><c> I</c><c> start</c><c> to</c>
+[12:08] here? Yes. Because if I start to
+[12:08] here? Yes. Because if I start to traverse<c> my</c><c> tree</c><c> like</c><c> this,</c><c> I</c><c> get</c><c> the</c>
+[12:10] traverse my tree like this, I get the
+[12:10] traverse my tree like this, I get the first<c> level</c><c> and</c><c> every</c><c> node</c><c> has</c><c> children.</c>
+[12:13] first level and every node has children.
+[12:13] first level and every node has children. Then<c> I</c><c> look</c><c> at</c><c> the</c><c> second</c><c> level.</c><c> Every</c>
+[12:16] Then I look at the second level. Every
+[12:16] Then I look at the second level. Every node<c> has</c><c> children.</c><c> I</c><c> look</c><c> at</c><c> the</c><c> third</c>
+[12:18] node has children. I look at the third
+[12:18] node has children. I look at the third level.<c> Node</c><c> three</c><c> has</c><c> children.</c><c> Node</c><c> 5</c>
+[12:22] level. Node three has children. Node 5
+[12:22] level. Node three has children. Node 5 does<c> not</c><c> have</c><c> any</c><c> children</c><c> and</c><c> that</c><c> is</c>
+[12:24] does not have any children and that is
+[12:24] does not have any children and that is where<c> I</c><c> immediately</c><c> stop.</c><c> I</c><c> don't</c><c> even</c>
+[12:27] where I immediately stop. I don't even
+[12:27] where I immediately stop. I don't even need<c> to</c><c> traverse</c><c> the</c><c> rest</c><c> of</c><c> the</c><c> tree</c>
+[12:29] need to traverse the rest of the tree
+[12:29] need to traverse the rest of the tree because<c> I</c><c> found</c><c> a</c><c> node</c><c> that</c><c> doesn't</c><c> have</c>
+[12:31] because I found a node that doesn't have
+[12:32] because I found a node that doesn't have any<c> children.</c><c> I</c><c> want</c><c> to</c><c> look</c><c> at</c><c> the</c>
+[12:33] any children. I want to look at the
+[12:33] any children. I want to look at the minimum<c> depth.</c><c> It</c><c> means</c><c> this</c><c> is</c><c> the</c>
+[12:35] minimum depth. It means this is the
+[12:35] minimum depth. It means this is the first<c> node</c><c> that</c><c> I</c><c> want</c><c> to</c><c> return.</c><c> This</c>
+[12:37] first node that I want to return. This
+[12:37] first node that I want to return. This is<c> giving</c><c> me</c><c> the</c><c> answer.</c><c> So</c><c> you</c><c> can</c>
+[12:40] is giving me the answer. So you can
+[12:40] is giving me the answer. So you can immediately<c> say</c><c> whatever</c><c> level</c><c> this</c>
+[12:42] immediately say whatever level this
+[12:42] immediately say whatever level this particular<c> node</c><c> is</c><c> on</c><c> and</c><c> this</c><c> will</c><c> be</c>
+[12:44] particular node is on and this will be
+[12:44] particular node is on and this will be your<c> answer.</c><c> This</c><c> is</c><c> the</c><c> minimum</c><c> depth</c>
+[12:46] your answer. This is the minimum depth
+[12:46] your answer. This is the minimum depth of<c> this</c><c> binary</c><c> tree.</c><c> Pretty</c><c> simple,</c>
+[12:49] of this binary tree. Pretty simple,
+[12:49] of this binary tree. Pretty simple, right?<c> And</c><c> if</c><c> you're</c><c> getting</c><c> the</c><c> drift,</c>
+[12:51] right? And if you're getting the drift,
+[12:51] right? And if you're getting the drift, there<c> is</c><c> one</c><c> more</c><c> problem</c><c> that</c><c> becomes</c>
+[12:53] there is one more problem that becomes
+[12:53] there is one more problem that becomes really<c> easy</c><c> to</c><c> solve.</c><c> The</c><c> left</c><c> view</c><c> of</c><c> a</c>
+[12:56] really easy to solve. The left view of a
+[12:56] really easy to solve. The left view of a binary<c> tree.</c><c> Over</c><c> here</c><c> you</c><c> are</c><c> given</c>
+[12:58] binary tree. Over here you are given
+[12:58] binary tree. Over here you are given this<c> binary</c><c> tree</c><c> and</c><c> you</c><c> have</c><c> to</c><c> do</c><c> a</c>
+[13:02] this binary tree and you have to do a
+[13:02] this binary tree and you have to do a different<c> kind</c><c> of</c><c> traversal.</c><c> Instead</c><c> of</c>
+[13:04] different kind of traversal. Instead of
+[13:04] different kind of traversal. Instead of a<c> pre-order</c><c> level</c><c> order</c><c> in</c><c> order,</c><c> what</c>
+[13:06] a pre-order level order in order, what
+[13:06] a pre-order level order in order, what you're<c> doing</c><c> is</c><c> you</c><c> are</c><c> looking</c><c> at</c><c> this</c>
+[13:08] you're doing is you are looking at this
+[13:08] you're doing is you are looking at this tree<c> from</c><c> the</c><c> left</c><c> side.</c><c> So</c><c> you</c><c> have</c><c> to</c>
+[13:11] tree from the left side. So you have to
+[13:11] tree from the left side. So you have to tell<c> me</c><c> what</c><c> nodes</c><c> are</c><c> visible.</c><c> So</c><c> you</c>
+[13:14] tell me what nodes are visible. So you
+[13:14] tell me what nodes are visible. So you can<c> see</c><c> that</c><c> node</c><c> one</c><c> will</c><c> be</c><c> visible,</c>
+[13:16] can see that node one will be visible,
+[13:16] can see that node one will be visible, two<c> is</c><c> visible,</c><c> three</c><c> then</c><c> four</c><c> and</c><c> then</c>
+[13:18] two is visible, three then four and then
+[13:18] two is visible, three then four and then a<c> nine.</c><c> If</c><c> you</c><c> apply</c><c> any</c><c> traversal</c>
+[13:21] a nine. If you apply any traversal
+[13:21] a nine. If you apply any traversal techniques,<c> it</c><c> may</c><c> become</c><c> so</c><c> hard</c><c> to</c>
+[13:23] techniques, it may become so hard to
+[13:23] techniques, it may become so hard to even<c> think</c><c> about</c><c> it.</c><c> Where</c><c> do</c><c> you</c><c> even</c>
+[13:25] even think about it. Where do you even
+[13:25] even think about it. Where do you even begin?<c> How</c><c> do</c><c> you</c><c> determine</c><c> if</c><c> is</c><c> this</c>
+[13:27] begin? How do you determine if is this
+[13:27] begin? How do you determine if is this the<c> leftmost</c><c> node?</c><c> But</c><c> a</c><c> breadth</c><c> search</c>
+[13:30] the leftmost node? But a breadth search
+[13:30] the leftmost node? But a breadth search or<c> a</c><c> level</c><c> order</c><c> traversal</c><c> comes</c><c> to</c><c> your</c>
+[13:32] or a level order traversal comes to your
+[13:32] or a level order traversal comes to your rescue.<c> What</c><c> do</c><c> you</c><c> need</c><c> to</c><c> do</c><c> over</c>
+[13:34] rescue. What do you need to do over
+[13:34] rescue. What do you need to do over here?<c> Iterate</c><c> level</c><c> by</c><c> level.</c><c> you</c><c> are</c>
+[13:37] here? Iterate level by level. you are
+[13:37] here? Iterate level by level. you are doing<c> a</c><c> breath</c><c> of</c><c> search</c><c> and</c><c> for</c><c> every</c>
+[13:40] doing a breath of search and for every
+[13:40] doing a breath of search and for every level<c> capture</c><c> the</c><c> first</c><c> element</c><c> that</c>
+[13:42] level capture the first element that
+[13:42] level capture the first element that you're<c> getting.</c>
+[13:45] you're getting.
+[13:45] you're getting. These<c> are</c><c> all</c><c> the</c><c> elements</c><c> that</c><c> you</c><c> will</c>
+[13:47] These are all the elements that you will
+[13:48] These are all the elements that you will encounter<c> when</c><c> you</c><c> are</c><c> doing</c><c> a</c><c> left</c><c> view</c>
+[13:50] encounter when you are doing a left view
+[13:50] encounter when you are doing a left view of<c> the</c><c> binary</c><c> tree.</c><c> A</c><c> breadth</c><c> for</c><c> search</c>
+[13:53] of the binary tree. A breadth for search
+[13:53] of the binary tree. A breadth for search makes<c> things</c><c> super</c><c> simple.</c><c> Similarly,</c>
+[13:55] makes things super simple. Similarly,
+[13:55] makes things super simple. Similarly, you<c> could</c><c> have</c><c> another</c><c> problem</c><c> where</c><c> you</c>
+[13:57] you could have another problem where you
+[13:57] you could have another problem where you want<c> to</c><c> do</c><c> the</c><c> right</c><c> view</c><c> of</c><c> the</c><c> binary</c>
+[13:59] want to do the right view of the binary
+[14:00] want to do the right view of the binary tree.<c> It</c><c> is</c><c> literally</c><c> the</c><c> same</c><c> problem.</c>
+[14:02] tree. It is literally the same problem.
+[14:02] tree. It is literally the same problem. When<c> you're</c><c> iterating</c><c> over</c><c> every</c><c> level,</c>
+[14:04] When you're iterating over every level,
+[14:04] When you're iterating over every level, just<c> keep</c><c> a</c><c> track</c><c> of</c><c> the</c><c> last</c><c> element</c>
+[14:06] just keep a track of the last element
+[14:06] just keep a track of the last element that<c> you're</c><c> seeing</c><c> and</c><c> voila,</c><c> you</c><c> found</c>
+[14:09] that you're seeing and voila, you found
+[14:09] that you're seeing and voila, you found the<c> answer.</c><c> This</c><c> is</c><c> how</c><c> things</c><c> can</c>
+[14:11] the answer. This is how things can
+[14:11] the answer. This is how things can become<c> super</c><c> simple.</c><c> For</c><c> example,</c><c> you</c>
+[14:13] become super simple. For example, you
+[14:13] become super simple. For example, you have<c> another</c><c> problem</c><c> average</c><c> of</c><c> levels</c>
+[14:15] have another problem average of levels
+[14:16] have another problem average of levels in<c> a</c><c> binary</c><c> tree.</c><c> Do</c><c> you</c><c> really</c><c> think</c><c> it</c>
+[14:18] in a binary tree. Do you really think it
+[14:18] in a binary tree. Do you really think it is<c> a</c><c> different</c><c> problem</c><c> to</c><c> solve?</c><c> All</c><c> we</c>
+[14:20] is a different problem to solve? All we
+[14:20] is a different problem to solve? All we are<c> doing</c><c> is</c><c> we</c><c> are</c><c> doing</c><c> a</c><c> breadth</c><c> for</c>
+[14:22] are doing is we are doing a breadth for
+[14:22] are doing is we are doing a breadth for search<c> or</c><c> a</c><c> level</c><c> order</c><c> traversal</c><c> to</c>
+[14:24] search or a level order traversal to
+[14:24] search or a level order traversal to iterate<c> over</c><c> each</c><c> of</c><c> these</c><c> levels</c><c> and</c>
+[14:26] iterate over each of these levels and
+[14:26] iterate over each of these levels and you<c> just</c><c> find</c><c> out</c><c> the</c><c> average</c><c> of</c><c> every</c>
+[14:29] you just find out the average of every
+[14:29] you just find out the average of every level.<c> This</c><c> keeps</c><c> things</c><c> super</c><c> simple.</c>
+[14:32] level. This keeps things super simple.
+[14:32] level. This keeps things super simple. You<c> are</c><c> only</c><c> doing</c><c> a</c><c> single</c><c> iteration</c>
+[14:35] You are only doing a single iteration
+[14:35] You are only doing a single iteration and<c> you</c><c> don't</c><c> even</c><c> have</c><c> recursion.</c><c> You</c>
+[14:38] and you don't even have recursion. You
+[14:38] and you don't even have recursion. You know<c> the</c><c> time</c><c> complexity</c><c> it</c><c> is</c><c> going</c><c> to</c>
+[14:40] know the time complexity it is going to
+[14:40] know the time complexity it is going to be<c> order</c><c> of</c><c> n</c><c> because</c><c> you</c><c> are</c><c> iterating</c>
+[14:43] be order of n because you are iterating
+[14:43] be order of n because you are iterating all<c> of</c><c> the</c><c> nodes</c><c> only</c><c> once</c><c> and</c><c> that</c><c> is</c><c> a</c>
+[14:46] all of the nodes only once and that is a
+[14:46] all of the nodes only once and that is a good<c> time</c><c> complexity</c><c> to</c><c> have</c><c> and</c><c> these</c>
+[14:47] good time complexity to have and these
+[14:48] good time complexity to have and these are<c> just</c><c> some</c><c> of</c><c> the</c><c> ways</c><c> how</c><c> you</c><c> can</c>
+[14:49] are just some of the ways how you can
+[14:49] are just some of the ways how you can apply<c> a</c><c> bread</c><c> first</c><c> search</c><c> to</c><c> tree</c><c> type</c>
+[14:51] apply a bread first search to tree type
+[14:51] apply a bread first search to tree type of<c> problems.</c><c> However,</c><c> the</c><c> application</c><c> of</c>
+[14:54] of problems. However, the application of
+[14:54] of problems. However, the application of BFS<c> isn't</c><c> limited.</c><c> If</c><c> you</c><c> remember</c><c> we</c>
+[14:57] BFS isn't limited. If you remember we
+[14:57] BFS isn't limited. If you remember we talked<c> about</c><c> graphs</c><c> also.</c><c> So</c><c> how</c><c> do</c><c> you</c>
+[15:00] talked about graphs also. So how do you
+[15:00] talked about graphs also. So how do you apply<c> the</c><c> bread</c><c> first</c><c> search</c><c> when</c><c> it</c>
+[15:02] apply the bread first search when it
+[15:02] apply the bread first search when it comes<c> to</c><c> problems</c><c> on</c><c> graphs.</c><c> Let</c><c> us</c>
+[15:05] comes to problems on graphs. Let us
+[15:05] comes to problems on graphs. Let us start<c> off</c><c> with</c><c> a</c><c> basic</c><c> but</c><c> important</c>
+[15:07] start off with a basic but important
+[15:07] start off with a basic but important problem<c> to</c><c> get</c><c> you</c><c> warmed</c><c> up</c><c> to</c><c> the</c><c> idea</c>
+[15:09] problem to get you warmed up to the idea
+[15:09] problem to get you warmed up to the idea of<c> using</c><c> Q's</c><c> bread</c><c> for</c><c> search</c><c> using</c>
+[15:12] of using Q's bread for search using
+[15:12] of using Q's bread for search using graphs.<c> Over</c><c> here</c><c> I</c><c> have</c><c> this</c><c> problem</c>
+[15:14] graphs. Over here I have this problem
+[15:14] graphs. Over here I have this problem number<c> of</c><c> provinces</c><c> and</c><c> then</c><c> I</c><c> am</c><c> given</c>
+[15:17] number of provinces and then I am given
+[15:17] number of provinces and then I am given a<c> matrix.</c><c> This</c><c> matrix</c><c> is</c><c> defining</c><c> if</c><c> a</c>
+[15:21] a matrix. This matrix is defining if a
+[15:21] a matrix. This matrix is defining if a cell<c> or</c><c> a</c><c> node</c><c> is</c><c> connected</c><c> to</c><c> one</c>
+[15:24] cell or a node is connected to one
+[15:24] cell or a node is connected to one another.<c> For</c><c> example,</c><c> when</c><c> I</c><c> check</c><c> node</c>
+[15:27] another. For example, when I check node
+[15:27] another. For example, when I check node one,<c> it</c><c> is</c><c> connected</c><c> to</c><c> node</c><c> 6</c><c> and</c><c> it</c><c> is</c>
+[15:30] one, it is connected to node 6 and it is
+[15:30] one, it is connected to node 6 and it is connected<c> to</c><c> node</c><c> 9.</c><c> So</c><c> one</c><c> is</c><c> connected</c>
+[15:33] connected to node 9. So one is connected
+[15:33] connected to node 9. So one is connected to<c> six</c><c> and</c><c> one</c><c> is</c><c> connected</c><c> to</c><c> 9.</c><c> And</c>
+[15:36] to six and one is connected to 9. And
+[15:36] to six and one is connected to 9. And similarly,<c> you</c><c> will</c><c> find</c><c> that</c><c> node</c><c> 6</c><c> is</c>
+[15:39] similarly, you will find that node 6 is
+[15:39] similarly, you will find that node 6 is connected<c> to</c><c> one</c><c> and</c><c> node</c><c> 9</c><c> is</c><c> also</c>
+[15:41] connected to one and node 9 is also
+[15:41] connected to one and node 9 is also connected<c> to</c><c> one.</c><c> If</c><c> you</c><c> want</c><c> to</c><c> find</c>
+[15:43] connected to one. If you want to find
+[15:43] connected to one. If you want to find the<c> information</c><c> about</c><c> any</c><c> node,</c><c> for</c>
+[15:45] the information about any node, for
+[15:45] the information about any node, for example,<c> node</c><c> number</c><c> four,</c><c> you</c><c> can</c><c> look</c>
+[15:47] example, node number four, you can look
+[15:47] example, node number four, you can look up<c> in</c><c> this</c><c> matrix.</c><c> So</c><c> node</c><c> four</c><c> is</c>
+[15:49] up in this matrix. So node four is
+[15:49] up in this matrix. So node four is connected<c> to</c><c> node</c><c> two</c><c> and</c><c> node</c><c> 4</c><c> is</c><c> also</c>
+[15:52] connected to node two and node 4 is also
+[15:52] connected to node two and node 4 is also connected<c> to</c><c> node</c><c> 7.</c><c> So</c><c> node</c><c> 4</c><c> is</c>
+[15:54] connected to node 7. So node 4 is
+[15:54] connected to node 7. So node 4 is connected<c> to</c><c> two</c><c> and</c><c> seven.</c><c> This</c><c> is</c><c> how</c>
+[15:57] connected to two and seven. This is how
+[15:57] connected to two and seven. This is how this<c> matrix</c><c> is</c><c> defining</c><c> all</c><c> of</c><c> my</c>
+[16:00] this matrix is defining all of my
+[16:00] this matrix is defining all of my connected<c> components.</c><c> The</c><c> problem</c>
+[16:02] connected components. The problem
+[16:02] connected components. The problem statement<c> says</c><c> that</c><c> if</c><c> you</c><c> are</c><c> given</c>
+[16:04] statement says that if you are given
+[16:04] statement says that if you are given this<c> matrix</c><c> and</c><c> all</c><c> of</c><c> these</c><c> cities,</c><c> you</c>
+[16:07] this matrix and all of these cities, you
+[16:07] this matrix and all of these cities, you have<c> to</c><c> tell</c><c> me</c><c> how</c><c> many</c><c> provinces</c><c> are</c>
+[16:09] have to tell me how many provinces are
+[16:09] have to tell me how many provinces are there.<c> Basically,</c><c> if</c><c> you</c><c> find</c><c> clusters</c>
+[16:12] there. Basically, if you find clusters
+[16:12] there. Basically, if you find clusters like<c> these,</c><c> then</c><c> these</c><c> all</c><c> are</c>
+[16:15] like these, then these all are
+[16:15] like these, then these all are provinces.<c> So</c><c> for</c><c> this</c><c> particular</c>
+[16:17] provinces. So for this particular
+[16:17] provinces. So for this particular problem,<c> three</c><c> should</c><c> be</c><c> your</c><c> answer</c>
+[16:19] problem, three should be your answer
+[16:19] problem, three should be your answer because<c> check</c><c> this</c><c> out.</c><c> Nodes</c><c> five</c><c> and</c>
+[16:22] because check this out. Nodes five and
+[16:22] because check this out. Nodes five and eight<c> aren't</c><c> connected</c><c> to</c><c> any</c><c> other</c>
+[16:24] eight aren't connected to any other
+[16:24] eight aren't connected to any other components.<c> All</c><c> of</c><c> these</c><c> nodes</c><c> are</c>
+[16:27] components. All of these nodes are
+[16:27] components. All of these nodes are connected<c> to</c><c> each</c><c> other</c><c> in</c><c> some</c><c> way</c><c> or</c>
+[16:29] connected to each other in some way or
+[16:29] connected to each other in some way or the<c> other.</c><c> So</c><c> how</c><c> do</c><c> you</c><c> apply</c><c> BSS</c><c> over</c>
+[16:32] the other. So how do you apply BSS over
+[16:32] the other. So how do you apply BSS over here?<c> Or</c><c> how</c><c> do</c><c> you</c><c> apply</c><c> the</c><c> Q</c><c> data</c>
+[16:35] here? Or how do you apply the Q data
+[16:35] here? Or how do you apply the Q data structure?<c> What</c><c> ideas</c><c> come</c><c> to</c><c> your</c><c> mind?</c>
+[16:37] structure? What ideas come to your mind?
+[16:37] structure? What ideas come to your mind? For<c> example,</c><c> as</c><c> soon</c><c> as</c><c> you</c><c> see</c><c> a</c><c> graph,</c>
+[16:40] For example, as soon as you see a graph,
+[16:40] For example, as soon as you see a graph, try<c> to</c><c> think</c><c> about</c><c> a</c><c> breadth</c><c> for</c><c> search.</c>
+[16:43] try to think about a breadth for search.
+[16:43] try to think about a breadth for search. What<c> happens</c><c> if</c><c> you</c><c> apply</c><c> the</c><c> breadth</c>
+[16:44] What happens if you apply the breadth
+[16:44] What happens if you apply the breadth for<c> search?</c><c> Let</c><c> us</c><c> say</c><c> I'm</c><c> starting</c><c> off</c>
+[16:46] for search? Let us say I'm starting off
+[16:46] for search? Let us say I'm starting off with<c> any</c><c> node.</c><c> I</c><c> started</c><c> off</c><c> in</c><c> node</c>
+[16:48] with any node. I started off in node
+[16:48] with any node. I started off in node one.<c> And</c><c> if</c><c> I</c><c> try</c><c> to</c><c> apply</c><c> a</c><c> breath</c><c> for</c>
+[16:51] one. And if I try to apply a breath for
+[16:51] one. And if I try to apply a breath for search,<c> what</c><c> will</c><c> happen?</c><c> I</c><c> will</c>
+[16:53] search, what will happen? I will
+[16:53] search, what will happen? I will navigate<c> at</c><c> node</c><c> 9</c><c> and</c><c> I</c><c> will</c><c> navigate</c>
+[16:55] navigate at node 9 and I will navigate
+[16:55] navigate at node 9 and I will navigate at<c> node</c><c> 6.</c><c> Can</c><c> I</c><c> go</c><c> any</c><c> further?</c><c> No.</c><c> And</c>
+[17:00] at node 6. Can I go any further? No. And
+[17:00] at node 6. Can I go any further? No. And what<c> did</c><c> I</c><c> do?</c><c> I</c><c> covered</c><c> all</c><c> of</c><c> the</c>
+[17:03] what did I do? I covered all of the
+[17:03] what did I do? I covered all of the nodes<c> that</c><c> were</c><c> reachable</c><c> from</c><c> node</c><c> one.</c>
+[17:06] nodes that were reachable from node one.
+[17:06] nodes that were reachable from node one. Right?<c> So</c><c> that's</c><c> it.</c><c> I</c><c> can</c><c> stop</c><c> over</c>
+[17:09] Right? So that's it. I can stop over
+[17:09] Right? So that's it. I can stop over here.<c> I</c><c> can</c><c> make</c><c> my</c><c> province</c><c> count</c><c> plus</c>
+[17:12] here. I can make my province count plus
+[17:12] here. I can make my province count plus one.<c> I</c><c> know</c><c> that</c><c> I</c><c> have</c><c> at</c><c> least</c><c> one</c>
+[17:15] one. I know that I have at least one
+[17:15] one. I know that I have at least one province.<c> Correct?</c><c> How</c><c> do</c><c> you</c><c> proceed</c>
+[17:17] province. Correct? How do you proceed
+[17:17] province. Correct? How do you proceed further?<c> What</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c><c> look</c>
+[17:20] further? What you can do is you can look
+[17:20] further? What you can do is you can look for<c> node</c><c> number</c><c> two.</c><c> And</c><c> where</c><c> do</c><c> I</c><c> have</c>
+[17:23] for node number two. And where do I have
+[17:23] for node number two. And where do I have node<c> number</c><c> two?</c><c> I</c><c> have</c><c> it</c><c> over</c><c> here.</c>
+[17:25] node number two? I have it over here.
+[17:25] node number two? I have it over here. Now<c> again</c><c> start</c><c> to</c><c> apply</c><c> the</c><c> bread</c><c> for</c>
+[17:28] Now again start to apply the bread for
+[17:28] Now again start to apply the bread for search.<c> I</c><c> start</c><c> from</c><c> this</c><c> particular</c>
+[17:30] search. I start from this particular
+[17:30] search. I start from this particular node.<c> Now</c><c> look</c><c> at</c><c> all</c><c> of</c><c> the</c><c> connected</c>
+[17:33] node. Now look at all of the connected
+[17:33] node. Now look at all of the connected components.<c> Two</c><c> is</c><c> connected</c><c> to</c><c> node</c><c> 3.</c>
+[17:35] components. Two is connected to node 3.
+[17:36] components. Two is connected to node 3. Two<c> is</c><c> connected</c><c> to</c><c> node</c><c> 7</c><c> and</c><c> two</c><c> is</c>
+[17:37] Two is connected to node 7 and two is
+[17:37] Two is connected to node 7 and two is connected<c> to</c><c> node</c><c> 4.</c><c> Once</c><c> again</c><c> I</c><c> cannot</c>
+[17:41] connected to node 4. Once again I cannot
+[17:41] connected to node 4. Once again I cannot go<c> any</c><c> further.</c><c> All</c><c> of</c><c> these</c><c> nodes</c><c> are</c>
+[17:43] go any further. All of these nodes are
+[17:43] go any further. All of these nodes are done.<c> So</c><c> my</c><c> breadth</c><c> for</c><c> search</c><c> stopped.</c>
+[17:46] done. So my breadth for search stopped.
+[17:46] done. So my breadth for search stopped. So<c> what</c><c> can</c><c> I</c><c> say?</c><c> I</c><c> may</c><c> have</c><c> discovered</c>
+[17:48] So what can I say? I may have discovered
+[17:48] So what can I say? I may have discovered one<c> more</c><c> province.</c><c> So</c><c> I</c><c> can</c><c> say</c><c> that</c>
+[17:51] one more province. So I can say that
+[17:51] one more province. So I can say that okay<c> I</c><c> am</c><c> going</c><c> to</c><c> set</c><c> the</c><c> number</c><c> of</c>
+[17:53] okay I am going to set the number of
+[17:53] okay I am going to set the number of provinces<c> to</c><c> two.</c><c> What</c><c> next?</c><c> How</c><c> do</c><c> you</c>
+[17:56] provinces to two. What next? How do you
+[17:56] provinces to two. What next? How do you proceed?<c> Look</c><c> at</c><c> node</c><c> three.</c><c> Do</c><c> you</c><c> want</c>
+[18:00] proceed? Look at node three. Do you want
+[18:00] proceed? Look at node three. Do you want to<c> apply</c><c> bread</c><c> for</c><c> search</c><c> on</c><c> this?</c><c> No.</c>
+[18:03] to apply bread for search on this? No.
+[18:03] to apply bread for search on this? No. Why?<c> Because</c><c> you</c><c> have</c><c> already</c><c> visited</c>
+[18:05] Why? Because you have already visited
+[18:05] Why? Because you have already visited it.<c> So</c><c> what</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c><c> also</c>
+[18:07] it. So what you can do is you can also
+[18:07] it. So what you can do is you can also maintain<c> another</c><c> array</c><c> that</c><c> is</c><c> storing</c>
+[18:09] maintain another array that is storing
+[18:10] maintain another array that is storing each<c> of</c><c> the</c><c> nodes</c><c> that</c><c> you</c><c> have</c><c> visited.</c>
+[18:12] each of the nodes that you have visited.
+[18:12] each of the nodes that you have visited. So<c> what</c><c> were</c><c> you</c><c> doing</c><c> while</c><c> applying</c>
+[18:14] So what were you doing while applying
+[18:14] So what were you doing while applying the<c> bread</c><c> for</c><c> search?</c><c> You</c><c> started</c><c> from</c>
+[18:16] the bread for search? You started from
+[18:16] the bread for search? You started from node<c> one.</c><c> Mark</c><c> this</c><c> as</c><c> visited.</c><c> You</c>
+[18:18] node one. Mark this as visited. You
+[18:18] node one. Mark this as visited. You reach<c> node</c><c> 9</c><c> and</c><c> six.</c><c> Mark</c><c> these</c><c> as</c>
+[18:20] reach node 9 and six. Mark these as
+[18:20] reach node 9 and six. Mark these as visited<c> too.</c><c> This</c><c> is</c><c> because</c><c> when</c><c> you</c>
+[18:23] visited too. This is because when you
+[18:23] visited too. This is because when you will<c> encounter</c><c> them</c><c> later,</c><c> you</c><c> know</c><c> that</c>
+[18:25] will encounter them later, you know that
+[18:25] will encounter them later, you know that you<c> don't</c><c> have</c><c> to</c><c> solve</c><c> for</c><c> them.</c><c> When</c>
+[18:27] you don't have to solve for them. When
+[18:27] you don't have to solve for them. When you<c> started</c><c> off</c><c> in</c><c> node</c><c> two,</c><c> you</c><c> marked</c>
+[18:29] you started off in node two, you marked
+[18:29] you started off in node two, you marked this<c> as</c><c> visited,</c><c> then</c><c> three</c><c> as</c><c> visited,</c>
+[18:30] this as visited, then three as visited,
+[18:30] this as visited, then three as visited, seven<c> as</c><c> visited,</c><c> and</c><c> four</c><c> as</c><c> visited.</c>
+[18:33] seven as visited, and four as visited.
+[18:33] seven as visited, and four as visited. All<c> of</c><c> these</c><c> nodes</c><c> are</c><c> marked</c><c> visited.</c>
+[18:35] All of these nodes are marked visited.
+[18:35] All of these nodes are marked visited. That<c> is</c><c> why</c><c> when</c><c> you</c><c> started</c><c> off</c><c> with</c>
+[18:37] That is why when you started off with
+[18:37] That is why when you started off with three,<c> you</c><c> know</c><c> that</c><c> you</c><c> don't</c><c> have</c><c> to</c>
+[18:38] three, you know that you don't have to
+[18:38] three, you know that you don't have to solve<c> for</c><c> it.</c><c> Do</c><c> you</c><c> have</c><c> to</c><c> solve</c><c> for</c>
+[18:40] solve for it. Do you have to solve for
+[18:40] solve for it. Do you have to solve for four?<c> No.</c><c> Because</c><c> you</c><c> have</c><c> visited</c><c> it.</c>
+[18:43] four? No. Because you have visited it.
+[18:43] four? No. Because you have visited it. Do<c> you</c><c> have</c><c> to</c><c> solve</c><c> for</c><c> five?</c><c> Yes,</c>
+[18:45] Do you have to solve for five? Yes,
+[18:45] Do you have to solve for five? Yes, because<c> this</c><c> node</c><c> is</c><c> still</c><c> not</c><c> visited.</c>
+[18:47] because this node is still not visited.
+[18:47] because this node is still not visited. So<c> apply</c><c> the</c><c> breakfast</c><c> for</c><c> search.</c><c> You</c>
+[18:49] So apply the breakfast for search. You
+[18:49] So apply the breakfast for search. You start<c> off</c><c> with</c><c> this</c><c> and</c><c> then</c><c> you</c><c> find</c>
+[18:51] start off with this and then you find
+[18:51] start off with this and then you find one<c> connected</c><c> component.</c><c> You</c><c> mark</c><c> both</c>
+[18:53] one connected component. You mark both
+[18:53] one connected component. You mark both of<c> these</c><c> nodes</c><c> as</c><c> visited</c><c> and</c><c> you</c><c> cannot</c>
+[18:56] of these nodes as visited and you cannot
+[18:56] of these nodes as visited and you cannot perform<c> BFS</c><c> further.</c><c> Maybe</c><c> you</c><c> found</c>
+[18:58] perform BFS further. Maybe you found
+[18:58] perform BFS further. Maybe you found another<c> province.</c><c> So</c><c> what</c><c> you</c><c> will</c><c> do?</c>
+[19:00] another province. So what you will do?
+[19:00] another province. So what you will do? You<c> will</c><c> set</c><c> your</c><c> number</c><c> of</c><c> provinces</c><c> to</c>
+[19:03] You will set your number of provinces to
+[19:03] You will set your number of provinces to three.<c> Now</c><c> keep</c><c> going</c><c> ahead.</c><c> Check</c><c> out</c>
+[19:05] three. Now keep going ahead. Check out
+[19:05] three. Now keep going ahead. Check out node<c> six.</c><c> This</c><c> is</c><c> already</c><c> visited.</c><c> Check</c>
+[19:07] node six. This is already visited. Check
+[19:07] node six. This is already visited. Check out<c> node</c><c> 7</c><c> already</c><c> visited.</c><c> Node</c><c> 8</c>
+[19:10] out node 7 already visited. Node 8
+[19:10] out node 7 already visited. Node 8 already<c> visited.</c><c> Node</c><c> 9</c><c> already</c><c> visited.</c>
+[19:13] already visited. Node 9 already visited.
+[19:13] already visited. Node 9 already visited. Now<c> you</c><c> have</c><c> covered</c><c> all</c><c> of</c><c> your</c><c> cities.</c>
+[19:16] Now you have covered all of your cities.
+[19:16] Now you have covered all of your cities. You<c> have</c><c> exhausted</c><c> your</c><c> entire</c><c> list</c><c> and</c>
+[19:18] You have exhausted your entire list and
+[19:18] You have exhausted your entire list and what<c> do</c><c> you</c><c> have?</c><c> You</c><c> have</c><c> determined</c>
+[19:20] what do you have? You have determined
+[19:20] what do you have? You have determined the<c> total</c><c> number</c><c> of</c><c> provinces</c><c> that</c><c> you</c>
+[19:22] the total number of provinces that you
+[19:22] the total number of provinces that you had.<c> So</c><c> a</c><c> BFS</c><c> is</c><c> actually</c><c> helping</c><c> you.</c>
+[19:26] had. So a BFS is actually helping you.
+[19:26] had. So a BFS is actually helping you. You<c> were</c><c> just</c><c> using</c><c> the</c><c> Q</c><c> data</c>
+[19:27] You were just using the Q data
+[19:27] You were just using the Q data structure.<c> You</c><c> applied</c><c> a</c><c> certain</c><c> logic</c>
+[19:30] structure. You applied a certain logic
+[19:30] structure. You applied a certain logic to<c> solve</c><c> this</c><c> entire</c><c> problem.</c><c> And</c><c> this</c>
+[19:33] to solve this entire problem. And this
+[19:33] to solve this entire problem. And this is<c> the</c><c> coding</c><c> pattern</c><c> that</c><c> I'm</c><c> talking</c>
+[19:35] is the coding pattern that I'm talking
+[19:35] is the coding pattern that I'm talking about.<c> This</c><c> was</c><c> however</c><c> one</c><c> of</c><c> the</c>
+[19:37] about. This was however one of the
+[19:37] about. This was however one of the problems<c> where</c><c> you</c><c> could</c><c> immediately</c>
+[19:39] problems where you could immediately
+[19:39] problems where you could immediately construct<c> the</c><c> graph</c><c> and</c><c> you</c><c> could</c><c> also</c>
+[19:41] construct the graph and you could also
+[19:41] construct the graph and you could also immediately<c> apply</c><c> the</c><c> BFS</c><c> algorithm.</c>
+[19:44] immediately apply the BFS algorithm.
+[19:44] immediately apply the BFS algorithm. Sometimes<c> it</c><c> may</c><c> not</c><c> be</c><c> evident.</c><c> For</c>
+[19:46] Sometimes it may not be evident. For
+[19:46] Sometimes it may not be evident. For example,<c> there</c><c> is</c><c> a</c><c> problem</c><c> available</c>
+[19:48] example, there is a problem available
+[19:48] example, there is a problem available called<c> course</c><c> schedule.</c><c> In</c><c> this</c><c> problem,</c>
+[19:51] called course schedule. In this problem,
+[19:51] called course schedule. In this problem, you<c> are</c><c> given</c><c> a</c><c> list</c><c> of</c><c> all</c><c> of</c><c> the</c>
+[19:53] you are given a list of all of the
+[19:53] you are given a list of all of the courses<c> and</c><c> courses</c><c> have</c><c> prerequisites.</c>
+[19:57] courses and courses have prerequisites.
+[19:57] courses and courses have prerequisites. For<c> example,</c><c> take</c><c> a</c><c> look</c><c> at</c><c> this</c>
+[19:59] For example, take a look at this
+[19:59] For example, take a look at this particular<c> schedule.</c><c> What</c><c> you</c><c> are</c>
+[20:01] particular schedule. What you are
+[20:01] particular schedule. What you are basically<c> given</c><c> is</c><c> you</c><c> are</c><c> given</c><c> arrays</c>
+[20:03] basically given is you are given arrays
+[20:03] basically given is you are given arrays like<c> this</c><c> 1,</c><c> 4.</c><c> So</c><c> 1A</c><c> 4</c><c> is</c><c> telling</c><c> me</c>
+[20:06] like this 1, 4. So 1A 4 is telling me
+[20:06] like this 1, 4. So 1A 4 is telling me that<c> you</c><c> need</c><c> to</c><c> take</c><c> course</c><c> 1</c><c> before</c>
+[20:08] that you need to take course 1 before
+[20:08] that you need to take course 1 before taking<c> course</c><c> 4.</c><c> Then</c><c> you</c><c> are</c><c> also</c><c> given</c>
+[20:10] taking course 4. Then you are also given
+[20:10] taking course 4. Then you are also given 9A<c> 4.</c><c> That</c><c> means</c><c> you</c><c> also</c><c> need</c><c> to</c><c> take</c>
+[20:13] 9A 4. That means you also need to take
+[20:14] 9A 4. That means you also need to take course<c> 9</c><c> before</c><c> taking</c><c> course</c><c> 4.</c><c> This</c><c> is</c>
+[20:16] course 9 before taking course 4. This is
+[20:16] course 9 before taking course 4. This is how<c> all</c><c> these</c><c> different</c><c> arrays</c><c> are</c>
+[20:19] how all these different arrays are
+[20:19] how all these different arrays are given.<c> This</c><c> particular</c><c> test</c><c> case</c><c> is</c>
+[20:21] given. This particular test case is
+[20:21] given. This particular test case is viable<c> because</c><c> you</c><c> can</c><c> see</c><c> that</c><c> you</c><c> will</c>
+[20:24] viable because you can see that you will
+[20:24] viable because you can see that you will be<c> able</c><c> to</c><c> ultimately</c><c> take</c><c> all</c><c> of</c><c> the</c>
+[20:26] be able to ultimately take all of the
+[20:26] be able to ultimately take all of the courses.<c> There</c><c> is</c><c> no</c><c> cyclic</c><c> dependency.</c>
+[20:30] courses. There is no cyclic dependency.
+[20:30] courses. There is no cyclic dependency. A<c> invalid</c><c> test</c><c> case</c><c> will</c><c> look</c><c> something</c>
+[20:32] A invalid test case will look something
+[20:32] A invalid test case will look something like<c> this.</c><c> For</c><c> example,</c><c> it</c><c> is</c><c> saying</c><c> to</c>
+[20:35] like this. For example, it is saying to
+[20:35] like this. For example, it is saying to take<c> course</c><c> one,</c><c> I</c><c> have</c><c> a</c><c> prerequisite</c>
+[20:37] take course one, I have a prerequisite
+[20:37] take course one, I have a prerequisite of<c> course</c><c> 4.</c><c> To</c><c> do</c><c> course</c><c> 4,</c><c> I</c><c> need</c><c> to</c>
+[20:40] of course 4. To do course 4, I need to
+[20:40] of course 4. To do course 4, I need to do<c> course</c><c> two.</c><c> Up</c><c> till</c><c> here,</c><c> everything</c>
+[20:42] do course two. Up till here, everything
+[20:42] do course two. Up till here, everything is<c> fine.</c><c> But</c><c> check</c><c> out</c><c> this</c><c> dependency</c>
+[20:45] is fine. But check out this dependency
+[20:45] is fine. But check out this dependency also.<c> To</c><c> do</c><c> course</c><c> two,</c><c> I</c><c> need</c><c> to</c><c> do</c>
+[20:47] also. To do course two, I need to do
+[20:47] also. To do course two, I need to do course<c> one.</c><c> So</c><c> this</c><c> is</c><c> kind</c><c> of</c><c> a</c>
+[20:50] course one. So this is kind of a
+[20:50] course one. So this is kind of a deadlock.<c> It</c><c> can</c><c> never</c><c> happen.</c><c> Right?</c><c> So</c>
+[20:53] deadlock. It can never happen. Right? So
+[20:53] deadlock. It can never happen. Right? So this<c> particular</c><c> test</c><c> case</c><c> is</c><c> not</c><c> valid.</c>
+[20:56] this particular test case is not valid.
+[20:56] this particular test case is not valid. So<c> given</c><c> these</c><c> two</c><c> test</c><c> cases</c><c> in</c><c> this</c>
+[20:59] So given these two test cases in this
+[20:59] So given these two test cases in this problem<c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> whether</c><c> a</c>
+[21:01] problem you have to tell me whether a
+[21:01] problem you have to tell me whether a course<c> schedule</c><c> is</c><c> even</c><c> possible</c><c> or</c><c> not.</c>
+[21:04] course schedule is even possible or not.
+[21:04] course schedule is even possible or not. For<c> this</c><c> you</c><c> will</c><c> return</c><c> true</c><c> as</c><c> your</c>
+[21:06] For this you will return true as your
+[21:06] For this you will return true as your answer<c> and</c><c> for</c><c> this</c><c> you</c><c> will</c><c> return</c>
+[21:07] answer and for this you will return
+[21:07] answer and for this you will return false<c> as</c><c> your</c><c> answer.</c>
+[21:10] false as your answer.
+[21:10] false as your answer. How<c> do</c><c> you</c><c> solve</c><c> this</c><c> problem</c><c> or</c><c> rather</c>
+[21:12] How do you solve this problem or rather
+[21:12] How do you solve this problem or rather how<c> do</c><c> you</c><c> apply</c><c> the</c><c> breadth</c><c> for</c><c> search</c>
+[21:14] how do you apply the breadth for search
+[21:14] how do you apply the breadth for search in<c> this</c><c> particular</c><c> problem?</c><c> Let</c><c> us</c><c> take</c>
+[21:17] in this particular problem? Let us take
+[21:17] in this particular problem? Let us take up<c> a</c><c> valid</c><c> scenario</c><c> and</c><c> one</c><c> thought</c>
+[21:19] up a valid scenario and one thought
+[21:19] up a valid scenario and one thought might<c> be</c><c> immediately</c><c> clear</c><c> in</c><c> your</c><c> mind.</c>
+[21:22] might be immediately clear in your mind.
+[21:22] might be immediately clear in your mind. I<c> have</c><c> to</c><c> use</c><c> the</c><c> Q</c><c> data</c><c> structure</c><c> and</c><c> I</c>
+[21:25] I have to use the Q data structure and I
+[21:25] I have to use the Q data structure and I have<c> to</c><c> start</c><c> somewhere.</c><c> What</c><c> can</c><c> be</c><c> a</c>
+[21:27] have to start somewhere. What can be a
+[21:27] have to start somewhere. What can be a good<c> starting</c><c> point?</c><c> Check</c><c> out</c><c> all</c><c> of</c>
+[21:29] good starting point? Check out all of
+[21:29] good starting point? Check out all of these<c> courses.</c><c> What</c><c> is</c><c> special</c><c> about</c>
+[21:32] these courses. What is special about
+[21:32] these courses. What is special about them?<c> These</c><c> courses</c><c> do</c><c> not</c><c> have</c><c> any</c>
+[21:35] them? These courses do not have any
+[21:35] them? These courses do not have any prerequisites.<c> You</c><c> can</c><c> start</c><c> all</c><c> of</c>
+[21:37] prerequisites. You can start all of
+[21:38] prerequisites. You can start all of these<c> courses</c><c> immediately</c><c> or</c><c> you</c><c> don't</c>
+[21:40] these courses immediately or you don't
+[21:40] these courses immediately or you don't have<c> to</c><c> wait</c><c> for</c><c> anyone.</c><c> So</c><c> what</c><c> are</c>
+[21:43] have to wait for anyone. So what are
+[21:43] have to wait for anyone. So what are they?<c> These</c><c> are</c><c> good</c><c> candidates</c><c> to</c><c> be</c>
+[21:46] they? These are good candidates to be
+[21:46] they? These are good candidates to be your<c> starting</c><c> points</c><c> in</c><c> a</c><c> breast</c><c> search.</c>
+[21:49] your starting points in a breast search.
+[21:49] your starting points in a breast search. So<c> what</c><c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I'm</c><c> going</c><c> to</c>
+[21:51] So what I'm going to do is I'm going to
+[21:51] So what I'm going to do is I'm going to mark<c> all</c><c> of</c><c> these</c><c> courses</c><c> as</c><c> my</c><c> starting</c>
+[21:54] mark all of these courses as my starting
+[21:54] mark all of these courses as my starting positions.<c> And</c><c> what</c><c> do</c><c> I</c><c> do?</c><c> I</c><c> mark</c><c> all</c>
+[21:57] positions. And what do I do? I mark all
+[21:57] positions. And what do I do? I mark all of<c> these</c><c> courses</c><c> in</c><c> my</c><c> queue</c><c> as</c><c> well.</c>
+[22:00] of these courses in my queue as well.
+[22:00] of these courses in my queue as well. What<c> did</c><c> you</c><c> just</c><c> get?</c><c> You</c><c> now</c><c> have</c><c> a</c>
+[22:02] What did you just get? You now have a
+[22:02] What did you just get? You now have a starting<c> point.</c><c> And</c><c> how</c><c> can</c><c> you</c><c> proceed?</c>
+[22:04] starting point. And how can you proceed?
+[22:04] starting point. And how can you proceed? You<c> need</c><c> to</c><c> run</c><c> a</c><c> while</c><c> loop</c><c> until</c><c> this</c>
+[22:06] You need to run a while loop until this
+[22:06] You need to run a while loop until this que<c> is</c><c> completely</c><c> empty.</c><c> And</c><c> how</c><c> do</c><c> you</c>
+[22:09] que is completely empty. And how do you
+[22:09] que is completely empty. And how do you proceed?<c> You</c><c> take</c><c> out</c><c> the</c><c> first</c><c> course.</c>
+[22:12] proceed? You take out the first course.
+[22:12] proceed? You take out the first course. What<c> can</c><c> you</c><c> do</c><c> after</c><c> completing</c><c> this</c>
+[22:14] What can you do after completing this
+[22:14] What can you do after completing this course?<c> After</c><c> completing</c><c> this</c><c> course,</c>
+[22:16] course? After completing this course,
+[22:16] course? After completing this course, you<c> can</c><c> do</c><c> course</c><c> number</c><c> four,</c><c> right?</c>
+[22:19] you can do course number four, right?
+[22:20] you can do course number four, right? But<c> do</c><c> you</c><c> want</c><c> to</c><c> put</c><c> this</c><c> course</c><c> in</c>
+[22:22] But do you want to put this course in
+[22:22] But do you want to put this course in your<c> queue</c><c> yet?</c><c> No.</c><c> Because</c><c> you</c><c> have</c><c> one</c>
+[22:26] your queue yet? No. Because you have one
+[22:26] your queue yet? No. Because you have one more<c> dependency</c><c> on</c><c> your</c><c> course.</c><c> So</c><c> what</c>
+[22:29] more dependency on your course. So what
+[22:29] more dependency on your course. So what we're<c> going</c><c> to</c><c> do</c><c> over</c><c> here</c><c> is</c><c> for</c><c> each</c>
+[22:31] we're going to do over here is for each
+[22:31] we're going to do over here is for each of<c> the</c><c> courses</c><c> you</c><c> are</c><c> going</c><c> to</c><c> maintain</c>
+[22:34] of the courses you are going to maintain
+[22:34] of the courses you are going to maintain a<c> map</c><c> that</c><c> is</c><c> telling</c><c> you</c><c> that</c><c> what</c><c> is</c>
+[22:38] a map that is telling you that what is
+[22:38] a map that is telling you that what is the<c> end</c><c> degree</c><c> of</c><c> a</c><c> particular</c><c> course.</c>
+[22:40] the end degree of a particular course.
+[22:40] the end degree of a particular course. So<c> what</c><c> I</c><c> will</c><c> have</c><c> over</c><c> here</c><c> is</c><c> some</c>
+[22:43] So what I will have over here is some
+[22:43] So what I will have over here is some kind<c> of</c><c> a</c><c> table</c><c> that</c><c> is</c><c> storing</c><c> the</c><c> in</c>
+[22:46] kind of a table that is storing the in
+[22:46] kind of a table that is storing the in degree<c> of</c><c> each</c><c> of</c><c> these</c><c> nodes.</c><c> The</c><c> in</c>
+[22:49] degree of each of these nodes. The in
+[22:49] degree of each of these nodes. The in degree<c> means</c><c> how</c><c> many</c><c> dependent</c><c> courses</c>
+[22:51] degree means how many dependent courses
+[22:51] degree means how many dependent courses do<c> I</c><c> have.</c><c> And</c><c> you</c><c> can</c><c> easily</c><c> construct</c>
+[22:53] do I have. And you can easily construct
+[22:53] do I have. And you can easily construct this<c> from</c><c> your</c><c> input</c><c> array.</c><c> So</c><c> course</c><c> 4</c>
+[22:56] this from your input array. So course 4
+[22:56] this from your input array. So course 4 has<c> two</c><c> in</c><c> degree,</c><c> course</c><c> 3</c><c> has</c><c> two,</c>
+[22:58] has two in degree, course 3 has two,
+[22:58] has two in degree, course 3 has two, course<c> 5</c><c> has</c><c> one,</c><c> and</c><c> course</c><c> 8</c><c> has</c><c> two.</c>
+[23:01] course 5 has one, and course 8 has two.
+[23:01] course 5 has one, and course 8 has two. So<c> I'm</c><c> going</c><c> to</c><c> write</c><c> down</c><c> all</c><c> of</c><c> this</c>
+[23:03] So I'm going to write down all of this
+[23:03] So I'm going to write down all of this in<c> my</c><c> map.</c><c> And</c><c> when</c><c> you're</c><c> popping</c>
+[23:06] in my map. And when you're popping
+[23:06] in my map. And when you're popping elements,<c> you</c><c> popped</c><c> out</c><c> one.</c><c> So</c><c> check</c>
+[23:08] elements, you popped out one. So check
+[23:08] elements, you popped out one. So check out<c> its</c><c> neighbors.</c><c> its</c><c> neighbor</c><c> is</c><c> four.</c>
+[23:11] out its neighbors. its neighbor is four.
+[23:11] out its neighbors. its neighbor is four. What<c> does</c><c> it</c><c> mean?</c><c> It</c><c> means</c><c> you</c><c> can</c>
+[23:13] What does it mean? It means you can
+[23:13] What does it mean? It means you can reduce<c> the</c><c> end</c><c> degree</c><c> of</c><c> this</c><c> particular</c>
+[23:15] reduce the end degree of this particular
+[23:15] reduce the end degree of this particular node<c> by</c><c> one.</c><c> So</c><c> what</c><c> will</c><c> happen?</c><c> This</c>
+[23:17] node by one. So what will happen? This
+[23:17] node by one. So what will happen? This two<c> gets</c><c> reduced</c><c> to</c><c> one</c><c> because</c><c> you</c><c> have</c>
+[23:20] two gets reduced to one because you have
+[23:20] two gets reduced to one because you have completed<c> this</c><c> course</c><c> and</c><c> one</c><c> doesn't</c>
+[23:23] completed this course and one doesn't
+[23:23] completed this course and one doesn't have<c> any</c><c> other</c><c> neighbors.</c><c> So</c><c> I'm</c><c> done</c>
+[23:25] have any other neighbors. So I'm done
+[23:25] have any other neighbors. So I'm done with<c> it.</c><c> What</c><c> do</c><c> you</c><c> do</c><c> now?</c><c> You</c><c> pop</c><c> out</c>
+[23:27] with it. What do you do now? You pop out
+[23:27] with it. What do you do now? You pop out the<c> next</c><c> element.</c><c> The</c><c> next</c><c> element</c><c> is</c>
+[23:29] the next element. The next element is
+[23:29] the next element. The next element is nine.<c> What</c><c> courses</c><c> can</c><c> you</c><c> complete</c><c> with</c>
+[23:31] nine. What courses can you complete with
+[23:31] nine. What courses can you complete with it?<c> Check</c><c> its</c><c> neighbors.</c><c> You</c><c> see</c><c> course</c>
+[23:34] it? Check its neighbors. You see course
+[23:34] it? Check its neighbors. You see course four<c> again.</c><c> So</c><c> what</c><c> will</c><c> you</c><c> do?</c><c> try</c><c> to</c>
+[23:36] four again. So what will you do? try to
+[23:36] four again. So what will you do? try to reduce<c> its</c><c> end</c><c> in</c><c> degree</c><c> because</c><c> you</c>
+[23:38] reduce its end in degree because you
+[23:38] reduce its end in degree because you have<c> completed</c><c> it.</c><c> So</c><c> this</c><c> gets</c><c> reduced</c>
+[23:41] have completed it. So this gets reduced
+[23:41] have completed it. So this gets reduced and<c> this</c><c> now</c><c> changes</c><c> to</c><c> zero.</c><c> As</c><c> soon</c><c> as</c>
+[23:44] and this now changes to zero. As soon as
+[23:44] and this now changes to zero. As soon as the<c> end</c><c> degree</c><c> changes</c><c> to</c><c> zero,</c><c> it</c><c> means</c>
+[23:47] the end degree changes to zero, it means
+[23:47] the end degree changes to zero, it means you<c> have</c><c> completed</c><c> all</c><c> of</c><c> its</c>
+[23:48] you have completed all of its
+[23:48] you have completed all of its prerequisites.<c> So</c><c> what</c><c> can</c><c> you</c><c> do?</c><c> You</c>
+[23:51] prerequisites. So what can you do? You
+[23:51] prerequisites. So what can you do? You can<c> basically</c><c> take</c><c> up</c><c> this</c><c> node</c><c> and</c><c> add</c>
+[23:54] can basically take up this node and add
+[23:54] can basically take up this node and add it<c> in</c><c> your</c><c> queue</c><c> over</c><c> here.</c><c> It</c><c> means</c>
+[23:56] it in your queue over here. It means
+[23:56] it in your queue over here. It means that<c> I</c><c> have</c><c> completed</c><c> this</c><c> course</c><c> and</c><c> I</c>
+[23:58] that I have completed this course and I
+[23:58] that I have completed this course and I am<c> ready</c><c> to</c><c> process</c><c> it</c><c> in</c><c> my</c><c> queue.</c><c> I</c>
+[24:01] am ready to process it in my queue. I
+[24:01] am ready to process it in my queue. I may<c> need</c><c> it</c><c> later</c><c> to</c><c> determine</c><c> if</c><c> I</c><c> have</c>
+[24:04] may need it later to determine if I have
+[24:04] may need it later to determine if I have completed<c> all</c><c> of</c><c> my</c><c> courses</c><c> or</c><c> not.</c><c> So</c>
+[24:07] completed all of my courses or not. So
+[24:07] completed all of my courses or not. So what<c> will</c><c> happen</c><c> next?</c><c> You</c><c> will</c>
+[24:08] what will happen next? You will
+[24:08] what will happen next? You will encounter<c> two.</c><c> Then</c><c> you</c><c> will</c><c> encounter</c>
+[24:10] encounter two. Then you will encounter
+[24:10] encounter two. Then you will encounter seven.<c> Both</c><c> these</c><c> courses</c><c> will</c><c> get</c>
+[24:12] seven. Both these courses will get
+[24:12] seven. Both these courses will get completed<c> and</c><c> they</c><c> will</c><c> reduce</c><c> the</c>
+[24:14] completed and they will reduce the
+[24:14] completed and they will reduce the degree<c> of</c><c> three</c><c> to</c><c> zero.</c><c> So</c><c> three</c><c> will</c>
+[24:17] degree of three to zero. So three will
+[24:17] degree of three to zero. So three will also<c> get</c><c> added</c><c> to</c><c> your</c><c> queue.</c><c> Over</c><c> here</c>
+[24:19] also get added to your queue. Over here
+[24:19] also get added to your queue. Over here you<c> know</c><c> what</c><c> is</c><c> going</c><c> to</c><c> happen</c><c> next.</c>
+[24:21] you know what is going to happen next.
+[24:21] you know what is going to happen next. You<c> are</c><c> going</c><c> to</c><c> pop</c><c> out</c><c> four</c><c> and</c><c> then</c>
+[24:22] You are going to pop out four and then
+[24:22] You are going to pop out four and then you<c> will</c><c> look</c><c> at</c><c> its</c><c> neighbors.</c><c> You</c><c> will</c>
+[24:25] you will look at its neighbors. You will
+[24:25] you will look at its neighbors. You will see<c> five.</c><c> Five</c><c> has</c><c> it</c><c> in</c><c> degree</c><c> of</c><c> one.</c>
+[24:27] see five. Five has it in degree of one.
+[24:27] see five. Five has it in degree of one. This<c> gets</c><c> reduced</c><c> to</c><c> zero</c><c> and</c><c> then</c><c> node</c>
+[24:29] This gets reduced to zero and then node
+[24:29] This gets reduced to zero and then node five<c> will</c><c> go</c><c> in</c><c> your</c><c> queue</c><c> for</c>
+[24:30] five will go in your queue for
+[24:30] five will go in your queue for processing.<c> This</c><c> way</c><c> you</c><c> keep</c><c> on</c>
+[24:33] processing. This way you keep on
+[24:33] processing. This way you keep on proceeding<c> until</c><c> your</c><c> Q</c><c> is</c><c> completely</c>
+[24:35] proceeding until your Q is completely
+[24:35] proceeding until your Q is completely empty.<c> If</c><c> your</c><c> Q</c><c> becomes</c><c> empty</c><c> at</c>
+[24:38] empty. If your Q becomes empty at
+[24:38] empty. If your Q becomes empty at certain<c> point,</c><c> it</c><c> means</c><c> that</c><c> you</c><c> will</c><c> be</c>
+[24:40] certain point, it means that you will be
+[24:40] certain point, it means that you will be able<c> to</c><c> complete</c><c> this</c><c> course</c><c> schedule</c>
+[24:42] able to complete this course schedule
+[24:42] able to complete this course schedule and<c> you</c><c> can</c><c> return</c><c> a</c><c> true</c><c> as</c><c> your</c>
+[24:44] and you can return a true as your
+[24:44] and you can return a true as your answer.<c> Try</c><c> to</c><c> think</c><c> what</c><c> will</c><c> happen</c><c> in</c>
+[24:47] answer. Try to think what will happen in
+[24:47] answer. Try to think what will happen in a<c> case</c><c> when</c><c> this</c><c> scenario</c><c> is</c><c> not</c><c> even</c>
+[24:49] a case when this scenario is not even
+[24:49] a case when this scenario is not even possible.<c> For</c><c> this</c><c> particular</c><c> test</c><c> case,</c>
+[24:52] possible. For this particular test case,
+[24:52] possible. For this particular test case, where<c> can</c><c> you</c><c> start?</c><c> Okay,</c><c> you</c><c> will</c>
+[24:54] where can you start? Okay, you will
+[24:54] where can you start? Okay, you will start<c> off</c><c> from</c><c> a</c><c> node</c><c> which</c><c> has</c><c> a</c><c> end</c>
+[24:55] start off from a node which has a end
+[24:56] start off from a node which has a end degree<c> of</c><c> zero</c><c> which</c><c> doesn't</c><c> have</c><c> any</c>
+[24:58] degree of zero which doesn't have any
+[24:58] degree of zero which doesn't have any dependencies.<c> You</c><c> add</c><c> this</c><c> to</c><c> your</c><c> que</c>
+[25:00] dependencies. You add this to your que
+[25:00] dependencies. You add this to your que and<c> now</c><c> what</c><c> happens?</c><c> Five</c><c> has</c><c> a</c><c> end</c>
+[25:03] and now what happens? Five has a end
+[25:03] and now what happens? Five has a end degree<c> of</c><c> two.</c><c> So</c><c> this</c><c> gets</c><c> reduced</c><c> to</c>
+[25:05] degree of two. So this gets reduced to
+[25:05] degree of two. So this gets reduced to one.<c> Correct.</c><c> But</c><c> do</c><c> you</c><c> have</c><c> any</c><c> other</c>
+[25:09] one. Correct. But do you have any other
+[25:09] one. Correct. But do you have any other node<c> to</c><c> work</c><c> with?</c><c> No.</c><c> Because</c><c> no</c><c> other</c>
+[25:12] node to work with? No. Because no other
+[25:12] node to work with? No. Because no other node<c> has</c><c> a</c><c> end</c><c> degree</c><c> of</c><c> zero.</c><c> So</c><c> what</c>
+[25:15] node has a end degree of zero. So what
+[25:15] node has a end degree of zero. So what happens<c> in</c><c> my</c><c> map?</c><c> I</c><c> will</c><c> have</c><c> some</c>
+[25:18] happens in my map? I will have some
+[25:18] happens in my map? I will have some elements<c> that</c><c> still</c><c> have</c><c> some</c><c> kind</c><c> of</c><c> an</c>
+[25:20] elements that still have some kind of an
+[25:20] elements that still have some kind of an end<c> degree.</c><c> It</c><c> means</c><c> I</c><c> cannot</c><c> even</c><c> reach</c>
+[25:23] end degree. It means I cannot even reach
+[25:23] end degree. It means I cannot even reach that<c> course.</c><c> I</c><c> am</c><c> unable</c><c> to</c><c> complete</c><c> all</c>
+[25:26] that course. I am unable to complete all
+[25:26] that course. I am unable to complete all of<c> the</c><c> prerequisites.</c><c> In</c><c> that</c><c> case,</c><c> you</c>
+[25:28] of the prerequisites. In that case, you
+[25:28] of the prerequisites. In that case, you return<c> false</c><c> as</c><c> your</c><c> answer.</c><c> This</c>
+[25:30] return false as your answer. This
+[25:30] return false as your answer. This example<c> was</c><c> really</c><c> great</c><c> because</c><c> you</c>
+[25:33] example was really great because you
+[25:33] example was really great because you have<c> to</c><c> try</c><c> and</c><c> figure</c><c> out</c><c> okay</c><c> what</c>
+[25:35] have to try and figure out okay what
+[25:35] have to try and figure out okay what will<c> be</c><c> my</c><c> starting</c><c> point.</c><c> You</c><c> were</c>
+[25:37] will be my starting point. You were
+[25:37] will be my starting point. You were already<c> seeing</c><c> that</c><c> this</c><c> problem</c><c> has</c>
+[25:39] already seeing that this problem has
+[25:39] already seeing that this problem has nodes<c> and</c><c> it</c><c> has</c><c> connected</c><c> components.</c>
+[25:42] nodes and it has connected components.
+[25:42] nodes and it has connected components. But<c> sometimes</c><c> you</c><c> might</c><c> have</c><c> a</c><c> problem</c>
+[25:45] But sometimes you might have a problem
+[25:45] But sometimes you might have a problem where<c> the</c><c> nodes</c><c> are</c><c> also</c><c> not</c><c> even</c>
+[25:47] where the nodes are also not even
+[25:47] where the nodes are also not even visible<c> to</c><c> you.</c><c> For</c><c> example,</c><c> take</c><c> up</c>
+[25:50] visible to you. For example, take up
+[25:50] visible to you. For example, take up this<c> problem,</c><c> minimum</c><c> genetic</c><c> mutation.</c>
+[25:52] this problem, minimum genetic mutation.
+[25:52] this problem, minimum genetic mutation. The<c> idea</c><c> over</c><c> here</c><c> is</c><c> that</c><c> you</c><c> are</c><c> given</c>
+[25:55] The idea over here is that you are given
+[25:55] The idea over here is that you are given a<c> certain</c><c> gene</c><c> structure</c><c> and</c><c> then</c><c> you</c>
+[25:58] a certain gene structure and then you
+[25:58] a certain gene structure and then you have<c> to</c><c> determine</c><c> can</c><c> you</c><c> transform</c><c> it</c>
+[26:01] have to determine can you transform it
+[26:01] have to determine can you transform it to<c> this</c><c> particular</c><c> structure</c><c> and</c><c> the</c>
+[26:03] to this particular structure and the
+[26:04] to this particular structure and the condition<c> is</c><c> that</c><c> all</c><c> of</c><c> these</c><c> values</c>
+[26:06] condition is that all of these values
+[26:06] condition is that all of these values can<c> be</c><c> just</c><c> set</c><c> of</c><c> four</c><c> characters</c>
+[26:08] can be just set of four characters
+[26:08] can be just set of four characters either<c> A,</c><c> C,</c><c> G</c><c> or</c><c> T</c><c> and</c><c> they</c><c> can</c><c> be</c><c> in</c>
+[26:13] either A, C, G or T and they can be in
+[26:13] either A, C, G or T and they can be in any<c> order.</c><c> You</c><c> are</c><c> also</c><c> given</c><c> a</c>
+[26:15] any order. You are also given a
+[26:15] any order. You are also given a condition<c> that</c><c> whenever</c><c> you</c><c> change</c><c> any</c>
+[26:17] condition that whenever you change any
+[26:17] condition that whenever you change any character,<c> let</c><c> us</c><c> say</c><c> I</c><c> change</c><c> this</c>
+[26:20] character, let us say I change this
+[26:20] character, let us say I change this particular<c> character</c><c> to</c><c> G.</c><c> Then</c><c> this</c><c> is</c>
+[26:23] particular character to G. Then this is
+[26:23] particular character to G. Then this is your<c> current</c><c> string.</c><c> You</c><c> are</c><c> given</c><c> a</c>
+[26:25] your current string. You are given a
+[26:25] your current string. You are given a certain<c> dictionary</c><c> if</c><c> this</c><c> is</c><c> even</c><c> valid</c>
+[26:27] certain dictionary if this is even valid
+[26:28] certain dictionary if this is even valid or<c> not.</c><c> You</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> after</c><c> how</c>
+[26:31] or not. You have to tell me after how
+[26:31] or not. You have to tell me after how many<c> mutations</c><c> what</c><c> is</c><c> the</c><c> minimum</c>
+[26:33] many mutations what is the minimum
+[26:34] many mutations what is the minimum number<c> of</c><c> mutations</c><c> required</c><c> so</c><c> you</c><c> can</c>
+[26:36] number of mutations required so you can
+[26:36] number of mutations required so you can reach<c> this</c><c> particular</c><c> mutation.</c><c> This</c>
+[26:39] reach this particular mutation. This
+[26:39] reach this particular mutation. This problem<c> feels</c><c> very</c><c> complex</c><c> when</c><c> you</c>
+[26:41] problem feels very complex when you
+[26:41] problem feels very complex when you think<c> about</c><c> it.</c><c> It</c><c> may</c><c> feel</c><c> that</c><c> oh</c><c> my</c>
+[26:43] think about it. It may feel that oh my
+[26:43] think about it. It may feel that oh my god<c> I</c><c> need</c><c> to</c><c> have</c><c> so</c><c> many</c><c> permutations.</c>
+[26:45] god I need to have so many permutations.
+[26:45] god I need to have so many permutations. How<c> do</c><c> I</c><c> validate</c><c> it?</c><c> How</c><c> do</c><c> I</c><c> check</c><c> it</c>
+[26:47] How do I validate it? How do I check it
+[26:47] How do I validate it? How do I check it in<c> my</c><c> string?</c><c> Where</c><c> do</c><c> I</c><c> go?</c><c> But</c><c> BFS</c><c> is</c>
+[26:50] in my string? Where do I go? But BFS is
+[26:50] in my string? Where do I go? But BFS is your<c> helper</c><c> over</c><c> here.</c><c> How?</c><c> If</c><c> you</c><c> think</c>
+[26:53] your helper over here. How? If you think
+[26:53] your helper over here. How? If you think about<c> it,</c><c> this</c><c> particular</c><c> node,</c><c> this</c>
+[26:57] about it, this particular node, this
+[26:57] about it, this particular node, this itself<c> is</c><c> the</c><c> starting</c><c> node.</c><c> And</c><c> what</c>
+[27:00] itself is the starting node. And what
+[27:00] itself is the starting node. And what about<c> your</c><c> child</c><c> nodes?</c><c> How</c><c> do</c><c> you</c><c> get</c>
+[27:02] about your child nodes? How do you get
+[27:02] about your child nodes? How do you get them?<c> If</c><c> you</c><c> convert</c><c> each</c><c> of</c><c> these</c>
+[27:05] them? If you convert each of these
+[27:05] them? If you convert each of these characters<c> and</c><c> mutate</c><c> it</c><c> into</c><c> a</c>
+[27:07] characters and mutate it into a
+[27:08] characters and mutate it into a different<c> character,</c><c> you</c><c> will</c><c> get</c><c> your</c>
+[27:09] different character, you will get your
+[27:09] different character, you will get your new<c> nodes.</c><c> For</c><c> example,</c><c> if</c><c> I</c><c> change</c><c> this</c>
+[27:11] new nodes. For example, if I change this
+[27:11] new nodes. For example, if I change this A<c> to</c><c> a</c><c> C,</c><c> what</c><c> do</c><c> I</c><c> get?</c><c> I</c><c> get</c><c> this</c>
+[27:14] A to a C, what do I get? I get this
+[27:14] A to a C, what do I get? I get this particular<c> string</c><c> and</c><c> this</c><c> is</c><c> a</c><c> new</c>
+[27:16] particular string and this is a new
+[27:16] particular string and this is a new node.<c> What</c><c> if</c><c> I</c><c> change</c><c> this?</c><c> Then</c><c> I</c><c> get</c>
+[27:19] node. What if I change this? Then I get
+[27:19] node. What if I change this? Then I get this<c> particular</c><c> string.</c><c> This</c><c> is</c><c> my</c><c> new</c>
+[27:21] this particular string. This is my new
+[27:21] this particular string. This is my new node.<c> I</c><c> can</c><c> change</c><c> this</c><c> C</c><c> to</c><c> a</c><c> G</c><c> and</c>
+[27:24] node. I can change this C to a G and
+[27:24] node. I can change this C to a G and then<c> I</c><c> get</c><c> this.</c><c> I</c><c> can</c><c> change</c><c> this</c><c> C</c><c> to</c>
+[27:26] then I get this. I can change this C to
+[27:26] then I get this. I can change this C to a<c> G</c><c> and</c><c> then</c><c> I</c><c> get</c><c> this.</c><c> So</c><c> what</c><c> I'm</c>
+[27:29] a G and then I get this. So what I'm
+[27:29] a G and then I get this. So what I'm getting?<c> I</c><c> got</c><c> an</c><c> initial</c><c> tree</c><c> or</c><c> a</c>
+[27:33] getting? I got an initial tree or a
+[27:33] getting? I got an initial tree or a starting<c> point</c><c> and</c><c> then</c><c> this</c><c> tree</c><c> it</c><c> has</c>
+[27:37] starting point and then this tree it has
+[27:37] starting point and then this tree it has four<c> children.</c><c> What</c><c> is</c><c> happening?</c><c> It</c><c> is</c>
+[27:40] four children. What is happening? It is
+[27:40] four children. What is happening? It is becoming<c> an</c><c> ner</c><c> tree.</c><c> Actually,</c><c> it</c><c> will</c>
+[27:43] becoming an ner tree. Actually, it will
+[27:43] becoming an ner tree. Actually, it will have<c> more</c><c> combinations</c><c> possible</c><c> and</c><c> each</c>
+[27:46] have more combinations possible and each
+[27:46] have more combinations possible and each of<c> these</c><c> nodes</c><c> they</c><c> will</c><c> have</c>
+[27:48] of these nodes they will have
+[27:48] of these nodes they will have permutations<c> of</c><c> its</c><c> own.</c><c> The</c><c> idea</c><c> of</c><c> a</c>
+[27:52] permutations of its own. The idea of a
+[27:52] permutations of its own. The idea of a breakfast<c> search</c><c> will</c><c> still</c><c> remain</c><c> the</c>
+[27:53] breakfast search will still remain the
+[27:53] breakfast search will still remain the same.<c> You</c><c> are</c><c> going</c><c> to</c><c> take</c><c> this</c><c> entire</c>
+[27:55] same. You are going to take this entire
+[27:56] same. You are going to take this entire string<c> and</c><c> pop</c><c> it</c><c> in</c><c> your</c><c> cube.</c><c> Pop</c><c> out</c>
+[27:58] string and pop it in your cube. Pop out
+[27:58] string and pop it in your cube. Pop out a<c> single</c><c> element,</c><c> get</c><c> all</c><c> of</c><c> its</c>
+[28:00] a single element, get all of its
+[28:00] a single element, get all of its different<c> permutations.</c>
+[28:02] different permutations.
+[28:02] different permutations. Then<c> pop</c><c> out</c><c> another</c><c> element</c><c> and</c><c> get</c><c> all</c>
+[28:05] Then pop out another element and get all
+[28:05] Then pop out another element and get all of<c> its</c><c> different</c><c> permutations.</c><c> the</c><c> extra</c>
+[28:07] of its different permutations. the extra
+[28:07] of its different permutations. the extra dictionary<c> that</c><c> you</c><c> have</c><c> to</c><c> determine</c><c> if</c>
+[28:09] dictionary that you have to determine if
+[28:09] dictionary that you have to determine if a<c> mutation</c><c> is</c><c> even</c><c> valid</c><c> or</c><c> not</c><c> that</c>
+[28:12] a mutation is even valid or not that
+[28:12] a mutation is even valid or not that will<c> help</c><c> you</c><c> to</c><c> eliminate</c><c> your</c><c> entire</c>
+[28:15] will help you to eliminate your entire
+[28:15] will help you to eliminate your entire subree.<c> For</c><c> example,</c><c> this</c><c> is</c><c> a</c><c> mutation</c>
+[28:18] subree. For example, this is a mutation
+[28:18] subree. For example, this is a mutation but<c> the</c><c> problem</c><c> may</c><c> say</c><c> that</c><c> this</c><c> is</c><c> not</c>
+[28:20] but the problem may say that this is not
+[28:20] but the problem may say that this is not valid.<c> So</c><c> you</c><c> will</c><c> remove</c><c> this</c><c> entire</c>
+[28:24] valid. So you will remove this entire
+[28:24] valid. So you will remove this entire subree.<c> It</c><c> just</c><c> reduces</c><c> your</c><c> search</c>
+[28:26] subree. It just reduces your search
+[28:26] subree. It just reduces your search space<c> but</c><c> the</c><c> entire</c><c> concept</c><c> will</c><c> still</c>
+[28:29] space but the entire concept will still
+[28:29] space but the entire concept will still remain<c> the</c><c> same.</c><c> I</c><c> particularly</c><c> don't</c>
+[28:32] remain the same. I particularly don't
+[28:32] remain the same. I particularly don't like<c> these</c><c> kind</c><c> of</c><c> problems.</c><c> But</c><c> if</c><c> you</c>
+[28:34] like these kind of problems. But if you
+[28:34] like these kind of problems. But if you ever<c> encounter</c><c> these,</c><c> BFS</c><c> is</c><c> again</c><c> your</c>
+[28:37] ever encounter these, BFS is again your
+[28:37] ever encounter these, BFS is again your friend<c> over</c><c> here.</c><c> I</c><c> really</c><c> think</c><c> now</c>
+[28:39] friend over here. I really think now
+[28:39] friend over here. I really think now you're<c> understanding</c><c> where</c><c> can</c><c> we</c><c> apply</c>
+[28:41] you're understanding where can we apply
+[28:41] you're understanding where can we apply the<c> breadth</c><c> for</c><c> search</c><c> and</c><c> how</c><c> do</c><c> you</c><c> go</c>
+[28:43] the breadth for search and how do you go
+[28:43] the breadth for search and how do you go about<c> it.</c><c> Once</c><c> you</c><c> have</c><c> determined</c><c> the</c>
+[28:45] about it. Once you have determined the
+[28:45] about it. Once you have determined the starting<c> point,</c><c> the</c><c> idea</c><c> becomes</c>
+[28:47] starting point, the idea becomes
+[28:47] starting point, the idea becomes relatively<c> easy.</c><c> So</c><c> there</c><c> are</c><c> certain</c>
+[28:50] relatively easy. So there are certain
+[28:50] relatively easy. So there are certain cues<c> which</c><c> can</c><c> help</c><c> you</c><c> determine</c><c> if</c><c> a</c>
+[28:53] cues which can help you determine if a
+[28:53] cues which can help you determine if a breath<c> for</c><c> search</c><c> can</c><c> be</c><c> actually</c>
+[28:54] breath for search can be actually
+[28:54] breath for search can be actually helpful<c> for</c><c> you.</c><c> For</c><c> example,</c><c> first</c><c> of</c>
+[28:57] helpful for you. For example, first of
+[28:57] helpful for you. For example, first of all,<c> there</c><c> should</c><c> be</c><c> a</c><c> finite</c><c> state</c>
+[28:59] all, there should be a finite state
+[28:59] all, there should be a finite state space.<c> There</c><c> should</c><c> be</c><c> a</c><c> finite</c><c> number</c>
+[29:02] space. There should be a finite number
+[29:02] space. There should be a finite number of<c> elements</c><c> you</c><c> have</c><c> to</c><c> look</c><c> from.</c><c> From</c>
+[29:04] of elements you have to look from. From
+[29:04] of elements you have to look from. From all<c> these</c><c> examples</c><c> that</c><c> we</c><c> saw,</c><c> there</c>
+[29:07] all these examples that we saw, there
+[29:07] all these examples that we saw, there are<c> only</c><c> certain</c><c> possible</c><c> conditions</c><c> and</c>
+[29:09] are only certain possible conditions and
+[29:10] are only certain possible conditions and then<c> you</c><c> are</c><c> searching</c><c> amongst</c><c> them.</c>
+[29:12] then you are searching amongst them.
+[29:12] then you are searching amongst them. Breth<c> for</c><c> search</c><c> is</c><c> just</c><c> a</c><c> technique</c><c> by</c>
+[29:14] Breth for search is just a technique by
+[29:14] Breth for search is just a technique by which<c> you</c><c> iterate</c><c> over</c><c> all</c><c> of</c><c> them</c>
+[29:16] which you iterate over all of them
+[29:16] which you iterate over all of them efficiently.<c> What</c><c> are</c><c> we</c><c> doing?</c><c> We</c><c> are</c>
+[29:18] efficiently. What are we doing? We are
+[29:18] efficiently. What are we doing? We are going<c> level</c><c> by</c><c> level</c><c> to</c><c> cover</c><c> the</c><c> entire</c>
+[29:21] going level by level to cover the entire
+[29:21] going level by level to cover the entire search<c> space.</c><c> And</c><c> when</c><c> you're</c><c> doing</c><c> it,</c>
+[29:23] search space. And when you're doing it,
+[29:23] search space. And when you're doing it, it<c> is</c><c> not</c><c> necessary</c><c> that</c><c> you</c><c> have</c><c> to</c>
+[29:25] it is not necessary that you have to
+[29:25] it is not necessary that you have to start<c> from</c><c> one</c><c> root</c><c> node.</c><c> You</c><c> can</c><c> start</c>
+[29:28] start from one root node. You can start
+[29:28] start from one root node. You can start parallelly<c> also.</c><c> You</c><c> can</c><c> start</c><c> from</c>
+[29:30] parallelly also. You can start from
+[29:30] parallelly also. You can start from nodes<c> that</c><c> are</c><c> independent.</c><c> For</c><c> example,</c>
+[29:33] nodes that are independent. For example,
+[29:33] nodes that are independent. For example, look<c> at</c><c> the</c><c> course</c><c> schedule</c><c> problem.</c><c> You</c>
+[29:35] look at the course schedule problem. You
+[29:35] look at the course schedule problem. You can<c> start</c><c> from</c><c> any</c><c> course</c><c> that</c><c> doesn't</c>
+[29:37] can start from any course that doesn't
+[29:37] can start from any course that doesn't have<c> a</c><c> dependency</c><c> and</c><c> then</c><c> you</c><c> can</c><c> work</c>
+[29:39] have a dependency and then you can work
+[29:39] have a dependency and then you can work from<c> your</c><c> way</c><c> over</c><c> there.</c><c> So</c><c> these</c><c> are</c>
+[29:41] from your way over there. So these are
+[29:41] from your way over there. So these are some<c> of</c><c> the</c><c> cues</c><c> that</c><c> can</c><c> help</c><c> you</c>
+[29:43] some of the cues that can help you
+[29:43] some of the cues that can help you identify<c> that</c><c> a</c><c> breath</c><c> first</c><c> search</c>
+[29:45] identify that a breath first search
+[29:45] identify that a breath first search might<c> be</c><c> applicable</c><c> to</c><c> this</c><c> problem.</c><c> Up</c>
+[29:48] might be applicable to this problem. Up
+[29:48] might be applicable to this problem. Up till<c> now</c><c> we</c><c> have</c><c> covered</c><c> three</c><c> type</c><c> of</c>
+[29:50] till now we have covered three type of
+[29:50] till now we have covered three type of problems<c> where</c><c> you</c><c> can</c><c> apply</c><c> the</c><c> breath</c>
+[29:51] problems where you can apply the breath
+[29:52] problems where you can apply the breath first<c> search.</c><c> We</c><c> have</c><c> covered</c><c> some</c>
+[29:53] first search. We have covered some
+[29:53] first search. We have covered some graphs.<c> The</c><c> remaining</c><c> portion</c><c> is</c>
+[29:56] graphs. The remaining portion is
+[29:56] graphs. The remaining portion is problems<c> that</c><c> involve</c><c> a</c><c> grid</c><c> or</c><c> a</c>
+[29:58] problems that involve a grid or a
+[29:58] problems that involve a grid or a matrix.<c> And</c><c> if</c><c> you</c><c> remember</c><c> I</c><c> told</c><c> you</c><c> a</c>
+[30:01] matrix. And if you remember I told you a
+[30:01] matrix. And if you remember I told you a grid<c> is</c><c> nothing</c><c> but</c><c> a</c><c> graph</c><c> that</c><c> is</c>
+[30:04] grid is nothing but a graph that is
+[30:04] grid is nothing but a graph that is connected<c> or</c><c> disconnected</c><c> in</c><c> a</c><c> certain</c>
+[30:06] connected or disconnected in a certain
+[30:06] connected or disconnected in a certain way.<c> You</c><c> might</c><c> have</c><c> seen</c><c> problem</c><c> like</c>
+[30:09] way. You might have seen problem like
+[30:09] way. You might have seen problem like this.<c> Maximum</c><c> area</c><c> of</c><c> an</c><c> island.</c><c> You</c><c> are</c>
+[30:12] this. Maximum area of an island. You are
+[30:12] this. Maximum area of an island. You are given<c> a</c><c> water</c><c> body</c><c> where</c><c> all</c><c> the</c>
+[30:14] given a water body where all the
+[30:14] given a water body where all the elements<c> if</c><c> are</c><c> zero</c><c> they</c><c> are</c><c> water</c><c> and</c>
+[30:17] elements if are zero they are water and
+[30:17] elements if are zero they are water and if<c> they</c><c> are</c><c> one</c><c> they</c><c> are</c><c> a</c><c> land</c>
+[30:19] if they are one they are a land
+[30:19] if they are one they are a land structure.<c> You</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> which</c>
+[30:22] structure. You have to tell me which
+[30:22] structure. You have to tell me which island<c> has</c><c> the</c><c> largest</c><c> area.</c><c> Where</c><c> do</c>
+[30:25] island has the largest area. Where do
+[30:25] island has the largest area. Where do you<c> even</c><c> begin?</c><c> Once</c><c> again</c><c> BFS</c><c> is</c><c> your</c>
+[30:28] you even begin? Once again BFS is your
+[30:28] you even begin? Once again BFS is your friend.<c> What</c><c> you</c><c> can</c><c> do</c><c> is</c><c> start</c>
+[30:30] friend. What you can do is start
+[30:30] friend. What you can do is start iterating<c> over</c><c> your</c><c> matrix.</c><c> As</c><c> soon</c><c> as</c>
+[30:33] iterating over your matrix. As soon as
+[30:33] iterating over your matrix. As soon as you<c> see</c><c> any</c><c> element</c><c> as</c><c> one</c><c> start</c>
+[30:35] you see any element as one start
+[30:35] you see any element as one start applying<c> BSS.</c><c> So</c><c> I</c><c> cover</c><c> this</c><c> add</c><c> this</c>
+[30:38] applying BSS. So I cover this add this
+[30:38] applying BSS. So I cover this add this to<c> your</c><c> que</c><c> and</c><c> look</c><c> at</c><c> its</c><c> neighbors.</c>
+[30:40] to your que and look at its neighbors.
+[30:40] to your que and look at its neighbors. You<c> added</c><c> these</c><c> to</c><c> your</c><c> neighbors</c><c> and</c>
+[30:43] You added these to your neighbors and
+[30:43] You added these to your neighbors and they<c> get</c><c> to</c><c> the</c><c> queue.</c><c> Now</c><c> pop</c><c> them</c><c> out</c>
+[30:45] they get to the queue. Now pop them out
+[30:45] they get to the queue. Now pop them out and<c> look</c><c> at</c><c> its</c><c> neighbors.</c><c> You</c><c> covered</c>
+[30:47] and look at its neighbors. You covered
+[30:48] and look at its neighbors. You covered all<c> of</c><c> these</c><c> elements.</c><c> You</c><c> marked</c><c> all</c><c> of</c>
+[30:50] all of these elements. You marked all of
+[30:50] all of these elements. You marked all of these<c> nodes</c><c> as</c><c> visited</c><c> and</c><c> you</c><c> are</c><c> done.</c>
+[30:52] these nodes as visited and you are done.
+[30:52] these nodes as visited and you are done. You<c> found</c><c> the</c><c> area</c><c> that</c><c> this</c><c> is</c><c> four.</c><c> So</c>
+[30:55] You found the area that this is four. So
+[30:55] You found the area that this is four. So possibly<c> four</c><c> is</c><c> my</c><c> maximum</c><c> area.</c><c> You</c>
+[30:58] possibly four is my maximum area. You
+[30:58] possibly four is my maximum area. You left<c> it</c><c> over</c><c> here.</c><c> Right?</c><c> Now</c><c> iterate</c>
+[31:00] left it over here. Right? Now iterate
+[31:00] left it over here. Right? Now iterate ahead.<c> Once</c><c> again</c><c> you</c><c> found</c><c> an</c><c> element.</c>
+[31:03] ahead. Once again you found an element.
+[31:03] ahead. Once again you found an element. Start<c> your</c><c> DSS.</c><c> You</c><c> start</c><c> from</c><c> here</c><c> and</c>
+[31:05] Start your DSS. You start from here and
+[31:05] Start your DSS. You start from here and then<c> you</c><c> cover</c><c> all</c><c> of</c><c> these</c><c> nodes.</c><c> You</c>
+[31:07] then you cover all of these nodes. You
+[31:07] then you cover all of these nodes. You are<c> done.</c><c> But</c><c> the</c><c> area</c><c> is</c><c> still</c><c> four.</c><c> So</c>
+[31:10] are done. But the area is still four. So
+[31:10] are done. But the area is still four. So you<c> don't</c><c> do</c><c> anything.</c><c> You</c><c> move</c><c> ahead,</c>
+[31:12] you don't do anything. You move ahead,
+[31:12] you don't do anything. You move ahead, you<c> see</c><c> one</c><c> more</c><c> one,</c><c> but</c><c> this</c><c> note</c><c> is</c>
+[31:15] you see one more one, but this note is
+[31:15] you see one more one, but this note is visited.<c> So</c><c> you're</c><c> going</c><c> to</c><c> skip</c><c> it.</c><c> You</c>
+[31:17] visited. So you're going to skip it. You
+[31:17] visited. So you're going to skip it. You move<c> ahead,</c><c> no</c><c> other</c><c> one.</c><c> Then</c><c> in</c><c> the</c>
+[31:20] move ahead, no other one. Then in the
+[31:20] move ahead, no other one. Then in the next<c> row,</c><c> you</c><c> find</c><c> another</c><c> one.</c><c> Apply</c>
+[31:22] next row, you find another one. Apply
+[31:22] next row, you find another one. Apply your<c> BFS.</c><c> You</c><c> start</c><c> here.</c><c> Then</c><c> you</c><c> find</c>
+[31:25] your BFS. You start here. Then you find
+[31:25] your BFS. You start here. Then you find the<c> next</c><c> level.</c><c> And</c><c> then</c><c> you</c><c> find</c><c> the</c>
+[31:28] the next level. And then you find the
+[31:28] the next level. And then you find the third<c> level.</c><c> And</c><c> then</c><c> finally</c><c> the</c><c> last.</c>
+[31:31] third level. And then finally the last.
+[31:31] third level. And then finally the last. So<c> you</c><c> found</c><c> another</c><c> greater</c><c> area.</c><c> And</c>
+[31:35] So you found another greater area. And
+[31:35] So you found another greater area. And this<c> area</c><c> is</c><c> eight.</c><c> So</c><c> you</c><c> update</c><c> your</c>
+[31:37] this area is eight. So you update your
+[31:37] this area is eight. So you update your area.<c> you</c><c> are</c><c> done.</c><c> If</c><c> you</c><c> start</c><c> to</c>
+[31:41] area. you are done. If you start to
+[31:41] area. you are done. If you start to iterate<c> any</c><c> one</c><c> that</c><c> you</c><c> encounter</c><c> now,</c>
+[31:43] iterate any one that you encounter now,
+[31:44] iterate any one that you encounter now, they<c> all</c><c> have</c><c> been</c><c> visited.</c><c> So</c><c> you're</c>
+[31:46] they all have been visited. So you're
+[31:46] they all have been visited. So you're not<c> applying</c><c> DFS</c><c> again</c><c> and</c><c> again.</c><c> At</c><c> the</c>
+[31:49] not applying DFS again and again. At the
+[31:49] not applying DFS again and again. At the very<c> end,</c><c> you</c><c> will</c><c> find</c><c> one</c><c> more</c><c> one.</c><c> So</c>
+[31:51] very end, you will find one more one. So
+[31:51] very end, you will find one more one. So you<c> try</c><c> to</c><c> traverse</c><c> it,</c><c> but</c><c> that's</c><c> it.</c>
+[31:53] you try to traverse it, but that's it.
+[31:54] you try to traverse it, but that's it. You<c> found</c><c> your</c><c> maximum</c><c> area</c><c> that</c><c> is</c>
+[31:55] You found your maximum area that is
+[31:56] You found your maximum area that is eight.<c> And</c><c> that</c><c> is</c><c> your</c><c> answer.</c><c> What</c>
+[31:58] eight. And that is your answer. What
+[31:58] eight. And that is your answer. What were<c> we</c><c> doing?</c><c> We</c><c> just</c><c> applied</c><c> the</c><c> BFS</c>
+[32:01] were we doing? We just applied the BFS
+[32:01] were we doing? We just applied the BFS technique<c> as</c><c> soon</c><c> as</c><c> we</c><c> got</c><c> a</c><c> starting</c>
+[32:03] technique as soon as we got a starting
+[32:03] technique as soon as we got a starting point.<c> Also</c><c> notice</c><c> we</c><c> just</c><c> traverse</c>
+[32:06] point. Also notice we just traverse
+[32:06] point. Also notice we just traverse every<c> element</c><c> only</c><c> once</c><c> because</c><c> if</c><c> we</c>
+[32:09] every element only once because if we
+[32:09] every element only once because if we encounter<c> it</c><c> again</c><c> a</c><c> visited</c><c> array</c><c> helps</c>
+[32:11] encounter it again a visited array helps
+[32:11] encounter it again a visited array helps us<c> to</c><c> know</c><c> if</c><c> we</c><c> need</c><c> to</c><c> perform</c><c> BFS</c>
+[32:14] us to know if we need to perform BFS
+[32:14] us to know if we need to perform BFS again<c> on</c><c> it</c><c> or</c><c> not.</c><c> On</c><c> a</c><c> similar</c><c> idea</c>
+[32:17] again on it or not. On a similar idea
+[32:17] again on it or not. On a similar idea there<c> is</c><c> one</c><c> more</c><c> problem</c><c> available</c>
+[32:19] there is one more problem available
+[32:19] there is one more problem available rotting<c> oranges.</c><c> Once</c><c> again</c><c> you're</c><c> given</c>
+[32:21] rotting oranges. Once again you're given
+[32:21] rotting oranges. Once again you're given a<c> grid</c><c> and</c><c> this</c><c> grid</c><c> has</c><c> some</c><c> oranges.</c>
+[32:25] a grid and this grid has some oranges.
+[32:25] a grid and this grid has some oranges. What<c> happens</c><c> is</c><c> that</c><c> for</c><c> each</c><c> of</c><c> these</c>
+[32:29] What happens is that for each of these
+[32:29] What happens is that for each of these orange<c> groups</c><c> you</c><c> are</c><c> given</c><c> a</c><c> orange</c>
+[32:32] orange groups you are given a orange
+[32:32] orange groups you are given a orange that<c> is</c><c> rotten.</c><c> So</c><c> let</c><c> us</c><c> say</c><c> I'm</c>
+[32:34] that is rotten. So let us say I'm
+[32:34] that is rotten. So let us say I'm starting<c> off</c><c> with</c><c> a</c><c> rotten</c><c> orange.</c><c> You</c>
+[32:38] starting off with a rotten orange. You
+[32:38] starting off with a rotten orange. You have<c> to</c><c> tell</c><c> me</c><c> in</c><c> how</c><c> many</c><c> days</c><c> will</c>
+[32:40] have to tell me in how many days will
+[32:40] have to tell me in how many days will all<c> of</c><c> the</c><c> oranges</c><c> get</c><c> rotten.</c><c> And</c><c> the</c>
+[32:43] all of the oranges get rotten. And the
+[32:43] all of the oranges get rotten. And the idea<c> is</c><c> that</c><c> in</c><c> the</c><c> next</c><c> day</c><c> all</c><c> the</c>
+[32:46] idea is that in the next day all the
+[32:46] idea is that in the next day all the neighboring<c> oranges</c><c> will</c><c> get</c><c> rotten.</c><c> So</c>
+[32:48] neighboring oranges will get rotten. So
+[32:48] neighboring oranges will get rotten. So technically<c> what</c><c> is</c><c> this</c><c> telling</c><c> you?</c><c> It</c>
+[32:50] technically what is this telling you? It
+[32:50] technically what is this telling you? It is<c> giving</c><c> you</c><c> the</c><c> starting</c><c> points</c><c> of</c>
+[32:53] is giving you the starting points of
+[32:53] is giving you the starting points of your<c> BFS.</c><c> You</c><c> start</c><c> from</c><c> over</c><c> here</c><c> and</c>
+[32:55] your BFS. You start from over here and
+[32:56] your BFS. You start from over here and then<c> you</c><c> apply</c><c> BFS</c><c> one</c><c> time.</c><c> So</c><c> this</c>
+[32:59] then you apply BFS one time. So this
+[32:59] then you apply BFS one time. So this happens<c> and</c><c> for</c><c> the</c><c> third</c><c> group</c><c> it</c><c> is</c>
+[33:02] happens and for the third group it is
+[33:02] happens and for the third group it is completely<c> rotten.</c><c> What</c><c> next?</c><c> On</c><c> the</c>
+[33:05] completely rotten. What next? On the
+[33:05] completely rotten. What next? On the third<c> day</c><c> this</c><c> group</c><c> is</c><c> completely</c>
+[33:08] third day this group is completely
+[33:08] third day this group is completely rotten<c> and</c><c> then</c><c> on</c><c> the</c><c> third</c><c> day</c><c> you</c>
+[33:10] rotten and then on the third day you
+[33:10] rotten and then on the third day you still<c> have</c><c> some</c><c> oranges</c><c> remaining.</c><c> What</c>
+[33:13] still have some oranges remaining. What
+[33:13] still have some oranges remaining. What happens<c> on</c><c> the</c><c> fourth</c><c> day?</c><c> This</c><c> last</c>
+[33:15] happens on the fourth day? This last
+[33:15] happens on the fourth day? This last orange<c> also</c><c> gets</c><c> rotten.</c><c> So</c><c> how</c><c> many</c>
+[33:17] orange also gets rotten. So how many
+[33:17] orange also gets rotten. So how many days<c> did</c><c> you</c><c> take?</c><c> You</c><c> took</c><c> a</c><c> total</c><c> of</c><c> 4</c>
+[33:20] days did you take? You took a total of 4
+[33:20] days did you take? You took a total of 4 days.<c> What</c><c> were</c><c> we</c><c> doing?</c><c> We</c><c> were</c>
+[33:23] days. What were we doing? We were
+[33:23] days. What were we doing? We were applying<c> a</c><c> bread</c><c> for</c><c> search.</c><c> We</c><c> just</c>
+[33:25] applying a bread for search. We just
+[33:25] applying a bread for search. We just started<c> from</c><c> the</c><c> rotting</c><c> orange</c><c> in</c><c> the</c>
+[33:27] started from the rotting orange in the
+[33:28] started from the rotting orange in the first<c> place</c><c> and</c><c> then</c><c> kept</c><c> on</c><c> expanding</c>
+[33:30] first place and then kept on expanding
+[33:30] first place and then kept on expanding until<c> we</c><c> are</c><c> able</c><c> to</c><c> cover</c><c> all</c><c> of</c><c> the</c>
+[33:33] until we are able to cover all of the
+[33:33] until we are able to cover all of the finite<c> search</c><c> space</c><c> that</c><c> we</c><c> have.</c><c> That</c>
+[33:36] finite search space that we have. That
+[33:36] finite search space that we have. That is<c> why</c><c> I</c><c> told</c><c> you</c><c> if</c><c> you</c><c> get</c><c> the</c>
+[33:37] is why I told you if you get the
+[33:37] is why I told you if you get the fundamental<c> correct</c><c> all</c><c> of</c><c> these</c>
+[33:39] fundamental correct all of these
+[33:39] fundamental correct all of these problems<c> become</c><c> very</c><c> very</c><c> easy</c><c> to</c><c> solve.</c>
+[33:41] problems become very very easy to solve.
+[33:41] problems become very very easy to solve. Let<c> us</c><c> quickly</c><c> look</c><c> at</c><c> one</c><c> more</c><c> problem.</c>
+[33:43] Let us quickly look at one more problem.
+[33:43] Let us quickly look at one more problem. Shortest<c> path</c><c> in</c><c> a</c><c> binary</c><c> matrix.</c><c> You</c>
+[33:45] Shortest path in a binary matrix. You
+[33:45] Shortest path in a binary matrix. You are<c> given</c><c> a</c><c> matrix</c><c> like</c><c> this.</c><c> You</c><c> have</c>
+[33:48] are given a matrix like this. You have
+[33:48] are given a matrix like this. You have ones<c> and</c><c> zeros</c><c> and</c><c> you</c><c> have</c><c> to</c><c> determine</c>
+[33:50] ones and zeros and you have to determine
+[33:50] ones and zeros and you have to determine the<c> shortest</c><c> path</c><c> from</c><c> this</c><c> top</c><c> left</c><c> to</c>
+[33:53] the shortest path from this top left to
+[33:53] the shortest path from this top left to bottom<c> right.</c><c> The</c><c> idea</c><c> over</c><c> here</c><c> is</c><c> that</c>
+[33:55] bottom right. The idea over here is that
+[33:56] bottom right. The idea over here is that the<c> path</c><c> has</c><c> to</c><c> consist</c><c> of</c><c> only</c><c> once.</c>
+[33:59] the path has to consist of only once.
+[33:59] the path has to consist of only once. You<c> can</c><c> see</c><c> that</c><c> there</c><c> are</c><c> multiple</c>
+[34:00] You can see that there are multiple
+[34:00] You can see that there are multiple paths<c> possible.</c><c> You</c><c> can</c><c> traverse</c><c> like</c>
+[34:01] paths possible. You can traverse like
+[34:02] paths possible. You can traverse like this.<c> You</c><c> can</c><c> traverse</c><c> like</c><c> this.</c><c> You</c>
+[34:04] this. You can traverse like this. You
+[34:04] this. You can traverse like this. You can<c> traverse</c><c> like</c><c> this.</c><c> There</c><c> are</c>
+[34:06] can traverse like this. There are
+[34:06] can traverse like this. There are multiple<c> ways</c><c> possible.</c><c> But</c><c> what</c><c> is</c><c> the</c>
+[34:08] multiple ways possible. But what is the
+[34:08] multiple ways possible. But what is the shortest<c> path?</c><c> What</c><c> do</c><c> you</c><c> do?</c><c> You</c><c> apply</c>
+[34:11] shortest path? What do you do? You apply
+[34:11] shortest path? What do you do? You apply the<c> bread</c><c> first</c><c> search.</c><c> You</c><c> start</c><c> from</c>
+[34:12] the bread first search. You start from
+[34:12] the bread first search. You start from over<c> here.</c><c> In</c><c> the</c><c> next</c><c> iteration,</c><c> where</c>
+[34:15] over here. In the next iteration, where
+[34:15] over here. In the next iteration, where can<c> you</c><c> go?</c><c> You</c><c> can</c><c> either</c><c> go</c><c> here</c><c> or</c>
+[34:17] can you go? You can either go here or
+[34:17] can you go? You can either go here or here.<c> You</c><c> took</c><c> two</c><c> steps.</c><c> In</c><c> the</c><c> next</c>
+[34:19] here. You took two steps. In the next
+[34:19] here. You took two steps. In the next iteration,<c> you</c><c> can</c><c> go</c><c> here</c><c> or</c><c> you</c><c> can</c><c> go</c>
+[34:21] iteration, you can go here or you can go
+[34:21] iteration, you can go here or you can go here<c> or</c><c> you</c><c> can</c><c> go</c><c> here.</c><c> So</c><c> you</c><c> are</c><c> done</c>
+[34:24] here or you can go here. So you are done
+[34:24] here or you can go here. So you are done with<c> three</c><c> steps.</c><c> In</c><c> the</c><c> next</c><c> iteration,</c>
+[34:27] with three steps. In the next iteration,
+[34:27] with three steps. In the next iteration, you<c> can</c><c> go</c><c> here</c><c> or</c><c> you</c><c> can</c><c> go</c><c> here</c><c> or</c>
+[34:29] you can go here or you can go here or
+[34:30] you can go here or you can go here or here<c> or</c><c> here.</c><c> Because</c><c> I'm</c><c> assuming</c><c> that</c>
+[34:33] here or here. Because I'm assuming that
+[34:33] here or here. Because I'm assuming that you<c> can</c><c> go</c><c> in</c><c> all</c><c> the</c><c> eight</c><c> directions</c>
+[34:36] you can go in all the eight directions
+[34:36] you can go in all the eight directions from<c> a</c><c> point.</c><c> The</c><c> problem</c><c> can</c><c> trick</c><c> you</c>
+[34:39] from a point. The problem can trick you
+[34:39] from a point. The problem can trick you that<c> okay,</c><c> you</c><c> can</c><c> only</c><c> go</c><c> vertically</c><c> or</c>
+[34:41] that okay, you can only go vertically or
+[34:41] that okay, you can only go vertically or horizontally,<c> not</c><c> diagonally.</c><c> then</c><c> you</c>
+[34:44] horizontally, not diagonally. then you
+[34:44] horizontally, not diagonally. then you might<c> need</c><c> to</c><c> tweak</c><c> on</c><c> how</c><c> you</c><c> are</c>
+[34:46] might need to tweak on how you are
+[34:46] might need to tweak on how you are completing<c> your</c><c> search</c><c> space.</c><c> Up</c><c> till</c>
+[34:48] completing your search space. Up till
+[34:48] completing your search space. Up till now<c> we</c><c> have</c><c> covered</c><c> four</c><c> steps.</c><c> What</c>
+[34:51] now we have covered four steps. What
+[34:51] now we have covered four steps. What about<c> the</c><c> fifth</c><c> step?</c><c> Now</c><c> you</c><c> know</c><c> that</c>
+[34:54] about the fifth step? Now you know that
+[34:54] about the fifth step? Now you know that this<c> is</c><c> not</c><c> going</c><c> to</c><c> lead</c><c> you</c><c> anywhere.</c>
+[34:55] this is not going to lead you anywhere.
+[34:56] this is not going to lead you anywhere. For<c> the</c><c> fifth</c><c> step,</c><c> you</c><c> can</c><c> reach</c><c> here,</c>
+[34:57] For the fifth step, you can reach here,
+[34:57] For the fifth step, you can reach here, here<c> or</c><c> here.</c><c> For</c><c> the</c><c> sixth</c><c> step,</c><c> you</c>
+[35:00] here or here. For the sixth step, you
+[35:00] here or here. For the sixth step, you can<c> reach</c><c> here,</c><c> here,</c><c> here</c><c> or</c><c> here.</c><c> So</c>
+[35:03] can reach here, here, here or here. So
+[35:03] can reach here, here, here or here. So what<c> did</c><c> we</c><c> do?</c><c> In</c><c> just</c><c> six</c><c> steps,</c><c> we</c>
+[35:06] what did we do? In just six steps, we
+[35:06] what did we do? In just six steps, we can<c> reach</c><c> the</c><c> final</c><c> destination.</c><c> If</c><c> you</c>
+[35:09] can reach the final destination. If you
+[35:09] can reach the final destination. If you want<c> to</c><c> actually</c><c> get</c><c> the</c><c> path,</c><c> then</c><c> you</c>
+[35:11] want to actually get the path, then you
+[35:12] want to actually get the path, then you might<c> have</c><c> to</c><c> implement</c><c> some</c><c> additional</c>
+[35:13] might have to implement some additional
+[35:13] might have to implement some additional logic<c> to</c><c> find</c><c> out</c><c> this</c><c> path</c><c> that</c><c> you</c>
+[35:16] logic to find out this path that you
+[35:16] logic to find out this path that you covered.<c> But</c><c> you</c><c> know</c><c> that</c><c> a</c><c> bread</c><c> first</c>
+[35:19] covered. But you know that a bread first
+[35:19] covered. But you know that a bread first search<c> is</c><c> your</c><c> friend</c><c> and</c><c> this</c><c> is</c><c> how</c>
+[35:21] search is your friend and this is how
+[35:21] search is your friend and this is how you<c> can</c><c> explore</c><c> your</c><c> complete</c><c> search</c>
+[35:23] you can explore your complete search
+[35:23] you can explore your complete search space.<c> I</c><c> think</c><c> now</c><c> you</c><c> are</c><c> getting</c><c> a</c>
+[35:26] space. I think now you are getting a
+[35:26] space. I think now you are getting a good<c> hold</c><c> of</c><c> how</c><c> you</c><c> can</c><c> apply</c><c> the</c><c> bread</c>
+[35:28] good hold of how you can apply the bread
+[35:28] good hold of how you can apply the bread first<c> search</c><c> in</c><c> a</c><c> lot</c><c> of</c><c> different</c>
+[35:29] first search in a lot of different
+[35:30] first search in a lot of different coding<c> patterns.</c><c> To</c><c> master</c><c> this</c>
+[35:31] coding patterns. To master this
+[35:32] coding patterns. To master this technique,<c> first</c><c> of</c><c> all,</c><c> you</c><c> determine</c>
+[35:34] technique, first of all, you determine
+[35:34] technique, first of all, you determine the<c> starting</c><c> point.</c><c> This</c><c> is</c><c> the</c><c> place</c>
+[35:36] the starting point. This is the place
+[35:36] the starting point. This is the place where<c> you</c><c> start</c><c> exploring.</c><c> What</c><c> do</c><c> you</c>
+[35:39] where you start exploring. What do you
+[35:39] where you start exploring. What do you do<c> next?</c><c> You</c><c> start</c><c> to</c><c> explore</c><c> outwards.</c>
+[35:42] do next? You start to explore outwards.
+[35:42] do next? You start to explore outwards. It<c> depends</c><c> upon</c><c> the</c><c> problem</c><c> that</c><c> you</c><c> are</c>
+[35:44] It depends upon the problem that you are
+[35:44] It depends upon the problem that you are given.<c> Can</c><c> you</c><c> go</c><c> in</c><c> all</c><c> the</c><c> eight</c>
+[35:46] given. Can you go in all the eight
+[35:46] given. Can you go in all the eight directions?<c> Can</c><c> you</c><c> go</c><c> only</c><c> left</c><c> and</c>
+[35:48] directions? Can you go only left and
+[35:48] directions? Can you go only left and right?<c> Can</c><c> you</c><c> go</c><c> only</c><c> bottom</c><c> and</c><c> right?</c>
+[35:51] right? Can you go only bottom and right?
+[35:51] right? Can you go only bottom and right? Just<c> make</c><c> sure</c><c> what</c><c> you</c><c> have</c><c> because</c>
+[35:53] Just make sure what you have because
+[35:53] Just make sure what you have because that<c> is</c><c> how</c><c> you're</c><c> exploring</c><c> a</c><c> left</c><c> tree</c>
+[35:56] that is how you're exploring a left tree
+[35:56] that is how you're exploring a left tree or<c> a</c><c> right</c><c> tree.</c><c> You</c><c> have</c><c> a</c><c> ner</c><c> tree.</c>
+[35:58] or a right tree. You have a ner tree.
+[35:58] or a right tree. You have a ner tree. How<c> are</c><c> you</c><c> exploring</c><c> that?</c><c> In</c><c> the</c><c> next</c>
+[36:01] How are you exploring that? In the next
+[36:01] How are you exploring that? In the next part,<c> you</c><c> have</c><c> to</c><c> manage</c><c> your</c><c> que.</c><c> How</c>
+[36:03] part, you have to manage your que. How
+[36:03] part, you have to manage your que. How are<c> you</c><c> popping</c><c> elements?</c><c> when</c><c> are</c><c> you</c>
+[36:05] are you popping elements? when are you
+[36:05] are you popping elements? when are you adding<c> them</c><c> back?</c><c> For</c><c> example,</c><c> in</c><c> course</c>
+[36:07] adding them back? For example, in course
+[36:07] adding them back? For example, in course schedule,<c> you</c><c> want</c><c> to</c><c> add</c><c> an</c><c> element</c>
+[36:09] schedule, you want to add an element
+[36:09] schedule, you want to add an element back<c> to</c><c> your</c><c> queue</c><c> only</c><c> if</c><c> the</c><c> in</c><c> degree</c>
+[36:12] back to your queue only if the in degree
+[36:12] back to your queue only if the in degree is<c> zero.</c><c> These</c><c> are</c><c> some</c><c> things</c><c> to</c><c> watch</c>
+[36:14] is zero. These are some things to watch
+[36:14] is zero. These are some things to watch out<c> for.</c><c> Once</c><c> you</c><c> have</c><c> done</c><c> all</c><c> of</c><c> this,</c>
+[36:17] out for. Once you have done all of this,
+[36:17] out for. Once you have done all of this, you<c> are</c><c> now</c><c> determining</c><c> a</c><c> path.</c><c> You</c><c> want</c>
+[36:19] you are now determining a path. You want
+[36:19] you are now determining a path. You want to<c> keep</c><c> on</c><c> iterating</c><c> until</c><c> your</c><c> Q</c><c> is</c>
+[36:21] to keep on iterating until your Q is
+[36:21] to keep on iterating until your Q is completely<c> empty.</c><c> And</c><c> then</c><c> once</c><c> your</c><c> Q</c>
+[36:24] completely empty. And then once your Q
+[36:24] completely empty. And then once your Q is<c> completely</c><c> empty,</c><c> you</c><c> have</c><c> ultimately</c>
+[36:27] is completely empty, you have ultimately
+[36:27] is completely empty, you have ultimately found<c> out</c><c> the</c><c> solution.</c><c> You</c><c> just</c><c> need</c><c> to</c>
+[36:29] found out the solution. You just need to
+[36:29] found out the solution. You just need to validate<c> it</c><c> and</c><c> you</c><c> need</c><c> to</c><c> determine</c><c> if</c>
+[36:31] validate it and you need to determine if
+[36:31] validate it and you need to determine if this<c> is</c><c> the</c><c> required</c><c> output</c><c> or</c><c> not.</c><c> So</c>
+[36:34] this is the required output or not. So
+[36:34] this is the required output or not. So what<c> did</c><c> we</c><c> learn</c><c> from</c><c> all</c><c> of</c><c> this?</c><c> Just</c>
+[36:36] what did we learn from all of this? Just
+[36:36] what did we learn from all of this? Just a<c> simple</c><c> BFS</c><c> technique</c><c> can</c><c> solve</c><c> a</c><c> lot</c>
+[36:39] a simple BFS technique can solve a lot
+[36:39] a simple BFS technique can solve a lot of<c> different</c><c> problems</c><c> if</c><c> applied</c><c> in</c><c> the</c>
+[36:41] of different problems if applied in the
+[36:41] of different problems if applied in the correct<c> way.</c><c> That</c><c> is</c><c> why</c><c> I</c><c> was</c>
+[36:43] correct way. That is why I was
+[36:43] correct way. That is why I was emphasizing<c> you</c><c> need</c><c> to</c><c> understand</c><c> BFS</c>
+[36:46] emphasizing you need to understand BFS
+[36:46] emphasizing you need to understand BFS from<c> the</c><c> point</c><c> of</c><c> view</c><c> of</c><c> a</c><c> Q</c><c> because</c><c> a</c>
+[36:49] from the point of view of a Q because a
+[36:49] from the point of view of a Q because a Q<c> is</c><c> helping</c><c> you</c><c> process</c><c> all</c><c> of</c><c> these</c>
+[36:51] Q is helping you process all of these
+[36:51] Q is helping you process all of these elements<c> in</c><c> a</c><c> first</c><c> in</c><c> first</c><c> out</c><c> order.</c>
+[36:54] elements in a first in first out order.
+[36:54] elements in a first in first out order. And<c> that</c><c> is</c><c> the</c><c> USP</c><c> of</c><c> a</c><c> bread</c><c> first</c>
+[36:57] And that is the USP of a bread first
+[36:57] And that is the USP of a bread first search.<c> That</c><c> is</c><c> the</c><c> underlying</c><c> idea</c><c> how</c>
+[37:00] search. That is the underlying idea how
+[37:00] search. That is the underlying idea how a<c> bread</c><c> first</c><c> search</c><c> actually</c><c> works.</c><c> So</c>
+[37:03] a bread first search actually works. So
+[37:03] a bread first search actually works. So if<c> you</c><c> found</c><c> any</c><c> problems</c><c> while</c><c> going</c>
+[37:05] if you found any problems while going
+[37:05] if you found any problems while going throughout<c> this</c><c> entire</c><c> video,</c><c> do</c><c> let</c><c> me</c>
+[37:07] throughout this entire video, do let me
+[37:07] throughout this entire video, do let me know<c> or</c><c> tell</c><c> me</c><c> what</c><c> other</c><c> problems</c><c> that</c>
+[37:09] know or tell me what other problems that
+[37:09] know or tell me what other problems that you<c> have</c><c> found</c><c> that</c><c> follow</c><c> the</c><c> same</c>
+[37:11] you have found that follow the same
+[37:11] you have found that follow the same pattern.<c> It</c><c> will</c><c> become</c><c> a</c><c> really</c><c> good</c>
+[37:13] pattern. It will become a really good
+[37:13] pattern. It will become a really good collection<c> and</c><c> it</c><c> is</c><c> going</c><c> to</c><c> help</c>
+[37:14] collection and it is going to help
+[37:14] collection and it is going to help anyone<c> who</c><c> is</c><c> watching</c><c> the</c><c> video</c><c> in</c><c> the</c>
+[37:16] anyone who is watching the video in the
+[37:16] anyone who is watching the video in the future.<c> As</c><c> a</c><c> reminder,</c><c> if</c><c> you</c><c> found</c><c> this</c>
+[37:18] future. As a reminder, if you found this
+[37:18] future. As a reminder, if you found this video<c> helpful,</c><c> please</c><c> do</c><c> consider</c>
+[37:19] video helpful, please do consider
+[37:19] video helpful, please do consider subscribing<c> to</c><c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c>
+[37:21] subscribing to my channel and share this
+[37:21] subscribing to my channel and share this video<c> with</c><c> your</c><c> friends.</c><c> This</c><c> really</c>
+[37:22] video with your friends. This really
+[37:22] video with your friends. This really keeps<c> me</c><c> motivated</c><c> and</c><c> I</c><c> can</c><c> make</c><c> more</c>
+[37:23] keeps me motivated and I can make more
+[37:23] keeps me motivated and I can make more such<c> videos.</c><c> Also,</c><c> a</c><c> huge</c><c> shout</c><c> out</c><c> to</c>
+[37:25] such videos. Also, a huge shout out to
+[37:26] such videos. Also, a huge shout out to all<c> of</c><c> the</c><c> members</c><c> who</c><c> support</c><c> my</c>
+[37:27] all of the members who support my
+[37:27] all of the members who support my channel.<c> you</c><c> guys</c><c> really</c><c> keeping</c><c> going</c>
+[37:29] channel. you guys really keeping going
+[37:29] channel. you guys really keeping going and<c> as</c><c> a</c><c> member</c><c> you</c><c> do</c><c> get</c><c> private</c><c> reply</c>
+[37:30] and as a member you do get private reply
+[37:30] and as a member you do get private reply to<c> your</c><c> comments</c><c> and</c><c> early</c><c> access</c><c> to</c><c> new</c>
+[37:32] to your comments and early access to new
+[37:32] to your comments and early access to new videos<c> as</c><c> well.</c><c> Also,</c><c> you</c><c> can</c><c> now</c>
+[37:34] videos as well. Also, you can now
+[37:34] videos as well. Also, you can now schedule<c> one</c><c> to</c><c> one</c><c> sessions</c><c> with</c><c> me</c><c> and</c>
+[37:36] schedule one to one sessions with me and
+[37:36] schedule one to one sessions with me and we<c> can</c><c> discuss</c><c> about</c><c> almost</c><c> anything.</c>
+[37:38] we can discuss about almost anything.
+[37:38] we can discuss about almost anything. Stay<c> tuned</c><c> for</c><c> my</c><c> upcoming</c><c> video.</c><c> Until</c>
+[37:40] Stay tuned for my upcoming video. Until
+[37:40] Stay tuned for my upcoming video. Until then,<c> see</c><c> youa.</c>

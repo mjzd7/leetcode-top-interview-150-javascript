@@ -1,0 +1,900 @@
+[0:02] As soon as you see a problem, what is
+[0:02] As soon as you see a problem, what is the<c> first</c><c> thing</c><c> that</c><c> you</c><c> do?</c><c> You</c><c> look</c><c> up</c>
+[0:04] the first thing that you do? You look up
+[0:04] the first thing that you do? You look up a<c> test</c><c> case</c><c> and</c><c> then</c><c> you</c><c> decide,</c><c> okay,</c><c> I</c>
+[0:07] a test case and then you decide, okay, I
+[0:07] a test case and then you decide, okay, I want<c> to</c><c> scan</c><c> all</c><c> of</c><c> these</c><c> elements.</c>
+[0:09] want to scan all of these elements.
+[0:09] want to scan all of these elements. There<c> are</c><c> multiple</c><c> ways</c><c> to</c><c> do</c><c> it.</c><c> You</c>
+[0:11] There are multiple ways to do it. You
+[0:11] There are multiple ways to do it. You can<c> either</c><c> use</c><c> a</c><c> two-pointer</c><c> approach</c><c> or</c>
+[0:14] can either use a two-pointer approach or
+[0:14] can either use a two-pointer approach or you<c> can</c><c> also</c><c> use</c><c> a</c><c> fast</c><c> pointer</c><c> and</c><c> a</c>
+[0:16] you can also use a fast pointer and a
+[0:16] you can also use a fast pointer and a slow<c> pointer.</c><c> But</c><c> sometimes</c><c> there</c><c> is</c><c> a</c>
+[0:19] slow pointer. But sometimes there is a
+[0:19] slow pointer. But sometimes there is a thought<c> that</c><c> comes</c><c> to</c><c> your</c><c> mind</c><c> that</c>
+[0:21] thought that comes to your mind that
+[0:21] thought that comes to your mind that okay,<c> I</c><c> need</c><c> to</c><c> remember</c><c> this</c><c> element</c>
+[0:23] okay, I need to remember this element
+[0:23] okay, I need to remember this element somehow<c> so</c><c> I</c><c> can</c><c> come</c><c> at</c><c> a</c><c> solution.</c><c> As</c>
+[0:27] somehow so I can come at a solution. As
+[0:27] somehow so I can come at a solution. As soon<c> as</c><c> this</c><c> thought</c><c> hits</c><c> your</c><c> mind,</c><c> it</c>
+[0:29] soon as this thought hits your mind, it
+[0:29] soon as this thought hits your mind, it means<c> you</c><c> will</c><c> either</c><c> want</c><c> to</c><c> use</c><c> a</c>
+[0:31] means you will either want to use a
+[0:31] means you will either want to use a hashmap<c> or</c><c> a</c><c> hash</c><c> fet.</c><c> And</c><c> that</c><c> is</c><c> the</c>
+[0:34] hashmap or a hash fet. And that is the
+[0:34] hashmap or a hash fet. And that is the pattern<c> we</c><c> are</c><c> going</c><c> to</c><c> talk</c><c> about</c><c> in</c>
+[0:35] pattern we are going to talk about in
+[0:35] pattern we are going to talk about in this<c> video.</c><c> Hello</c><c> friends,</c><c> welcome</c><c> back</c>
+[0:37] this video. Hello friends, welcome back
+[0:37] this video. Hello friends, welcome back to<c> my</c><c> channel.</c>
+[0:43] First of all, we need to understand what
+[0:43] First of all, we need to understand what do<c> you</c><c> actually</c><c> mean</c><c> by</c><c> a</c><c> hashmap</c><c> and</c><c> a</c>
+[0:45] do you actually mean by a hashmap and a
+[0:45] do you actually mean by a hashmap and a hash<c> fet.</c><c> These</c><c> two</c><c> are</c><c> very</c><c> essential</c>
+[0:48] hash fet. These two are very essential
+[0:48] hash fet. These two are very essential data<c> structures</c><c> which</c><c> are</c><c> available</c><c> in</c>
+[0:50] data structures which are available in
+[0:50] data structures which are available in almost<c> every</c><c> programming</c><c> language.</c><c> Yes,</c>
+[0:53] almost every programming language. Yes,
+[0:53] almost every programming language. Yes, they<c> take</c><c> up</c><c> some</c><c> space,</c><c> but</c><c> they</c><c> give</c>
+[0:56] they take up some space, but they give
+[0:56] they take up some space, but they give you<c> a</c><c> time</c><c> complexity</c><c> of</c><c> order</c><c> of</c><c> one</c>
+[0:58] you a time complexity of order of one
+[0:58] you a time complexity of order of one when<c> you</c><c> have</c><c> to</c><c> look</c><c> up</c><c> elements.</c><c> So,</c>
+[1:00] when you have to look up elements. So,
+[1:00] when you have to look up elements. So, how<c> do</c><c> they</c><c> work?</c><c> For</c><c> example,</c><c> this</c><c> is</c>
+[1:03] how do they work? For example, this is
+[1:03] how do they work? For example, this is how<c> you</c><c> can</c><c> imagine</c><c> a</c><c> hash</c><c> set</c><c> to</c><c> be.</c><c> In</c>
+[1:06] how you can imagine a hash set to be. In
+[1:06] how you can imagine a hash set to be. In a<c> hash</c><c> set,</c><c> you</c><c> can</c><c> never</c><c> have</c><c> any</c>
+[1:09] a hash set, you can never have any
+[1:09] a hash set, you can never have any duplicates.<c> So</c><c> for</c><c> example,</c><c> if</c><c> I</c><c> try</c><c> to</c>
+[1:11] duplicates. So for example, if I try to
+[1:11] duplicates. So for example, if I try to add<c> numbers</c><c> like</c><c> two,</c><c> three</c><c> and</c><c> then</c><c> a</c>
+[1:14] add numbers like two, three and then a
+[1:14] add numbers like two, three and then a five<c> and</c><c> then</c><c> let</c><c> us</c><c> say</c><c> I</c><c> try</c><c> to</c><c> add</c><c> a</c>
+[1:17] five and then let us say I try to add a
+[1:17] five and then let us say I try to add a two<c> again.</c><c> This</c><c> two</c><c> will</c><c> not</c><c> make</c><c> an</c>
+[1:20] two again. This two will not make an
+[1:20] two again. This two will not make an entry<c> in</c><c> your</c><c> hashet</c><c> because</c><c> two</c><c> already</c>
+[1:24] entry in your hashet because two already
+[1:24] entry in your hashet because two already exists.<c> Similarly,</c><c> you</c><c> can</c><c> add</c><c> more</c>
+[1:27] exists. Similarly, you can add more
+[1:27] exists. Similarly, you can add more distinct<c> elements.</c>
+[1:29] distinct elements.
+[1:29] distinct elements. It<c> is</c><c> guaranteed</c><c> that</c><c> any</c><c> time</c><c> you</c><c> check</c>
+[1:31] It is guaranteed that any time you check
+[1:32] It is guaranteed that any time you check your<c> hash</c><c> fret</c><c> all</c><c> of</c><c> the</c><c> elements</c><c> will</c>
+[1:34] your hash fret all of the elements will
+[1:34] your hash fret all of the elements will be<c> unique.</c><c> One</c><c> more</c><c> advantage</c><c> that</c><c> you</c>
+[1:36] be unique. One more advantage that you
+[1:36] be unique. One more advantage that you get<c> is</c><c> you</c><c> can</c><c> query</c><c> all</c><c> of</c><c> these</c>
+[1:39] get is you can query all of these
+[1:39] get is you can query all of these elements<c> in</c><c> a</c><c> constant</c><c> time.</c><c> For</c>
+[1:42] elements in a constant time. For
+[1:42] elements in a constant time. For example,<c> you</c><c> can</c><c> immediately</c><c> ask,</c><c> hey,</c>
+[1:44] example, you can immediately ask, hey,
+[1:44] example, you can immediately ask, hey, is<c> the</c><c> number</c><c> three</c><c> in</c><c> my</c><c> hashet?</c><c> And</c>
+[1:47] is the number three in my hashet? And
+[1:47] is the number three in my hashet? And with<c> the</c><c> order</c><c> of</c><c> one-time</c><c> complexity,</c>
+[1:49] with the order of one-time complexity,
+[1:49] with the order of one-time complexity, you<c> will</c><c> either</c><c> return</c><c> a</c><c> true</c><c> or</c><c> a</c>
+[1:51] you will either return a true or a
+[1:51] you will either return a true or a false.<c> If</c><c> a</c><c> number</c><c> does</c><c> not</c><c> exist,</c><c> you</c>
+[1:53] false. If a number does not exist, you
+[1:53] false. If a number does not exist, you can<c> still</c><c> ask,</c><c> hey,</c><c> is</c><c> 11</c><c> in</c><c> my</c><c> hash?</c><c> It</c>
+[1:56] can still ask, hey, is 11 in my hash? It
+[1:56] can still ask, hey, is 11 in my hash? It does<c> not</c><c> exist.</c><c> So,</c><c> you</c><c> will</c><c> get</c><c> a</c>
+[1:58] does not exist. So, you will get a
+[1:58] does not exist. So, you will get a false.<c> This</c><c> is</c><c> the</c><c> basic</c><c> idea</c><c> of</c><c> a</c>
+[2:01] false. This is the basic idea of a
+[2:01] false. This is the basic idea of a hashet.<c> Somehow</c><c> you</c><c> are</c><c> trying</c><c> to</c>
+[2:03] hashet. Somehow you are trying to
+[2:03] hashet. Somehow you are trying to remember<c> okay</c><c> these</c><c> are</c><c> all</c><c> the</c><c> unique</c>
+[2:06] remember okay these are all the unique
+[2:06] remember okay these are all the unique elements<c> that</c><c> I</c><c> have</c><c> encountered</c><c> and</c><c> it</c>
+[2:09] elements that I have encountered and it
+[2:09] elements that I have encountered and it is<c> not</c><c> necessary</c><c> that</c><c> all</c><c> of</c><c> these</c><c> have</c>
+[2:11] is not necessary that all of these have
+[2:11] is not necessary that all of these have to<c> be</c><c> integers.</c><c> They</c><c> can</c><c> be</c><c> strings</c><c> they</c>
+[2:13] to be integers. They can be strings they
+[2:13] to be integers. They can be strings they can<c> be</c><c> also</c><c> objects.</c><c> It</c><c> is</c><c> up</c><c> to</c><c> you</c><c> to</c>
+[2:16] can be also objects. It is up to you to
+[2:16] can be also objects. It is up to you to decide<c> what</c><c> do</c><c> you</c><c> want</c><c> to</c><c> do</c><c> with</c><c> it.</c>
+[2:19] decide what do you want to do with it.
+[2:19] decide what do you want to do with it. Similarly<c> you</c><c> also</c><c> have</c><c> the</c><c> concept</c><c> of</c><c> a</c>
+[2:21] Similarly you also have the concept of a
+[2:21] Similarly you also have the concept of a hashmap.<c> In</c><c> a</c><c> hashmap</c><c> you</c><c> will</c><c> have</c><c> a</c>
+[2:25] hashmap. In a hashmap you will have a
+[2:25] hashmap. In a hashmap you will have a key<c> and</c><c> a</c><c> value.</c><c> But</c><c> all</c><c> of</c><c> these</c><c> keys</c>
+[2:29] key and a value. But all of these keys
+[2:29] key and a value. But all of these keys they<c> are</c><c> guaranteed</c><c> to</c><c> be</c><c> unique.</c><c> You</c>
+[2:32] they are guaranteed to be unique. You
+[2:32] they are guaranteed to be unique. You can<c> assign</c><c> different</c><c> type</c><c> of</c><c> keys</c><c> with</c>
+[2:34] can assign different type of keys with
+[2:34] can assign different type of keys with different<c> type</c><c> of</c><c> values.</c><c> For</c><c> example,</c>
+[2:37] different type of values. For example,
+[2:37] different type of values. For example, your<c> keys</c><c> can</c><c> be</c><c> all</c><c> integers</c><c> and</c><c> your</c>
+[2:40] your keys can be all integers and your
+[2:40] your keys can be all integers and your values<c> could</c><c> be</c><c> string</c><c> as</c><c> well.</c><c> And</c><c> at</c>
+[2:43] values could be string as well. And at
+[2:43] values could be string as well. And at any<c> instant</c><c> none</c><c> of</c><c> these</c><c> values</c><c> will</c><c> be</c>
+[2:45] any instant none of these values will be
+[2:46] any instant none of these values will be duplicated.<c> You</c><c> can</c><c> have</c><c> duplicated</c>
+[2:49] duplicated. You can have duplicated
+[2:49] duplicated. You can have duplicated values.
+[2:50] values.
+[2:50] values. This<c> is</c><c> perfectly</c><c> fine.</c><c> But</c><c> you</c><c> cannot</c>
+[2:53] This is perfectly fine. But you cannot
+[2:53] This is perfectly fine. But you cannot have<c> a</c><c> two</c><c> over</c><c> here.</c><c> This</c><c> is</c><c> the</c>
+[2:56] have a two over here. This is the
+[2:56] have a two over here. This is the advantage<c> that</c><c> a</c><c> hashmap</c><c> gives</c><c> you</c><c> and</c>
+[2:59] advantage that a hashmap gives you and
+[2:59] advantage that a hashmap gives you and once<c> again</c><c> it</c><c> will</c><c> take</c><c> up</c><c> a</c><c> order</c><c> of</c><c> n</c>
+[3:02] once again it will take up a order of n
+[3:02] once again it will take up a order of n extra<c> space</c><c> where</c><c> n</c><c> is</c><c> the</c><c> number</c><c> of</c>
+[3:05] extra space where n is the number of
+[3:05] extra space where n is the number of elements<c> you</c><c> are</c><c> trying</c><c> to</c><c> store</c><c> in</c><c> your</c>
+[3:07] elements you are trying to store in your
+[3:07] elements you are trying to store in your map.<c> But</c><c> the</c><c> advantage</c><c> you</c><c> get</c><c> is</c><c> you</c>
+[3:10] map. But the advantage you get is you
+[3:10] map. But the advantage you get is you can<c> query</c><c> all</c><c> of</c><c> these</c><c> values</c><c> in</c><c> a</c>
+[3:12] can query all of these values in a
+[3:12] can query all of these values in a constant<c> time.</c><c> So</c><c> you</c><c> can</c><c> straight</c><c> away</c>
+[3:14] constant time. So you can straight away
+[3:14] constant time. So you can straight away ask<c> okay</c><c> is</c><c> two</c><c> present</c><c> in</c><c> my</c><c> map?</c><c> So</c>
+[3:18] ask okay is two present in my map? So
+[3:18] ask okay is two present in my map? So you<c> will</c><c> get</c><c> either</c><c> a</c><c> true</c><c> or</c><c> a</c><c> false</c>
+[3:21] you will get either a true or a false
+[3:21] you will get either a true or a false and<c> you</c><c> can</c><c> ask</c><c> one</c><c> more</c><c> information</c>
+[3:23] and you can ask one more information
+[3:23] and you can ask one more information what<c> is</c><c> the</c><c> value</c><c> associated</c><c> with</c><c> two.</c>
+[3:26] what is the value associated with two.
+[3:26] what is the value associated with two. So<c> you</c><c> will</c><c> return</c><c> CD.</c><c> So</c><c> we</c><c> are</c><c> getting</c>
+[3:30] So you will return CD. So we are getting
+[3:30] So you will return CD. So we are getting two<c> advantages</c><c> over</c><c> here.</c><c> You</c><c> can</c><c> either</c>
+[3:32] two advantages over here. You can either
+[3:32] two advantages over here. You can either ask<c> in</c><c> your</c><c> map</c><c> is</c><c> the</c><c> key</c><c> present.</c><c> So</c>
+[3:35] ask in your map is the key present. So
+[3:35] ask in your map is the key present. So this<c> is</c><c> very</c><c> similar</c><c> to</c><c> a</c><c> hash</c><c> fet</c><c> but</c>
+[3:37] this is very similar to a hash fet but
+[3:37] this is very similar to a hash fet but at<c> the</c><c> same</c><c> time</c><c> you</c><c> also</c><c> get</c><c> to</c><c> store</c><c> a</c>
+[3:40] at the same time you also get to store a
+[3:40] at the same time you also get to store a certain<c> value</c><c> that</c><c> is</c><c> associated</c><c> with</c>
+[3:42] certain value that is associated with
+[3:42] certain value that is associated with it.<c> This</c><c> is</c><c> the</c><c> basic</c><c> understanding</c><c> how</c>
+[3:45] it. This is the basic understanding how
+[3:45] it. This is the basic understanding how hash<c> maps</c><c> and</c><c> hash</c><c> fetss</c><c> work.</c><c> So</c><c> before</c>
+[3:48] hash maps and hash fetss work. So before
+[3:48] hash maps and hash fetss work. So before we<c> try</c><c> to</c><c> understand</c><c> even</c><c> more,</c><c> let</c><c> us</c>
+[3:51] we try to understand even more, let us
+[3:51] we try to understand even more, let us quickly<c> take</c><c> a</c><c> look</c><c> at</c><c> some</c><c> very</c>
+[3:52] quickly take a look at some very
+[3:52] quickly take a look at some very familiar<c> examples</c><c> and</c><c> then</c><c> you</c><c> will</c>
+[3:55] familiar examples and then you will
+[3:55] familiar examples and then you will start<c> to</c><c> get</c><c> an</c><c> idea</c><c> about</c><c> it.</c><c> I'm</c>
+[3:57] start to get an idea about it. I'm
+[3:57] start to get an idea about it. I'm pretty<c> sure</c><c> you</c><c> must</c><c> have</c><c> heard</c><c> about</c>
+[3:59] pretty sure you must have heard about
+[3:59] pretty sure you must have heard about this<c> problem</c><c> to</c><c> sum</c><c> but</c><c> this</c><c> time</c><c> your</c>
+[4:02] this problem to sum but this time your
+[4:02] this problem to sum but this time your array<c> is</c><c> unsorted.</c><c> The</c><c> idea</c><c> over</c><c> here</c><c> is</c>
+[4:05] array is unsorted. The idea over here is
+[4:05] array is unsorted. The idea over here is you<c> are</c><c> given</c><c> an</c><c> unsorted</c><c> array</c><c> and</c><c> you</c>
+[4:08] you are given an unsorted array and you
+[4:08] you are given an unsorted array and you have<c> to</c><c> tell</c><c> me</c><c> if</c><c> there</c><c> are</c><c> any</c><c> two</c>
+[4:11] have to tell me if there are any two
+[4:11] have to tell me if there are any two inteious<c> available</c><c> that</c><c> sum</c><c> up</c><c> to</c><c> a</c>
+[4:14] inteious available that sum up to a
+[4:14] inteious available that sum up to a particular<c> number.</c><c> Let</c><c> us</c><c> say</c><c> the</c>
+[4:16] particular number. Let us say the
+[4:16] particular number. Let us say the desired<c> sum</c><c> is</c><c> 10.</c><c> So</c><c> how</c><c> do</c><c> you</c>
+[4:19] desired sum is 10. So how do you
+[4:19] desired sum is 10. So how do you approach<c> it?</c><c> A</c><c> brute</c><c> force</c><c> way</c><c> will</c><c> be</c>
+[4:21] approach it? A brute force way will be
+[4:21] approach it? A brute force way will be that<c> you</c><c> will</c><c> pick</c><c> up</c><c> two</c><c> elements</c><c> every</c>
+[4:23] that you will pick up two elements every
+[4:23] that you will pick up two elements every time<c> and</c><c> then</c><c> try</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum.</c>
+[4:25] time and then try to find out the sum.
+[4:25] time and then try to find out the sum. This<c> will</c><c> take</c><c> up</c><c> a</c><c> time</c><c> complexity</c><c> of</c>
+[4:27] This will take up a time complexity of
+[4:27] This will take up a time complexity of order<c> of</c><c> n².</c><c> But</c><c> you</c><c> can</c><c> do</c><c> something</c>
+[4:30] order of n². But you can do something
+[4:30] order of n². But you can do something efficient.<c> What</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c>
+[4:32] efficient. What you can do is you can
+[4:32] efficient. What you can do is you can pick<c> up</c><c> a</c><c> hash</c><c> set.</c><c> In</c><c> this</c><c> set</c><c> first</c><c> of</c>
+[4:35] pick up a hash set. In this set first of
+[4:35] pick up a hash set. In this set first of all<c> add</c><c> all</c><c> the</c><c> numbers</c><c> that</c><c> are</c>
+[4:37] all add all the numbers that are
+[4:37] all add all the numbers that are available<c> to</c><c> you.</c><c> Immediately</c><c> I</c><c> can</c>
+[4:40] available to you. Immediately I can
+[4:40] available to you. Immediately I can query<c> if</c><c> any</c><c> of</c><c> this</c><c> number</c><c> is</c><c> present.</c>
+[4:43] query if any of this number is present.
+[4:43] query if any of this number is present. So<c> how</c><c> do</c><c> you</c><c> approach</c><c> it?</c><c> You</c><c> take</c><c> up</c>
+[4:45] So how do you approach it? You take up
+[4:45] So how do you approach it? You take up this<c> number</c><c> minus2</c><c> and</c><c> then</c><c> if</c><c> you</c><c> want</c>
+[4:48] this number minus2 and then if you want
+[4:48] this number minus2 and then if you want to<c> find</c><c> another</c><c> number</c><c> such</c><c> that</c><c> -2</c><c> +</c><c> of</c>
+[4:51] to find another number such that -2 + of
+[4:51] to find another number such that -2 + of x<c> gives</c><c> you</c><c> 10.</c><c> So</c><c> what</c><c> should</c><c> be</c><c> the</c>
+[4:54] x gives you 10. So what should be the
+[4:54] x gives you 10. So what should be the value<c> of</c><c> x?</c><c> x</c><c> should</c><c> be</c><c> 12.</c><c> Correct?</c><c> If</c>
+[4:58] value of x? x should be 12. Correct? If
+[4:58] value of x? x should be 12. Correct? If 12<c> was</c><c> present</c><c> in</c><c> my</c><c> array</c><c> then</c><c> you</c><c> got</c>
+[5:01] 12 was present in my array then you got
+[5:01] 12 was present in my array then you got the<c> answer.</c><c> But</c><c> how</c><c> do</c><c> you</c><c> scan</c><c> for</c><c> 12?</c>
+[5:04] the answer. But how do you scan for 12?
+[5:04] the answer. But how do you scan for 12? You<c> don't</c><c> want</c><c> to</c><c> iterate</c><c> over</c><c> your</c>
+[5:06] You don't want to iterate over your
+[5:06] You don't want to iterate over your array<c> again.</c><c> This</c><c> is</c><c> where</c><c> this</c><c> set</c>
+[5:08] array again. This is where this set
+[5:08] array again. This is where this set comes<c> in.</c><c> You</c><c> will</c><c> immediately</c><c> look</c><c> up</c>
+[5:11] comes in. You will immediately look up
+[5:11] comes in. You will immediately look up is<c> 12</c><c> present</c><c> in</c><c> my</c><c> hash</c><c> fet.</c><c> No.</c><c> So</c><c> it</c>
+[5:14] is 12 present in my hash fet. No. So it
+[5:14] is 12 present in my hash fet. No. So it means<c> 2</c><c> cannot</c><c> be</c><c> a</c><c> part</c><c> of</c><c> your</c><c> answer.</c>
+[5:17] means 2 cannot be a part of your answer.
+[5:17] means 2 cannot be a part of your answer. What<c> about</c><c> minus</c><c> 5?</c><c> Now</c><c> you</c><c> need</c><c> min</c><c> -5</c>
+[5:20] What about minus 5? Now you need min -5
+[5:20] What about minus 5? Now you need min -5 +<c> of</c><c> 15</c><c> to</c><c> get</c><c> 10.</c><c> Correct?</c><c> So</c><c> you</c><c> look</c>
+[5:23] + of 15 to get 10. Correct? So you look
+[5:24] + of 15 to get 10. Correct? So you look up<c> can</c><c> you</c><c> find</c><c> a</c><c> 15?</c><c> No.</c><c> So</c><c> this</c><c> also</c>
+[5:27] up can you find a 15? No. So this also
+[5:27] up can you find a 15? No. So this also cannot<c> be</c><c> a</c><c> part</c><c> of</c><c> your</c><c> answer.</c><c> Can</c><c> you</c>
+[5:29] cannot be a part of your answer. Can you
+[5:29] cannot be a part of your answer. Can you use<c> six?</c><c> To</c><c> get</c><c> 10</c><c> you</c><c> will</c><c> need</c><c> a</c><c> four</c>
+[5:33] use six? To get 10 you will need a four
+[5:33] use six? To get 10 you will need a four correct.<c> So</c><c> you</c><c> can</c><c> now</c><c> search</c><c> hey</c><c> is</c>
+[5:36] correct. So you can now search hey is
+[5:36] correct. So you can now search hey is four<c> present</c><c> in</c><c> my</c><c> hash?</c><c> Yes</c><c> you</c><c> found</c><c> a</c>
+[5:39] four present in my hash? Yes you found a
+[5:39] four present in my hash? Yes you found a value.<c> So</c><c> you</c><c> can</c><c> say</c><c> that</c><c> okay</c><c> 6a</c><c> 4</c><c> are</c>
+[5:42] value. So you can say that okay 6a 4 are
+[5:42] value. So you can say that okay 6a 4 are the<c> two</c><c> inteious</c><c> which</c><c> will</c><c> add</c><c> up</c><c> to</c>
+[5:45] the two inteious which will add up to
+[5:45] the two inteious which will add up to give<c> you</c><c> the</c><c> result</c><c> 10</c><c> n.</c><c> You</c><c> can</c><c> see</c>
+[5:47] give you the result 10 n. You can see
+[5:47] give you the result 10 n. You can see how<c> hash</c><c> set</c><c> gave</c><c> us</c><c> advantage.</c><c> The</c><c> time</c>
+[5:50] how hash set gave us advantage. The time
+[5:50] how hash set gave us advantage. The time complexity<c> changed</c><c> from</c><c> order</c><c> of</c><c> n²</c><c> to</c>
+[5:52] complexity changed from order of n² to
+[5:52] complexity changed from order of n² to order<c> of</c><c> 2n</c><c> which</c><c> is</c><c> relatively</c><c> just</c>
+[5:55] order of 2n which is relatively just
+[5:55] order of 2n which is relatively just order<c> of</c><c> n</c><c> because</c><c> you</c><c> are</c><c> scanning</c><c> the</c>
+[5:57] order of n because you are scanning the
+[5:58] order of n because you are scanning the array<c> only</c><c> twice.</c><c> But</c><c> keep</c><c> in</c><c> mind</c><c> that</c>
+[6:01] array only twice. But keep in mind that
+[6:01] array only twice. But keep in mind that you<c> used</c><c> up</c><c> extra</c><c> order</c><c> of</c><c> n</c><c> space</c><c> to</c>
+[6:03] you used up extra order of n space to
+[6:03] you used up extra order of n space to arrive<c> at</c><c> this</c><c> efficient</c><c> solution.</c>
+[6:06] arrive at this efficient solution.
+[6:06] arrive at this efficient solution. Let<c> us</c><c> move</c><c> on</c><c> to</c><c> another</c><c> problem.</c><c> Now</c>
+[6:08] Let us move on to another problem. Now
+[6:08] Let us move on to another problem. Now over<c> here</c><c> you</c><c> are</c><c> given</c><c> a</c><c> sudoku</c><c> board</c>
+[6:11] over here you are given a sudoku board
+[6:11] over here you are given a sudoku board and<c> you</c><c> have</c><c> to</c><c> verify</c><c> if</c><c> this</c><c> sudoku</c>
+[6:14] and you have to verify if this sudoku
+[6:14] and you have to verify if this sudoku board<c> is</c><c> actually</c><c> valid</c><c> or</c><c> not.</c><c> If</c><c> you</c>
+[6:17] board is actually valid or not. If you
+[6:17] board is actually valid or not. If you remember<c> what</c><c> are</c><c> the</c><c> rules</c><c> of</c><c> sudoku.</c>
+[6:19] remember what are the rules of sudoku.
+[6:19] remember what are the rules of sudoku. For<c> each</c><c> of</c><c> these</c><c> small</c><c> squares</c><c> you</c>
+[6:22] For each of these small squares you
+[6:22] For each of these small squares you should<c> have</c><c> number</c><c> from</c><c> 1</c><c> to</c><c> 9.</c>
+[6:25] should have number from 1 to 9.
+[6:25] should have number from 1 to 9. And<c> for</c><c> each</c><c> of</c><c> these</c><c> columns</c><c> you</c><c> should</c>
+[6:28] And for each of these columns you should
+[6:28] And for each of these columns you should also<c> have</c><c> the</c><c> number</c><c> from</c><c> 1</c><c> to</c><c> 9.</c><c> And</c>
+[6:31] also have the number from 1 to 9. And
+[6:31] also have the number from 1 to 9. And this<c> should</c><c> be</c><c> true</c><c> for</c><c> each</c><c> of</c><c> the</c>
+[6:33] this should be true for each of the
+[6:33] this should be true for each of the column.<c> Again</c><c> all</c><c> of</c><c> these</c><c> rows</c><c> they</c>
+[6:37] column. Again all of these rows they
+[6:37] column. Again all of these rows they should<c> have</c><c> numbers</c><c> from</c><c> 1</c><c> to</c><c> 9.</c><c> If</c><c> any</c>
+[6:41] should have numbers from 1 to 9. If any
+[6:41] should have numbers from 1 to 9. If any row<c> or</c><c> any</c><c> column</c><c> or</c><c> any</c><c> of</c><c> the</c><c> smaller</c>
+[6:43] row or any column or any of the smaller
+[6:43] row or any column or any of the smaller squares<c> they</c><c> have</c><c> duplicate</c><c> numbers</c><c> it</c>
+[6:46] squares they have duplicate numbers it
+[6:46] squares they have duplicate numbers it is<c> not</c><c> a</c><c> valid</c><c> pseudoku.</c><c> So</c><c> what</c><c> does</c>
+[6:48] is not a valid pseudoku. So what does
+[6:48] is not a valid pseudoku. So what does this<c> tell</c><c> you?</c><c> You</c><c> have</c><c> to</c><c> again</c><c> think</c>
+[6:51] this tell you? You have to again think
+[6:51] this tell you? You have to again think okay<c> have</c><c> I</c><c> encountered</c><c> this</c><c> number</c>
+[6:53] okay have I encountered this number
+[6:53] okay have I encountered this number before?<c> Is</c><c> there</c><c> a</c><c> duplicate?</c>
+[6:56] before? Is there a duplicate?
+[6:56] before? Is there a duplicate? Immediately<c> you</c><c> should</c><c> use</c><c> a</c><c> hash</c><c> set.</c>
+[6:58] Immediately you should use a hash set.
+[6:58] Immediately you should use a hash set. So<c> what</c><c> are</c><c> we</c><c> going</c><c> to</c><c> do</c><c> over</c><c> here?</c><c> We</c>
+[7:01] So what are we going to do over here? We
+[7:01] So what are we going to do over here? We can<c> create</c><c> individual</c><c> hashetss</c><c> for</c><c> each</c>
+[7:04] can create individual hashetss for each
+[7:04] can create individual hashetss for each of<c> these</c><c> smaller</c><c> squares.</c><c> So</c><c> you</c><c> are</c>
+[7:06] of these smaller squares. So you are
+[7:06] of these smaller squares. So you are going<c> to</c><c> have</c><c> nine</c><c> of</c><c> these</c><c> hashetss</c><c> for</c>
+[7:09] going to have nine of these hashetss for
+[7:09] going to have nine of these hashetss for each<c> of</c><c> the</c><c> smaller</c><c> squares.</c><c> Then</c><c> you</c>
+[7:12] each of the smaller squares. Then you
+[7:12] each of the smaller squares. Then you can<c> have</c><c> individual</c><c> hash</c><c> fetss</c><c> for</c><c> each</c>
+[7:14] can have individual hash fetss for each
+[7:14] can have individual hash fetss for each of<c> your</c><c> rows.</c><c> And</c><c> then</c><c> similarly</c><c> you</c><c> can</c>
+[7:18] of your rows. And then similarly you can
+[7:18] of your rows. And then similarly you can have<c> individual</c><c> hash</c><c> fats</c><c> for</c><c> your</c>
+[7:19] have individual hash fats for your
+[7:20] have individual hash fats for your columns<c> also.</c><c> For</c><c> each</c><c> of</c><c> these</c><c> hash</c>
+[7:22] columns also. For each of these hash
+[7:22] columns also. For each of these hash fits<c> you</c><c> will</c><c> try</c><c> to</c><c> add</c><c> all</c><c> of</c><c> the</c>
+[7:24] fits you will try to add all of the
+[7:24] fits you will try to add all of the numbers.<c> So</c><c> take</c><c> up</c><c> your</c><c> first</c><c> square</c>
+[7:26] numbers. So take up your first square
+[7:26] numbers. So take up your first square and<c> add</c><c> all</c><c> of</c><c> these</c><c> numbers.</c><c> take</c><c> up</c>
+[7:28] and add all of these numbers. take up
+[7:28] and add all of these numbers. take up your<c> second</c><c> square</c><c> and</c><c> add</c><c> all</c><c> of</c><c> these</c>
+[7:30] your second square and add all of these
+[7:30] your second square and add all of these numbers.<c> Similarly,</c><c> do</c><c> this</c><c> for</c><c> each</c><c> of</c>
+[7:33] numbers. Similarly, do this for each of
+[7:33] numbers. Similarly, do this for each of the<c> square</c><c> that</c><c> you're</c><c> encountering.</c><c> If</c>
+[7:35] the square that you're encountering. If
+[7:35] the square that you're encountering. If at<c> any</c><c> instance</c><c> you</c><c> see</c><c> that</c><c> a</c><c> number</c>
+[7:38] at any instance you see that a number
+[7:38] at any instance you see that a number was<c> already</c><c> present</c><c> in</c><c> your</c><c> set,</c><c> that</c>
+[7:40] was already present in your set, that
+[7:40] was already present in your set, that means<c> this</c><c> sudoku</c><c> is</c><c> not</c><c> valid.</c><c> If</c><c> you</c>
+[7:43] means this sudoku is not valid. If you
+[7:43] means this sudoku is not valid. If you have<c> iterated</c><c> over</c><c> entire</c><c> elements</c><c> and</c>
+[7:45] have iterated over entire elements and
+[7:46] have iterated over entire elements and find<c> that</c><c> okay,</c><c> I'm</c><c> not</c><c> finding</c><c> any</c>
+[7:48] find that okay, I'm not finding any
+[7:48] find that okay, I'm not finding any duplicates,<c> then</c><c> this</c><c> sudoku</c><c> is</c><c> valid.</c>
+[7:51] duplicates, then this sudoku is valid.
+[7:51] duplicates, then this sudoku is valid. For<c> example,</c><c> try</c><c> to</c><c> notice</c><c> what</c><c> will</c>
+[7:53] For example, try to notice what will
+[7:53] For example, try to notice what will happen<c> when</c><c> I'm</c><c> going</c><c> over</c><c> this</c><c> row.</c><c> So</c>
+[7:56] happen when I'm going over this row. So
+[7:56] happen when I'm going over this row. So for<c> a</c><c> row</c><c> I'm</c><c> going</c><c> to</c><c> take</c><c> up</c><c> this</c>
+[7:58] for a row I'm going to take up this
+[7:58] for a row I'm going to take up this hash.<c> I</c><c> start</c><c> adding</c><c> the</c><c> elements.</c><c> I</c><c> add</c>
+[8:02] hash. I start adding the elements. I add
+[8:02] hash. I start adding the elements. I add a<c> one</c><c> here.</c><c> Then</c><c> I</c><c> add</c><c> a</c><c> two</c><c> then</c><c> five.</c>
+[8:05] a one here. Then I add a two then five.
+[8:05] a one here. Then I add a two then five. Then<c> three.</c><c> And</c><c> then</c><c> what</c><c> do</c><c> I</c><c> see?</c><c> I</c>
+[8:08] Then three. And then what do I see? I
+[8:08] Then three. And then what do I see? I see<c> a</c><c> two</c><c> again.</c><c> Two</c><c> is</c><c> already</c><c> present.</c>
+[8:11] see a two again. Two is already present.
+[8:11] see a two again. Two is already present. So<c> immediately</c><c> this</c><c> sudoku</c><c> is</c><c> not</c><c> valid</c>
+[8:14] So immediately this sudoku is not valid
+[8:14] So immediately this sudoku is not valid at<c> all.</c><c> Also</c><c> if</c><c> you</c><c> notice</c><c> closely</c><c> we</c>
+[8:18] at all. Also if you notice closely we
+[8:18] at all. Also if you notice closely we have<c> multiple</c><c> eights</c><c> in</c><c> the</c><c> same</c><c> column.</c>
+[8:21] have multiple eights in the same column.
+[8:21] have multiple eights in the same column. So<c> this</c><c> sudoku</c><c> is</c><c> not</c><c> valid</c><c> with</c>
+[8:24] So this sudoku is not valid with
+[8:24] So this sudoku is not valid with multiple<c> causes.</c><c> But</c><c> what</c><c> did</c><c> we</c><c> do?</c><c> In</c>
+[8:27] multiple causes. But what did we do? In
+[8:27] multiple causes. But what did we do? In just<c> a</c><c> single</c><c> iteration,</c><c> we</c><c> were</c><c> able</c><c> to</c>
+[8:29] just a single iteration, we were able to
+[8:29] just a single iteration, we were able to verify<c> if</c><c> this</c><c> sudoku</c><c> is</c><c> valid</c><c> or</c><c> not.</c>
+[8:32] verify if this sudoku is valid or not.
+[8:32] verify if this sudoku is valid or not. So<c> what</c><c> are</c><c> we</c><c> doing</c><c> over</c><c> here?</c><c> How</c><c> are</c>
+[8:34] So what are we doing over here? How are
+[8:34] So what are we doing over here? How are we<c> identifying</c><c> if</c><c> you</c><c> can</c><c> apply</c><c> the</c>
+[8:36] we identifying if you can apply the
+[8:36] we identifying if you can apply the hashmap<c> or</c><c> a</c><c> hash</c><c> fit</c><c> pattern?</c>
+[8:39] hashmap or a hash fit pattern?
+[8:39] hashmap or a hash fit pattern? Basically,<c> you</c><c> should</c><c> be</c><c> asking</c><c> yourself</c>
+[8:41] Basically, you should be asking yourself
+[8:41] Basically, you should be asking yourself some<c> different</c><c> kind</c><c> of</c><c> questions.</c><c> Go</c>
+[8:44] some different kind of questions. Go
+[8:44] some different kind of questions. Go over<c> the</c><c> problem</c><c> statement</c><c> and</c><c> try</c><c> to</c>
+[8:46] over the problem statement and try to
+[8:46] over the problem statement and try to think<c> about</c><c> a</c><c> solution.</c><c> Try</c><c> to</c><c> think</c><c> how</c>
+[8:49] think about a solution. Try to think how
+[8:49] think about a solution. Try to think how do<c> you</c><c> want</c><c> to</c><c> scan</c><c> your</c><c> elements?</c><c> And</c>
+[8:52] do you want to scan your elements? And
+[8:52] do you want to scan your elements? And if<c> some</c><c> of</c><c> these</c><c> thoughts</c><c> come</c><c> to</c><c> your</c>
+[8:53] if some of these thoughts come to your
+[8:54] if some of these thoughts come to your mind,<c> for</c><c> example,</c><c> you</c><c> have</c><c> to</c><c> find</c>
+[8:56] mind, for example, you have to find
+[8:56] mind, for example, you have to find duplicates,<c> that</c><c> is</c><c> a</c><c> very</c><c> good</c>
+[8:58] duplicates, that is a very good
+[8:58] duplicates, that is a very good indicator<c> you</c><c> would</c><c> need</c><c> a</c><c> hash</c><c> fet</c>
+[9:00] indicator you would need a hash fet
+[9:00] indicator you would need a hash fet because<c> in</c><c> constant</c><c> time</c><c> you</c><c> can</c>
+[9:02] because in constant time you can
+[9:02] because in constant time you can determine<c> if</c><c> a</c><c> number</c><c> has</c><c> been</c>
+[9:04] determine if a number has been
+[9:04] determine if a number has been duplicated<c> or</c><c> not.</c><c> Similarly,</c><c> you</c><c> might</c>
+[9:07] duplicated or not. Similarly, you might
+[9:07] duplicated or not. Similarly, you might want<c> to</c><c> count</c><c> frequencies.</c><c> So</c><c> you</c><c> are</c>
+[9:10] want to count frequencies. So you are
+[9:10] want to count frequencies. So you are given<c> a</c><c> string</c><c> and</c><c> you</c><c> want</c><c> to</c><c> know</c><c> how</c>
+[9:12] given a string and you want to know how
+[9:12] given a string and you want to know how many<c> times</c><c> a</c><c> character</c><c> is</c><c> appearing.</c>
+[9:14] many times a character is appearing.
+[9:14] many times a character is appearing. Once<c> again,</c><c> you</c><c> need</c><c> a</c><c> hashmap</c><c> because</c>
+[9:17] Once again, you need a hashmap because
+[9:17] Once again, you need a hashmap because you<c> can</c><c> immediately</c><c> pinpoint</c><c> if</c><c> the</c>
+[9:19] you can immediately pinpoint if the
+[9:20] you can immediately pinpoint if the number<c> is</c><c> present</c><c> or</c><c> not</c><c> and</c><c> then</c><c> what</c>
+[9:22] number is present or not and then what
+[9:22] number is present or not and then what is<c> the</c><c> frequency.</c><c> So</c><c> what</c><c> are</c><c> we</c><c> doing?</c>
+[9:24] is the frequency. So what are we doing?
+[9:24] is the frequency. So what are we doing? We<c> are</c><c> trying</c><c> to</c><c> track</c><c> the</c><c> state</c><c> of</c><c> a</c>
+[9:27] We are trying to track the state of a
+[9:27] We are trying to track the state of a particular<c> element</c><c> that</c><c> have</c><c> I</c>
+[9:29] particular element that have I
+[9:30] particular element that have I encountered<c> this</c><c> before</c><c> and</c><c> what</c><c> was</c><c> it</c>
+[9:32] encountered this before and what was it
+[9:32] encountered this before and what was it current<c> state?</c><c> It</c><c> could</c><c> be</c><c> frequency.</c><c> It</c>
+[9:34] current state? It could be frequency. It
+[9:34] current state? It could be frequency. It could<c> just</c><c> be</c><c> the</c><c> existence</c><c> also.</c><c> I</c><c> hope</c>
+[9:37] could just be the existence also. I hope
+[9:37] could just be the existence also. I hope this<c> is</c><c> now</c><c> giving</c><c> you</c><c> an</c><c> idea</c><c> where</c><c> you</c>
+[9:39] this is now giving you an idea where you
+[9:39] this is now giving you an idea where you can<c> apply</c><c> this</c><c> pattern.</c><c> Let</c><c> us</c><c> continue</c>
+[9:42] can apply this pattern. Let us continue
+[9:42] can apply this pattern. Let us continue to<c> solve</c><c> more</c><c> problems</c><c> and</c><c> you</c><c> are</c><c> going</c>
+[9:44] to solve more problems and you are going
+[9:44] to solve more problems and you are going to<c> see</c><c> how</c><c> fast</c><c> the</c><c> process</c><c> is.</c><c> For</c>
+[9:47] to see how fast the process is. For
+[9:47] to see how fast the process is. For example,<c> I</c><c> have</c><c> this</c><c> problem</c><c> over</c><c> here</c>
+[9:49] example, I have this problem over here
+[9:49] example, I have this problem over here zero<c> stripping.</c><c> The</c><c> problem</c><c> says</c><c> that</c>
+[9:52] zero stripping. The problem says that
+[9:52] zero stripping. The problem says that you<c> are</c><c> given</c><c> a</c><c> matrix</c><c> like</c><c> this.</c><c> If</c><c> you</c>
+[9:55] you are given a matrix like this. If you
+[9:55] you are given a matrix like this. If you see<c> a</c><c> zero</c><c> anywhere,</c><c> then</c><c> this</c><c> entire</c>
+[9:59] see a zero anywhere, then this entire
+[9:59] see a zero anywhere, then this entire column<c> and</c><c> the</c><c> entire</c><c> row</c><c> they</c><c> should</c>
+[10:02] column and the entire row they should
+[10:02] column and the entire row they should all<c> get</c><c> converted</c><c> to</c><c> zeros.</c><c> That</c><c> is</c><c> the</c>
+[10:06] all get converted to zeros. That is the
+[10:06] all get converted to zeros. That is the desired<c> output.</c><c> If</c><c> you</c><c> check</c><c> over</c><c> here,</c>
+[10:09] desired output. If you check over here,
+[10:09] desired output. If you check over here, all<c> of</c><c> these</c><c> elements</c><c> have</c><c> converted</c><c> to</c>
+[10:11] all of these elements have converted to
+[10:11] all of these elements have converted to zero.<c> And</c><c> for</c><c> this</c><c> particular</c><c> zero,</c><c> both</c>
+[10:13] zero. And for this particular zero, both
+[10:13] zero. And for this particular zero, both the<c> rows</c><c> and</c><c> columns</c><c> have</c><c> converted</c><c> to</c>
+[10:15] the rows and columns have converted to
+[10:15] the rows and columns have converted to zero.<c> When</c><c> you</c><c> solve</c><c> this</c><c> problem,</c><c> you</c>
+[10:18] zero. When you solve this problem, you
+[10:18] zero. When you solve this problem, you cannot<c> just</c><c> start</c><c> iterating</c><c> and</c><c> then</c><c> as</c>
+[10:21] cannot just start iterating and then as
+[10:21] cannot just start iterating and then as soon<c> as</c><c> you</c><c> see</c><c> a</c><c> zero,</c><c> you</c><c> cannot</c><c> mark</c>
+[10:23] soon as you see a zero, you cannot mark
+[10:23] soon as you see a zero, you cannot mark all<c> of</c><c> these</c><c> elements</c><c> as</c><c> zero</c><c> because</c>
+[10:26] all of these elements as zero because
+[10:26] all of these elements as zero because you<c> have</c><c> to</c><c> travel</c><c> further</c><c> also.</c><c> And</c><c> if</c>
+[10:29] you have to travel further also. And if
+[10:29] you have to travel further also. And if you<c> do</c><c> this</c><c> then</c><c> all</c><c> of</c><c> these</c><c> columns</c>
+[10:31] you do this then all of these columns
+[10:31] you do this then all of these columns will<c> start</c><c> getting</c><c> to</c><c> mark</c><c> zero.</c><c> But</c>
+[10:34] will start getting to mark zero. But
+[10:34] will start getting to mark zero. But that<c> is</c><c> not</c><c> what</c><c> we</c><c> desire.</c><c> So</c><c> somehow</c>
+[10:37] that is not what we desire. So somehow
+[10:37] that is not what we desire. So somehow you<c> need</c><c> to</c><c> remember</c><c> that</c><c> okay</c><c> I</c><c> need</c><c> to</c>
+[10:40] you need to remember that okay I need to
+[10:40] you need to remember that okay I need to make<c> this</c><c> column</c><c> as</c><c> zero</c><c> and</c><c> make</c><c> this</c>
+[10:43] make this column as zero and make this
+[10:43] make this column as zero and make this row<c> as</c><c> zero.</c><c> So</c><c> once</c><c> again</c><c> you</c><c> got</c><c> your</c>
+[10:47] row as zero. So once again you got your
+[10:47] row as zero. So once again you got your hint.<c> What</c><c> you</c><c> will</c><c> do</c><c> is</c><c> you</c><c> will</c><c> make</c>
+[10:49] hint. What you will do is you will make
+[10:49] hint. What you will do is you will make a<c> row</c><c> hashet</c><c> and</c><c> you</c><c> will</c><c> make</c><c> a</c><c> column</c>
+[10:52] a row hashet and you will make a column
+[10:52] a row hashet and you will make a column hash<c> set.</c><c> In</c><c> your</c><c> row</c><c> hashet</c><c> you</c><c> write</c>
+[10:55] hash set. In your row hashet you write
+[10:55] hash set. In your row hashet you write down<c> which</c><c> rows</c><c> you</c><c> want</c><c> to</c><c> make</c><c> zero.</c>
+[10:58] down which rows you want to make zero.
+[10:58] down which rows you want to make zero. So<c> I</c><c> want</c><c> to</c><c> make</c><c> row</c><c> one</c><c> as</c><c> zero</c><c> and</c><c> I</c>
+[11:00] So I want to make row one as zero and I
+[11:00] So I want to make row one as zero and I want<c> to</c><c> make</c><c> row</c><c> three</c><c> as</c><c> zero.</c><c> Which</c>
+[11:02] want to make row three as zero. Which
+[11:02] want to make row three as zero. Which columns<c> I</c><c> want</c><c> to</c><c> make</c><c> zero.</c><c> I</c><c> want</c><c> to</c>
+[11:05] columns I want to make zero. I want to
+[11:05] columns I want to make zero. I want to make<c> column</c><c> 1</c><c> as</c><c> zero</c><c> and</c><c> column</c><c> four</c><c> as</c>
+[11:07] make column 1 as zero and column four as
+[11:07] make column 1 as zero and column four as zero.<c> Now</c><c> what</c><c> you</c><c> can</c><c> do</c><c> you</c><c> have</c>
+[11:10] zero. Now what you can do you have
+[11:10] zero. Now what you can do you have iterated<c> over</c><c> every</c><c> element.</c><c> Just</c><c> look</c>
+[11:12] iterated over every element. Just look
+[11:12] iterated over every element. Just look at<c> these</c><c> particular</c><c> rows</c><c> and</c><c> columns</c><c> and</c>
+[11:15] at these particular rows and columns and
+[11:15] at these particular rows and columns and marked<c> them</c><c> as</c><c> zero.</c><c> That's</c><c> it.</c><c> Once</c>
+[11:18] marked them as zero. That's it. Once
+[11:18] marked them as zero. That's it. Once again<c> with</c><c> just</c><c> one</c><c> scan</c><c> you</c><c> were</c><c> able</c>
+[11:20] again with just one scan you were able
+[11:20] again with just one scan you were able to<c> arrive</c><c> at</c><c> your</c><c> solution.</c>
+[11:22] to arrive at your solution.
+[11:22] to arrive at your solution. This<c> next</c><c> problem</c><c> is</c><c> one</c><c> which</c><c> I</c><c> really</c>
+[11:24] This next problem is one which I really
+[11:24] This next problem is one which I really like.<c> You</c><c> are</c><c> given</c><c> this</c><c> array</c><c> and</c><c> you</c>
+[11:28] like. You are given this array and you
+[11:28] like. You are given this array and you have<c> to</c><c> tell</c><c> me</c><c> the</c><c> longest</c><c> chain</c><c> of</c>
+[11:30] have to tell me the longest chain of
+[11:30] have to tell me the longest chain of consecutive<c> integers</c><c> that</c><c> you</c><c> can</c><c> find.</c>
+[11:33] consecutive integers that you can find.
+[11:33] consecutive integers that you can find. So<c> if</c><c> you</c><c> notice</c><c> you</c><c> can</c><c> find</c><c> one</c><c> chain</c>
+[11:35] So if you notice you can find one chain
+[11:35] So if you notice you can find one chain 1<c> 2</c><c> and</c><c> three.</c><c> You</c><c> cannot</c><c> find</c><c> a</c><c> four.</c>
+[11:38] 1 2 and three. You cannot find a four.
+[11:38] 1 2 and three. You cannot find a four. So<c> you</c><c> can</c><c> stop.</c><c> Similarly</c><c> you</c><c> can</c><c> also</c>
+[11:41] So you can stop. Similarly you can also
+[11:41] So you can stop. Similarly you can also find<c> 5</c><c> 6</c><c> 7</c><c> 8.</c><c> This</c><c> is</c><c> also</c><c> a</c><c> chain.</c><c> This</c>
+[11:46] find 5 6 7 8. This is also a chain. This
+[11:46] find 5 6 7 8. This is also a chain. This is<c> longer</c><c> for</c><c> four</c><c> elements.</c><c> So</c><c> over</c>
+[11:49] is longer for four elements. So over
+[11:49] is longer for four elements. So over here<c> this</c><c> is</c><c> the</c><c> answer.</c><c> But</c><c> you</c><c> may</c><c> ask</c>
+[11:53] here this is the answer. But you may ask
+[11:53] here this is the answer. But you may ask okay<c> how</c><c> can</c><c> I</c><c> apply</c><c> a</c><c> hash</c><c> set</c><c> or</c><c> a</c>
+[11:55] okay how can I apply a hash set or a
+[11:55] okay how can I apply a hash set or a hashmap<c> over</c><c> here.</c><c> While</c><c> scanning</c>
+[11:58] hashmap over here. While scanning
+[11:58] hashmap over here. While scanning through<c> the</c><c> array,</c><c> you</c><c> need</c><c> to</c><c> somehow</c>
+[12:00] through the array, you need to somehow
+[12:00] through the array, you need to somehow remember<c> that</c><c> have</c><c> I</c><c> seen</c><c> a</c><c> smaller</c>
+[12:02] remember that have I seen a smaller
+[12:02] remember that have I seen a smaller element<c> than</c><c> this.</c><c> Try</c><c> to</c><c> think</c><c> if</c><c> I</c><c> am</c>
+[12:06] element than this. Try to think if I am
+[12:06] element than this. Try to think if I am looking<c> at</c><c> the</c><c> element</c><c> one.</c><c> If</c><c> in</c><c> my</c>
+[12:08] looking at the element one. If in my
+[12:08] looking at the element one. If in my array<c> I</c><c> had</c><c> a</c><c> zero</c><c> also</c><c> that</c><c> means</c><c> zero</c>
+[12:12] array I had a zero also that means zero
+[12:12] array I had a zero also that means zero would<c> be</c><c> the</c><c> starting</c><c> point</c><c> of</c><c> a</c><c> chain.</c>
+[12:15] would be the starting point of a chain.
+[12:15] would be the starting point of a chain. Correct?<c> If</c><c> I</c><c> cannot</c><c> find</c><c> a</c><c> element</c>
+[12:18] Correct? If I cannot find a element
+[12:18] Correct? If I cannot find a element smaller<c> than</c><c> one,</c><c> it</c><c> means</c><c> this</c><c> is</c><c> the</c>
+[12:21] smaller than one, it means this is the
+[12:21] smaller than one, it means this is the starting<c> point</c><c> of</c><c> probably</c><c> a</c><c> new</c><c> chain.</c>
+[12:24] starting point of probably a new chain.
+[12:24] starting point of probably a new chain. Correct?<c> So</c><c> what</c><c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I'm</c>
+[12:26] Correct? So what I'm going to do is I'm
+[12:26] Correct? So what I'm going to do is I'm going<c> to</c><c> take</c><c> up</c><c> a</c><c> hash</c><c> fit</c><c> and</c><c> then</c><c> I</c>
+[12:29] going to take up a hash fit and then I
+[12:29] going to take up a hash fit and then I add<c> up</c><c> all</c><c> of</c><c> my</c><c> numbers.</c>
+[12:32] add up all of my numbers.
+[12:32] add up all of my numbers. Now<c> what</c><c> you</c><c> can</c><c> do</c><c> start</c><c> off</c><c> with</c><c> the</c>
+[12:34] Now what you can do start off with the
+[12:34] Now what you can do start off with the first<c> element.</c><c> You</c><c> need</c><c> to</c><c> look</c><c> for</c><c> a</c>
+[12:36] first element. You need to look for a
+[12:36] first element. You need to look for a zero.<c> Can</c><c> you</c><c> find</c><c> a</c><c> zero</c><c> in</c><c> this</c><c> set?</c>
+[12:39] zero. Can you find a zero in this set?
+[12:39] zero. Can you find a zero in this set? No.<c> It</c><c> means</c><c> this</c><c> is</c><c> probably</c><c> the</c>
+[12:42] No. It means this is probably the
+[12:42] No. It means this is probably the starting<c> of</c><c> a</c><c> new</c><c> sequence.</c><c> And</c><c> this</c>
+[12:45] starting of a new sequence. And this
+[12:45] starting of a new sequence. And this lookup<c> happened</c><c> immediately.</c><c> You</c><c> don't</c>
+[12:47] lookup happened immediately. You don't
+[12:47] lookup happened immediately. You don't have<c> to</c><c> waste</c><c> time.</c><c> So</c><c> now</c><c> what</c><c> you</c><c> can</c>
+[12:49] have to waste time. So now what you can
+[12:49] have to waste time. So now what you can do?<c> You</c><c> can</c><c> look</c><c> for</c><c> two.</c><c> And</c><c> do</c><c> you</c>
+[12:52] do? You can look for two. And do you
+[12:52] do? You can look for two. And do you find<c> a</c><c> two?</c><c> Yes.</c><c> What</c><c> is</c><c> the</c><c> next</c>
+[12:55] find a two? Yes. What is the next
+[12:55] find a two? Yes. What is the next element<c> that</c><c> you</c><c> have</c><c> to</c><c> look</c><c> for?</c><c> You</c>
+[12:56] element that you have to look for? You
+[12:56] element that you have to look for? You need<c> to</c><c> look</c><c> for</c><c> three.</c><c> You</c><c> can</c><c> find</c><c> a</c>
+[12:57] need to look for three. You can find a
+[12:58] need to look for three. You can find a three<c> also.</c><c> Can</c><c> you</c><c> find</c><c> a</c><c> four</c><c> in</c><c> here?</c>
+[13:00] three also. Can you find a four in here?
+[13:00] three also. Can you find a four in here? No.<c> It</c><c> means</c><c> I</c><c> found</c><c> one</c><c> of</c><c> the</c><c> length</c>
+[13:04] No. It means I found one of the length
+[13:04] No. It means I found one of the length as<c> 1</c><c> 2</c><c> and</c><c> 3.</c><c> This</c><c> is</c><c> my</c><c> one</c><c> chain</c><c> that</c>
+[13:08] as 1 2 and 3. This is my one chain that
+[13:08] as 1 2 and 3. This is my one chain that I<c> found.</c><c> Now</c><c> you</c><c> move</c><c> ahead</c><c> and</c><c> you</c><c> get</c>
+[13:11] I found. Now you move ahead and you get
+[13:11] I found. Now you move ahead and you get the<c> element</c><c> six.</c><c> Either</c><c> this</c><c> element</c><c> six</c>
+[13:14] the element six. Either this element six
+[13:14] the element six. Either this element six will<c> start</c><c> a</c><c> new</c><c> chain</c><c> or</c><c> it</c><c> will</c><c> be</c><c> a</c>
+[13:17] will start a new chain or it will be a
+[13:17] will start a new chain or it will be a part<c> of</c><c> some</c><c> other</c><c> longer</c><c> chain.</c><c> To</c><c> be</c><c> a</c>
+[13:20] part of some other longer chain. To be a
+[13:20] part of some other longer chain. To be a part<c> of</c><c> other</c><c> longer</c><c> chain</c><c> you</c><c> must</c><c> have</c>
+[13:23] part of other longer chain you must have
+[13:23] part of other longer chain you must have five<c> in</c><c> your</c><c> array</c><c> also</c><c> correct.</c><c> So</c><c> you</c>
+[13:25] five in your array also correct. So you
+[13:25] five in your array also correct. So you will<c> look</c><c> for</c><c> five.</c><c> Can</c><c> you</c><c> find</c><c> it?</c>
+[13:27] will look for five. Can you find it?
+[13:27] will look for five. Can you find it? Yes.<c> It</c><c> simply</c><c> means</c><c> that</c><c> six</c><c> is</c><c> not</c><c> the</c>
+[13:31] Yes. It simply means that six is not the
+[13:31] Yes. It simply means that six is not the starting<c> point.</c><c> So</c><c> I'm</c><c> not</c><c> going</c><c> to</c><c> do</c>
+[13:33] starting point. So I'm not going to do
+[13:33] starting point. So I'm not going to do any<c> more</c><c> iterations</c><c> with</c><c> it.</c><c> I</c><c> will</c><c> just</c>
+[13:36] any more iterations with it. I will just
+[13:36] any more iterations with it. I will just skip<c> this</c><c> number</c><c> because</c><c> this</c><c> isn't</c>
+[13:38] skip this number because this isn't
+[13:38] skip this number because this isn't starting<c> a</c><c> new</c><c> chain.</c><c> Go</c><c> to</c><c> two.</c><c> Can</c><c> you</c>
+[13:41] starting a new chain. Go to two. Can you
+[13:42] starting a new chain. Go to two. Can you find<c> a</c><c> one</c><c> over</c><c> here?</c><c> Yes.</c><c> It</c><c> means</c><c> two</c>
+[13:44] find a one over here? Yes. It means two
+[13:44] find a one over here? Yes. It means two is<c> also</c><c> not</c><c> starting</c><c> a</c><c> new</c><c> chain.</c><c> Look</c>
+[13:47] is also not starting a new chain. Look
+[13:47] is also not starting a new chain. Look at<c> the</c><c> next</c><c> element.</c><c> Can</c><c> you</c><c> find</c><c> a</c><c> four</c>
+[13:50] at the next element. Can you find a four
+[13:50] at the next element. Can you find a four in<c> your</c><c> set?</c><c> No.</c><c> It</c><c> means</c><c> five</c><c> is</c><c> the</c>
+[13:54] in your set? No. It means five is the
+[13:54] in your set? No. It means five is the start<c> of</c><c> a</c><c> new</c><c> chain.</c><c> So</c><c> I</c><c> need</c><c> to</c><c> find</c>
+[13:57] start of a new chain. So I need to find
+[13:57] start of a new chain. So I need to find out<c> how</c><c> big</c><c> my</c><c> chain</c><c> is.</c><c> So</c><c> with</c><c> five,</c>
+[13:59] out how big my chain is. So with five,
+[13:59] out how big my chain is. So with five, I'm<c> going</c><c> to</c><c> look</c><c> up</c><c> six.</c><c> Then</c><c> I'm</c><c> going</c>
+[14:01] I'm going to look up six. Then I'm going
+[14:01] I'm going to look up six. Then I'm going to<c> look</c><c> up</c><c> seven.</c><c> Then</c><c> I</c><c> look</c><c> up</c><c> eight.</c>
+[14:04] to look up seven. Then I look up eight.
+[14:04] to look up seven. Then I look up eight. Can<c> I</c><c> find</c><c> a</c><c> nine?</c><c> No.</c><c> So</c><c> I</c><c> can</c><c> stop</c>
+[14:06] Can I find a nine? No. So I can stop
+[14:06] Can I find a nine? No. So I can stop over<c> here.</c><c> And</c><c> what</c><c> did</c><c> I</c><c> find?</c><c> I</c><c> found</c>
+[14:09] over here. And what did I find? I found
+[14:09] over here. And what did I find? I found 5<c> 6</c><c> 7</c><c> 8.</c><c> This</c><c> is</c><c> another</c><c> chain</c><c> that</c><c> I</c>
+[14:13] 5 6 7 8. This is another chain that I
+[14:13] 5 6 7 8. This is another chain that I found<c> and</c><c> it</c><c> length</c><c> is</c><c> four.</c><c> This</c><c> is</c>
+[14:15] found and it length is four. This is
+[14:15] found and it length is four. This is longer.<c> Correct.</c><c> Now</c><c> move</c><c> ahead.</c><c> For</c>
+[14:18] longer. Correct. Now move ahead. For
+[14:18] longer. Correct. Now move ahead. For eight,<c> can</c><c> you</c><c> find</c><c> seven?</c><c> Yes.</c><c> So,</c>
+[14:21] eight, can you find seven? Yes. So,
+[14:21] eight, can you find seven? Yes. So, don't<c> do</c><c> anything.</c><c> For</c><c> seven,</c><c> can</c><c> you</c>
+[14:23] don't do anything. For seven, can you
+[14:23] don't do anything. For seven, can you find<c> a</c><c> six?</c><c> Yes.</c><c> Don't</c><c> do</c><c> anything.</c><c> For</c>
+[14:25] find a six? Yes. Don't do anything. For
+[14:25] find a six? Yes. Don't do anything. For 10,<c> can</c><c> you</c><c> find</c><c> a</c><c> nine?</c><c> No.</c><c> But</c><c> you</c>
+[14:29] 10, can you find a nine? No. But you
+[14:29] 10, can you find a nine? No. But you can't<c> find</c><c> 11</c><c> either.</c><c> For</c><c> three,</c><c> can</c><c> you</c>
+[14:31] can't find 11 either. For three, can you
+[14:31] can't find 11 either. For three, can you find<c> a</c><c> two?</c><c> Yes.</c><c> So,</c><c> you</c><c> don't</c><c> have</c><c> to</c>
+[14:33] find a two? Yes. So, you don't have to
+[14:33] find a two? Yes. So, you don't have to do<c> anything.</c><c> So,</c><c> what</c><c> did</c><c> we</c><c> just</c><c> do?</c><c> We</c>
+[14:35] do anything. So, what did we just do? We
+[14:36] do anything. So, what did we just do? We did<c> one</c><c> scan</c><c> to</c><c> add</c><c> all</c><c> of</c><c> the</c><c> numbers</c>
+[14:37] did one scan to add all of the numbers
+[14:37] did one scan to add all of the numbers to<c> our</c><c> set.</c><c> And</c><c> in</c><c> the</c><c> other</c><c> scan,</c><c> we</c>
+[14:40] to our set. And in the other scan, we
+[14:40] to our set. And in the other scan, we were<c> able</c><c> to</c><c> easily</c><c> determine,</c><c> hey,</c><c> what</c>
+[14:43] were able to easily determine, hey, what
+[14:43] were able to easily determine, hey, what is<c> my</c><c> longest</c><c> chain</c><c> that</c><c> I</c><c> can</c><c> found?</c><c> So</c>
+[14:46] is my longest chain that I can found? So
+[14:46] is my longest chain that I can found? So once<c> again</c><c> we</c><c> are</c><c> just</c><c> taking</c><c> up</c><c> order</c>
+[14:49] once again we are just taking up order
+[14:49] once again we are just taking up order of<c> n</c><c> extra</c><c> space</c><c> to</c><c> find</c><c> all</c><c> of</c><c> these</c>
+[14:51] of n extra space to find all of these
+[14:51] of n extra space to find all of these efficient<c> solutions.</c>
+[14:53] efficient solutions.
+[14:54] efficient solutions. What<c> about</c><c> hash</c><c> sets</c><c> now</c><c> and</c><c> what</c><c> about</c>
+[14:56] What about hash sets now and what about
+[14:56] What about hash sets now and what about strings?<c> Valid</c><c> anagram</c><c> is</c><c> a</c><c> perfect</c>
+[14:59] strings? Valid anagram is a perfect
+[14:59] strings? Valid anagram is a perfect example<c> how</c><c> you</c><c> can</c><c> use</c><c> them.</c><c> What</c><c> are</c>
+[15:01] example how you can use them. What are
+[15:02] example how you can use them. What are anagrams?<c> Anagrams</c><c> are</c><c> simply</c><c> two</c>
+[15:04] anagrams? Anagrams are simply two
+[15:04] anagrams? Anagrams are simply two strings<c> where</c><c> all</c><c> of</c><c> its</c><c> characters</c><c> are</c>
+[15:06] strings where all of its characters are
+[15:06] strings where all of its characters are just<c> rearranged.</c><c> They</c><c> are</c><c> the</c><c> same</c>
+[15:08] just rearranged. They are the same
+[15:08] just rearranged. They are the same characters<c> and</c><c> the</c><c> same</c><c> frequencies.</c><c> So</c>
+[15:11] characters and the same frequencies. So
+[15:11] characters and the same frequencies. So how<c> can</c><c> you</c><c> use</c><c> a</c><c> hash</c><c> effect?</c><c> I</c><c> have</c><c> my</c>
+[15:13] how can you use a hash effect? I have my
+[15:13] how can you use a hash effect? I have my first<c> string</c><c> over</c><c> here.</c><c> just</c><c> iterate</c>
+[15:16] first string over here. just iterate
+[15:16] first string over here. just iterate over<c> each</c><c> of</c><c> the</c><c> character</c><c> and</c><c> add</c><c> them</c>
+[15:18] over each of the character and add them
+[15:18] over each of the character and add them to<c> your</c><c> hash</c><c> set.</c><c> So</c><c> when</c><c> you</c><c> add</c><c> all</c><c> of</c>
+[15:21] to your hash set. So when you add all of
+[15:21] to your hash set. So when you add all of these<c> characters,</c><c> you</c><c> get</c><c> their</c>
+[15:22] these characters, you get their
+[15:22] these characters, you get their frequencies<c> as</c><c> well.</c><c> A</c><c> is</c><c> one,</c><c> D</c><c> is</c><c> 1,</c><c> M</c>
+[15:26] frequencies as well. A is one, D is 1, M
+[15:26] frequencies as well. A is one, D is 1, M is<c> 1,</c><c> I</c><c> is</c><c> 1,</c><c> R</c><c> appears</c><c> two</c><c> times,</c><c> and</c><c> E</c>
+[15:29] is 1, I is 1, R appears two times, and E
+[15:29] is 1, I is 1, R appears two times, and E appears<c> just</c><c> one</c><c> time.</c><c> Notice</c><c> that</c><c> I</c><c> can</c>
+[15:32] appears just one time. Notice that I can
+[15:32] appears just one time. Notice that I can do<c> all</c><c> of</c><c> these</c><c> lookups</c><c> in</c><c> just</c><c> order</c><c> of</c>
+[15:34] do all of these lookups in just order of
+[15:34] do all of these lookups in just order of one<c> time.</c><c> So</c><c> I</c><c> will</c><c> just</c><c> increment</c><c> their</c>
+[15:37] one time. So I will just increment their
+[15:37] one time. So I will just increment their frequencies.<c> Next,</c><c> what</c><c> you're</c><c> going</c><c> to</c>
+[15:40] frequencies. Next, what you're going to
+[15:40] frequencies. Next, what you're going to do?<c> take</c><c> up</c><c> the</c><c> second</c><c> string</c><c> and</c>
+[15:43] do? take up the second string and
+[15:43] do? take up the second string and iterate<c> over</c><c> each</c><c> of</c><c> the</c><c> character.</c><c> For</c>
+[15:45] iterate over each of the character. For
+[15:45] iterate over each of the character. For each<c> of</c><c> the</c><c> character,</c><c> you</c><c> will</c><c> do</c>
+[15:47] each of the character, you will do
+[15:47] each of the character, you will do immediate<c> lookups</c><c> with</c><c> order</c><c> of</c><c> one</c><c> time</c>
+[15:50] immediate lookups with order of one time
+[15:50] immediate lookups with order of one time and<c> eventually</c><c> you</c><c> are</c><c> going</c><c> to</c><c> reduce</c>
+[15:53] and eventually you are going to reduce
+[15:53] and eventually you are going to reduce the<c> frequency</c><c> of</c><c> each</c><c> of</c><c> the</c><c> character</c>
+[15:55] the frequency of each of the character
+[15:55] the frequency of each of the character that<c> you're</c><c> encountering.</c>
+[15:57] that you're encountering.
+[15:57] that you're encountering. At<c> the</c><c> very</c><c> end,</c><c> if</c><c> all</c><c> of</c><c> these</c>
+[15:59] At the very end, if all of these
+[15:59] At the very end, if all of these frequencies<c> have</c><c> become</c><c> zero,</c><c> it</c><c> means</c>
+[16:02] frequencies have become zero, it means
+[16:02] frequencies have become zero, it means the<c> frequencies</c><c> match</c><c> and</c><c> the</c><c> characters</c>
+[16:04] the frequencies match and the characters
+[16:04] the frequencies match and the characters match.<c> So,</c><c> this</c><c> two</c><c> strings</c><c> are</c>
+[16:06] match. So, this two strings are
+[16:06] match. So, this two strings are anagrams.<c> But</c><c> if</c><c> any</c><c> of</c><c> the</c><c> character</c>
+[16:09] anagrams. But if any of the character
+[16:09] anagrams. But if any of the character did<c> not</c><c> match</c><c> or</c><c> if</c><c> you</c><c> had</c><c> an</c><c> extra</c>
+[16:12] did not match or if you had an extra
+[16:12] did not match or if you had an extra character,<c> for</c><c> example,</c><c> there</c><c> was</c><c> an</c><c> X</c>
+[16:15] character, for example, there was an X
+[16:15] character, for example, there was an X over<c> here,</c><c> you</c><c> will</c><c> try</c><c> to</c><c> look</c><c> up</c><c> this</c>
+[16:18] over here, you will try to look up this
+[16:18] over here, you will try to look up this X<c> in</c><c> here.</c><c> You</c><c> can't</c><c> find</c><c> it.</c><c> So</c><c> you</c><c> can</c>
+[16:20] X in here. You can't find it. So you can
+[16:20] X in here. You can't find it. So you can simply<c> return</c><c> a</c><c> false.</c><c> This</c><c> makes</c><c> life</c>
+[16:23] simply return a false. This makes life
+[16:24] simply return a false. This makes life so<c> much</c><c> simpler.</c><c> Correct?</c><c> And</c><c> based</c><c> upon</c>
+[16:27] so much simpler. Correct? And based upon
+[16:27] so much simpler. Correct? And based upon a<c> similar</c><c> idea,</c><c> you</c><c> can</c><c> solve</c><c> multiple</c>
+[16:29] a similar idea, you can solve multiple
+[16:30] a similar idea, you can solve multiple other<c> problems</c><c> also.</c><c> For</c><c> example,</c>
+[16:32] other problems also. For example,
+[16:32] other problems also. For example, contains<c> duplicates.</c><c> You</c><c> are</c><c> given</c><c> a</c>
+[16:34] contains duplicates. You are given a
+[16:34] contains duplicates. You are given a string<c> and</c><c> you</c><c> have</c><c> to</c><c> find</c><c> out</c><c> if</c><c> it</c>
+[16:36] string and you have to find out if it
+[16:36] string and you have to find out if it has<c> duplicates</c><c> or</c><c> not.</c><c> just</c><c> add</c><c> them</c><c> to</c>
+[16:38] has duplicates or not. just add them to
+[16:38] has duplicates or not. just add them to a<c> set</c><c> and</c><c> if</c><c> you</c><c> encounter</c><c> it</c><c> again,</c><c> you</c>
+[16:41] a set and if you encounter it again, you
+[16:41] a set and if you encounter it again, you have<c> a</c><c> duplicate.</c><c> Intersection</c><c> of</c><c> two</c>
+[16:44] have a duplicate. Intersection of two
+[16:44] have a duplicate. Intersection of two arrays.<c> You</c><c> want</c><c> to</c><c> find</c><c> out</c><c> if</c><c> these</c>
+[16:47] arrays. You want to find out if these
+[16:47] arrays. You want to find out if these arrays<c> have</c><c> an</c><c> intersection</c><c> point.</c><c> Just</c>
+[16:49] arrays have an intersection point. Just
+[16:49] arrays have an intersection point. Just take<c> up</c><c> all</c><c> of</c><c> the</c><c> elements</c><c> of</c><c> the</c><c> first</c>
+[16:52] take up all of the elements of the first
+[16:52] take up all of the elements of the first array<c> and</c><c> add</c><c> it</c><c> to</c><c> a</c><c> set.</c><c> Then</c><c> take</c><c> up</c>
+[16:55] array and add it to a set. Then take up
+[16:55] array and add it to a set. Then take up the<c> second</c><c> array</c><c> and</c><c> iterate</c><c> over</c><c> each</c>
+[16:56] the second array and iterate over each
+[16:56] the second array and iterate over each of<c> the</c><c> elements</c><c> one</c><c> by</c><c> one.</c><c> As</c><c> soon</c><c> as</c>
+[16:59] of the elements one by one. As soon as
+[16:59] of the elements one by one. As soon as you<c> find</c><c> something</c><c> that</c><c> is</c><c> already</c>
+[17:01] you find something that is already
+[17:01] you find something that is already present<c> in</c><c> your</c><c> hashet,</c><c> that</c><c> is</c><c> the</c>
+[17:03] present in your hashet, that is the
+[17:03] present in your hashet, that is the intersection<c> point.</c><c> Similarly,</c><c> you</c><c> can</c>
+[17:05] intersection point. Similarly, you can
+[17:05] intersection point. Similarly, you can have<c> one</c><c> more</c><c> example.</c><c> the</c><c> first</c><c> unique</c>
+[17:07] have one more example. the first unique
+[17:07] have one more example. the first unique character<c> in</c><c> a</c><c> string.</c><c> So</c><c> let</c><c> us</c><c> say</c><c> you</c>
+[17:10] character in a string. So let us say you
+[17:10] character in a string. So let us say you have<c> a</c><c> string</c><c> like</c><c> a</c><c> b</c><c> c</c><c> ab.</c><c> What</c><c> do</c><c> you</c>
+[17:13] have a string like a b c ab. What do you
+[17:13] have a string like a b c ab. What do you do?<c> Add</c><c> all</c><c> of</c><c> these</c><c> characters</c><c> to</c><c> a</c>
+[17:15] do? Add all of these characters to a
+[17:15] do? Add all of these characters to a hash<c> set</c><c> and</c><c> store</c><c> their</c><c> frequencies.</c>
+[17:19] hash set and store their frequencies.
+[17:19] hash set and store their frequencies. The<c> first</c><c> character</c><c> that</c><c> you</c><c> see</c><c> that</c>
+[17:21] The first character that you see that
+[17:21] The first character that you see that has<c> a</c><c> frequency</c><c> of</c><c> one,</c><c> that</c><c> is</c><c> your</c>
+[17:23] has a frequency of one, that is your
+[17:23] has a frequency of one, that is your answer.<c> We</c><c> just</c><c> solved</c><c> so</c><c> many</c><c> problems,</c>
+[17:26] answer. We just solved so many problems,
+[17:26] answer. We just solved so many problems, right?<c> And</c><c> this</c><c> is</c><c> the</c><c> power</c><c> of</c><c> hash</c>
+[17:29] right? And this is the power of hash
+[17:29] right? And this is the power of hash fetss<c> and</c><c> hashmaps.</c><c> Basically,</c><c> you</c><c> are</c>
+[17:32] fetss and hashmaps. Basically, you are
+[17:32] fetss and hashmaps. Basically, you are storing<c> some</c><c> kind</c><c> of</c><c> an</c><c> extra</c><c> state.</c><c> You</c>
+[17:34] storing some kind of an extra state. You
+[17:34] storing some kind of an extra state. You are<c> not</c><c> just</c><c> storing</c><c> an</c><c> element</c><c> just</c>
+[17:37] are not just storing an element just
+[17:37] are not just storing an element just like<c> an</c><c> array.</c><c> You</c><c> are</c><c> also</c><c> containing</c>
+[17:39] like an array. You are also containing
+[17:39] like an array. You are also containing the<c> information</c><c> that</c><c> this</c><c> element</c>
+[17:42] the information that this element
+[17:42] the information that this element appears<c> only</c><c> once</c><c> or</c><c> has</c><c> this</c><c> appeared</c>
+[17:45] appears only once or has this appeared
+[17:45] appears only once or has this appeared earlier<c> also.</c><c> Similarly,</c><c> it</c><c> gives</c><c> you</c>
+[17:48] earlier also. Similarly, it gives you
+[17:48] earlier also. Similarly, it gives you order<c> of</c><c> one</c><c> lookup</c><c> time</c><c> and</c><c> that</c><c> is</c><c> a</c>
+[17:51] order of one lookup time and that is a
+[17:51] order of one lookup time and that is a very<c> essential</c><c> feature.</c><c> It</c><c> just</c><c> takes</c>
+[17:53] very essential feature. It just takes
+[17:53] very essential feature. It just takes constant<c> time</c><c> to</c><c> query</c><c> the</c><c> set</c><c> and</c>
+[17:56] constant time to query the set and
+[17:56] constant time to query the set and determine<c> if</c><c> it</c><c> is</c><c> present</c><c> or</c><c> not.</c>
+[17:58] determine if it is present or not.
+[17:58] determine if it is present or not. Similarly,<c> it</c><c> keeps</c><c> your</c><c> logic</c><c> clean</c><c> and</c>
+[18:01] Similarly, it keeps your logic clean and
+[18:01] Similarly, it keeps your logic clean and as<c> you</c><c> know</c><c> it</c><c> also</c><c> reduces</c><c> the</c><c> time</c>
+[18:03] as you know it also reduces the time
+[18:04] as you know it also reduces the time complexity.<c> You</c><c> went</c><c> from</c><c> order</c><c> of</c><c> n</c>
+[18:06] complexity. You went from order of n
+[18:06] complexity. You went from order of n square<c> time</c><c> to</c><c> mostly</c><c> order</c><c> of</c><c> n</c><c> time</c>
+[18:09] square time to mostly order of n time
+[18:09] square time to mostly order of n time and<c> that</c><c> is</c><c> because</c><c> you</c><c> are</c><c> reusing</c><c> some</c>
+[18:11] and that is because you are reusing some
+[18:12] and that is because you are reusing some of<c> the</c><c> information.</c><c> You</c><c> avoided</c><c> an</c><c> extra</c>
+[18:14] of the information. You avoided an extra
+[18:14] of the information. You avoided an extra loop<c> to</c><c> look</c><c> up</c><c> that</c><c> information</c><c> and</c><c> you</c>
+[18:16] loop to look up that information and you
+[18:16] loop to look up that information and you use<c> your</c><c> hash</c><c> set.</c><c> But</c><c> always</c><c> keep</c><c> in</c>
+[18:19] use your hash set. But always keep in
+[18:19] use your hash set. But always keep in mind<c> that</c><c> using</c><c> a</c><c> hash</c><c> set</c><c> or</c><c> a</c><c> hashmap</c>
+[18:22] mind that using a hash set or a hashmap
+[18:22] mind that using a hash set or a hashmap can<c> take</c><c> up</c><c> extra</c><c> space.</c><c> So</c><c> you</c><c> might</c>
+[18:24] can take up extra space. So you might
+[18:24] can take up extra space. So you might want<c> to</c><c> use</c><c> it</c><c> with</c><c> caution.</c><c> But</c><c> it</c><c> is</c>
+[18:27] want to use it with caution. But it is
+[18:27] want to use it with caution. But it is good<c> in</c><c> scenarios</c><c> where</c><c> you</c><c> have</c><c> a</c>
+[18:30] good in scenarios where you have a
+[18:30] good in scenarios where you have a constant<c> sample</c><c> size.</c><c> For</c><c> example,</c><c> you</c>
+[18:32] constant sample size. For example, you
+[18:32] constant sample size. For example, you are<c> dealing</c><c> with</c><c> the</c><c> characters</c><c> of</c>
+[18:34] are dealing with the characters of
+[18:34] are dealing with the characters of English<c> alphabet.</c><c> You</c><c> know</c><c> that</c><c> there</c>
+[18:37] English alphabet. You know that there
+[18:37] English alphabet. You know that there can<c> be</c><c> a</c><c> maximum</c><c> of</c><c> 26</c><c> characters.</c><c> So</c>
+[18:40] can be a maximum of 26 characters. So
+[18:40] can be a maximum of 26 characters. So you<c> are</c><c> not</c><c> taking</c><c> up</c><c> order</c><c> of</c><c> n</c><c> space</c>
+[18:42] you are not taking up order of n space
+[18:42] you are not taking up order of n space but<c> you</c><c> are</c><c> only</c><c> taking</c><c> up</c><c> constant</c>
+[18:44] but you are only taking up constant
+[18:44] but you are only taking up constant space.<c> So</c><c> the</c><c> space</c><c> complexity</c><c> actually</c>
+[18:47] space. So the space complexity actually
+[18:47] space. So the space complexity actually turns<c> out</c><c> to</c><c> be</c><c> order</c><c> of</c><c> one</c><c> rather</c><c> than</c>
+[18:49] turns out to be order of one rather than
+[18:49] turns out to be order of one rather than order<c> of</c><c> n.</c><c> So</c><c> these</c><c> are</c><c> some</c><c> of</c><c> the</c>
+[18:52] order of n. So these are some of the
+[18:52] order of n. So these are some of the examples<c> where</c><c> a</c><c> hash</c><c> set</c><c> and</c><c> a</c><c> hashmap</c>
+[18:55] examples where a hash set and a hashmap
+[18:55] examples where a hash set and a hashmap can<c> actually</c><c> make</c><c> your</c><c> life</c><c> very</c><c> very</c>
+[18:57] can actually make your life very very
+[18:57] can actually make your life very very simple.<c> Just</c><c> tell</c><c> me</c><c> in</c><c> the</c><c> comment</c>
+[18:59] simple. Just tell me in the comment
+[18:59] simple. Just tell me in the comment section<c> below</c><c> where</c><c> all</c><c> have</c><c> you</c><c> used</c>
+[19:01] section below where all have you used
+[19:01] section below where all have you used this<c> particular</c><c> pattern</c><c> and</c><c> this</c><c> will</c>
+[19:03] this particular pattern and this will
+[19:03] this particular pattern and this will really<c> become</c><c> a</c><c> very</c><c> good</c><c> collection</c><c> for</c>
+[19:06] really become a very good collection for
+[19:06] really become a very good collection for all<c> of</c><c> these</c><c> such</c><c> kind</c><c> of</c><c> problems.</c><c> I</c>
+[19:08] all of these such kind of problems. I
+[19:08] all of these such kind of problems. I would<c> be</c><c> happy</c><c> to</c><c> discuss</c><c> and</c><c> contribute</c>
+[19:10] would be happy to discuss and contribute
+[19:10] would be happy to discuss and contribute to<c> the</c><c> collection</c><c> as</c><c> well.</c><c> As</c><c> a</c>
+[19:12] to the collection as well. As a
+[19:12] to the collection as well. As a reminder,<c> if</c><c> you</c><c> found</c><c> this</c><c> video</c>
+[19:13] reminder, if you found this video
+[19:13] reminder, if you found this video helpful,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[19:15] helpful, please do consider subscribing
+[19:15] helpful, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[19:16] to my channel and share this video with
+[19:16] to my channel and share this video with your<c> friends.</c><c> This</c><c> really</c><c> keeps</c><c> me</c>
+[19:18] your friends. This really keeps me
+[19:18] your friends. This really keeps me motivated<c> and</c><c> I</c><c> can</c><c> make</c><c> more</c><c> such</c>
+[19:19] motivated and I can make more such
+[19:19] motivated and I can make more such videos.<c> Also,</c><c> now</c><c> you</c><c> can</c><c> schedule</c><c> a</c>
+[19:22] videos. Also, now you can schedule a
+[19:22] videos. Also, now you can schedule a one-to-one<c> session</c><c> with</c><c> me</c><c> to</c><c> have</c><c> a</c>
+[19:24] one-to-one session with me to have a
+[19:24] one-to-one session with me to have a direct<c> interaction</c><c> and</c><c> solve</c><c> any</c><c> sort</c><c> of</c>
+[19:26] direct interaction and solve any sort of
+[19:26] direct interaction and solve any sort of doubts.<c> A</c><c> huge</c><c> shout</c><c> out</c><c> to</c><c> all</c><c> of</c><c> the</c>
+[19:28] doubts. A huge shout out to all of the
+[19:28] doubts. A huge shout out to all of the members<c> who</c><c> support</c><c> my</c><c> channel.</c><c> You</c><c> guys</c>
+[19:30] members who support my channel. You guys
+[19:30] members who support my channel. You guys really<c> keep</c><c> me</c><c> going</c><c> and</c><c> as</c><c> a</c><c> member,</c>
+[19:32] really keep me going and as a member,
+[19:32] really keep me going and as a member, you<c> do</c><c> get</c><c> prior</c><c> to</c><c> reply</c><c> to</c><c> your</c>
+[19:33] you do get prior to reply to your
+[19:33] you do get prior to reply to your comments<c> and</c><c> early</c><c> access</c><c> to</c><c> new</c><c> videos</c>
+[19:35] comments and early access to new videos
+[19:35] comments and early access to new videos as<c> well.</c><c> Stay</c><c> tuned</c><c> for</c><c> my</c><c> upcoming</c>
+[19:37] as well. Stay tuned for my upcoming
+[19:37] as well. Stay tuned for my upcoming video.<c> Until</c><c> then,</c><c> see</c><c> youa.</c>

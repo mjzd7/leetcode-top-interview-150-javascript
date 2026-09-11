@@ -1,0 +1,910 @@
+[0:02] You wouldn't believe me, but we will be
+[0:02] You wouldn't believe me, but we will be solving<c> 12</c><c> different</c><c> problems</c><c> in</c><c> just</c><c> a</c>
+[0:04] solving 12 different problems in just a
+[0:04] solving 12 different problems in just a single<c> video.</c><c> How</c><c> do</c><c> we</c><c> do</c><c> that?</c><c> And</c>
+[0:07] single video. How do we do that? And
+[0:07] single video. How do we do that? And that<c> is</c><c> through</c><c> the</c><c> magic</c><c> of</c><c> patterns.</c>
+[0:09] that is through the magic of patterns.
+[0:09] that is through the magic of patterns. Let<c> us</c><c> find</c><c> out</c><c> all</c><c> about</c><c> them.</c><c> Hello</c>
+[0:11] Let us find out all about them. Hello
+[0:11] Let us find out all about them. Hello friends,<c> welcome</c><c> back</c><c> to</c><c> my</c><c> channel.</c>
+[0:17] You might be wondering what happened all
+[0:17] You might be wondering what happened all of<c> a</c><c> sudden.</c><c> Why</c><c> are</c><c> we</c><c> focusing</c><c> on</c>
+[0:19] of a sudden. Why are we focusing on
+[0:19] of a sudden. Why are we focusing on patterns?<c> If</c><c> you</c><c> remember</c><c> my</c><c> previous</c>
+[0:21] patterns? If you remember my previous
+[0:22] patterns? If you remember my previous video,<c> I</c><c> briefly</c><c> talked</c><c> about</c><c> how</c><c> it</c><c> is</c>
+[0:24] video, I briefly talked about how it is
+[0:24] video, I briefly talked about how it is very<c> difficult</c><c> to</c><c> go</c><c> over</c><c> each</c><c> and</c><c> every</c>
+[0:27] very difficult to go over each and every
+[0:27] very difficult to go over each and every problem<c> statement</c><c> that</c><c> is</c><c> available</c><c> on</c>
+[0:28] problem statement that is available on
+[0:28] problem statement that is available on lead<c> code.</c><c> Also,</c><c> if</c><c> you're</c><c> preparing</c><c> for</c>
+[0:31] lead code. Also, if you're preparing for
+[0:31] lead code. Also, if you're preparing for your<c> interview,</c><c> how</c><c> far</c><c> do</c><c> you</c><c> solve</c>
+[0:33] your interview, how far do you solve
+[0:33] your interview, how far do you solve problems?<c> How</c><c> many</c><c> problems</c><c> do</c><c> you</c>
+[0:35] problems? How many problems do you
+[0:35] problems? How many problems do you solve?<c> This</c><c> is</c><c> actually</c><c> very</c><c> very</c>
+[0:37] solve? This is actually very very
+[0:37] solve? This is actually very very tricky.<c> And</c><c> if</c><c> you</c><c> think</c><c> about</c><c> it,</c><c> while</c>
+[0:40] tricky. And if you think about it, while
+[0:40] tricky. And if you think about it, while solving<c> all</c><c> of</c><c> these</c><c> problems,</c><c> you</c><c> might</c>
+[0:42] solving all of these problems, you might
+[0:42] solving all of these problems, you might have<c> realized</c><c> there</c><c> are</c><c> so</c><c> many</c>
+[0:44] have realized there are so many
+[0:44] have realized there are so many recurring<c> patterns.</c><c> You</c><c> might</c><c> have</c>
+[0:46] recurring patterns. You might have
+[0:46] recurring patterns. You might have realized<c> that</c><c> hey,</c><c> I</c><c> have</c><c> already</c>
+[0:48] realized that hey, I have already
+[0:48] realized that hey, I have already applied<c> this</c><c> pattern</c><c> before.</c><c> So</c><c> that</c><c> is</c>
+[0:51] applied this pattern before. So that is
+[0:51] applied this pattern before. So that is why<c> we</c><c> understand</c><c> patterns</c><c> and</c><c> how</c><c> you</c>
+[0:54] why we understand patterns and how you
+[0:54] why we understand patterns and how you can<c> use</c><c> them.</c><c> Basically</c><c> the</c><c> idea</c><c> over</c>
+[0:57] can use them. Basically the idea over
+[0:57] can use them. Basically the idea over here<c> is</c><c> that</c><c> you</c><c> try</c><c> to</c><c> identify</c><c> some</c>
+[1:00] here is that you try to identify some
+[1:00] here is that you try to identify some recurring<c> problems.</c><c> If</c><c> you</c><c> have</c><c> noticed</c>
+[1:02] recurring problems. If you have noticed
+[1:02] recurring problems. If you have noticed I<c> always</c><c> talk</c><c> about</c><c> what</c><c> other</c><c> similar</c>
+[1:05] I always talk about what other similar
+[1:05] I always talk about what other similar problems<c> you</c><c> can</c><c> find</c><c> out</c><c> and</c><c> that</c><c> is</c>
+[1:07] problems you can find out and that is
+[1:07] problems you can find out and that is why<c> because</c><c> you</c><c> see</c><c> these</c><c> kind</c><c> of</c>
+[1:09] why because you see these kind of
+[1:09] why because you see these kind of patterns<c> repeated.</c><c> So</c><c> if</c><c> you</c><c> have</c><c> solved</c>
+[1:12] patterns repeated. So if you have solved
+[1:12] patterns repeated. So if you have solved one<c> problem</c><c> of</c><c> a</c><c> kind,</c><c> you</c><c> are</c><c> able</c><c> to</c>
+[1:14] one problem of a kind, you are able to
+[1:14] one problem of a kind, you are able to solve<c> other</c><c> problems</c><c> also.</c><c> And</c><c> once</c><c> you</c>
+[1:17] solve other problems also. And once you
+[1:17] solve other problems also. And once you have<c> started</c><c> to</c><c> find</c><c> out</c><c> all</c><c> of</c><c> these</c>
+[1:19] have started to find out all of these
+[1:19] have started to find out all of these patterns,<c> as</c><c> soon</c><c> as</c><c> you're</c><c> given</c><c> a</c>
+[1:21] patterns, as soon as you're given a
+[1:21] patterns, as soon as you're given a problem,<c> your</c><c> mind</c><c> starts</c><c> to</c><c> work.</c><c> You</c>
+[1:24] problem, your mind starts to work. You
+[1:24] problem, your mind starts to work. You can<c> think</c><c> about</c><c> okay,</c><c> I</c><c> can</c><c> apply</c><c> this</c>
+[1:26] can think about okay, I can apply this
+[1:26] can think about okay, I can apply this approach<c> or</c><c> I</c><c> can</c><c> apply</c><c> this</c><c> approach.</c>
+[1:28] approach or I can apply this approach.
+[1:28] approach or I can apply this approach. And<c> when</c><c> you</c><c> see</c><c> such</c><c> kind</c><c> of</c><c> a</c><c> question</c>
+[1:31] And when you see such kind of a question
+[1:31] And when you see such kind of a question in<c> an</c><c> interview,</c><c> you</c><c> are</c><c> able</c><c> to</c><c> speed</c>
+[1:33] in an interview, you are able to speed
+[1:33] in an interview, you are able to speed up<c> your</c><c> process</c><c> as</c><c> well</c><c> because</c><c> over</c>
+[1:35] up your process as well because over
+[1:35] up your process as well because over there<c> you</c><c> do</c><c> not</c><c> know</c><c> what</c><c> can</c><c> come</c><c> your</c>
+[1:38] there you do not know what can come your
+[1:38] there you do not know what can come your way.<c> But</c><c> if</c><c> you</c><c> are</c><c> prepared</c><c> about</c>
+[1:40] way. But if you are prepared about
+[1:40] way. But if you are prepared about something<c> to</c><c> look</c><c> for</c><c> then</c><c> it</c><c> becomes</c>
+[1:43] something to look for then it becomes
+[1:43] something to look for then it becomes easy<c> to</c><c> solve</c><c> and</c><c> it</c><c> is</c><c> very</c><c> real</c><c> life</c>
+[1:46] easy to solve and it is very real life
+[1:46] easy to solve and it is very real life scenario<c> as</c><c> well.</c><c> If</c><c> I</c><c> tell</c><c> you</c><c> okay</c>
+[1:49] scenario as well. If I tell you okay
+[1:49] scenario as well. If I tell you okay just<c> find</c><c> a</c><c> treasure</c><c> in</c><c> a</c><c> whole</c><c> lot</c><c> of</c>
+[1:51] just find a treasure in a whole lot of
+[1:51] just find a treasure in a whole lot of area<c> then</c><c> you</c><c> don't</c><c> even</c><c> know</c><c> what</c><c> to</c>
+[1:53] area then you don't even know what to
+[1:54] area then you don't even know what to look<c> for.</c><c> But</c><c> if</c><c> I</c><c> tell</c><c> you</c><c> that</c><c> the</c>
+[1:57] look for. But if I tell you that the
+[1:57] look for. But if I tell you that the treasure<c> is</c><c> of</c><c> green</c><c> color</c><c> then</c><c> you</c>
+[2:00] treasure is of green color then you
+[2:00] treasure is of green color then you exactly<c> know</c><c> what</c><c> to</c><c> look</c><c> for.</c><c> At</c><c> least</c>
+[2:02] exactly know what to look for. At least
+[2:02] exactly know what to look for. At least you<c> have</c><c> a</c><c> starting</c><c> point.</c><c> And</c><c> that</c><c> is</c>
+[2:05] you have a starting point. And that is
+[2:05] you have a starting point. And that is exactly<c> what</c><c> patterns</c><c> mean</c><c> when</c><c> you</c><c> come</c>
+[2:07] exactly what patterns mean when you come
+[2:07] exactly what patterns mean when you come across<c> coding</c><c> problems.</c><c> They</c><c> really</c><c> help</c>
+[2:10] across coding problems. They really help
+[2:10] across coding problems. They really help you<c> to</c><c> speed</c><c> up</c><c> your</c><c> process</c><c> and</c><c> it</c><c> will</c>
+[2:13] you to speed up your process and it will
+[2:13] you to speed up your process and it will guarantee<c> you</c><c> interview</c><c> success</c><c> as</c><c> well.</c>
+[2:15] guarantee you interview success as well.
+[2:15] guarantee you interview success as well. So<c> first</c><c> of</c><c> all,</c><c> where</c><c> do</c><c> we</c><c> start?</c><c> The</c>
+[2:17] So first of all, where do we start? The
+[2:18] So first of all, where do we start? The most<c> basic</c><c> pattern</c><c> that</c><c> you</c><c> might</c><c> have</c>
+[2:19] most basic pattern that you might have
+[2:20] most basic pattern that you might have already<c> seen</c><c> and</c><c> done</c><c> at</c><c> a</c><c> lot</c><c> of</c><c> places</c>
+[2:22] already seen and done at a lot of places
+[2:22] already seen and done at a lot of places is<c> the</c><c> two</c><c> pointers</c><c> pattern.</c><c> The</c><c> idea</c>
+[2:25] is the two pointers pattern. The idea
+[2:25] is the two pointers pattern. The idea over<c> here</c><c> is</c><c> very</c><c> very</c><c> simple.</c><c> For</c>
+[2:27] over here is very very simple. For
+[2:27] over here is very very simple. For example,<c> you</c><c> have</c><c> an</c><c> array</c><c> like</c><c> this.</c>
+[2:29] example, you have an array like this.
+[2:29] example, you have an array like this. What<c> you</c><c> do</c><c> is</c><c> instead</c><c> of</c><c> iterating</c><c> over</c>
+[2:32] What you do is instead of iterating over
+[2:32] What you do is instead of iterating over every<c> element,</c><c> you</c><c> take</c><c> up</c><c> two</c><c> pointers</c>
+[2:35] every element, you take up two pointers
+[2:35] every element, you take up two pointers and<c> iterate</c><c> over</c><c> them</c><c> simultaneously.</c><c> So</c>
+[2:38] and iterate over them simultaneously. So
+[2:38] and iterate over them simultaneously. So what<c> you</c><c> can</c><c> do</c><c> is</c><c> if</c><c> you</c><c> have</c><c> your</c>
+[2:39] what you can do is if you have your
+[2:40] what you can do is if you have your array<c> like</c><c> this,</c><c> you</c><c> can</c><c> take</c><c> up</c><c> two</c>
+[2:42] array like this, you can take up two
+[2:42] array like this, you can take up two different<c> pointers</c><c> and</c><c> now</c><c> you</c><c> move</c>
+[2:45] different pointers and now you move
+[2:45] different pointers and now you move these<c> pointers</c><c> as</c><c> per</c><c> your</c><c> need.</c><c> What</c>
+[2:48] these pointers as per your need. What
+[2:48] these pointers as per your need. What you<c> can</c><c> do</c><c> is</c><c> you</c><c> can</c><c> move</c><c> one</c><c> of</c><c> the</c>
+[2:50] you can do is you can move one of the
+[2:50] you can do is you can move one of the pointers<c> one</c><c> step</c><c> at</c><c> a</c><c> time</c><c> and</c><c> at</c><c> the</c>
+[2:53] pointers one step at a time and at the
+[2:53] pointers one step at a time and at the same<c> time</c><c> you</c><c> can</c><c> move</c><c> the</c><c> other</c><c> pointer</c>
+[2:55] same time you can move the other pointer
+[2:55] same time you can move the other pointer two<c> places</c><c> at</c><c> a</c><c> time</c><c> or</c><c> anything</c><c> that</c>
+[2:58] two places at a time or anything that
+[2:58] two places at a time or anything that works<c> for</c><c> you.</c><c> The</c><c> other</c><c> way</c><c> you</c><c> can</c><c> use</c>
+[3:01] works for you. The other way you can use
+[3:01] works for you. The other way you can use a<c> two-pointer</c><c> pattern</c><c> is</c><c> let</c><c> us</c><c> say</c><c> you</c>
+[3:03] a two-pointer pattern is let us say you
+[3:03] a two-pointer pattern is let us say you were<c> given</c><c> an</c><c> array.</c><c> Now</c><c> the</c><c> common</c>
+[3:06] were given an array. Now the common
+[3:06] were given an array. Now the common method<c> is</c><c> that</c><c> you</c><c> start</c><c> from</c><c> the</c>
+[3:08] method is that you start from the
+[3:08] method is that you start from the beginning<c> and</c><c> then</c><c> try</c><c> to</c><c> traverse</c><c> your</c>
+[3:10] beginning and then try to traverse your
+[3:10] beginning and then try to traverse your array.<c> Correct?</c><c> with</c><c> two</c><c> pointers.</c><c> What</c>
+[3:13] array. Correct? with two pointers. What
+[3:13] array. Correct? with two pointers. What you<c> can</c><c> do</c><c> is</c><c> you</c><c> can</c><c> also</c><c> have</c><c> another</c>
+[3:15] you can do is you can also have another
+[3:15] you can do is you can also have another pointer<c> that</c><c> is</c><c> starting</c><c> from</c><c> the</c><c> very</c>
+[3:17] pointer that is starting from the very
+[3:17] pointer that is starting from the very last<c> of</c><c> your</c><c> array.</c><c> So</c><c> once</c><c> again</c>
+[3:20] last of your array. So once again
+[3:20] last of your array. So once again whatever<c> is</c><c> the</c><c> problem</c><c> statement</c><c> based</c>
+[3:22] whatever is the problem statement based
+[3:22] whatever is the problem statement based upon<c> that</c><c> you</c><c> can</c><c> start</c><c> to</c><c> iterate</c>
+[3:24] upon that you can start to iterate
+[3:24] upon that you can start to iterate through<c> your</c><c> array</c><c> from</c><c> both</c><c> the</c>
+[3:26] through your array from both the
+[3:26] through your array from both the directions.<c> So</c><c> it</c><c> is</c><c> kind</c><c> of</c><c> giving</c><c> you</c>
+[3:29] directions. So it is kind of giving you
+[3:29] directions. So it is kind of giving you a<c> starting</c><c> point.</c><c> You</c><c> are</c><c> given</c><c> a</c>
+[3:31] a starting point. You are given a
+[3:31] a starting point. You are given a problem<c> statement</c><c> and</c><c> now</c><c> you</c><c> are</c>
+[3:33] problem statement and now you are
+[3:33] problem statement and now you are wondering<c> okay</c><c> if</c><c> I'm</c><c> iterating</c><c> one</c><c> step</c>
+[3:36] wondering okay if I'm iterating one step
+[3:36] wondering okay if I'm iterating one step at<c> a</c><c> time</c><c> how</c><c> do</c><c> I</c><c> get</c><c> the</c><c> next</c><c> element?</c>
+[3:39] at a time how do I get the next element?
+[3:39] at a time how do I get the next element? And<c> that</c><c> is</c><c> where</c><c> you</c><c> can</c><c> think</c><c> okay</c><c> to</c>
+[3:41] And that is where you can think okay to
+[3:41] And that is where you can think okay to get<c> the</c><c> next</c><c> element</c><c> either</c><c> I</c><c> can</c><c> start</c>
+[3:43] get the next element either I can start
+[3:43] get the next element either I can start one<c> more</c><c> pointer</c><c> from</c><c> the</c><c> beginning</c><c> or</c><c> I</c>
+[3:46] one more pointer from the beginning or I
+[3:46] one more pointer from the beginning or I can<c> start</c><c> one</c><c> more</c><c> pointer</c><c> somewhere</c>
+[3:48] can start one more pointer somewhere
+[3:48] can start one more pointer somewhere else<c> in</c><c> the</c><c> array</c><c> also.</c><c> So</c><c> what</c><c> does</c><c> all</c>
+[3:50] else in the array also. So what does all
+[3:50] else in the array also. So what does all of<c> that</c><c> mean?</c><c> For</c><c> example,</c><c> let</c><c> us</c><c> try</c><c> to</c>
+[3:53] of that mean? For example, let us try to
+[3:53] of that mean? For example, let us try to look<c> at</c><c> the</c><c> problem</c><c> twosome.</c><c> In</c><c> this</c>
+[3:56] look at the problem twosome. In this
+[3:56] look at the problem twosome. In this particular<c> problem,</c><c> you</c><c> are</c><c> given</c><c> a</c>
+[3:58] particular problem, you are given a
+[3:58] particular problem, you are given a sorted<c> array</c><c> and</c><c> now</c><c> you</c><c> are</c><c> said</c><c> that</c>
+[4:02] sorted array and now you are said that
+[4:02] sorted array and now you are said that find<c> me</c><c> two</c><c> numbers</c><c> which</c><c> equal</c><c> the</c><c> sum</c>
+[4:06] find me two numbers which equal the sum
+[4:06] find me two numbers which equal the sum of<c> a</c><c> particular</c><c> number</c><c> k.</c><c> How</c><c> do</c><c> you</c>
+[4:08] of a particular number k. How do you
+[4:08] of a particular number k. How do you solve<c> this</c><c> problem?</c><c> Certainly</c><c> there's</c><c> a</c>
+[4:10] solve this problem? Certainly there's a
+[4:10] solve this problem? Certainly there's a brute<c> force</c><c> way.</c><c> But</c><c> with</c><c> a</c><c> two-pointer</c>
+[4:12] brute force way. But with a two-pointer
+[4:12] brute force way. But with a two-pointer approach,<c> what</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c>
+[4:14] approach, what you can do is you can
+[4:14] approach, what you can do is you can start<c> off</c><c> one</c><c> pointer</c><c> over</c><c> here</c><c> and</c><c> you</c>
+[4:17] start off one pointer over here and you
+[4:17] start off one pointer over here and you can<c> start</c><c> off</c><c> one</c><c> pointer</c><c> over</c><c> here.</c><c> You</c>
+[4:19] can start off one pointer over here. You
+[4:19] can start off one pointer over here. You do<c> -5</c><c> +</c><c> 6.</c><c> So</c><c> that</c><c> will</c><c> give</c><c> you</c><c> one.</c>
+[4:23] do -5 + 6. So that will give you one.
+[4:23] do -5 + 6. So that will give you one. Now<c> this</c><c> array</c><c> is</c><c> sorted.</c><c> So</c><c> what</c><c> you</c>
+[4:26] Now this array is sorted. So what you
+[4:26] Now this array is sorted. So what you can<c> do</c><c> is</c><c> if</c><c> you</c><c> want</c><c> a</c><c> bigger</c><c> sum,</c><c> you</c>
+[4:29] can do is if you want a bigger sum, you
+[4:30] can do is if you want a bigger sum, you can<c> traverse</c><c> the</c><c> first</c><c> pointer</c><c> one</c><c> step</c>
+[4:32] can traverse the first pointer one step
+[4:32] can traverse the first pointer one step ahead<c> because</c><c> you</c><c> know</c><c> that</c><c> all</c><c> the</c>
+[4:35] ahead because you know that all the
+[4:35] ahead because you know that all the numbers<c> are</c><c> in</c><c> an</c><c> increasing</c><c> order.</c><c> So</c>
+[4:37] numbers are in an increasing order. So
+[4:37] numbers are in an increasing order. So the<c> sum</c><c> is</c><c> going</c><c> to</c><c> increase</c><c> and</c><c> if</c><c> you</c>
+[4:40] the sum is going to increase and if you
+[4:40] the sum is going to increase and if you want<c> to</c><c> go</c><c> towards</c><c> a</c><c> smaller</c><c> sum</c><c> then</c>
+[4:43] want to go towards a smaller sum then
+[4:43] want to go towards a smaller sum then you<c> take</c><c> this</c><c> rear</c><c> pointer</c><c> and</c><c> start</c>
+[4:45] you take this rear pointer and start
+[4:45] you take this rear pointer and start moving<c> backward.</c><c> So</c><c> if</c><c> you</c><c> go</c><c> over</c><c> here</c>
+[4:49] moving backward. So if you go over here
+[4:49] moving backward. So if you go over here the<c> sum</c><c> is</c><c> going</c><c> to</c><c> decrease.</c><c> So</c><c> what</c>
+[4:51] the sum is going to decrease. So what
+[4:51] the sum is going to decrease. So what you<c> will</c><c> do?</c><c> You</c><c> will</c><c> keep</c><c> on</c><c> iterating</c>
+[4:53] you will do? You will keep on iterating
+[4:53] you will do? You will keep on iterating like<c> this</c><c> and</c><c> this</c><c> until</c><c> you</c><c> find</c><c> your</c>
+[4:56] like this and this until you find your
+[4:56] like this and this until you find your particular<c> sum</c><c> that</c><c> you</c><c> need.</c><c> So</c><c> what</c>
+[4:58] particular sum that you need. So what
+[4:58] particular sum that you need. So what did<c> we</c><c> just</c><c> do?</c><c> We</c><c> were</c><c> able</c><c> to</c><c> apply</c>
+[5:00] did we just do? We were able to apply
+[5:00] did we just do? We were able to apply the<c> twopinter</c><c> approach</c><c> to</c><c> come</c><c> up</c><c> with</c>
+[5:02] the twopinter approach to come up with
+[5:02] the twopinter approach to come up with an<c> efficient</c><c> solution</c><c> in</c><c> just</c><c> one</c>
+[5:04] an efficient solution in just one
+[5:04] an efficient solution in just one traversal<c> of</c><c> the</c><c> array.</c><c> Similarly,</c><c> if</c>
+[5:07] traversal of the array. Similarly, if
+[5:07] traversal of the array. Similarly, if you<c> remember,</c><c> we</c><c> also</c><c> had</c><c> a</c><c> problem</c>
+[5:09] you remember, we also had a problem
+[5:09] you remember, we also had a problem called<c> threesome.</c><c> In</c><c> threes</c><c> sum,</c><c> all</c><c> you</c>
+[5:12] called threesome. In threes sum, all you
+[5:12] called threesome. In threes sum, all you need<c> to</c><c> do</c><c> is</c><c> fix</c><c> one</c><c> of</c><c> the</c><c> numbers</c>
+[5:15] need to do is fix one of the numbers
+[5:15] need to do is fix one of the numbers that<c> you</c><c> want</c><c> to</c><c> start</c><c> with.</c><c> And</c><c> then</c><c> on</c>
+[5:18] that you want to start with. And then on
+[5:18] that you want to start with. And then on the<c> rest</c><c> of</c><c> the</c><c> array,</c><c> you</c><c> again</c><c> apply</c>
+[5:20] the rest of the array, you again apply
+[5:20] the rest of the array, you again apply the<c> twosome</c><c> approach.</c><c> So</c><c> once</c><c> again,</c>
+[5:23] the twosome approach. So once again,
+[5:23] the twosome approach. So once again, you're<c> taking</c><c> the</c><c> help</c><c> of</c><c> two</c><c> pointers.</c>
+[5:25] you're taking the help of two pointers.
+[5:25] you're taking the help of two pointers. In<c> the</c><c> next</c><c> iteration,</c><c> you</c><c> are</c><c> going</c><c> to</c>
+[5:27] In the next iteration, you are going to
+[5:27] In the next iteration, you are going to fix<c> the</c><c> other</c><c> number</c><c> and</c><c> then</c><c> once</c><c> again</c>
+[5:29] fix the other number and then once again
+[5:29] fix the other number and then once again apply<c> the</c><c> twosome</c><c> approach.</c><c> So</c><c> what</c><c> can</c>
+[5:32] apply the twosome approach. So what can
+[5:32] apply the twosome approach. So what can you<c> find</c><c> over</c><c> here?</c><c> I</c><c> was</c><c> able</c><c> to</c><c> apply</c>
+[5:35] you find over here? I was able to apply
+[5:35] you find over here? I was able to apply this<c> particular</c><c> pattern</c><c> of</c><c> two</c><c> pointers</c>
+[5:38] this particular pattern of two pointers
+[5:38] this particular pattern of two pointers to<c> solve</c><c> two</c><c> different</c><c> kind</c><c> of</c><c> problem</c>
+[5:40] to solve two different kind of problem
+[5:40] to solve two different kind of problem statements.<c> The</c><c> twosome</c><c> problem</c><c> and</c><c> the</c>
+[5:42] statements. The twosome problem and the
+[5:42] statements. The twosome problem and the threesome<c> problem.</c><c> Let</c><c> us</c><c> keep</c><c> going</c>
+[5:44] threesome problem. Let us keep going
+[5:44] threesome problem. Let us keep going ahead.<c> One</c><c> other</c><c> problem</c><c> that</c><c> you</c><c> might</c>
+[5:47] ahead. One other problem that you might
+[5:47] ahead. One other problem that you might have<c> seen</c><c> is</c><c> you</c><c> have</c><c> to</c><c> merge</c><c> two</c>
+[5:49] have seen is you have to merge two
+[5:49] have seen is you have to merge two sorted<c> lists.</c><c> And</c><c> what</c><c> is</c><c> happening?</c><c> You</c>
+[5:52] sorted lists. And what is happening? You
+[5:52] sorted lists. And what is happening? You are<c> given</c><c> two</c><c> sorted</c><c> arrays</c><c> and</c><c> now</c><c> you</c>
+[5:56] are given two sorted arrays and now you
+[5:56] are given two sorted arrays and now you have<c> to</c><c> give</c><c> me</c><c> a</c><c> resultant</c><c> array</c><c> that</c>
+[5:59] have to give me a resultant array that
+[5:59] have to give me a resultant array that is<c> also</c><c> sorted.</c><c> Once</c><c> again,</c><c> where</c><c> does</c>
+[6:02] is also sorted. Once again, where does
+[6:02] is also sorted. Once again, where does the<c> twop</c><c> pointer</c><c> approach</c><c> come</c><c> in</c><c> handy?</c>
+[6:05] the twop pointer approach come in handy?
+[6:05] the twop pointer approach come in handy? You<c> start</c><c> off</c><c> one</c><c> pointer</c><c> here</c><c> and</c><c> then</c>
+[6:06] You start off one pointer here and then
+[6:06] You start off one pointer here and then you<c> start</c><c> off</c><c> one</c><c> pointer</c><c> over</c><c> here.</c><c> And</c>
+[6:09] you start off one pointer over here. And
+[6:09] you start off one pointer over here. And now<c> what</c><c> you</c><c> can</c><c> do,</c><c> compare</c><c> both</c><c> of</c>
+[6:11] now what you can do, compare both of
+[6:11] now what you can do, compare both of these<c> elements.</c><c> Whichever</c><c> is</c><c> the</c>
+[6:13] these elements. Whichever is the
+[6:13] these elements. Whichever is the smallest<c> just</c><c> add</c><c> it</c><c> to</c><c> your</c><c> result</c>
+[6:15] smallest just add it to your result
+[6:15] smallest just add it to your result list.<c> And</c><c> now</c><c> you</c><c> can</c><c> advance</c><c> your</c>
+[6:18] list. And now you can advance your
+[6:18] list. And now you can advance your pointer.<c> Now</c><c> compare</c><c> minus5</c><c> and</c><c> minus1.</c>
+[6:21] pointer. Now compare minus5 and minus1.
+[6:21] pointer. Now compare minus5 and minus1. Minus<c> 5</c><c> is</c><c> smaller.</c><c> So</c><c> minus</c><c> y</c><c> will</c><c> get</c>
+[6:24] Minus 5 is smaller. So minus y will get
+[6:24] Minus 5 is smaller. So minus y will get in<c> your</c><c> result.</c><c> And</c><c> then</c><c> you</c><c> are</c><c> going</c>
+[6:26] in your result. And then you are going
+[6:26] in your result. And then you are going to<c> advance</c><c> this</c><c> pointer</c><c> forward.</c><c> What</c>
+[6:28] to advance this pointer forward. What
+[6:28] to advance this pointer forward. What are<c> we</c><c> doing</c><c> over</c><c> here?</c><c> Again,</c><c> we</c><c> apply</c>
+[6:30] are we doing over here? Again, we apply
+[6:30] are we doing over here? Again, we apply the<c> two-pointer</c><c> approach</c><c> to</c><c> perform</c><c> only</c>
+[6:34] the two-pointer approach to perform only
+[6:34] the two-pointer approach to perform only one<c> traversal</c><c> of</c><c> both</c><c> of</c><c> the</c><c> lists</c><c> and</c>
+[6:37] one traversal of both of the lists and
+[6:37] one traversal of both of the lists and ultimately<c> we</c><c> will</c><c> have</c><c> our</c><c> entire</c>
+[6:39] ultimately we will have our entire
+[6:39] ultimately we will have our entire sorted<c> list.</c><c> Think</c><c> about</c><c> it.</c><c> There</c><c> can</c>
+[6:42] sorted list. Think about it. There can
+[6:42] sorted list. Think about it. There can also<c> be</c><c> a</c><c> similar</c><c> problem</c><c> where</c><c> you</c><c> are</c>
+[6:45] also be a similar problem where you are
+[6:45] also be a similar problem where you are given<c> two</c><c> sorted</c><c> arrays</c><c> and</c><c> you</c><c> have</c><c> to</c>
+[6:48] given two sorted arrays and you have to
+[6:48] given two sorted arrays and you have to remove<c> the</c><c> duplicates</c><c> in</c><c> between</c><c> them.</c>
+[6:50] remove the duplicates in between them.
+[6:50] remove the duplicates in between them. So<c> once</c><c> again</c><c> the</c><c> method</c><c> will</c><c> remain</c><c> the</c>
+[6:53] So once again the method will remain the
+[6:53] So once again the method will remain the same.<c> You</c><c> start</c><c> off</c><c> your</c><c> pointers</c><c> from</c>
+[6:55] same. You start off your pointers from
+[6:55] same. You start off your pointers from the<c> starting</c><c> positions</c><c> and</c><c> now</c><c> keep</c><c> on</c>
+[6:58] the starting positions and now keep on
+[6:58] the starting positions and now keep on iterating<c> until</c><c> you</c><c> find</c><c> duplicate</c>
+[7:00] iterating until you find duplicate
+[7:00] iterating until you find duplicate elements<c> and</c><c> just</c><c> remove</c><c> them</c><c> instead</c><c> of</c>
+[7:03] elements and just remove them instead of
+[7:03] elements and just remove them instead of iterating<c> both</c><c> the</c><c> arrays</c><c> again</c><c> and</c>
+[7:05] iterating both the arrays again and
+[7:05] iterating both the arrays again and again.<c> So</c><c> do</c><c> you</c><c> really</c><c> think</c><c> these</c><c> all</c>
+[7:08] again. So do you really think these all
+[7:08] again. So do you really think these all are<c> separate</c><c> problems?</c><c> No,</c><c> we</c><c> are</c><c> just</c>
+[7:11] are separate problems? No, we are just
+[7:11] are separate problems? No, we are just applying<c> a</c><c> similar</c><c> pattern</c><c> to</c><c> all</c><c> of</c>
+[7:14] applying a similar pattern to all of
+[7:14] applying a similar pattern to all of these<c> problems.</c><c> And</c><c> another</c><c> similar</c>
+[7:16] these problems. And another similar
+[7:16] these problems. And another similar problem<c> that</c><c> you</c><c> might</c><c> have</c><c> found</c><c> is</c>
+[7:18] problem that you might have found is
+[7:18] problem that you might have found is finding<c> the</c><c> intersection</c><c> point</c><c> of</c><c> two</c>
+[7:20] finding the intersection point of two
+[7:20] finding the intersection point of two sorted<c> arrays.</c><c> Basically</c><c> look</c><c> at</c><c> these</c>
+[7:23] sorted arrays. Basically look at these
+[7:23] sorted arrays. Basically look at these two<c> arrays.</c><c> This</c><c> first</c><c> array</c><c> is</c><c> a</c><c> sorted</c>
+[7:26] two arrays. This first array is a sorted
+[7:26] two arrays. This first array is a sorted array<c> and</c><c> the</c><c> second</c><c> array</c><c> is</c><c> also</c>
+[7:28] array and the second array is also
+[7:28] array and the second array is also sorted.<c> Up</c><c> till</c><c> here</c><c> both</c><c> these</c><c> arrays</c>
+[7:31] sorted. Up till here both these arrays
+[7:31] sorted. Up till here both these arrays are<c> different.</c><c> But</c><c> at</c><c> this</c><c> particular</c>
+[7:35] are different. But at this particular
+[7:35] are different. But at this particular element<c> they</c><c> merge</c><c> and</c><c> now</c><c> they</c><c> are</c><c> the</c>
+[7:38] element they merge and now they are the
+[7:38] element they merge and now they are the same.<c> Once</c><c> again</c><c> is</c><c> this</c><c> a</c><c> different</c>
+[7:40] same. Once again is this a different
+[7:40] same. Once again is this a different problem<c> to</c><c> solve?</c><c> No.</c><c> You</c><c> are</c><c> again</c>
+[7:43] problem to solve? No. You are again
+[7:43] problem to solve? No. You are again applying<c> the</c><c> same</c><c> pattern.</c><c> You</c><c> will</c><c> keep</c>
+[7:44] applying the same pattern. You will keep
+[7:44] applying the same pattern. You will keep on<c> iterating</c><c> and</c><c> as</c><c> soon</c><c> as</c><c> you</c><c> find</c><c> the</c>
+[7:46] on iterating and as soon as you find the
+[7:46] on iterating and as soon as you find the same<c> element,</c><c> you</c><c> will</c><c> return</c><c> your</c>
+[7:48] same element, you will return your
+[7:48] same element, you will return your answer.<c> All</c><c> of</c><c> this</c><c> seems</c><c> very</c><c> fancy,</c>
+[7:51] answer. All of this seems very fancy,
+[7:51] answer. All of this seems very fancy, right?<c> But</c><c> how</c><c> can</c><c> you</c><c> actually</c><c> identify</c>
+[7:54] right? But how can you actually identify
+[7:54] right? But how can you actually identify where<c> can</c><c> you</c><c> apply</c><c> the</c><c> two-pointer</c>
+[7:56] where can you apply the two-pointer
+[7:56] where can you apply the two-pointer approach?<c> If</c><c> you</c><c> think</c><c> about</c><c> it,</c><c> most</c><c> of</c>
+[7:59] approach? If you think about it, most of
+[7:59] approach? If you think about it, most of it<c> comes</c><c> from</c><c> experience.</c><c> But</c><c> there</c><c> are</c>
+[8:01] it comes from experience. But there are
+[8:02] it comes from experience. But there are certain<c> keywords</c><c> which</c><c> you</c><c> can</c><c> look</c><c> for</c>
+[8:03] certain keywords which you can look for
+[8:03] certain keywords which you can look for in<c> a</c><c> problem</c><c> statement</c><c> where</c><c> this</c>
+[8:06] in a problem statement where this
+[8:06] in a problem statement where this twopinter<c> approach</c><c> may</c><c> be</c><c> applicable.</c>
+[8:09] twopinter approach may be applicable.
+[8:09] twopinter approach may be applicable. For<c> example,</c><c> as</c><c> soon</c><c> as</c><c> you</c><c> see</c><c> a</c><c> sorted</c>
+[8:11] For example, as soon as you see a sorted
+[8:11] For example, as soon as you see a sorted sequence,<c> it</c><c> immediately</c><c> gives</c><c> you</c><c> one</c>
+[8:14] sequence, it immediately gives you one
+[8:14] sequence, it immediately gives you one advantage.<c> the</c><c> smallest</c><c> element</c><c> will</c><c> be</c>
+[8:16] advantage. the smallest element will be
+[8:16] advantage. the smallest element will be on<c> the</c><c> left</c><c> and</c><c> the</c><c> largest</c><c> element</c><c> will</c>
+[8:18] on the left and the largest element will
+[8:18] on the left and the largest element will be<c> on</c><c> the</c><c> right.</c><c> So</c><c> if</c><c> you</c><c> want</c><c> to</c><c> do</c>
+[8:21] be on the right. So if you want to do
+[8:21] be on the right. So if you want to do something<c> with</c><c> the</c><c> smallest</c><c> element</c><c> and</c>
+[8:23] something with the smallest element and
+[8:23] something with the smallest element and the<c> larger</c><c> element</c><c> then</c><c> immediately</c>
+[8:25] the larger element then immediately
+[8:25] the larger element then immediately apply<c> two</c><c> pointers</c><c> or</c><c> if</c><c> you</c><c> have</c><c> to</c><c> go</c>
+[8:29] apply two pointers or if you have to go
+[8:29] apply two pointers or if you have to go towards<c> some</c><c> kind</c><c> of</c><c> a</c><c> target</c><c> sum</c><c> then</c>
+[8:31] towards some kind of a target sum then
+[8:31] towards some kind of a target sum then again<c> it</c><c> means</c><c> that</c><c> two</c><c> pointers</c><c> can</c>
+[8:34] again it means that two pointers can
+[8:34] again it means that two pointers can help<c> you</c><c> because</c><c> you</c><c> are</c><c> getting</c><c> a</c>
+[8:36] help you because you are getting a
+[8:36] help you because you are getting a minimum<c> and</c><c> a</c><c> maximum.</c><c> you</c><c> don't</c><c> have</c>
+[8:39] minimum and a maximum. you don't have
+[8:39] minimum and a maximum. you don't have anything<c> beyond</c><c> those</c><c> limits</c><c> and</c><c> if</c>
+[8:41] anything beyond those limits and if
+[8:41] anything beyond those limits and if you're<c> defining</c><c> your</c><c> limits</c><c> that</c><c> kind</c><c> of</c>
+[8:43] you're defining your limits that kind of
+[8:43] you're defining your limits that kind of narrows<c> down</c><c> okay</c><c> this</c><c> will</c><c> be</c><c> the</c>
+[8:45] narrows down okay this will be the
+[8:45] narrows down okay this will be the efficient<c> solution.</c><c> Similarly</c><c> when</c><c> you</c>
+[8:48] efficient solution. Similarly when you
+[8:48] efficient solution. Similarly when you have<c> to</c><c> compare</c><c> and</c><c> combine</c><c> elements</c>
+[8:51] have to compare and combine elements
+[8:51] have to compare and combine elements think<c> about</c><c> the</c><c> previous</c><c> case</c><c> we</c><c> had</c><c> two</c>
+[8:53] think about the previous case we had two
+[8:53] think about the previous case we had two sorted<c> lists</c><c> you</c><c> need</c><c> to</c><c> combine</c><c> them.</c>
+[8:56] sorted lists you need to combine them.
+[8:56] sorted lists you need to combine them. One<c> way</c><c> to</c><c> combine</c><c> would</c><c> be</c><c> that</c><c> you</c>
+[8:58] One way to combine would be that you
+[8:58] One way to combine would be that you pick<c> up</c><c> a</c><c> particular</c><c> element</c><c> and</c><c> then</c>
+[9:00] pick up a particular element and then
+[9:00] pick up a particular element and then iterate<c> over</c><c> all</c><c> of</c><c> the</c><c> other</c><c> list.</c>
+[9:02] iterate over all of the other list.
+[9:02] iterate over all of the other list. Correct?<c> Or</c><c> you</c><c> can</c><c> start</c><c> both</c><c> the</c>
+[9:05] Correct? Or you can start both the
+[9:05] Correct? Or you can start both the pointers<c> at</c><c> the</c><c> same</c><c> time</c><c> and</c><c> then</c><c> keep</c>
+[9:07] pointers at the same time and then keep
+[9:07] pointers at the same time and then keep on<c> combining</c><c> them</c><c> as</c><c> you</c><c> go.</c><c> This</c><c> saves</c>
+[9:11] on combining them as you go. This saves
+[9:11] on combining them as you go. This saves you<c> time</c><c> and</c><c> it</c><c> will</c><c> be</c><c> efficient</c><c> as</c>
+[9:13] you time and it will be efficient as
+[9:13] you time and it will be efficient as well.<c> Sometimes</c><c> you</c><c> might</c><c> have</c><c> realized</c>
+[9:15] well. Sometimes you might have realized
+[9:15] well. Sometimes you might have realized that<c> when</c><c> you</c><c> are</c><c> iterating</c><c> through</c><c> an</c>
+[9:17] that when you are iterating through an
+[9:17] that when you are iterating through an array,<c> you</c><c> might</c><c> have</c><c> wondered</c><c> okay</c><c> if</c><c> I</c>
+[9:20] array, you might have wondered okay if I
+[9:20] array, you might have wondered okay if I apply<c> a</c><c> nested</c><c> loop</c><c> as</c><c> soon</c><c> as</c><c> this</c>
+[9:23] apply a nested loop as soon as this
+[9:23] apply a nested loop as soon as this thought<c> comes</c><c> to</c><c> your</c><c> mind,</c><c> it</c><c> means</c>
+[9:26] thought comes to your mind, it means
+[9:26] thought comes to your mind, it means that<c> at</c><c> least</c><c> you</c><c> can</c><c> try</c><c> two</c><c> pointers.</c>
+[9:29] that at least you can try two pointers.
+[9:29] that at least you can try two pointers. A<c> nested</c><c> loop</c><c> simply</c><c> means</c><c> that</c><c> you</c><c> are</c>
+[9:31] A nested loop simply means that you are
+[9:31] A nested loop simply means that you are fixing<c> one</c><c> element</c><c> and</c><c> then</c><c> you're</c>
+[9:33] fixing one element and then you're
+[9:33] fixing one element and then you're iterating<c> over</c><c> all</c><c> of</c><c> the</c><c> other</c>
+[9:35] iterating over all of the other
+[9:35] iterating over all of the other elements.<c> So</c><c> it</c><c> could</c><c> be</c><c> possible</c><c> that</c>
+[9:38] elements. So it could be possible that
+[9:38] elements. So it could be possible that if<c> you</c><c> apply</c><c> two</c><c> pointers</c><c> and</c><c> iterate</c>
+[9:41] if you apply two pointers and iterate
+[9:41] if you apply two pointers and iterate over<c> the</c><c> elements</c><c> together</c><c> maybe</c><c> you</c>
+[9:43] over the elements together maybe you
+[9:43] over the elements together maybe you have<c> a</c><c> faster</c><c> approach</c><c> right</c><c> away</c>
+[9:45] have a faster approach right away
+[9:45] have a faster approach right away available<c> over</c><c> there.</c><c> And</c><c> the</c><c> last</c>
+[9:48] available over there. And the last
+[9:48] available over there. And the last whenever<c> you</c><c> have</c><c> to</c><c> move</c><c> or</c><c> shrink</c><c> a</c>
+[9:50] whenever you have to move or shrink a
+[9:50] whenever you have to move or shrink a window.<c> So</c><c> two</c><c> pointers</c><c> are</c><c> essentially</c>
+[9:53] window. So two pointers are essentially
+[9:53] window. So two pointers are essentially giving<c> you</c><c> a</c><c> operating</c><c> window</c><c> in</c>
+[9:55] giving you a operating window in
+[9:56] giving you a operating window in between.<c> So</c><c> you</c><c> have</c><c> fixed</c><c> two</c><c> limits.</c>
+[9:59] between. So you have fixed two limits.
+[9:59] between. So you have fixed two limits. You<c> may</c><c> want</c><c> to</c><c> sum</c><c> all</c><c> of</c><c> the</c><c> different</c>
+[10:02] You may want to sum all of the different
+[10:02] You may want to sum all of the different numbers<c> in</c><c> this</c><c> particular</c><c> interval</c>
+[10:04] numbers in this particular interval
+[10:04] numbers in this particular interval based<c> upon</c><c> if</c><c> you</c><c> want</c><c> a</c><c> larger</c><c> sum</c><c> or</c><c> a</c>
+[10:07] based upon if you want a larger sum or a
+[10:07] based upon if you want a larger sum or a smaller<c> sum.</c><c> You</c><c> can</c><c> modify</c><c> your</c><c> two</c>
+[10:09] smaller sum. You can modify your two
+[10:10] smaller sum. You can modify your two pointers.<c> So</c><c> these</c><c> are</c><c> some</c><c> of</c><c> the</c><c> key</c>
+[10:13] pointers. So these are some of the key
+[10:13] pointers. So these are some of the key points<c> that</c><c> you</c><c> should</c><c> look</c><c> out</c><c> for.</c><c> I'm</c>
+[10:15] points that you should look out for. I'm
+[10:15] points that you should look out for. I'm not<c> saying</c><c> that</c><c> this</c><c> is</c><c> an</c><c> exhaustive</c>
+[10:17] not saying that this is an exhaustive
+[10:17] not saying that this is an exhaustive list<c> and</c><c> certainly</c><c> the</c><c> more</c><c> problems</c><c> you</c>
+[10:20] list and certainly the more problems you
+[10:20] list and certainly the more problems you solve<c> the</c><c> more</c><c> easily</c><c> you</c><c> will</c><c> be</c><c> able</c>
+[10:22] solve the more easily you will be able
+[10:22] solve the more easily you will be able to<c> identify</c><c> them.</c><c> Let</c><c> us</c><c> keep</c><c> moving</c>
+[10:24] to identify them. Let us keep moving
+[10:24] to identify them. Let us keep moving ahead<c> and</c><c> find</c><c> out</c><c> more</c><c> applications.</c>
+[10:27] ahead and find out more applications.
+[10:27] ahead and find out more applications. You<c> can</c><c> apply</c><c> the</c><c> two-pointer</c><c> approach</c>
+[10:29] You can apply the two-pointer approach
+[10:29] You can apply the two-pointer approach even<c> to</c><c> strings.</c><c> For</c><c> example,</c><c> take</c><c> this</c>
+[10:32] even to strings. For example, take this
+[10:32] even to strings. For example, take this problem.<c> You</c><c> have</c><c> to</c><c> find</c><c> out</c><c> if</c><c> a</c>
+[10:35] problem. You have to find out if a
+[10:35] problem. You have to find out if a string<c> is</c><c> valid</c><c> wrong.</c><c> One</c><c> way</c><c> to</c><c> do</c><c> is</c>
+[10:37] string is valid wrong. One way to do is
+[10:37] string is valid wrong. One way to do is that<c> you</c><c> iterate</c><c> from</c><c> the</c><c> beginning</c><c> and</c>
+[10:39] that you iterate from the beginning and
+[10:39] that you iterate from the beginning and go<c> all</c><c> the</c><c> way</c><c> up</c><c> to</c><c> the</c><c> end.</c><c> You</c><c> found</c>
+[10:42] go all the way up to the end. You found
+[10:42] go all the way up to the end. You found a<c> string.</c><c> Now</c><c> start</c><c> from</c><c> the</c><c> very</c><c> last</c>
+[10:44] a string. Now start from the very last
+[10:44] a string. Now start from the very last and<c> then</c><c> again</c><c> go</c><c> all</c><c> the</c><c> way</c><c> to</c><c> the</c>
+[10:46] and then again go all the way to the
+[10:46] and then again go all the way to the beginning<c> and</c><c> then</c><c> you</c><c> compare</c><c> both</c>
+[10:48] beginning and then you compare both
+[10:48] beginning and then you compare both these<c> results.</c><c> The</c><c> other</c><c> efficient</c><c> way</c>
+[10:51] these results. The other efficient way
+[10:51] these results. The other efficient way will<c> be</c><c> that</c><c> you</c><c> again</c><c> take</c><c> up</c><c> two</c>
+[10:53] will be that you again take up two
+[10:53] will be that you again take up two pointers<c> starting</c><c> from</c><c> the</c><c> first</c><c> element</c>
+[10:55] pointers starting from the first element
+[10:56] pointers starting from the first element and<c> the</c><c> right</c><c> character.</c><c> Now</c><c> if</c><c> both</c><c> of</c>
+[10:59] and the right character. Now if both of
+[10:59] and the right character. Now if both of these<c> are</c><c> same</c><c> what</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c>
+[11:01] these are same what you can do is you
+[11:01] these are same what you can do is you can<c> move</c><c> your</c><c> pointers</c><c> simultaneously</c>
+[11:05] can move your pointers simultaneously
+[11:05] can move your pointers simultaneously one<c> step</c><c> forward</c><c> and</c><c> one</c><c> step</c><c> backward.</c>
+[11:07] one step forward and one step backward.
+[11:07] one step forward and one step backward. Again<c> compare</c><c> both</c><c> of</c><c> these</c><c> elements.</c><c> So</c>
+[11:10] Again compare both of these elements. So
+[11:10] Again compare both of these elements. So keep<c> on</c><c> going</c><c> until</c><c> both</c><c> of</c><c> your</c>
+[11:12] keep on going until both of your
+[11:12] keep on going until both of your pointers<c> merge.</c><c> If</c><c> you</c><c> have</c><c> merged</c><c> both</c>
+[11:14] pointers merge. If you have merged both
+[11:14] pointers merge. If you have merged both the<c> pointers</c><c> and</c><c> every</c><c> character</c><c> matched</c>
+[11:17] the pointers and every character matched
+[11:17] the pointers and every character matched what<c> did</c><c> it</c><c> mean?</c><c> this</c><c> string</c><c> was</c><c> a</c>
+[11:19] what did it mean? this string was a
+[11:19] what did it mean? this string was a palendrome.<c> Otherwise,</c><c> if</c><c> at</c><c> any</c>
+[11:22] palendrome. Otherwise, if at any
+[11:22] palendrome. Otherwise, if at any condition,<c> let</c><c> us</c><c> say</c><c> this</c><c> string</c><c> was</c><c> X.</c>
+[11:24] condition, let us say this string was X.
+[11:24] condition, let us say this string was X. A<c> and</c><c> X</c><c> do</c><c> not</c><c> match.</c><c> So,</c><c> you</c><c> can</c><c> stop</c>
+[11:28] A and X do not match. So, you can stop
+[11:28] A and X do not match. So, you can stop right<c> over</c><c> there</c><c> and</c><c> say</c><c> that</c><c> this</c>
+[11:29] right over there and say that this
+[11:29] right over there and say that this string<c> is</c><c> not</c><c> a</c><c> parend</c><c> row.</c><c> It</c><c> saves</c><c> you</c>
+[11:32] string is not a parend row. It saves you
+[11:32] string is not a parend row. It saves you so<c> much</c><c> time</c><c> rather</c><c> than</c><c> iterating</c>
+[11:34] so much time rather than iterating
+[11:34] so much time rather than iterating through<c> the</c><c> entire</c><c> string</c><c> both</c><c> the</c>
+[11:36] through the entire string both the
+[11:36] through the entire string both the times.<c> What</c><c> other</c><c> problem</c><c> comes</c><c> in</c><c> your</c>
+[11:39] times. What other problem comes in your
+[11:39] times. What other problem comes in your mind<c> when</c><c> you</c><c> think</c><c> about</c><c> a</c><c> string</c><c> and</c>
+[11:41] mind when you think about a string and
+[11:41] mind when you think about a string and two<c> pointers</c><c> from</c><c> the</c><c> starting</c><c> and</c><c> the</c>
+[11:43] two pointers from the starting and the
+[11:43] two pointers from the starting and the beginning?<c> Yes,</c><c> you</c><c> can</c><c> also</c><c> reverse</c><c> a</c>
+[11:45] beginning? Yes, you can also reverse a
+[11:46] beginning? Yes, you can also reverse a string.<c> And</c><c> similarly</c><c> what</c><c> you</c><c> can</c><c> also</c>
+[11:48] string. And similarly what you can also
+[11:48] string. And similarly what you can also do<c> is</c><c> you</c><c> can</c><c> also</c><c> reverse</c><c> a</c><c> certain</c>
+[11:51] do is you can also reverse a certain
+[11:51] do is you can also reverse a certain section<c> of</c><c> your</c><c> string.</c><c> So</c><c> basically</c><c> let</c>
+[11:54] section of your string. So basically let
+[11:54] section of your string. So basically let us<c> say</c><c> this</c><c> is</c><c> my</c><c> particular</c><c> string.</c><c> I</c>
+[11:56] us say this is my particular string. I
+[11:56] us say this is my particular string. I have<c> to</c><c> reverse</c><c> this</c><c> part</c><c> in</c><c> the</c><c> middle.</c>
+[11:59] have to reverse this part in the middle.
+[11:59] have to reverse this part in the middle. I<c> take</c><c> up</c><c> two</c><c> pointers</c><c> like</c><c> this.</c><c> And</c>
+[12:01] I take up two pointers like this. And
+[12:01] I take up two pointers like this. And now<c> I'm</c><c> just</c><c> going</c><c> to</c><c> swap</c><c> both</c><c> of</c>
+[12:04] now I'm just going to swap both of
+[12:04] now I'm just going to swap both of these.<c> As</c><c> soon</c><c> as</c><c> I</c><c> swap</c><c> it,</c><c> I'm</c><c> going</c>
+[12:06] these. As soon as I swap it, I'm going
+[12:06] these. As soon as I swap it, I'm going to<c> move</c><c> one</c><c> step</c><c> forward.</c><c> And</c><c> then</c><c> once</c>
+[12:08] to move one step forward. And then once
+[12:08] to move one step forward. And then once again<c> I'm</c><c> going</c><c> to</c><c> swap</c><c> both</c><c> of</c><c> these.</c>
+[12:11] again I'm going to swap both of these.
+[12:11] again I'm going to swap both of these. So<c> we</c><c> are</c><c> solving</c><c> the</c><c> same</c><c> problem</c><c> again</c>
+[12:13] So we are solving the same problem again
+[12:14] So we are solving the same problem again and<c> again.</c><c> You</c><c> just</c><c> have</c><c> to</c><c> take</c><c> up</c><c> two</c>
+[12:16] and again. You just have to take up two
+[12:16] and again. You just have to take up two pointers<c> and</c><c> then</c><c> there</c><c> are</c><c> so</c><c> many</c>
+[12:18] pointers and then there are so many
+[12:18] pointers and then there are so many different<c> combinations</c><c> possible.</c><c> Up</c><c> till</c>
+[12:21] different combinations possible. Up till
+[12:21] different combinations possible. Up till now<c> we</c><c> have</c><c> been</c><c> advancing</c><c> both</c><c> of</c><c> these</c>
+[12:23] now we have been advancing both of these
+[12:24] now we have been advancing both of these pointers<c> with</c><c> the</c><c> same</c><c> speed</c><c> either</c><c> in</c>
+[12:26] pointers with the same speed either in
+[12:26] pointers with the same speed either in the<c> forward</c><c> direction</c><c> or</c><c> in</c><c> the</c><c> reverse</c>
+[12:28] the forward direction or in the reverse
+[12:28] the forward direction or in the reverse direction.<c> Remember</c><c> I</c><c> told</c><c> you</c><c> that</c><c> you</c>
+[12:31] direction. Remember I told you that you
+[12:31] direction. Remember I told you that you can<c> advance</c><c> these</c><c> two</c><c> pointers</c><c> with</c>
+[12:33] can advance these two pointers with
+[12:33] can advance these two pointers with different<c> speeds</c><c> as</c><c> well.</c><c> And</c><c> that</c><c> is</c>
+[12:35] different speeds as well. And that is
+[12:36] different speeds as well. And that is where<c> you</c><c> might</c><c> have</c><c> already</c><c> seen</c><c> a</c>
+[12:37] where you might have already seen a
+[12:38] where you might have already seen a similar<c> problem</c><c> come</c><c> across</c><c> your</c><c> way.</c>
+[12:40] similar problem come across your way.
+[12:40] similar problem come across your way. You<c> are</c><c> given</c><c> a</c><c> link</c><c> list</c><c> and</c><c> you</c><c> have</c>
+[12:42] You are given a link list and you have
+[12:42] You are given a link list and you have to<c> find</c><c> out</c><c> the</c><c> middle</c><c> element.</c><c> So</c><c> how</c>
+[12:45] to find out the middle element. So how
+[12:45] to find out the middle element. So how you<c> can</c><c> do</c><c> is</c><c> you</c><c> have</c><c> this</c><c> link</c><c> list</c>
+[12:47] you can do is you have this link list
+[12:47] you can do is you have this link list over<c> here.</c><c> You</c><c> start</c><c> off</c><c> both</c><c> the</c>
+[12:50] over here. You start off both the
+[12:50] over here. You start off both the pointers<c> from</c><c> the</c><c> same</c><c> position.</c><c> Now</c><c> the</c>
+[12:53] pointers from the same position. Now the
+[12:53] pointers from the same position. Now the first<c> pointer</c><c> will</c><c> be</c><c> a</c><c> slow</c><c> pointer</c><c> and</c>
+[12:55] first pointer will be a slow pointer and
+[12:55] first pointer will be a slow pointer and the<c> second</c><c> pointer</c><c> will</c><c> be</c><c> a</c><c> fast</c>
+[12:57] the second pointer will be a fast
+[12:57] the second pointer will be a fast pointer.<c> A</c><c> slow</c><c> pointer</c><c> means</c><c> it</c><c> will</c>
+[13:00] pointer. A slow pointer means it will
+[13:00] pointer. A slow pointer means it will only<c> move</c><c> one</c><c> step</c><c> at</c><c> a</c><c> time</c><c> and</c><c> the</c>
+[13:03] only move one step at a time and the
+[13:03] only move one step at a time and the fast<c> pointer</c><c> will</c><c> move</c><c> two</c><c> steps</c><c> at</c><c> a</c>
+[13:05] fast pointer will move two steps at a
+[13:05] fast pointer will move two steps at a time.<c> So</c><c> what</c><c> happens</c><c> at</c><c> every</c>
+[13:07] time. So what happens at every
+[13:07] time. So what happens at every iteration?<c> The</c><c> slow</c><c> pointer</c><c> moves</c><c> here.</c>
+[13:09] iteration? The slow pointer moves here.
+[13:10] iteration? The slow pointer moves here. The<c> fast</c><c> pointer</c><c> moves</c><c> here.</c><c> The</c><c> slow</c>
+[13:12] The fast pointer moves here. The slow
+[13:12] The fast pointer moves here. The slow pointer<c> moves</c><c> here.</c><c> The</c><c> fast</c><c> pointer</c>
+[13:14] pointer moves here. The fast pointer
+[13:14] pointer moves here. The fast pointer moves<c> here.</c><c> Slow</c><c> move</c><c> here.</c><c> And</c><c> the</c><c> fast</c>
+[13:17] moves here. Slow move here. And the fast
+[13:17] moves here. Slow move here. And the fast move<c> here.</c><c> As</c><c> soon</c><c> as</c><c> the</c><c> next</c><c> of</c><c> the</c>
+[13:20] move here. As soon as the next of the
+[13:20] move here. As soon as the next of the fast<c> pointer</c><c> is</c><c> null,</c><c> you</c><c> can</c><c> stop</c><c> over</c>
+[13:23] fast pointer is null, you can stop over
+[13:23] fast pointer is null, you can stop over there.<c> And</c><c> what</c><c> just</c><c> happened?</c><c> Look</c><c> at</c>
+[13:25] there. And what just happened? Look at
+[13:25] there. And what just happened? Look at your<c> slow</c><c> pointer.</c><c> It</c><c> is</c><c> pointing</c><c> at</c><c> the</c>
+[13:28] your slow pointer. It is pointing at the
+[13:28] your slow pointer. It is pointing at the middle<c> element.</c><c> And</c><c> why</c><c> is</c><c> that?</c><c> So</c><c> it</c>
+[13:31] middle element. And why is that? So it
+[13:31] middle element. And why is that? So it is<c> very</c><c> very</c><c> obvious.</c><c> Let</c><c> us</c><c> say</c><c> you</c>
+[13:33] is very very obvious. Let us say you
+[13:33] is very very obvious. Let us say you have<c> a</c><c> link</c><c> list</c><c> only</c><c> of</c><c> three</c><c> elements</c>
+[13:36] have a link list only of three elements
+[13:36] have a link list only of three elements where<c> the</c><c> last</c><c> element</c><c> is</c><c> null.</c><c> If</c><c> you</c>
+[13:38] where the last element is null. If you
+[13:38] where the last element is null. If you start<c> from</c><c> the</c><c> beginning</c><c> and</c><c> you</c><c> have</c>
+[13:40] start from the beginning and you have
+[13:40] start from the beginning and you have two<c> pointers,</c><c> if</c><c> the</c><c> first</c><c> pointer</c><c> takes</c>
+[13:43] two pointers, if the first pointer takes
+[13:43] two pointers, if the first pointer takes two<c> steps,</c><c> the</c><c> slow</c><c> pointer</c><c> will</c><c> only</c>
+[13:45] two steps, the slow pointer will only
+[13:45] two steps, the slow pointer will only take<c> one</c><c> step.</c><c> So</c><c> the</c><c> slow</c><c> pointer</c><c> is</c>
+[13:48] take one step. So the slow pointer is
+[13:48] take one step. So the slow pointer is always<c> at</c><c> the</c><c> halfway</c><c> of</c><c> the</c><c> fast</c>
+[13:51] always at the halfway of the fast
+[13:51] always at the halfway of the fast pointer.<c> And</c><c> that</c><c> is</c><c> the</c><c> underlying</c><c> idea</c>
+[13:54] pointer. And that is the underlying idea
+[13:54] pointer. And that is the underlying idea how<c> you</c><c> can</c><c> use</c><c> pointers</c><c> with</c><c> different</c>
+[13:57] how you can use pointers with different
+[13:57] how you can use pointers with different speeds<c> to</c><c> arrive</c><c> at</c><c> an</c><c> efficient</c>
+[13:59] speeds to arrive at an efficient
+[13:59] speeds to arrive at an efficient solution.<c> On</c><c> a</c><c> similar</c><c> concept,</c><c> you</c>
+[14:01] solution. On a similar concept, you
+[14:01] solution. On a similar concept, you might<c> have</c><c> also</c><c> heard</c><c> about</c><c> the</c><c> problem</c>
+[14:04] might have also heard about the problem
+[14:04] might have also heard about the problem finding<c> a</c><c> cycle</c><c> in</c><c> a</c><c> link</c><c> list.</c>
+[14:07] finding a cycle in a link list.
+[14:07] finding a cycle in a link list. Basically,<c> what</c><c> happens</c><c> is</c><c> one</c><c> of</c><c> these</c>
+[14:09] Basically, what happens is one of these
+[14:09] Basically, what happens is one of these nodes<c> will</c><c> be</c><c> connected</c><c> to</c><c> some</c><c> other</c>
+[14:12] nodes will be connected to some other
+[14:12] nodes will be connected to some other node<c> in</c><c> your</c><c> link</c><c> list.</c><c> And</c><c> to</c><c> find</c><c> this</c>
+[14:15] node in your link list. And to find this
+[14:15] node in your link list. And to find this cycle,<c> you</c><c> will</c><c> keep</c><c> on</c><c> moving</c><c> both</c><c> of</c>
+[14:17] cycle, you will keep on moving both of
+[14:17] cycle, you will keep on moving both of your<c> pointers</c><c> and</c><c> you</c><c> are</c><c> guaranteed</c>
+[14:20] your pointers and you are guaranteed
+[14:20] your pointers and you are guaranteed that<c> they</c><c> will</c><c> meet</c><c> somewhere.</c><c> Because</c>
+[14:23] that they will meet somewhere. Because
+[14:23] that they will meet somewhere. Because if<c> you</c><c> think</c><c> about</c><c> it</c><c> in</c><c> a</c><c> race</c><c> if</c><c> one</c>
+[14:25] if you think about it in a race if one
+[14:25] if you think about it in a race if one of<c> the</c><c> person</c><c> is</c><c> moving</c><c> faster</c><c> and</c><c> it</c><c> is</c>
+[14:28] of the person is moving faster and it is
+[14:28] of the person is moving faster and it is a<c> loop</c><c> ultimately</c><c> the</c><c> faster</c><c> person</c><c> will</c>
+[14:32] a loop ultimately the faster person will
+[14:32] a loop ultimately the faster person will catch<c> up</c><c> with</c><c> the</c><c> slower</c><c> person.</c>
+[14:33] catch up with the slower person.
+[14:34] catch up with the slower person. Correct?<c> So</c><c> once</c><c> again</c><c> these</c><c> two</c>
+[14:37] Correct? So once again these two
+[14:37] Correct? So once again these two pointers<c> are</c><c> helping</c><c> you</c><c> to</c><c> find</c><c> an</c>
+[14:39] pointers are helping you to find an
+[14:39] pointers are helping you to find an efficient<c> solution.</c><c> What</c><c> else?</c><c> You</c><c> might</c>
+[14:42] efficient solution. What else? You might
+[14:42] efficient solution. What else? You might have<c> also</c><c> seen</c><c> a</c><c> problem</c><c> where</c><c> you</c><c> are</c>
+[14:44] have also seen a problem where you are
+[14:44] have also seen a problem where you are given<c> a</c><c> array</c><c> of</c><c> zeros</c><c> and</c><c> ones</c><c> and</c><c> now</c>
+[14:48] given a array of zeros and ones and now
+[14:48] given a array of zeros and ones and now you<c> have</c><c> to</c><c> separate</c><c> them.</c><c> That</c><c> means</c>
+[14:51] you have to separate them. That means
+[14:51] you have to separate them. That means all<c> the</c><c> zeros</c><c> should</c><c> be</c><c> on</c><c> one</c><c> side</c><c> and</c>
+[14:53] all the zeros should be on one side and
+[14:53] all the zeros should be on one side and all<c> of</c><c> the</c><c> ones</c><c> should</c><c> be</c><c> on</c><c> the</c><c> other</c>
+[14:55] all of the ones should be on the other
+[14:55] all of the ones should be on the other side.<c> That</c><c> means</c><c> you</c><c> are</c><c> partitioning</c>
+[14:57] side. That means you are partitioning
+[14:58] side. That means you are partitioning around<c> a</c><c> particular</c><c> condition.</c><c> So</c><c> let</c><c> us</c>
+[15:00] around a particular condition. So let us
+[15:00] around a particular condition. So let us say<c> I</c><c> have</c><c> this</c><c> array</c><c> with</c><c> me.</c><c> Once</c>
+[15:02] say I have this array with me. Once
+[15:02] say I have this array with me. Once again<c> I</c><c> take</c><c> up</c><c> my</c><c> two</c><c> pointers.</c><c> I</c><c> know</c>
+[15:05] again I take up my two pointers. I know
+[15:05] again I take up my two pointers. I know that<c> all</c><c> of</c><c> the</c><c> zeros</c><c> should</c><c> be</c><c> at</c><c> the</c>
+[15:07] that all of the zeros should be at the
+[15:07] that all of the zeros should be at the left<c> and</c><c> all</c><c> of</c><c> the</c><c> ones</c><c> should</c><c> be</c><c> at</c>
+[15:09] left and all of the ones should be at
+[15:09] left and all of the ones should be at the<c> right.</c><c> So</c><c> I</c><c> have</c><c> my</c><c> zero</c><c> over</c><c> here</c>
+[15:13] the right. So I have my zero over here
+[15:13] the right. So I have my zero over here and<c> this</c><c> is</c><c> fine.</c><c> My</c><c> zero</c><c> is</c><c> on</c><c> the</c><c> left</c>
+[15:16] and this is fine. My zero is on the left
+[15:16] and this is fine. My zero is on the left and<c> my</c><c> left</c><c> pointer</c><c> is</c><c> good.</c><c> So</c><c> what</c><c> I</c>
+[15:19] and my left pointer is good. So what I
+[15:19] and my left pointer is good. So what I will<c> do</c><c> is</c><c> I</c><c> will</c><c> move</c><c> ahead.</c><c> As</c><c> soon</c><c> as</c>
+[15:21] will do is I will move ahead. As soon as
+[15:21] will do is I will move ahead. As soon as I<c> move</c><c> ahead,</c><c> I</c><c> see</c><c> that</c><c> I</c><c> have</c><c> a</c><c> one</c>
+[15:23] I move ahead, I see that I have a one
+[15:23] I move ahead, I see that I have a one over<c> here.</c><c> One</c><c> should</c><c> not</c><c> be</c><c> on</c><c> the</c>
+[15:25] over here. One should not be on the
+[15:25] over here. One should not be on the left.<c> So</c><c> I'll</c><c> wait.</c><c> Now</c><c> look</c><c> at</c><c> the</c>
+[15:29] left. So I'll wait. Now look at the
+[15:29] left. So I'll wait. Now look at the right<c> pointer.</c><c> It</c><c> is</c><c> pointing</c><c> at</c><c> a</c><c> one.</c>
+[15:31] right pointer. It is pointing at a one.
+[15:31] right pointer. It is pointing at a one. So<c> one</c><c> should</c><c> be</c><c> on</c><c> the</c><c> right.</c><c> So</c><c> okay,</c>
+[15:34] So one should be on the right. So okay,
+[15:34] So one should be on the right. So okay, I<c> won't</c><c> do</c><c> anything.</c>
+[15:36] I won't do anything.
+[15:36] I won't do anything. Now<c> go</c><c> back</c><c> one</c><c> step.</c><c> Again,</c><c> I'm</c>
+[15:38] Now go back one step. Again, I'm
+[15:38] Now go back one step. Again, I'm pointing<c> at</c><c> a</c><c> one.</c><c> One</c><c> should</c><c> be</c><c> on</c><c> the</c>
+[15:41] pointing at a one. One should be on the
+[15:41] pointing at a one. One should be on the right.<c> So</c><c> once</c><c> again,</c><c> I</c><c> won't</c><c> touch</c><c> it.</c>
+[15:44] right. So once again, I won't touch it.
+[15:44] right. So once again, I won't touch it. Now<c> go</c><c> one</c><c> step</c><c> backward.</c><c> What</c><c> do</c><c> you</c>
+[15:47] Now go one step backward. What do you
+[15:47] Now go one step backward. What do you see<c> now?</c><c> I</c><c> see</c><c> a</c><c> zero</c><c> over</c><c> here.</c><c> Zero</c>
+[15:49] see now? I see a zero over here. Zero
+[15:49] see now? I see a zero over here. Zero shouldn't<c> be</c><c> over</c><c> here.</c><c> So</c><c> now</c><c> I</c><c> have</c><c> a</c>
+[15:52] shouldn't be over here. So now I have a
+[15:52] shouldn't be over here. So now I have a very<c> good</c><c> condition</c><c> with</c><c> me.</c><c> I</c><c> have</c><c> one</c>
+[15:55] very good condition with me. I have one
+[15:55] very good condition with me. I have one pointer<c> over</c><c> here</c><c> that</c><c> shouldn't</c><c> be</c><c> and</c>
+[15:57] pointer over here that shouldn't be and
+[15:57] pointer over here that shouldn't be and I<c> have</c><c> one</c><c> pointer</c><c> over</c><c> here</c><c> that</c><c> should</c>
+[15:59] I have one pointer over here that should
+[15:59] I have one pointer over here that should not<c> belong</c><c> here.</c><c> So</c><c> what</c><c> do</c><c> you</c><c> do?</c>
+[16:01] not belong here. So what do you do?
+[16:02] not belong here. So what do you do? Immediately<c> you</c><c> swap</c><c> both</c><c> of</c><c> them.</c><c> So</c>
+[16:04] Immediately you swap both of them. So
+[16:04] Immediately you swap both of them. So what<c> will</c><c> happen?</c><c> This</c><c> will</c><c> become</c><c> a</c>
+[16:06] what will happen? This will become a
+[16:06] what will happen? This will become a zero<c> and</c><c> this</c><c> will</c><c> become</c><c> a</c><c> one.</c><c> So</c><c> both</c>
+[16:09] zero and this will become a one. So both
+[16:09] zero and this will become a one. So both of<c> my</c><c> pointers</c><c> are</c><c> now</c><c> happy.</c><c> And</c><c> once</c>
+[16:11] of my pointers are now happy. And once
+[16:11] of my pointers are now happy. And once again<c> I</c><c> can</c><c> move</c><c> this</c><c> one</c><c> step</c><c> forward</c>
+[16:13] again I can move this one step forward
+[16:13] again I can move this one step forward and<c> this</c><c> one</c><c> step</c><c> backward.</c><c> Again</c><c> one</c>
+[16:16] and this one step backward. Again one
+[16:16] and this one step backward. Again one should<c> not</c><c> belong</c><c> here.</c><c> and</c><c> zero</c><c> should</c>
+[16:17] should not belong here. and zero should
+[16:17] should not belong here. and zero should not<c> belong</c><c> here.</c><c> So</c><c> I</c><c> will</c><c> swap</c><c> them</c>
+[16:19] not belong here. So I will swap them
+[16:19] not belong here. So I will swap them again.
+[16:21] again.
+[16:21] again. So<c> this</c><c> way</c><c> you</c><c> are</c><c> going</c><c> to</c><c> keep</c><c> on</c>
+[16:23] So this way you are going to keep on
+[16:23] So this way you are going to keep on moving<c> ahead</c><c> until</c><c> both</c><c> of</c><c> your</c><c> pointers</c>
+[16:26] moving ahead until both of your pointers
+[16:26] moving ahead until both of your pointers meet<c> and</c><c> eventually</c><c> all</c><c> of</c><c> the</c><c> zeros</c>
+[16:29] meet and eventually all of the zeros
+[16:29] meet and eventually all of the zeros will<c> be</c><c> on</c><c> the</c><c> left</c><c> hand</c><c> side</c><c> and</c><c> all</c><c> of</c>
+[16:31] will be on the left hand side and all of
+[16:31] will be on the left hand side and all of the<c> ones</c><c> will</c><c> be</c><c> on</c><c> the</c><c> right</c><c> hand</c><c> side.</c>
+[16:34] the ones will be on the right hand side.
+[16:34] the ones will be on the right hand side. So<c> basically</c><c> you're</c><c> partitioning</c><c> based</c>
+[16:36] So basically you're partitioning based
+[16:36] So basically you're partitioning based upon<c> a</c><c> certain</c><c> condition</c><c> and</c><c> similarly</c>
+[16:39] upon a certain condition and similarly
+[16:39] upon a certain condition and similarly you<c> might</c><c> have</c><c> also</c><c> seen</c><c> the</c><c> Dutch</c>
+[16:41] you might have also seen the Dutch
+[16:41] you might have also seen the Dutch national<c> flag</c><c> problem</c><c> where</c><c> instead</c><c> of</c>
+[16:44] national flag problem where instead of
+[16:44] national flag problem where instead of zeros<c> and</c><c> ones</c><c> you</c><c> have</c><c> a</c><c> zero</c><c> a</c><c> one</c><c> and</c>
+[16:47] zeros and ones you have a zero a one and
+[16:47] zeros and ones you have a zero a one and a<c> two.</c><c> So</c><c> what</c><c> do</c><c> you</c><c> do</c><c> in</c><c> that</c><c> case?</c>
+[16:49] a two. So what do you do in that case?
+[16:49] a two. So what do you do in that case? All<c> of</c><c> the</c><c> zeros</c><c> should</c><c> be</c><c> on</c><c> the</c><c> left</c>
+[16:51] All of the zeros should be on the left
+[16:51] All of the zeros should be on the left and<c> all</c><c> of</c><c> the</c><c> two</c><c> should</c><c> be</c><c> on</c><c> the</c>
+[16:53] and all of the two should be on the
+[16:53] and all of the two should be on the right.<c> Any</c><c> other</c><c> element</c><c> you</c><c> know</c><c> that</c>
+[16:56] right. Any other element you know that
+[16:56] right. Any other element you know that it<c> will</c><c> be</c><c> a</c><c> one.</c><c> So</c><c> let</c><c> it</c><c> stay</c><c> in</c><c> the</c>
+[16:59] it will be a one. So let it stay in the
+[16:59] it will be a one. So let it stay in the middle<c> wherever</c><c> it</c><c> is.</c><c> Another</c><c> famous</c>
+[17:01] middle wherever it is. Another famous
+[17:01] middle wherever it is. Another famous problem<c> that</c><c> you</c><c> might</c><c> have</c><c> encountered</c>
+[17:03] problem that you might have encountered
+[17:03] problem that you might have encountered is<c> container</c><c> with</c><c> maximum</c><c> water.</c><c> You</c><c> are</c>
+[17:05] is container with maximum water. You are
+[17:06] is container with maximum water. You are given<c> an</c><c> array</c><c> and</c><c> all</c><c> the</c><c> different</c>
+[17:08] given an array and all the different
+[17:08] given an array and all the different integers<c> represent</c><c> the</c><c> height</c><c> of</c><c> that</c>
+[17:11] integers represent the height of that
+[17:11] integers represent the height of that particular<c> wall.</c><c> You</c><c> have</c><c> to</c><c> find</c><c> out</c>
+[17:13] particular wall. You have to find out
+[17:13] particular wall. You have to find out which<c> container</c><c> has</c><c> the</c><c> maximum</c><c> water.</c>
+[17:15] which container has the maximum water.
+[17:15] which container has the maximum water. So<c> what</c><c> do</c><c> you</c><c> do</c><c> again?</c><c> Have</c><c> a</c><c> starting</c>
+[17:18] So what do you do again? Have a starting
+[17:18] So what do you do again? Have a starting pointer<c> and</c><c> have</c><c> a</c><c> ending</c><c> pointer.</c><c> This</c>
+[17:20] pointer and have a ending pointer. This
+[17:20] pointer and have a ending pointer. This is<c> the</c><c> maximum</c><c> area</c><c> possible.</c><c> Correct?</c>
+[17:24] is the maximum area possible. Correct?
+[17:24] is the maximum area possible. Correct? So<c> you</c><c> cannot</c><c> go</c><c> beyond</c><c> that.</c><c> The</c><c> only</c>
+[17:27] So you cannot go beyond that. The only
+[17:27] So you cannot go beyond that. The only option<c> you</c><c> have</c><c> is</c><c> to</c><c> shrink</c><c> the</c><c> area</c>
+[17:29] option you have is to shrink the area
+[17:29] option you have is to shrink the area and<c> then</c><c> find</c><c> out</c><c> which</c><c> container</c><c> has</c>
+[17:31] and then find out which container has
+[17:31] and then find out which container has the<c> maximum</c><c> water.</c><c> So</c><c> these</c><c> are</c><c> some</c><c> of</c>
+[17:34] the maximum water. So these are some of
+[17:34] the maximum water. So these are some of the<c> hints</c><c> that</c><c> help</c><c> you</c><c> to</c><c> decide</c><c> that</c>
+[17:37] the hints that help you to decide that
+[17:37] the hints that help you to decide that if<c> a</c><c> two-pointer</c><c> approach</c><c> will</c><c> work</c><c> out</c>
+[17:39] if a two-pointer approach will work out
+[17:39] if a two-pointer approach will work out for<c> me</c><c> because</c><c> these</c><c> two</c><c> pointers</c><c> are</c>
+[17:43] for me because these two pointers are
+[17:43] for me because these two pointers are helping<c> you</c><c> to</c><c> give</c><c> finite</c><c> limits</c><c> that</c><c> I</c>
+[17:47] helping you to give finite limits that I
+[17:47] helping you to give finite limits that I cannot<c> have</c><c> a</c><c> solution</c><c> beyond</c><c> these.</c><c> So</c>
+[17:49] cannot have a solution beyond these. So
+[17:50] cannot have a solution beyond these. So the<c> only</c><c> way</c><c> left</c><c> is</c><c> that</c><c> you</c><c> either</c>
+[17:52] the only way left is that you either
+[17:52] the only way left is that you either need<c> to</c><c> converge</c><c> or</c><c> you</c><c> need</c><c> to</c><c> move</c>
+[17:55] need to converge or you need to move
+[17:55] need to converge or you need to move both<c> these</c><c> pointers</c><c> to</c><c> the</c><c> end</c><c> such</c><c> that</c>
+[17:57] both these pointers to the end such that
+[17:57] both these pointers to the end such that you<c> are</c><c> ensuring</c><c> you</c><c> have</c><c> covered</c><c> all</c><c> of</c>
+[17:59] you are ensuring you have covered all of
+[17:59] you are ensuring you have covered all of the<c> elements</c><c> and</c><c> most</c><c> of</c><c> the</c><c> time</c><c> they</c>
+[18:02] the elements and most of the time they
+[18:02] the elements and most of the time they guarantee<c> you</c><c> a</c><c> solution</c><c> that</c><c> works</c><c> in</c><c> a</c>
+[18:05] guarantee you a solution that works in a
+[18:05] guarantee you a solution that works in a time<c> of</c><c> order</c><c> of</c><c> n.</c><c> Isn't</c><c> it</c><c> interesting</c>
+[18:08] time of order of n. Isn't it interesting
+[18:08] time of order of n. Isn't it interesting how<c> with</c><c> just</c><c> a</c><c> single</c><c> pattern</c><c> we</c><c> were</c>
+[18:10] how with just a single pattern we were
+[18:10] how with just a single pattern we were able<c> to</c><c> solve</c><c> so</c><c> many</c><c> questions.</c><c> What</c><c> do</c>
+[18:13] able to solve so many questions. What do
+[18:13] able to solve so many questions. What do you<c> think</c><c> about</c><c> this</c><c> particular</c><c> pattern?</c>
+[18:15] you think about this particular pattern?
+[18:15] you think about this particular pattern? What<c> other</c><c> problems</c><c> have</c><c> you</c><c> found</c><c> that</c>
+[18:17] What other problems have you found that
+[18:17] What other problems have you found that follow<c> the</c><c> same</c><c> principle</c><c> or</c><c> a</c><c> similar</c>
+[18:20] follow the same principle or a similar
+[18:20] follow the same principle or a similar idea?<c> Tell</c><c> me</c><c> everything</c><c> in</c><c> the</c><c> comment</c>
+[18:22] idea? Tell me everything in the comment
+[18:22] idea? Tell me everything in the comment section<c> below</c><c> and</c><c> it</c><c> will</c><c> become</c><c> a</c><c> very</c>
+[18:24] section below and it will become a very
+[18:24] section below and it will become a very good<c> collection</c><c> to</c><c> categorize</c><c> all</c><c> of</c><c> the</c>
+[18:27] good collection to categorize all of the
+[18:27] good collection to categorize all of the similar<c> problems</c><c> that</c><c> are</c><c> working</c><c> on</c><c> the</c>
+[18:29] similar problems that are working on the
+[18:29] similar problems that are working on the same<c> concept</c><c> and</c><c> I</c><c> will</c><c> be</c><c> happy</c><c> to</c>
+[18:31] same concept and I will be happy to
+[18:32] same concept and I will be happy to discuss<c> if</c><c> you</c><c> have</c><c> any</c><c> other</c><c> doubts</c>
+[18:33] discuss if you have any other doubts
+[18:33] discuss if you have any other doubts based<c> upon</c><c> this</c><c> particular</c><c> pattern.</c><c> As</c><c> a</c>
+[18:36] based upon this particular pattern. As a
+[18:36] based upon this particular pattern. As a reminder,<c> if</c><c> you</c><c> found</c><c> this</c><c> video</c>
+[18:37] reminder, if you found this video
+[18:37] reminder, if you found this video helpful,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[18:39] helpful, please do consider subscribing
+[18:39] helpful, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[18:40] to my channel and share this video with
+[18:40] to my channel and share this video with your<c> friends.</c><c> Also</c><c> remember</c><c> that</c><c> now</c><c> you</c>
+[18:43] your friends. Also remember that now you
+[18:43] your friends. Also remember that now you can<c> schedule</c><c> one-to-one</c><c> sessions</c><c> with</c>
+[18:44] can schedule one-to-one sessions with
+[18:44] can schedule one-to-one sessions with me.<c> You</c><c> can</c><c> find</c><c> the</c><c> link</c><c> in</c><c> the</c>
+[18:46] me. You can find the link in the
+[18:46] me. You can find the link in the description<c> below</c><c> and</c><c> schedule</c><c> a</c>
+[18:48] description below and schedule a
+[18:48] description below and schedule a session.<c> Also,</c><c> a</c><c> huge</c><c> shout</c><c> out</c><c> to</c><c> all</c>
+[18:50] session. Also, a huge shout out to all
+[18:50] session. Also, a huge shout out to all of<c> the</c><c> members</c><c> who</c><c> support</c><c> my</c><c> channel.</c>
+[18:52] of the members who support my channel.
+[18:52] of the members who support my channel. You<c> guys</c><c> really</c><c> keep</c><c> me</c><c> going.</c><c> And</c><c> as</c><c> a</c>
+[18:54] You guys really keep me going. And as a
+[18:54] You guys really keep me going. And as a member,<c> you</c><c> do</c><c> get</c><c> private</c><c> reply</c><c> to</c><c> your</c>
+[18:56] member, you do get private reply to your
+[18:56] member, you do get private reply to your comments<c> and</c><c> early</c><c> access</c><c> to</c><c> new</c><c> videos</c>
+[18:57] comments and early access to new videos
+[18:57] comments and early access to new videos as<c> well.</c><c> Stay</c><c> tuned</c><c> for</c><c> my</c><c> upcoming</c>
+[18:59] as well. Stay tuned for my upcoming
+[18:59] as well. Stay tuned for my upcoming video.<c> Until</c><c> then,</c><c> fear.</c>

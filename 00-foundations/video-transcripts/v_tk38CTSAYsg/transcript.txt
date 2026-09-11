@@ -1,0 +1,1434 @@
+[0:02] Sliding window is one of the most fun
+[0:02] Sliding window is one of the most fun patterns<c> to</c><c> solve.</c><c> That</c><c> is</c><c> because</c><c> you</c>
+[0:04] patterns to solve. That is because you
+[0:04] patterns to solve. That is because you can<c> actually</c><c> take</c><c> up</c><c> a</c><c> data</c><c> structure</c>
+[0:06] can actually take up a data structure
+[0:06] can actually take up a data structure like<c> an</c><c> array</c><c> and</c><c> then</c><c> you</c><c> can</c><c> define</c><c> a</c>
+[0:09] like an array and then you can define a
+[0:09] like an array and then you can define a window<c> over</c><c> it.</c>
+[0:10] window over it.
+[0:10] window over it. This<c> window</c><c> now</c><c> has</c><c> some</c><c> elements.</c><c> And</c>
+[0:13] This window now has some elements. And
+[0:13] This window now has some elements. And now<c> you</c><c> can</c><c> slide</c><c> this</c><c> window</c><c> throughout</c>
+[0:15] now you can slide this window throughout
+[0:15] now you can slide this window throughout your<c> entire</c><c> array.</c>
+[0:17] your entire array.
+[0:17] your entire array. I<c> feel</c><c> that</c><c> this</c><c> kind</c><c> of</c><c> keeps</c><c> you</c>
+[0:19] I feel that this kind of keeps you
+[0:19] I feel that this kind of keeps you focused<c> on</c><c> the</c><c> goal</c><c> and</c><c> it</c><c> really</c>
+[0:21] focused on the goal and it really
+[0:21] focused on the goal and it really becomes<c> interesting</c><c> as</c><c> well.</c>
+[0:23] becomes interesting as well.
+[0:23] becomes interesting as well. Let<c> us</c><c> find</c><c> out</c><c> more</c><c> about</c><c> it.</c><c> Hello</c>
+[0:25] Let us find out more about it. Hello
+[0:25] Let us find out more about it. Hello friends,<c> welcome</c><c> back</c><c> to</c><c> my</c><c> channel.</c>
+[0:32] I feel that the name sliding window is
+[0:32] I feel that the name sliding window is intuitive<c> in</c><c> itself.</c><c> You</c><c> have</c><c> a</c><c> window</c>
+[0:35] intuitive in itself. You have a window
+[0:35] intuitive in itself. You have a window that<c> contains</c><c> some</c><c> elements</c><c> and</c><c> then</c><c> you</c>
+[0:37] that contains some elements and then you
+[0:37] that contains some elements and then you are<c> sliding</c><c> this</c><c> window.</c><c> To</c><c> understand</c>
+[0:40] are sliding this window. To understand
+[0:40] are sliding this window. To understand it<c> better,</c><c> let</c><c> us</c><c> immediately</c><c> dive</c><c> into</c>
+[0:42] it better, let us immediately dive into
+[0:42] it better, let us immediately dive into some<c> problems.</c><c> That</c><c> will</c><c> give</c><c> you</c><c> a</c><c> very</c>
+[0:44] some problems. That will give you a very
+[0:44] some problems. That will give you a very good<c> idea</c><c> what</c><c> this</c><c> pattern</c><c> is</c><c> all</c>
+[0:46] good idea what this pattern is all
+[0:46] good idea what this pattern is all about.<c> You</c><c> might</c><c> have</c><c> already</c><c> seen</c>
+[0:48] about. You might have already seen
+[0:48] about. You might have already seen problems<c> of</c><c> this</c><c> pattern.</c><c> You</c><c> need</c><c> to</c>
+[0:50] problems of this pattern. You need to
+[0:50] problems of this pattern. You need to find<c> the</c><c> maximum</c><c> sum</c><c> of</c><c> a</c><c> sub</c><c> array</c><c> of</c>
+[0:53] find the maximum sum of a sub array of
+[0:53] find the maximum sum of a sub array of size<c> K.</c>
+[0:54] size K.
+[0:54] size K. You<c> are</c><c> given</c><c> an</c><c> array</c><c> that</c><c> even</c><c> sorted</c>
+[0:57] You are given an array that even sorted
+[0:57] You are given an array that even sorted and<c> you</c><c> are</c><c> given</c><c> a</c><c> value</c><c> K.</c><c> It</c><c> means</c>
+[1:00] and you are given a value K. It means
+[1:00] and you are given a value K. It means you<c> need</c><c> to</c><c> find</c><c> me</c><c> a</c><c> sub</c><c> array</c><c> of</c><c> size</c>
+[1:03] you need to find me a sub array of size
+[1:03] you need to find me a sub array of size K,<c> that</c><c> means</c><c> four</c><c> elements,</c><c> such</c><c> that</c>
+[1:06] K, that means four elements, such that
+[1:06] K, that means four elements, such that you<c> have</c><c> the</c><c> maximum</c><c> sum.</c><c> So,</c><c> what</c><c> is</c>
+[1:09] you have the maximum sum. So, what is
+[1:09] you have the maximum sum. So, what is the<c> brute</c><c> force</c><c> approach?</c><c> You</c><c> will</c><c> try</c>
+[1:11] the brute force approach? You will try
+[1:11] the brute force approach? You will try to<c> find</c><c> out</c><c> all</c><c> of</c><c> the</c><c> sub</c><c> array</c><c> of</c><c> size</c>
+[1:14] to find out all of the sub array of size
+[1:14] to find out all of the sub array of size four<c> and</c><c> then</c><c> you</c><c> will</c><c> try</c><c> to</c><c> keep</c><c> a</c>
+[1:17] four and then you will try to keep a
+[1:17] four and then you will try to keep a track<c> of</c><c> all</c><c> of</c><c> the</c><c> sums.</c>
+[1:19] track of all of the sums.
+[1:19] track of all of the sums. But<c> over</c><c> here,</c><c> what</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c>
+[1:21] But over here, what you can do is you
+[1:21] But over here, what you can do is you know<c> that</c><c> you</c><c> have</c><c> to</c><c> look</c><c> at</c><c> four</c>
+[1:24] know that you have to look at four
+[1:24] know that you have to look at four elements<c> at</c><c> once</c>
+[1:25] elements at once
+[1:25] elements at once and<c> they</c><c> all</c><c> should</c><c> be</c><c> contiguous.</c>
+[1:28] and they all should be contiguous.
+[1:28] and they all should be contiguous. This<c> means</c><c> you</c><c> can</c><c> apply</c><c> the</c><c> sliding</c>
+[1:30] This means you can apply the sliding
+[1:30] This means you can apply the sliding window<c> over</c><c> here.</c>
+[1:32] window over here.
+[1:32] window over here. Technically,<c> what</c><c> is</c><c> going</c><c> to</c><c> happen</c><c> is</c>
+[1:34] Technically, what is going to happen is
+[1:34] Technically, what is going to happen is you<c> are</c><c> trying</c><c> to</c><c> define</c><c> a</c><c> window</c><c> that</c>
+[1:36] you are trying to define a window that
+[1:36] you are trying to define a window that contains<c> four</c><c> elements.</c>
+[1:39] contains four elements.
+[1:39] contains four elements. And<c> if</c><c> you</c><c> look</c><c> at</c><c> these</c><c> four</c><c> elements,</c>
+[1:41] And if you look at these four elements,
+[1:41] And if you look at these four elements, you<c> find</c><c> that</c><c> the</c><c> total</c><c> sum</c><c> of</c><c> these</c>
+[1:43] you find that the total sum of these
+[1:43] you find that the total sum of these elements<c> is</c><c> three,</c><c> correct?</c>
+[1:45] elements is three, correct?
+[1:45] elements is three, correct? Now,<c> you</c><c> have</c><c> to</c><c> traverse</c><c> other</c><c> elements</c>
+[1:48] Now, you have to traverse other elements
+[1:48] Now, you have to traverse other elements as<c> well.</c>
+[1:49] as well.
+[1:49] as well. For<c> a</c><c> brute</c><c> force</c><c> approach,</c><c> you</c><c> will</c><c> try</c>
+[1:51] For a brute force approach, you will try
+[1:51] For a brute force approach, you will try to<c> find</c><c> out</c><c> the</c><c> other</c><c> four</c><c> elements.</c>
+[1:54] to find out the other four elements.
+[1:54] to find out the other four elements. But<c> with</c><c> a</c><c> sliding</c><c> window,</c><c> what</c><c> you</c><c> can</c>
+[1:56] But with a sliding window, what you can
+[1:56] But with a sliding window, what you can do<c> is</c><c> you</c><c> can</c><c> simply</c><c> take</c><c> this</c><c> window</c>
+[1:58] do is you can simply take this window
+[1:58] do is you can simply take this window and<c> slide</c><c> one</c><c> step</c><c> ahead.</c>
+[2:00] and slide one step ahead.
+[2:00] and slide one step ahead. Once<c> you</c><c> slide</c><c> it,</c><c> what</c><c> did</c><c> you</c><c> do?</c><c> You</c>
+[2:02] Once you slide it, what did you do? You
+[2:02] Once you slide it, what did you do? You added<c> three,</c><c> so</c><c> you</c><c> do</c><c> a</c><c> plus</c><c> three,</c><c> and</c>
+[2:05] added three, so you do a plus three, and
+[2:05] added three, so you do a plus three, and then<c> you</c><c> removed</c><c> a</c><c> minus</c><c> two.</c><c> So,</c><c> you</c>
+[2:08] then you removed a minus two. So, you
+[2:08] then you removed a minus two. So, you remove<c> minus</c><c> two.</c>
+[2:09] remove minus two.
+[2:09] remove minus two. Now,<c> you</c><c> will</c><c> get</c><c> your</c><c> new</c><c> sum.</c><c> And</c><c> that</c>
+[2:12] Now, you will get your new sum. And that
+[2:12] Now, you will get your new sum. And that is<c> eight.</c>
+[2:13] is eight.
+[2:13] is eight. So,<c> this</c><c> is</c><c> how</c><c> we</c><c> are</c><c> taking</c><c> advantage</c>
+[2:15] So, this is how we are taking advantage
+[2:15] So, this is how we are taking advantage of<c> a</c><c> window</c><c> that</c><c> is</c><c> sliding.</c>
+[2:17] of a window that is sliding.
+[2:17] of a window that is sliding. In<c> the</c><c> next</c><c> step,</c><c> what</c><c> is</c><c> going</c><c> to</c>
+[2:18] In the next step, what is going to
+[2:18] In the next step, what is going to happen?<c> You</c><c> slide</c><c> your</c><c> window</c><c> one</c><c> step</c>
+[2:20] happen? You slide your window one step
+[2:20] happen? You slide your window one step ahead<c> again.</c>
+[2:21] ahead again.
+[2:21] ahead again. So,<c> what</c><c> did</c><c> we</c><c> do?</c><c> We</c><c> added</c><c> an</c><c> eight,</c>
+[2:24] So, what did we do? We added an eight,
+[2:24] So, what did we do? We added an eight, and<c> we</c><c> removed</c><c> a</c><c> minus</c><c> five.</c>
+[2:27] and we removed a minus five.
+[2:27] and we removed a minus five. So,<c> now</c><c> what</c><c> do</c><c> I</c><c> get?</c><c> I</c><c> get</c><c> the</c><c> sum</c><c> as</c>
+[2:29] So, now what do I get? I get the sum as
+[2:29] So, now what do I get? I get the sum as 21.
+[2:30] 21.
+[2:30] 21. This<c> is</c><c> what</c><c> we</c><c> are</c><c> doing</c><c> over</c><c> here.</c>
+[2:32] This is what we are doing over here.
+[2:32] This is what we are doing over here. We<c> take</c><c> this</c><c> window,</c><c> and</c><c> we</c><c> slide</c><c> it</c><c> one</c>
+[2:35] We take this window, and we slide it one
+[2:35] We take this window, and we slide it one step<c> at</c><c> a</c><c> time</c><c> all</c><c> throughout</c><c> the</c><c> array.</c>
+[2:37] step at a time all throughout the array.
+[2:37] step at a time all throughout the array. And<c> that</c><c> is</c><c> why</c><c> we</c><c> call</c><c> it</c><c> a</c><c> sliding</c>
+[2:40] And that is why we call it a sliding
+[2:40] And that is why we call it a sliding window<c> pattern.</c><c> You</c><c> know</c><c> that</c><c> this</c><c> size</c>
+[2:43] window pattern. You know that this size
+[2:43] window pattern. You know that this size is<c> going</c><c> to</c><c> remain</c><c> fixed,</c>
+[2:45] is going to remain fixed,
+[2:45] is going to remain fixed, or<c> rather,</c><c> you</c><c> are</c><c> talking</c><c> about</c>
+[2:47] or rather, you are talking about
+[2:47] or rather, you are talking about elements<c> that</c><c> appear</c><c> contiguous.</c>
+[2:49] elements that appear contiguous.
+[2:49] elements that appear contiguous. That<c> is</c><c> your</c><c> very</c><c> big</c><c> indication.</c>
+[2:52] That is your very big indication.
+[2:52] That is your very big indication. So,<c> now</c><c> you</c><c> know</c><c> what</c><c> to</c><c> do,</c><c> right?</c><c> You</c>
+[2:54] So, now you know what to do, right? You
+[2:54] So, now you know what to do, right? You can<c> keep</c><c> on</c><c> sliding</c><c> this</c><c> window</c>
+[2:56] can keep on sliding this window
+[2:56] can keep on sliding this window at<c> every</c><c> set</c><c> of</c><c> four</c><c> elements,</c><c> and</c><c> just</c>
+[3:00] at every set of four elements, and just
+[3:00] at every set of four elements, and just keep<c> a</c><c> track</c><c> of</c><c> the</c><c> sum</c><c> of</c><c> each</c><c> of</c><c> these</c>
+[3:02] keep a track of the sum of each of these
+[3:03] keep a track of the sum of each of these four<c> elements.</c>
+[3:04] four elements.
+[3:04] four elements. Even<c> this</c><c> is</c><c> easy.</c><c> You</c><c> just</c><c> add</c><c> the</c><c> new</c>
+[3:06] Even this is easy. You just add the new
+[3:06] Even this is easy. You just add the new element,<c> and</c><c> remove</c><c> the</c><c> previous</c>
+[3:08] element, and remove the previous
+[3:08] element, and remove the previous element.<c> That's</c><c> it.</c>
+[3:10] element. That's it.
+[3:10] element. That's it. Just<c> keep</c><c> a</c><c> track</c><c> of</c><c> all</c><c> of</c><c> these</c><c> sums,</c>
+[3:12] Just keep a track of all of these sums,
+[3:12] Just keep a track of all of these sums, and<c> in</c><c> the</c><c> end,</c><c> you</c><c> can</c><c> return</c><c> the</c>
+[3:14] and in the end, you can return the
+[3:14] and in the end, you can return the maximum<c> sum</c><c> that</c><c> you</c><c> found.</c>
+[3:17] maximum sum that you found.
+[3:17] maximum sum that you found. If<c> you</c><c> want</c><c> to</c><c> return</c><c> that</c><c> array,</c><c> you</c>
+[3:19] If you want to return that array, you
+[3:19] If you want to return that array, you can<c> keep</c><c> a</c><c> track</c><c> of</c><c> these</c><c> four</c><c> elements</c>
+[3:21] can keep a track of these four elements
+[3:21] can keep a track of these four elements also.
+[3:23] also.
+[3:23] also. And<c> that's</c><c> it.</c><c> You</c><c> have</c><c> found</c><c> out</c><c> the</c>
+[3:24] And that's it. You have found out the
+[3:24] And that's it. You have found out the answer.
+[3:25] answer.
+[3:26] answer. You<c> might</c><c> have</c><c> seen</c><c> other</c><c> problems</c><c> like</c>
+[3:27] You might have seen other problems like
+[3:27] You might have seen other problems like this<c> also.</c><c> For</c><c> example,</c><c> in</c><c> this</c><c> one,</c><c> you</c>
+[3:30] this also. For example, in this one, you
+[3:30] this also. For example, in this one, you have<c> to</c><c> find</c><c> out</c><c> the</c><c> average</c><c> instead</c><c> of</c>
+[3:32] have to find out the average instead of
+[3:32] have to find out the average instead of the<c> sum.</c>
+[3:33] the sum.
+[3:33] the sum. Do<c> you</c><c> really</c><c> think</c><c> it</c><c> requires</c><c> a</c><c> whole</c>
+[3:35] Do you really think it requires a whole
+[3:36] Do you really think it requires a whole different<c> implementation?</c>
+[3:37] different implementation?
+[3:37] different implementation? It<c> is</c><c> literally</c><c> the</c><c> same</c><c> logic.</c>
+[3:39] It is literally the same logic.
+[3:39] It is literally the same logic. You<c> take</c><c> up</c><c> your</c><c> window,</c><c> and</c><c> then</c><c> find</c>
+[3:42] You take up your window, and then find
+[3:42] You take up your window, and then find out<c> the</c><c> average.</c>
+[3:44] out the average.
+[3:44] out the average. And<c> then,</c><c> once</c><c> you</c><c> slide</c><c> it,</c><c> just</c><c> add</c>
+[3:46] And then, once you slide it, just add
+[3:46] And then, once you slide it, just add the<c> new</c><c> element,</c><c> remove</c><c> the</c><c> previous</c>
+[3:48] the new element, remove the previous
+[3:48] the new element, remove the previous one,<c> and</c><c> get</c><c> a</c><c> new</c><c> average.</c><c> Keep</c><c> a</c><c> track</c>
+[3:51] one, and get a new average. Keep a track
+[3:51] one, and get a new average. Keep a track of<c> the</c><c> average</c><c> across</c><c> your</c><c> entire</c><c> window</c>
+[3:54] of the average across your entire window
+[3:54] of the average across your entire window and<c> once</c><c> you</c><c> reach</c><c> the</c><c> end,</c><c> you</c><c> can</c>
+[3:56] and once you reach the end, you can
+[3:56] and once you reach the end, you can stop.<c> That's</c><c> it.</c><c> You</c><c> solved</c><c> one</c><c> more</c>
+[3:58] stop. That's it. You solved one more
+[3:58] stop. That's it. You solved one more problem.
+[3:59] problem.
+[3:59] problem. And<c> sliding</c><c> window</c><c> is</c><c> not</c><c> just</c><c> limited</c>
+[4:01] And sliding window is not just limited
+[4:01] And sliding window is not just limited to<c> integers.</c>
+[4:03] to integers.
+[4:03] to integers. For<c> example,</c><c> in</c><c> this</c><c> problem,</c><c> I</c><c> need</c><c> to</c>
+[4:05] For example, in this problem, I need to
+[4:05] For example, in this problem, I need to find<c> out</c><c> the</c><c> maximum</c><c> vowels</c><c> in</c><c> a</c>
+[4:08] find out the maximum vowels in a
+[4:08] find out the maximum vowels in a substring<c> of</c><c> size</c><c> K.</c>
+[4:10] substring of size K.
+[4:10] substring of size K. Once<c> again,</c><c> all</c><c> of</c><c> these</c><c> words</c><c> are</c><c> just</c>
+[4:13] Once again, all of these words are just
+[4:13] Once again, all of these words are just tweaked<c> and</c><c> asked</c><c> in</c><c> a</c><c> different</c><c> manner.</c>
+[4:16] tweaked and asked in a different manner.
+[4:16] tweaked and asked in a different manner. What<c> do</c><c> you</c><c> have</c><c> to</c><c> do</c><c> in</c><c> this</c><c> problem</c>
+[4:18] What do you have to do in this problem
+[4:18] What do you have to do in this problem in<c> the</c><c> end?</c>
+[4:19] in the end?
+[4:19] in the end? Once<c> again,</c><c> you</c><c> are</c><c> given</c><c> a</c><c> certain</c>
+[4:21] Once again, you are given a certain
+[4:21] Once again, you are given a certain size.
+[4:22] size.
+[4:22] size. You<c> know</c><c> that</c><c> you</c><c> will</c><c> have</c><c> a</c><c> substring</c>
+[4:24] You know that you will have a substring
+[4:24] You know that you will have a substring of<c> this</c><c> particular</c><c> length</c><c> of</c><c> the</c><c> size</c>
+[4:26] of this particular length of the size
+[4:26] of this particular length of the size four.
+[4:27] four.
+[4:27] four. It<c> means</c><c> I</c><c> will</c><c> have</c><c> a</c><c> window</c><c> of</c><c> size</c>
+[4:29] It means I will have a window of size
+[4:29] It means I will have a window of size four.
+[4:30] four.
+[4:30] four. And<c> once</c><c> again,</c><c> what</c><c> do</c><c> you</c><c> need</c><c> to</c><c> do?</c>
+[4:32] And once again, what do you need to do?
+[4:32] And once again, what do you need to do? Just<c> count</c><c> how</c><c> many</c><c> vowels</c><c> can</c><c> you</c><c> find?</c>
+[4:35] Just count how many vowels can you find?
+[4:35] Just count how many vowels can you find? For<c> example,</c><c> in</c><c> this</c><c> particular</c><c> window,</c>
+[4:37] For example, in this particular window,
+[4:37] For example, in this particular window, you<c> can</c><c> only</c><c> find</c><c> one</c><c> vowel.</c>
+[4:39] you can only find one vowel.
+[4:39] you can only find one vowel. Then<c> you</c><c> slide</c><c> ahead,</c><c> this</c><c> time</c><c> you</c><c> have</c>
+[4:41] Then you slide ahead, this time you have
+[4:41] Then you slide ahead, this time you have two<c> vowels.</c>
+[4:42] two vowels.
+[4:42] two vowels. Again,<c> you</c><c> slide</c><c> ahead,</c><c> again</c><c> two</c>
+[4:44] Again, you slide ahead, again two
+[4:44] Again, you slide ahead, again two vowels.<c> Again,</c><c> you</c><c> slide</c><c> ahead,</c><c> again</c>
+[4:46] vowels. Again, you slide ahead, again
+[4:46] vowels. Again, you slide ahead, again two<c> vowels.</c>
+[4:47] two vowels.
+[4:47] two vowels. So,<c> you</c><c> just</c><c> keep</c><c> on</c><c> scanning</c><c> your</c>
+[4:49] So, you just keep on scanning your
+[4:49] So, you just keep on scanning your entire<c> array</c><c> like</c><c> this</c>
+[4:51] entire array like this
+[4:51] entire array like this and<c> at</c><c> the</c><c> very</c><c> end,</c><c> you</c><c> can</c><c> simply</c>
+[4:54] and at the very end, you can simply
+[4:54] and at the very end, you can simply return,<c> "Okay,</c><c> this</c><c> is</c><c> the</c><c> maximum</c>
+[4:56] return, "Okay, this is the maximum
+[4:56] return, "Okay, this is the maximum number<c> of</c><c> vowels</c><c> that</c><c> I</c><c> found."</c><c> All</c><c> I'm</c>
+[4:58] number of vowels that I found." All I'm
+[4:58] number of vowels that I found." All I'm trying<c> to</c><c> say</c><c> is</c><c> there</c><c> are</c><c> multiple</c><c> ways</c>
+[5:00] trying to say is there are multiple ways
+[5:00] trying to say is there are multiple ways to<c> ask</c><c> the</c><c> same</c><c> question.</c><c> Whereas,</c><c> the</c>
+[5:03] to ask the same question. Whereas, the
+[5:03] to ask the same question. Whereas, the underlying<c> idea</c><c> about</c><c> applying</c><c> a</c><c> sliding</c>
+[5:05] underlying idea about applying a sliding
+[5:05] underlying idea about applying a sliding window<c> will</c><c> remain</c><c> the</c><c> same.</c><c> So,</c><c> what</c>
+[5:07] window will remain the same. So, what
+[5:07] window will remain the same. So, what did<c> we</c><c> learn</c><c> so</c><c> far?</c>
+[5:09] did we learn so far?
+[5:09] did we learn so far? We<c> understood</c><c> how</c><c> a</c><c> sliding</c><c> window</c>
+[5:11] We understood how a sliding window
+[5:11] We understood how a sliding window actually<c> works</c><c> and</c><c> what</c><c> is</c><c> the</c><c> intuition</c>
+[5:13] actually works and what is the intuition
+[5:14] actually works and what is the intuition behind<c> it.</c>
+[5:15] behind it.
+[5:15] behind it. You<c> are</c><c> looking</c><c> at</c><c> some</c><c> contiguous</c>
+[5:17] You are looking at some contiguous
+[5:17] You are looking at some contiguous elements<c> and</c><c> then</c><c> you</c><c> are</c><c> sliding</c><c> this</c>
+[5:19] elements and then you are sliding this
+[5:19] elements and then you are sliding this window<c> all</c><c> throughout</c><c> your</c><c> input</c><c> array.</c>
+[5:22] window all throughout your input array.
+[5:22] window all throughout your input array. Now,<c> there</c><c> can</c><c> be</c><c> two</c><c> different</c><c> types</c><c> of</c>
+[5:25] Now, there can be two different types of
+[5:25] Now, there can be two different types of sliding<c> windows.</c>
+[5:26] sliding windows.
+[5:26] sliding windows. The<c> problems</c><c> that</c><c> we</c><c> just</c><c> saw,</c><c> they</c><c> were</c>
+[5:29] The problems that we just saw, they were
+[5:29] The problems that we just saw, they were a<c> fixed</c><c> size</c><c> of</c><c> sliding</c><c> window.</c>
+[5:31] a fixed size of sliding window.
+[5:32] a fixed size of sliding window. So,<c> whenever</c><c> you</c><c> hear</c><c> terms</c><c> like</c><c> do</c>
+[5:34] So, whenever you hear terms like do
+[5:34] So, whenever you hear terms like do something<c> with</c><c> K</c><c> elements,</c>
+[5:36] something with K elements,
+[5:36] something with K elements, that<c> means</c><c> you</c><c> are</c><c> restricting</c><c> that,</c>
+[5:38] that means you are restricting that,
+[5:38] that means you are restricting that, "Okay,<c> I</c><c> need</c><c> to</c><c> look</c><c> at</c><c> only</c><c> these</c><c> K</c>
+[5:40] "Okay, I need to look at only these K
+[5:40] "Okay, I need to look at only these K elements."
+[5:41] elements."
+[5:41] elements." In<c> those</c><c> patterns,</c><c> you</c><c> will</c><c> take</c><c> up</c><c> this</c>
+[5:43] In those patterns, you will take up this
+[5:43] In those patterns, you will take up this window<c> and</c><c> then</c><c> you're</c><c> going</c><c> to</c><c> slide</c><c> it</c>
+[5:46] window and then you're going to slide it
+[5:46] window and then you're going to slide it one<c> character</c><c> at</c><c> a</c><c> time.</c><c> When</c><c> you</c><c> slide</c>
+[5:49] one character at a time. When you slide
+[5:49] one character at a time. When you slide one<c> character</c><c> at</c><c> a</c><c> time</c><c> or</c><c> even</c><c> faster,</c>
+[5:52] one character at a time or even faster,
+[5:52] one character at a time or even faster, it<c> simply</c><c> means</c><c> that</c><c> you</c><c> are</c><c> iterating</c>
+[5:55] it simply means that you are iterating
+[5:55] it simply means that you are iterating over<c> your</c><c> entire</c><c> array.</c>
+[5:56] over your entire array.
+[5:56] over your entire array. You<c> are</c><c> able</c><c> to</c><c> perform</c><c> a</c><c> complete</c><c> scan,</c>
+[5:59] You are able to perform a complete scan,
+[5:59] You are able to perform a complete scan, and<c> that</c><c> ensures</c><c> that</c><c> you</c><c> have</c><c> covered</c>
+[6:01] and that ensures that you have covered
+[6:01] and that ensures that you have covered every<c> element.</c>
+[6:03] every element.
+[6:03] every element. Now,<c> this</c><c> is</c><c> the</c><c> most</c><c> basic</c><c> part</c><c> how</c><c> you</c>
+[6:06] Now, this is the most basic part how you
+[6:06] Now, this is the most basic part how you use<c> a</c><c> sliding</c><c> window</c><c> pattern.</c>
+[6:08] use a sliding window pattern.
+[6:08] use a sliding window pattern. There<c> is,</c><c> however,</c><c> one</c><c> more</c><c> way</c><c> in</c><c> which</c>
+[6:11] There is, however, one more way in which
+[6:11] There is, however, one more way in which sliding<c> window</c><c> patterns</c><c> are</c><c> generally</c>
+[6:13] sliding window patterns are generally
+[6:13] sliding window patterns are generally used,<c> and</c><c> that</c><c> is</c><c> where</c><c> things</c><c> start</c><c> to</c>
+[6:16] used, and that is where things start to
+[6:16] used, and that is where things start to get<c> a</c><c> little</c><c> tricky.</c><c> It</c><c> means</c><c> the</c><c> length</c>
+[6:19] get a little tricky. It means the length
+[6:19] get a little tricky. It means the length of<c> your</c><c> sliding</c><c> window</c><c> can</c><c> change.</c>
+[6:21] of your sliding window can change.
+[6:21] of your sliding window can change. We<c> call</c><c> this</c><c> as</c><c> a</c><c> variable-size</c><c> sliding</c>
+[6:24] We call this as a variable-size sliding
+[6:24] We call this as a variable-size sliding window<c> pattern.</c><c> The</c><c> idea</c><c> over</c><c> here</c><c> is</c>
+[6:26] window pattern. The idea over here is
+[6:26] window pattern. The idea over here is very<c> simple.</c><c> Let</c><c> us</c><c> say</c><c> you're</c><c> starting</c>
+[6:28] very simple. Let us say you're starting
+[6:29] very simple. Let us say you're starting off<c> your</c><c> window</c><c> just</c><c> with</c><c> one</c><c> element.</c>
+[6:32] off your window just with one element.
+[6:32] off your window just with one element. Now,<c> based</c><c> upon</c><c> your</c><c> problem</c><c> statement,</c>
+[6:34] Now, based upon your problem statement,
+[6:35] Now, based upon your problem statement, what<c> you</c><c> may</c><c> want</c><c> to</c><c> do</c><c> is</c><c> you</c><c> may</c><c> want</c>
+[6:37] what you may want to do is you may want
+[6:37] what you may want to do is you may want to<c> cover</c><c> more</c><c> and</c><c> more</c><c> elements</c><c> in</c><c> your</c>
+[6:39] to cover more and more elements in your
+[6:39] to cover more and more elements in your array
+[6:40] array
+[6:40] array until<c> a</c><c> certain</c><c> condition</c><c> is</c><c> met.</c>
+[6:43] until a certain condition is met.
+[6:43] until a certain condition is met. So,<c> you</c><c> might</c><c> have</c><c> encountered</c><c> questions</c>
+[6:46] So, you might have encountered questions
+[6:46] So, you might have encountered questions like,<c> "Okay,</c><c> find</c><c> me</c><c> the</c><c> array</c><c> that</c><c> has</c>
+[6:49] like, "Okay, find me the array that has
+[6:49] like, "Okay, find me the array that has K<c> distinct</c><c> characters."</c>
+[6:51] K distinct characters."
+[6:51] K distinct characters." It<c> means</c><c> you</c><c> are</c><c> looking</c><c> for</c><c> some</c>
+[6:54] It means you are looking for some
+[6:54] It means you are looking for some particular<c> K</c><c> characters.</c>
+[6:56] particular K characters.
+[6:56] particular K characters. Now,<c> it</c><c> could</c><c> be</c><c> possible</c><c> that</c><c> all</c><c> the</c>
+[6:58] Now, it could be possible that all the
+[6:58] Now, it could be possible that all the characters<c> are</c><c> repeated.</c><c> So,</c><c> you're</c>
+[7:00] characters are repeated. So, you're
+[7:00] characters are repeated. So, you're continuing<c> to</c><c> increase</c><c> the</c><c> length</c><c> of</c>
+[7:02] continuing to increase the length of
+[7:02] continuing to increase the length of your<c> sliding</c><c> window</c><c> until</c><c> you</c><c> find</c><c> those</c>
+[7:04] your sliding window until you find those
+[7:04] your sliding window until you find those distinct<c> characters.</c>
+[7:05] distinct characters.
+[7:05] distinct characters. Or<c> you</c><c> could</c><c> even</c><c> use</c><c> hash</c><c> sets</c><c> or</c><c> even</c>
+[7:09] Or you could even use hash sets or even
+[7:09] Or you could even use hash sets or even some<c> kind</c><c> of</c><c> a</c><c> frequency</c><c> map</c><c> to</c><c> keep</c><c> a</c>
+[7:11] some kind of a frequency map to keep a
+[7:11] some kind of a frequency map to keep a track<c> of</c><c> those</c><c> K</c><c> elements.</c>
+[7:13] track of those K elements.
+[7:13] track of those K elements. So,<c> whenever</c><c> you're</c><c> hearing</c><c> terms</c><c> like</c>
+[7:15] So, whenever you're hearing terms like
+[7:15] So, whenever you're hearing terms like at<c> most</c><c> K</c><c> characters,</c>
+[7:17] at most K characters,
+[7:17] at most K characters, it<c> means</c><c> you</c><c> need</c><c> the</c><c> concept</c><c> of</c><c> a</c>
+[7:19] it means you need the concept of a
+[7:19] it means you need the concept of a variable-size<c> sliding</c><c> window.</c>
+[7:21] variable-size sliding window.
+[7:22] variable-size sliding window. For<c> example,</c><c> you</c><c> covered</c><c> certain</c>
+[7:23] For example, you covered certain
+[7:23] For example, you covered certain elements.<c> But</c><c> now,</c><c> when</c><c> you</c><c> want</c><c> to</c>
+[7:26] elements. But now, when you want to
+[7:26] elements. But now, when you want to cover<c> your</c><c> entire</c><c> array,</c>
+[7:28] cover your entire array,
+[7:28] cover your entire array, sometimes<c> you</c><c> may</c><c> have</c><c> to</c><c> remove</c><c> some</c>
+[7:30] sometimes you may have to remove some
+[7:30] sometimes you may have to remove some elements<c> from</c><c> your</c><c> window.</c>
+[7:32] elements from your window.
+[7:32] elements from your window. So,<c> what</c><c> you</c><c> will</c><c> do</c><c> is</c><c> you</c><c> will</c><c> start</c>
+[7:33] So, what you will do is you will start
+[7:33] So, what you will do is you will start reducing<c> the</c><c> length,</c><c> and</c><c> it</c><c> could</c><c> be</c>
+[7:35] reducing the length, and it could be
+[7:35] reducing the length, and it could be possible<c> that</c><c> you</c><c> may</c><c> want</c><c> to</c><c> include</c>
+[7:37] possible that you may want to include
+[7:37] possible that you may want to include more<c> characters.</c><c> All</c><c> of</c><c> this</c><c> happens</c>
+[7:40] more characters. All of this happens
+[7:40] more characters. All of this happens dynamically<c> as</c><c> per</c><c> your</c><c> requirements.</c>
+[7:43] dynamically as per your requirements.
+[7:43] dynamically as per your requirements. It<c> could</c><c> be</c><c> possible</c><c> that</c><c> after</c><c> several</c>
+[7:45] It could be possible that after several
+[7:45] It could be possible that after several iterations,<c> you</c><c> have</c><c> now</c><c> covered</c><c> your</c>
+[7:47] iterations, you have now covered your
+[7:47] iterations, you have now covered your entire<c> array.</c>
+[7:49] entire array.
+[7:49] entire array. All<c> of</c><c> this</c><c> isn't</c><c> very,</c><c> very</c><c> complex.</c>
+[7:51] All of this isn't very, very complex.
+[7:51] All of this isn't very, very complex. Let<c> us</c><c> look</c><c> at</c><c> some</c><c> problems</c><c> that</c><c> will</c>
+[7:53] Let us look at some problems that will
+[7:53] Let us look at some problems that will make<c> this</c><c> concept</c><c> even</c><c> more</c><c> clear</c><c> to</c>
+[7:55] make this concept even more clear to
+[7:55] make this concept even more clear to you.<c> For</c><c> example,</c><c> look</c><c> at</c><c> this</c>
+[7:57] you. For example, look at this
+[7:57] you. For example, look at this particular<c> problem.</c>
+[7:58] particular problem.
+[7:58] particular problem. You<c> need</c><c> to</c><c> find</c><c> me</c><c> the</c><c> longest</c>
+[8:00] You need to find me the longest
+[8:00] You need to find me the longest substring<c> without</c><c> any</c><c> repeating</c>
+[8:02] substring without any repeating
+[8:02] substring without any repeating character.
+[8:04] character.
+[8:04] character. I<c> have</c><c> this</c><c> entire</c><c> string</c><c> with</c><c> me.</c>
+[8:06] I have this entire string with me.
+[8:06] I have this entire string with me. And<c> you</c><c> need</c><c> to</c><c> give</c><c> me</c><c> a</c><c> substring</c><c> in</c>
+[8:08] And you need to give me a substring in
+[8:08] And you need to give me a substring in which<c> none</c><c> of</c><c> the</c><c> characters</c><c> are</c>
+[8:10] which none of the characters are
+[8:10] which none of the characters are repeated,<c> but</c><c> the</c><c> length</c><c> should</c><c> be</c>
+[8:12] repeated, but the length should be
+[8:12] repeated, but the length should be maximum.
+[8:13] maximum.
+[8:13] maximum. So,<c> you</c><c> can</c><c> find</c><c> several</c><c> of</c><c> these</c>
+[8:15] So, you can find several of these
+[8:15] So, you can find several of these strings,<c> right?</c>
+[8:16] strings, right?
+[8:16] strings, right? In<c> all</c><c> these</c><c> strings,</c><c> none</c><c> of</c><c> the</c>
+[8:18] In all these strings, none of the
+[8:18] In all these strings, none of the characters<c> are</c><c> repeated.</c><c> But</c><c> if</c><c> you</c><c> take</c>
+[8:21] characters are repeated. But if you take
+[8:21] characters are repeated. But if you take this<c> particular</c><c> string,</c>
+[8:22] this particular string,
+[8:22] this particular string, this<c> I</c><c> now</c><c> gets</c><c> repeated.</c>
+[8:25] this I now gets repeated.
+[8:25] this I now gets repeated. So,<c> this</c><c> is</c><c> where</c><c> you</c><c> stop.</c>
+[8:26] So, this is where you stop.
+[8:26] So, this is where you stop. For<c> a</c><c> brute-force</c><c> approach,</c><c> you</c><c> will</c><c> try</c>
+[8:28] For a brute-force approach, you will try
+[8:28] For a brute-force approach, you will try to<c> now</c><c> start</c><c> with</c><c> H,</c><c> then</c><c> you</c><c> will</c><c> try</c>
+[8:30] to now start with H, then you will try
+[8:30] to now start with H, then you will try to<c> start</c><c> with</c><c> I,</c><c> and</c><c> so</c><c> on.</c>
+[8:32] to start with I, and so on.
+[8:32] to start with I, and so on. The<c> time</c><c> complexity</c><c> is</c><c> going</c><c> to</c><c> get</c>
+[8:34] The time complexity is going to get
+[8:34] The time complexity is going to get worse<c> and</c><c> worse.</c>
+[8:35] worse and worse.
+[8:35] worse and worse. How<c> does</c><c> the</c><c> sliding</c><c> window</c><c> help</c><c> over</c>
+[8:37] How does the sliding window help over
+[8:37] How does the sliding window help over here?
+[8:37] here?
+[8:37] here? You<c> start</c><c> with</c><c> the</c><c> first</c><c> element.</c><c> You</c>
+[8:40] You start with the first element. You
+[8:40] You start with the first element. You see,<c> okay,</c><c> currently</c><c> no</c><c> character</c><c> is</c>
+[8:43] see, okay, currently no character is
+[8:43] see, okay, currently no character is repeating<c> here.</c>
+[8:44] repeating here.
+[8:44] repeating here. Then<c> you</c><c> include</c><c> one</c><c> more</c><c> character.</c>
+[8:47] Then you include one more character.
+[8:47] Then you include one more character. Once<c> again,</c><c> no</c><c> character</c><c> is</c><c> repeated.</c>
+[8:49] Once again, no character is repeated.
+[8:49] Once again, no character is repeated. What<c> you</c><c> can</c><c> also</c><c> do</c><c> is</c><c> you</c><c> can</c><c> keep</c>
+[8:51] What you can also do is you can keep
+[8:51] What you can also do is you can keep these<c> characters</c><c> in</c><c> some</c><c> kind</c><c> of</c><c> a</c><c> hash</c>
+[8:54] these characters in some kind of a hash
+[8:54] these characters in some kind of a hash set,<c> so</c><c> you</c><c> can</c><c> easily</c><c> find</c><c> out</c><c> if</c><c> a</c>
+[8:56] set, so you can easily find out if a
+[8:56] set, so you can easily find out if a character<c> got</c><c> repeated</c><c> or</c><c> not.</c>
+[8:58] character got repeated or not.
+[8:58] character got repeated or not. You<c> will</c><c> continue</c><c> ahead.</c><c> You</c><c> see</c><c> I,</c><c> I</c><c> is</c>
+[9:01] You will continue ahead. You see I, I is
+[9:01] You will continue ahead. You see I, I is also<c> not</c><c> present.</c><c> You</c><c> see</c><c> S,</c>
+[9:03] also not present. You see S,
+[9:03] also not present. You see S, S<c> is</c><c> also</c><c> not</c><c> present,</c><c> and</c><c> now</c><c> you</c><c> see</c>
+[9:06] S is also not present, and now you see
+[9:06] S is also not present, and now you see an<c> I</c><c> again.</c>
+[9:07] an I again.
+[9:07] an I again. What<c> happens?</c><c> This</c><c> I</c><c> is</c><c> repeated,</c><c> so</c><c> you</c>
+[9:10] What happens? This I is repeated, so you
+[9:10] What happens? This I is repeated, so you will<c> not</c><c> include</c><c> it</c><c> in</c><c> your</c><c> window,</c>
+[9:12] will not include it in your window,
+[9:12] will not include it in your window, but<c> you</c><c> found</c><c> a</c><c> checkpoint.</c><c> You</c><c> found</c>
+[9:15] but you found a checkpoint. You found
+[9:15] but you found a checkpoint. You found that,<c> "Okay,</c><c> I</c><c> can</c><c> find</c><c> one</c><c> string</c><c> of</c>
+[9:18] that, "Okay, I can find one string of
+[9:18] that, "Okay, I can find one string of the<c> length</c><c> four</c><c> which</c><c> doesn't</c><c> have</c><c> any</c>
+[9:20] the length four which doesn't have any
+[9:20] the length four which doesn't have any repeated<c> characters."</c>
+[9:21] repeated characters."
+[9:21] repeated characters." So,<c> this</c><c> is</c><c> one</c><c> benchmark.</c><c> When</c><c> you</c><c> have</c>
+[9:24] So, this is one benchmark. When you have
+[9:24] So, this is one benchmark. When you have to<c> go</c><c> ahead,</c><c> what</c><c> will</c><c> you</c><c> do?</c>
+[9:26] to go ahead, what will you do?
+[9:26] to go ahead, what will you do? You<c> will</c><c> now</c><c> try</c><c> to</c>
+[9:28] You will now try to
+[9:28] You will now try to add<c> a</c><c> character.</c>
+[9:30] add a character.
+[9:30] add a character. I<c> got</c><c> added,</c>
+[9:31] I got added,
+[9:31] I got added, but<c> since</c><c> it</c><c> is</c><c> duplicated,</c><c> you</c><c> will</c>
+[9:34] but since it is duplicated, you will
+[9:34] but since it is duplicated, you will want<c> to</c><c> keep</c><c> on</c><c> removing</c><c> characters</c>
+[9:36] want to keep on removing characters
+[9:36] want to keep on removing characters until<c> your</c><c> sliding</c><c> window</c><c> have</c><c> unique</c>
+[9:39] until your sliding window have unique
+[9:39] until your sliding window have unique characters<c> again.</c>
+[9:40] characters again.
+[9:40] characters again. So,<c> I</c><c> will</c><c> keep</c><c> on</c><c> removing</c><c> until</c><c> I</c>
+[9:43] So, I will keep on removing until I
+[9:43] So, I will keep on removing until I don't<c> have</c><c> any</c><c> duplicates.</c><c> I</c><c> still</c><c> have</c>
+[9:45] don't have any duplicates. I still have
+[9:45] don't have any duplicates. I still have two<c> eyes.</c><c> I</c><c> remove</c><c> this.</c><c> I</c><c> still</c><c> have</c>
+[9:48] two eyes. I remove this. I still have
+[9:48] two eyes. I remove this. I still have two<c> eyes.</c><c> I</c><c> remove</c><c> this.</c><c> And</c><c> now</c><c> I</c><c> only</c>
+[9:51] two eyes. I remove this. And now I only
+[9:51] two eyes. I remove this. And now I only have<c> one</c><c> eye.</c>
+[9:52] have one eye.
+[9:52] have one eye. All<c> the</c><c> elements</c><c> are</c><c> again</c><c> unique.</c><c> But</c>
+[9:55] All the elements are again unique. But
+[9:55] All the elements are again unique. But this<c> time</c><c> the</c><c> length</c><c> is</c><c> two.</c>
+[9:57] this time the length is two.
+[9:57] this time the length is two. Since<c> two</c><c> is</c><c> less</c><c> than</c><c> four,</c><c> so</c><c> I</c><c> can</c>
+[9:59] Since two is less than four, so I can
+[9:59] Since two is less than four, so I can ignore<c> it.</c>
+[10:00] ignore it.
+[10:00] ignore it. You<c> will</c><c> try</c><c> to</c><c> repeat</c><c> the</c><c> same</c><c> process</c>
+[10:01] You will try to repeat the same process
+[10:01] You will try to repeat the same process again.<c> You</c><c> add</c><c> an</c><c> S.</c>
+[10:04] again. You add an S.
+[10:04] again. You add an S. So,<c> now</c><c> you</c><c> have</c><c> a</c><c> repeated</c><c> characters.</c>
+[10:06] So, now you have a repeated characters.
+[10:06] So, now you have a repeated characters. So,<c> you</c><c> will</c><c> reduce</c><c> the</c><c> length</c><c> of</c><c> your</c>
+[10:08] So, you will reduce the length of your
+[10:08] So, you will reduce the length of your window.
+[10:09] window.
+[10:09] window. You<c> will</c><c> go</c><c> ahead</c><c> now.</c><c> You</c><c> find</c><c> A.</c>
+[10:12] You will go ahead now. You find A.
+[10:12] You will go ahead now. You find A. None<c> of</c><c> them</c><c> are</c><c> repeated.</c>
+[10:13] None of them are repeated.
+[10:13] None of them are repeated. L,<c> none</c><c> of</c><c> them</c><c> are</c><c> repeated.</c><c> O,</c><c> none</c><c> of</c>
+[10:15] L, none of them are repeated. O, none of
+[10:15] L, none of them are repeated. O, none of them<c> are</c><c> repeated.</c><c> N,</c><c> none</c><c> of</c><c> them</c><c> are</c>
+[10:17] them are repeated. N, none of them are
+[10:17] them are repeated. N, none of them are repeated.<c> Then</c><c> G</c><c> and</c><c> then</c><c> a</c><c> X.</c>
+[10:20] repeated. Then G and then a X.
+[10:20] repeated. Then G and then a X. What<c> did</c><c> we</c><c> do?</c><c> We</c><c> covered</c><c> the</c><c> entire</c>
+[10:22] What did we do? We covered the entire
+[10:23] What did we do? We covered the entire string<c> and</c><c> none</c><c> of</c><c> the</c><c> characters</c><c> are</c>
+[10:25] string and none of the characters are
+[10:25] string and none of the characters are repeated.<c> So,</c><c> what</c><c> did</c><c> we</c><c> find</c><c> out?</c><c> We</c>
+[10:27] repeated. So, what did we find out? We
+[10:28] repeated. So, what did we find out? We find<c> out</c><c> that</c><c> the</c><c> longest</c><c> substring</c>
+[10:30] find out that the longest substring
+[10:30] find out that the longest substring without<c> any</c><c> repeated</c><c> characters</c><c> is</c>
+[10:32] without any repeated characters is
+[10:32] without any repeated characters is actually<c> eight.</c>
+[10:33] actually eight.
+[10:33] actually eight. And<c> we</c><c> were</c><c> using</c><c> the</c><c> concept</c><c> of</c><c> of</c><c> a</c>
+[10:35] And we were using the concept of of a
+[10:35] And we were using the concept of of a variable<c> size</c><c> sliding</c><c> window.</c>
+[10:37] variable size sliding window.
+[10:37] variable size sliding window. The<c> window</c><c> was</c><c> sliding,</c><c> but</c><c> its</c><c> length</c>
+[10:39] The window was sliding, but its length
+[10:39] The window was sliding, but its length was<c> not</c><c> fixed.</c>
+[10:41] was not fixed.
+[10:41] was not fixed. And<c> that</c><c> is</c><c> your</c><c> answer.</c>
+[10:42] And that is your answer.
+[10:42] And that is your answer. But<c> these</c><c> problems</c><c> can</c><c> start</c><c> to</c><c> become</c>
+[10:45] But these problems can start to become
+[10:45] But these problems can start to become more<c> and</c><c> more</c><c> generalized</c><c> and</c><c> they</c><c> might</c>
+[10:47] more and more generalized and they might
+[10:47] more and more generalized and they might feel<c> a</c><c> little</c><c> bit</c><c> more</c><c> tricky.</c>
+[10:49] feel a little bit more tricky.
+[10:49] feel a little bit more tricky. But<c> you</c><c> don't</c><c> have</c><c> to</c><c> worry</c><c> about</c><c> it.</c>
+[10:52] But you don't have to worry about it.
+[10:52] But you don't have to worry about it. Just<c> focus</c><c> on</c><c> your</c><c> basics</c><c> and</c><c> everything</c>
+[10:54] Just focus on your basics and everything
+[10:54] Just focus on your basics and everything will<c> be</c><c> fine.</c>
+[10:55] will be fine.
+[10:55] will be fine. For<c> example,</c><c> look</c><c> at</c><c> this</c><c> next</c><c> problem.</c>
+[10:57] For example, look at this next problem.
+[10:57] For example, look at this next problem. You<c> have</c><c> to</c><c> find</c><c> out</c><c> the</c><c> longest</c>
+[10:59] You have to find out the longest
+[10:59] You have to find out the longest substring<c> with</c><c> at</c><c> most</c><c> K</c><c> distinct</c>
+[11:02] substring with at most K distinct
+[11:02] substring with at most K distinct characters.
+[11:03] characters.
+[11:03] characters. So,<c> the</c><c> underlying</c><c> idea</c><c> will</c><c> still</c>
+[11:05] So, the underlying idea will still
+[11:05] So, the underlying idea will still remain<c> the</c><c> same.</c><c> You</c><c> will</c><c> want</c><c> to</c><c> have</c><c> a</c>
+[11:08] remain the same. You will want to have a
+[11:08] remain the same. You will want to have a variable<c> size</c><c> sliding</c><c> window.</c>
+[11:10] variable size sliding window.
+[11:10] variable size sliding window. But<c> just</c><c> looking</c><c> at</c><c> repeated</c><c> characters</c>
+[11:13] But just looking at repeated characters
+[11:13] But just looking at repeated characters isn't<c> enough.</c>
+[11:14] isn't enough.
+[11:14] isn't enough. You<c> will</c><c> also</c><c> want</c><c> to</c><c> make</c><c> sure</c><c> that</c><c> the</c>
+[11:17] You will also want to make sure that the
+[11:17] You will also want to make sure that the string<c> that</c><c> you're</c><c> forming</c>
+[11:19] string that you're forming
+[11:19] string that you're forming this<c> string</c><c> should</c><c> have</c><c> at</c><c> most</c><c> K</c>
+[11:22] this string should have at most K
+[11:22] this string should have at most K distinct<c> characters.</c>
+[11:23] distinct characters.
+[11:24] distinct characters. For<c> example,</c><c> in</c><c> the</c><c> previous</c><c> question,</c>
+[11:26] For example, in the previous question,
+[11:26] For example, in the previous question, as<c> soon</c><c> as</c><c> I</c><c> got</c><c> an</c><c> I,</c><c> then</c><c> I</c><c> had</c><c> to</c>
+[11:29] as soon as I got an I, then I had to
+[11:29] as soon as I got an I, then I had to started<c> to</c><c> reduce</c><c> the</c><c> length.</c>
+[11:31] started to reduce the length.
+[11:31] started to reduce the length. But<c> over</c><c> here,</c><c> I</c><c> am</c><c> good</c><c> with</c><c> at</c><c> most</c><c> K</c>
+[11:34] But over here, I am good with at most K
+[11:34] But over here, I am good with at most K distinct<c> characters.</c>
+[11:36] distinct characters.
+[11:36] distinct characters. So,<c> if</c><c> I</c><c> try</c><c> to</c><c> add</c><c> one</c><c> more</c><c> element,</c>
+[11:38] So, if I try to add one more element,
+[11:38] So, if I try to add one more element, how<c> many</c><c> distinct</c><c> characters</c><c> do</c><c> I</c><c> have?</c>
+[11:41] how many distinct characters do I have?
+[11:41] how many distinct characters do I have? I<c> still</c><c> have</c><c> only</c><c> four</c><c> distinct</c>
+[11:43] I still have only four distinct
+[11:43] I still have only four distinct characters.
+[11:44] characters.
+[11:44] characters. So,<c> this</c><c> window</c><c> works</c><c> perfectly</c><c> for</c><c> me.</c>
+[11:47] So, this window works perfectly for me.
+[11:47] So, this window works perfectly for me. Can<c> I</c><c> go</c><c> ahead?</c><c> Yes,</c><c> I</c><c> can.</c>
+[11:49] Can I go ahead? Yes, I can.
+[11:49] Can I go ahead? Yes, I can. Because,<c> even</c><c> now,</c><c> I</c><c> only</c><c> have</c><c> four</c>
+[11:52] Because, even now, I only have four
+[11:52] Because, even now, I only have four distinct<c> characters.</c>
+[11:53] distinct characters.
+[11:53] distinct characters. But,<c> can</c><c> I</c><c> go</c><c> ahead</c><c> now?</c>
+[11:55] But, can I go ahead now?
+[11:55] But, can I go ahead now? As<c> soon</c><c> as</c><c> I</c><c> included</c><c> A,</c><c> I</c><c> now</c><c> have</c><c> five</c>
+[11:58] As soon as I included A, I now have five
+[11:59] As soon as I included A, I now have five distinct<c> characters.</c><c> So,</c><c> this</c><c> is</c><c> an</c>
+[12:01] distinct characters. So, this is an
+[12:01] distinct characters. So, this is an indication<c> that</c><c> you</c><c> need</c><c> to</c><c> start</c>
+[12:03] indication that you need to start
+[12:03] indication that you need to start reducing<c> your</c><c> length.</c>
+[12:04] reducing your length.
+[12:05] reducing your length. So,<c> what</c><c> will</c><c> you</c><c> do?</c><c> You'll</c><c> try</c><c> to</c><c> cut</c>
+[12:06] So, what will you do? You'll try to cut
+[12:06] So, what will you do? You'll try to cut off<c> one</c><c> element.</c><c> Now,</c><c> again,</c><c> you</c><c> have</c>
+[12:08] off one element. Now, again, you have
+[12:09] off one element. Now, again, you have four<c> elements,</c><c> so</c><c> that</c><c> works</c>
+[12:10] four elements, so that works
+[12:10] four elements, so that works wonderfully.
+[12:11] wonderfully.
+[12:11] wonderfully. Now,<c> go</c><c> ahead.</c>
+[12:13] Now, go ahead.
+[12:13] Now, go ahead. Once<c> again,</c><c> you</c><c> have</c><c> five</c><c> distinct</c>
+[12:14] Once again, you have five distinct
+[12:14] Once again, you have five distinct characters,<c> so</c><c> you</c><c> will</c><c> need</c><c> to</c><c> reduce</c>
+[12:17] characters, so you will need to reduce
+[12:17] characters, so you will need to reduce your<c> length.</c>
+[12:18] your length.
+[12:18] your length. Similarly,<c> you</c><c> will</c><c> keep</c><c> on</c><c> going</c><c> ahead.</c>
+[12:20] Similarly, you will keep on going ahead.
+[12:20] Similarly, you will keep on going ahead. You<c> include</c><c> an</c><c> O.</c><c> Now,</c><c> again,</c><c> you</c><c> have</c>
+[12:22] You include an O. Now, again, you have
+[12:22] You include an O. Now, again, you have five<c> characters,</c><c> so</c><c> remove</c><c> this.</c>
+[12:25] five characters, so remove this.
+[12:25] five characters, so remove this. Notice<c> that,</c><c> if</c><c> you</c><c> removed</c><c> an</c><c> I,</c><c> you</c>
+[12:27] Notice that, if you removed an I, you
+[12:28] Notice that, if you removed an I, you still<c> have</c><c> five</c><c> distinct</c><c> characters.</c><c> So,</c>
+[12:30] still have five distinct characters. So,
+[12:30] still have five distinct characters. So, you<c> need</c><c> to</c><c> reduce</c><c> the</c><c> length</c><c> even</c><c> more.</c>
+[12:33] you need to reduce the length even more.
+[12:33] you need to reduce the length even more. When<c> you</c><c> removed</c><c> an</c><c> S,</c><c> you</c><c> still</c><c> have</c>
+[12:35] When you removed an S, you still have
+[12:35] When you removed an S, you still have five<c> distinct</c><c> characters.</c><c> So,</c><c> you</c><c> need</c>
+[12:37] five distinct characters. So, you need
+[12:37] five distinct characters. So, you need to<c> remove</c><c> more</c><c> characters.</c>
+[12:39] to remove more characters.
+[12:39] to remove more characters. And<c> that</c><c> happened</c><c> because</c><c> these</c>
+[12:40] And that happened because these
+[12:40] And that happened because these characters<c> were</c><c> duplicated,</c><c> correct?</c>
+[12:43] characters were duplicated, correct?
+[12:43] characters were duplicated, correct? So,<c> that</c><c> is</c><c> the</c><c> idea.</c>
+[12:44] So, that is the idea.
+[12:44] So, that is the idea. Now,<c> once</c><c> again,</c><c> you</c><c> have</c><c> four</c><c> distinct</c>
+[12:47] Now, once again, you have four distinct
+[12:47] Now, once again, you have four distinct characters,<c> so</c><c> this</c><c> also</c><c> becomes</c><c> a</c>
+[12:49] characters, so this also becomes a
+[12:49] characters, so this also becomes a candidate.
+[12:50] candidate.
+[12:50] candidate. Similarly,<c> you</c><c> would</c><c> keep</c><c> on</c><c> scanning</c>
+[12:52] Similarly, you would keep on scanning
+[12:52] Similarly, you would keep on scanning your<c> entire</c><c> string,</c><c> and</c><c> that</c><c> will</c><c> cover</c>
+[12:55] your entire string, and that will cover
+[12:55] your entire string, and that will cover every<c> element.</c><c> But,</c><c> you</c><c> have</c><c> already</c>
+[12:57] every element. But, you have already
+[12:57] every element. But, you have already found<c> out</c><c> that</c><c> the</c><c> longest</c><c> string</c><c> with</c>
+[13:00] found out that the longest string with
+[13:00] found out that the longest string with at<c> most</c><c> four</c><c> distinct</c><c> characters</c><c> is</c><c> this</c>
+[13:03] at most four distinct characters is this
+[13:03] at most four distinct characters is this particular<c> substring.</c>
+[13:04] particular substring.
+[13:04] particular substring. You<c> might</c><c> have</c><c> guessed</c><c> it.</c><c> The</c><c> problem</c>
+[13:06] You might have guessed it. The problem
+[13:06] You might have guessed it. The problem statement<c> is</c><c> actually</c><c> the</c><c> same.</c>
+[13:08] statement is actually the same.
+[13:08] statement is actually the same. You<c> are</c><c> just</c><c> playing</c><c> around</c><c> with</c><c> all</c><c> of</c>
+[13:10] You are just playing around with all of
+[13:10] You are just playing around with all of the<c> different</c><c> conditions</c><c> that</c><c> could</c><c> be</c>
+[13:12] the different conditions that could be
+[13:12] the different conditions that could be asked.
+[13:13] asked.
+[13:13] asked. So,<c> basically,</c><c> how</c><c> do</c><c> you</c><c> identify</c><c> that,</c>
+[13:16] So, basically, how do you identify that,
+[13:16] So, basically, how do you identify that, when<c> you're</c><c> given</c><c> a</c><c> problem,</c><c> can</c><c> you</c>
+[13:17] when you're given a problem, can you
+[13:17] when you're given a problem, can you apply<c> the</c><c> sliding</c><c> window</c><c> pattern</c><c> or</c><c> not?</c>
+[13:19] apply the sliding window pattern or not?
+[13:20] apply the sliding window pattern or not? There<c> are</c><c> certain</c><c> cues</c><c> that</c><c> you</c><c> can</c>
+[13:22] There are certain cues that you can
+[13:22] There are certain cues that you can watch<c> out</c><c> for.</c>
+[13:23] watch out for.
+[13:23] watch out for. For<c> example,</c><c> the</c><c> first</c><c> thing</c><c> that</c><c> you</c>
+[13:24] For example, the first thing that you
+[13:24] For example, the first thing that you need<c> to</c><c> look</c><c> at</c><c> is</c><c> a</c><c> linear</c><c> structure.</c>
+[13:27] need to look at is a linear structure.
+[13:27] need to look at is a linear structure. Sliding<c> window</c><c> only</c><c> operates</c><c> when</c><c> your</c>
+[13:30] Sliding window only operates when your
+[13:30] Sliding window only operates when your structure<c> is</c><c> linear.</c><c> You</c><c> cannot</c><c> use</c><c> it</c>
+[13:33] structure is linear. You cannot use it
+[13:33] structure is linear. You cannot use it on<c> trees</c><c> or</c><c> graphs.</c>
+[13:35] on trees or graphs.
+[13:35] on trees or graphs. So,<c> arrays</c><c> and</c><c> strings</c><c> are</c><c> perfect</c>
+[13:37] So, arrays and strings are perfect
+[13:37] So, arrays and strings are perfect examples<c> because</c><c> all</c><c> of</c><c> these</c><c> elements</c>
+[13:39] examples because all of these elements
+[13:39] examples because all of these elements are<c> contiguous</c><c> and</c><c> then</c><c> you</c><c> can</c><c> have</c><c> a</c>
+[13:43] are contiguous and then you can have a
+[13:43] are contiguous and then you can have a window<c> on</c><c> top</c><c> of</c><c> it.</c><c> That</c><c> means</c><c> you're</c>
+[13:45] window on top of it. That means you're
+[13:45] window on top of it. That means you're looking<c> at</c><c> only</c><c> certain</c><c> set</c><c> of</c><c> elements.</c>
+[13:47] looking at only certain set of elements.
+[13:47] looking at only certain set of elements. And<c> that</c><c> is</c><c> why</c><c> a</c><c> contiguous</c><c> segment</c><c> is</c>
+[13:50] And that is why a contiguous segment is
+[13:50] And that is why a contiguous segment is very,<c> very</c><c> important.</c><c> Because</c><c> notice</c>
+[13:53] very, very important. Because notice
+[13:53] very, very important. Because notice what<c> we</c><c> demanded</c><c> in</c><c> all</c><c> of</c><c> our</c><c> problems.</c>
+[13:55] what we demanded in all of our problems.
+[13:55] what we demanded in all of our problems. We<c> were</c><c> looking</c><c> at</c><c> sub-arrays,</c>
+[13:57] We were looking at sub-arrays,
+[13:57] We were looking at sub-arrays, sub-strings,<c> a</c><c> part</c><c> of</c><c> the</c><c> string,</c><c> a</c>
+[13:59] sub-strings, a part of the string, a
+[13:59] sub-strings, a part of the string, a part<c> of</c><c> an</c><c> array.</c>
+[14:01] part of an array.
+[14:01] part of an array. Those<c> are</c><c> your</c><c> major</c><c> hints.</c>
+[14:03] Those are your major hints.
+[14:03] Those are your major hints. And<c> notice</c><c> what</c><c> the</c><c> problem</c><c> asks</c><c> you</c>
+[14:05] And notice what the problem asks you
+[14:05] And notice what the problem asks you for.
+[14:06] for.
+[14:06] for. Find<c> the</c><c> minimum</c><c> and</c><c> the</c><c> maximum.</c><c> That</c>
+[14:09] Find the minimum and the maximum. That
+[14:09] Find the minimum and the maximum. That means<c> you're</c><c> looking</c><c> at</c><c> a</c><c> window</c><c> and</c><c> you</c>
+[14:11] means you're looking at a window and you
+[14:11] means you're looking at a window and you have<c> to</c><c> tell</c><c> me,</c><c> "Okay,</c><c> this</c><c> is</c><c> the</c>
+[14:13] have to tell me, "Okay, this is the
+[14:13] have to tell me, "Okay, this is the maximum<c> size</c><c> or</c><c> this</c><c> is</c><c> the</c><c> minimum</c>
+[14:14] maximum size or this is the minimum
+[14:14] maximum size or this is the minimum size."
+[14:15] size."
+[14:15] size." Count<c> distinct</c><c> or</c><c> duplicates.</c><c> You</c><c> are</c>
+[14:18] Count distinct or duplicates. You are
+[14:18] Count distinct or duplicates. You are maintaining<c> a</c><c> hash</c><c> fit</c><c> to</c><c> find</c><c> distinct</c>
+[14:20] maintaining a hash fit to find distinct
+[14:20] maintaining a hash fit to find distinct elements.<c> You</c><c> are</c><c> also</c><c> maintaining</c><c> a</c>
+[14:22] elements. You are also maintaining a
+[14:22] elements. You are also maintaining a hash<c> fit</c><c> to</c><c> find</c><c> duplicates.</c><c> You</c><c> could</c>
+[14:24] hash fit to find duplicates. You could
+[14:24] hash fit to find duplicates. You could also<c> maintain</c><c> frequency</c><c> maps.</c><c> That</c><c> is</c>
+[14:27] also maintain frequency maps. That is
+[14:27] also maintain frequency maps. That is giving<c> you</c><c> a</c><c> state</c><c> of</c><c> what</c><c> is</c><c> happening</c>
+[14:29] giving you a state of what is happening
+[14:29] giving you a state of what is happening in<c> your</c><c> window.</c>
+[14:30] in your window.
+[14:30] in your window. Basically,<c> this</c><c> window</c><c> is</c><c> your</c><c> area</c><c> of</c>
+[14:33] Basically, this window is your area of
+[14:33] Basically, this window is your area of concern.<c> You're</c><c> trying</c><c> to</c><c> derive</c><c> all</c><c> of</c>
+[14:36] concern. You're trying to derive all of
+[14:36] concern. You're trying to derive all of the<c> results</c><c> that</c><c> you</c><c> can</c><c> find</c><c> from</c><c> this</c>
+[14:37] the results that you can find from this
+[14:37] the results that you can find from this window.
+[14:38] window.
+[14:38] window. Let<c> us</c><c> now</c><c> look</c><c> at</c><c> one</c><c> fancy</c><c> problem.</c>
+[14:41] Let us now look at one fancy problem.
+[14:41] Let us now look at one fancy problem. You<c> might</c><c> have</c><c> all</c><c> seen</c><c> the</c><c> problem</c>
+[14:43] You might have all seen the problem
+[14:43] You might have all seen the problem fruits<c> into</c><c> basket.</c><c> Basically,</c><c> you</c><c> are</c>
+[14:45] fruits into basket. Basically, you are
+[14:45] fruits into basket. Basically, you are given<c> an</c><c> array</c><c> that</c><c> is</c><c> certainly</c><c> a</c>
+[14:48] given an array that is certainly a
+[14:48] given an array that is certainly a garden<c> and</c><c> all</c><c> of</c><c> the</c><c> fruits</c><c> are</c><c> in</c><c> a</c>
+[14:50] garden and all of the fruits are in a
+[14:50] garden and all of the fruits are in a line.
+[14:51] line.
+[14:51] line. You're<c> given</c><c> a</c><c> basket</c><c> and</c><c> this</c><c> basket</c>
+[14:54] You're given a basket and this basket
+[14:54] You're given a basket and this basket can<c> hold</c><c> only</c><c> two</c><c> type</c><c> of</c><c> fruits.</c>
+[14:56] can hold only two type of fruits.
+[14:57] can hold only two type of fruits. You<c> have</c><c> to</c><c> make</c><c> sure</c><c> that</c><c> whichever</c><c> two</c>
+[14:59] You have to make sure that whichever two
+[14:59] You have to make sure that whichever two type<c> of</c><c> fruits</c><c> you</c><c> pick,</c>
+[15:01] type of fruits you pick,
+[15:01] type of fruits you pick, you<c> need</c><c> to</c><c> have</c><c> the</c><c> maximum</c><c> quantity</c><c> of</c>
+[15:04] you need to have the maximum quantity of
+[15:04] you need to have the maximum quantity of it.
+[15:05] it.
+[15:05] it. And<c> all</c><c> of</c><c> these</c><c> fruits</c><c> are</c><c> contiguous.</c>
+[15:08] And all of these fruits are contiguous.
+[15:08] And all of these fruits are contiguous. So,<c> what</c><c> do</c><c> you</c><c> see</c><c> over</c><c> here?</c>
+[15:10] So, what do you see over here?
+[15:10] So, what do you see over here? Isn't<c> this</c><c> problem</c><c> literally</c><c> the</c><c> same</c><c> as</c>
+[15:13] Isn't this problem literally the same as
+[15:13] Isn't this problem literally the same as finding<c> the</c><c> longest</c><c> sub-string</c><c> with</c><c> at</c>
+[15:15] finding the longest sub-string with at
+[15:15] finding the longest sub-string with at most<c> K</c><c> distinct</c><c> characters?</c>
+[15:17] most K distinct characters?
+[15:17] most K distinct characters? What<c> do</c><c> you</c><c> do?</c><c> You</c><c> start</c><c> picking</c><c> up</c>
+[15:19] What do you do? You start picking up
+[15:19] What do you do? You start picking up fruits.<c> You</c><c> pick</c><c> up</c><c> an</c><c> apple</c><c> and</c><c> then</c>
+[15:22] fruits. You pick up an apple and then
+[15:22] fruits. You pick up an apple and then you<c> pick</c><c> up</c><c> an</c><c> orange.</c>
+[15:23] you pick up an orange.
+[15:23] you pick up an orange. You<c> found</c><c> two</c><c> type</c><c> of</c><c> fruits.</c><c> That's</c><c> it,</c>
+[15:26] You found two type of fruits. That's it,
+[15:26] You found two type of fruits. That's it, and<c> that's</c><c> good.</c>
+[15:27] and that's good.
+[15:27] and that's good. So,<c> you</c><c> record</c><c> it.</c><c> Now,</c><c> you</c><c> try</c><c> to</c><c> pick</c>
+[15:29] So, you record it. Now, you try to pick
+[15:29] So, you record it. Now, you try to pick a<c> watermelon.</c>
+[15:31] a watermelon.
+[15:31] a watermelon. You<c> cannot</c><c> have</c><c> three</c><c> types.</c><c> So,</c><c> you</c>
+[15:33] You cannot have three types. So, you
+[15:33] You cannot have three types. So, you will<c> want</c><c> to</c><c> reduce</c><c> your</c><c> window.</c>
+[15:35] will want to reduce your window.
+[15:35] will want to reduce your window. This<c> is</c><c> perfect.</c>
+[15:37] This is perfect.
+[15:37] This is perfect. Now,<c> try</c><c> to</c><c> add</c><c> more</c><c> fruits.</c><c> Can</c><c> you</c><c> add</c>
+[15:39] Now, try to add more fruits. Can you add
+[15:39] Now, try to add more fruits. Can you add a<c> watermelon?</c><c> Yes.</c>
+[15:41] a watermelon? Yes.
+[15:41] a watermelon? Yes. So,<c> now</c><c> you</c><c> are</c><c> able</c><c> to</c><c> add</c>
+[15:43] So, now you are able to add
+[15:43] So, now you are able to add three<c> fruits.</c><c> So,</c><c> that</c><c> is</c><c> a</c><c> bigger</c>
+[15:44] three fruits. So, that is a bigger
+[15:45] three fruits. So, that is a bigger number.
+[15:45] number.
+[15:45] number. Works<c> perfectly.</c>
+[15:47] Works perfectly.
+[15:47] Works perfectly. Try<c> to</c><c> add</c><c> the</c><c> next</c><c> fruit.</c><c> Can</c><c> I</c><c> add</c><c> a</c>
+[15:49] Try to add the next fruit. Can I add a
+[15:49] Try to add the next fruit. Can I add a banana?<c> No,</c><c> because</c><c> now</c><c> I</c><c> will</c><c> have</c>
+[15:51] banana? No, because now I will have
+[15:51] banana? No, because now I will have three<c> type</c><c> of</c><c> fruits.</c><c> So,</c><c> remove</c><c> the</c>
+[15:53] three type of fruits. So, remove the
+[15:53] three type of fruits. So, remove the orange,
+[15:54] orange,
+[15:54] orange, and<c> this</c><c> is</c><c> a</c><c> good</c><c> for</c><c> us.</c>
+[15:56] and this is a good for us.
+[15:56] and this is a good for us. I<c> still</c><c> have</c><c> three</c><c> fruits,</c><c> so</c><c> I</c><c> don't</c>
+[15:58] I still have three fruits, so I don't
+[15:58] I still have three fruits, so I don't need<c> to</c><c> update</c><c> it.</c>
+[16:00] need to update it.
+[16:00] need to update it. Try<c> to</c><c> add</c><c> the</c><c> next</c><c> fruit.</c><c> Can</c><c> I</c><c> add</c><c> an</c>
+[16:02] Try to add the next fruit. Can I add an
+[16:02] Try to add the next fruit. Can I add an orange?<c> No,</c><c> because</c><c> now</c><c> I</c><c> will</c><c> have</c>
+[16:04] orange? No, because now I will have
+[16:04] orange? No, because now I will have three<c> different</c><c> kind</c><c> of</c><c> fruits.</c>
+[16:06] three different kind of fruits.
+[16:06] three different kind of fruits. It<c> means</c><c> I</c><c> will</c><c> need</c><c> to</c><c> reduce</c><c> my</c><c> size.</c>
+[16:09] It means I will need to reduce my size.
+[16:09] It means I will need to reduce my size. Reducing<c> the</c><c> size</c><c> by</c><c> one</c><c> does</c><c> not</c><c> help.</c>
+[16:11] Reducing the size by one does not help.
+[16:11] Reducing the size by one does not help. I<c> still</c><c> have</c><c> three</c><c> different</c><c> fruits.</c>
+[16:13] I still have three different fruits.
+[16:13] I still have three different fruits. Remove<c> one</c><c> more</c><c> fruit.</c>
+[16:15] Remove one more fruit.
+[16:15] Remove one more fruit. I<c> again</c><c> have</c><c> only</c><c> two</c><c> type</c><c> of</c><c> fruits,</c><c> so</c>
+[16:17] I again have only two type of fruits, so
+[16:17] I again have only two type of fruits, so that<c> is</c><c> good.</c>
+[16:18] that is good.
+[16:18] that is good. I<c> can</c><c> now</c><c> increase.</c><c> Can</c><c> I</c><c> add</c><c> one</c><c> more</c>
+[16:21] I can now increase. Can I add one more
+[16:21] I can now increase. Can I add one more orange?<c> Yes.</c>
+[16:22] orange? Yes.
+[16:22] orange? Yes. Can<c> I</c><c> add</c><c> an</c><c> apple?</c><c> No.</c>
+[16:24] Can I add an apple? No.
+[16:24] Can I add an apple? No. So,<c> I</c><c> will</c><c> reduce</c><c> it.</c>
+[16:26] So, I will reduce it.
+[16:26] So, I will reduce it. Notice<c> that</c><c> I</c><c> was</c><c> still</c><c> able</c><c> to</c><c> have</c>
+[16:28] Notice that I was still able to have
+[16:28] Notice that I was still able to have only<c> three</c><c> maximum</c><c> fruits.</c>
+[16:30] only three maximum fruits.
+[16:30] only three maximum fruits. Can<c> I</c><c> add</c><c> an</c><c> orange</c><c> again?</c><c> Yes,</c><c> because</c>
+[16:33] Can I add an orange again? Yes, because
+[16:33] Can I add an orange again? Yes, because once<c> again,</c><c> in</c><c> my</c><c> basket,</c><c> I</c><c> only</c><c> have</c>
+[16:36] once again, in my basket, I only have
+[16:36] once again, in my basket, I only have two<c> type</c><c> of</c><c> fruits.</c><c> But,</c><c> the</c><c> total</c>
+[16:38] two type of fruits. But, the total
+[16:38] two type of fruits. But, the total fruits<c> I</c><c> collected</c><c> over</c><c> here</c><c> is</c><c> four.</c>
+[16:40] fruits I collected over here is four.
+[16:40] fruits I collected over here is four. Four<c> is</c><c> greater</c><c> than</c><c> three,</c><c> so</c><c> I</c><c> will</c>
+[16:42] Four is greater than three, so I will
+[16:42] Four is greater than three, so I will reject<c> this</c><c> value.</c><c> I</c><c> have</c><c> scanned</c><c> my</c>
+[16:44] reject this value. I have scanned my
+[16:44] reject this value. I have scanned my entire<c> array.</c><c> That</c><c> means</c><c> four</c><c> is</c><c> my</c>
+[16:46] entire array. That means four is my
+[16:46] entire array. That means four is my answer.
+[16:47] answer.
+[16:47] answer. So,<c> do</c><c> you</c><c> see</c><c> how</c><c> sliding</c><c> window</c><c> is</c>
+[16:49] So, do you see how sliding window is
+[16:49] So, do you see how sliding window is helping<c> us?</c><c> It</c><c> helps</c><c> to</c><c> scan</c><c> the</c><c> entire</c>
+[16:52] helping us? It helps to scan the entire
+[16:52] helping us? It helps to scan the entire array.<c> It</c><c> removes</c><c> the</c><c> order</c><c> of</c><c> n</c><c> squared</c>
+[16:54] array. It removes the order of n squared
+[16:54] array. It removes the order of n squared complexity.<c> It</c><c> helps</c><c> you</c><c> to</c><c> focus</c><c> only</c>
+[16:57] complexity. It helps you to focus only
+[16:57] complexity. It helps you to focus only on<c> a</c><c> certain</c><c> state</c><c> of</c><c> elements,</c><c> and</c><c> you</c>
+[17:00] on a certain state of elements, and you
+[17:00] on a certain state of elements, and you are<c> maintaining</c><c> that</c><c> state.</c>
+[17:02] are maintaining that state.
+[17:02] are maintaining that state. Up<c> till</c><c> now,</c><c> we</c><c> have</c><c> been</c><c> looking</c><c> at</c><c> the</c>
+[17:04] Up till now, we have been looking at the
+[17:04] Up till now, we have been looking at the maximum<c> substring,</c><c> the</c><c> maximum</c><c> number</c><c> of</c>
+[17:06] maximum substring, the maximum number of
+[17:06] maximum substring, the maximum number of fruits.<c> Similarly,</c><c> you</c><c> can</c><c> also</c><c> have</c><c> a</c>
+[17:08] fruits. Similarly, you can also have a
+[17:08] fruits. Similarly, you can also have a problem<c> where</c><c> you</c><c> have</c><c> to</c><c> find</c><c> the</c>
+[17:11] problem where you have to find the
+[17:11] problem where you have to find the minimum<c> size</c><c> of</c><c> a</c><c> sub</c><c> array</c><c> with</c><c> a</c>
+[17:13] minimum size of a sub array with a
+[17:13] minimum size of a sub array with a particular<c> sum.</c>
+[17:14] particular sum.
+[17:15] particular sum. You<c> are</c><c> given</c><c> this</c><c> array,</c><c> and</c><c> you</c><c> have</c>
+[17:16] You are given this array, and you have
+[17:16] You are given this array, and you have to<c> find</c><c> the</c><c> target</c><c> of</c><c> seven</c><c> as</c><c> the</c><c> sum.</c>
+[17:20] to find the target of seven as the sum.
+[17:20] to find the target of seven as the sum. So,<c> what</c><c> do</c><c> you</c><c> do?</c><c> Again,</c><c> a</c><c> variable</c>
+[17:22] So, what do you do? Again, a variable
+[17:22] So, what do you do? Again, a variable size<c> sliding</c><c> window.</c><c> You</c><c> take</c><c> up</c><c> the</c>
+[17:24] size sliding window. You take up the
+[17:24] size sliding window. You take up the first<c> element.</c><c> The</c><c> sum</c><c> is</c><c> two.</c><c> It</c><c> is</c>
+[17:26] first element. The sum is two. It is
+[17:26] first element. The sum is two. It is less<c> than</c><c> seven,</c><c> so</c><c> you</c><c> don't</c><c> have</c><c> to</c>
+[17:27] less than seven, so you don't have to
+[17:27] less than seven, so you don't have to worry.
+[17:28] worry.
+[17:28] worry. You<c> do</c><c> 2</c><c> +</c><c> 3.</c>
+[17:30] You do 2 + 3.
+[17:30] You do 2 + 3. It<c> is</c><c> still</c><c> five.</c><c> So,</c><c> it</c><c> is</c><c> still</c>
+[17:32] It is still five. So, it is still
+[17:32] It is still five. So, it is still smaller.<c> I</c><c> add</c><c> one</c><c> more</c><c> element.</c>
+[17:35] smaller. I add one more element.
+[17:35] smaller. I add one more element. The<c> sum</c><c> is</c><c> six.</c>
+[17:37] The sum is six.
+[17:37] The sum is six. Still<c> less</c><c> than</c><c> seven.</c>
+[17:38] Still less than seven.
+[17:38] Still less than seven. And<c> now</c><c> I</c><c> add</c><c> one</c><c> more</c><c> element.</c><c> The</c>
+[17:41] And now I add one more element. The
+[17:41] And now I add one more element. The total<c> sum</c><c> now</c><c> becomes</c><c> eight.</c>
+[17:43] total sum now becomes eight.
+[17:43] total sum now becomes eight. And<c> what</c><c> is</c><c> the</c><c> length</c><c> of</c><c> this</c><c> array?</c>
+[17:46] And what is the length of this array?
+[17:46] And what is the length of this array? The<c> length</c><c> is</c><c> four.</c>
+[17:47] The length is four.
+[17:47] The length is four. So,<c> at</c><c> least</c><c> I</c><c> found</c><c> out</c><c> one</c><c> possible</c>
+[17:50] So, at least I found out one possible
+[17:50] So, at least I found out one possible solution.<c> But</c><c> until</c><c> I</c><c> scan</c><c> my</c><c> entire</c>
+[17:53] solution. But until I scan my entire
+[17:53] solution. But until I scan my entire array,<c> then</c><c> I</c><c> am</c><c> not</c><c> sure.</c>
+[17:55] array, then I am not sure.
+[17:55] array, then I am not sure. So,<c> what</c><c> are</c><c> you</c><c> basically</c><c> doing</c><c> over</c>
+[17:57] So, what are you basically doing over
+[17:57] So, what are you basically doing over here?<c> This</c><c> is</c><c> the</c><c> left</c><c> pointer</c><c> and</c><c> this</c>
+[17:59] here? This is the left pointer and this
+[17:59] here? This is the left pointer and this is<c> the</c><c> right</c><c> pointer.</c>
+[18:01] is the right pointer.
+[18:01] is the right pointer. To<c> increase</c><c> your</c><c> length,</c><c> you</c><c> do</c><c> a</c><c> right</c>
+[18:03] To increase your length, you do a right
+[18:03] To increase your length, you do a right plus<c> plus</c><c> and</c><c> to</c><c> decrease</c><c> your</c><c> length,</c>
+[18:06] plus plus and to decrease your length,
+[18:06] plus plus and to decrease your length, you<c> do</c><c> a</c><c> left</c><c> minus</c><c> minus.</c>
+[18:08] you do a left minus minus.
+[18:08] you do a left minus minus. So,<c> what</c><c> I</c><c> will</c><c> do</c><c> over</c><c> here?</c><c> I</c><c> will</c><c> do</c>
+[18:09] So, what I will do over here? I will do
+[18:09] So, what I will do over here? I will do a<c> left</c><c> minus</c><c> minus.</c>
+[18:11] a left minus minus.
+[18:11] a left minus minus. What<c> is</c><c> my</c><c> sum</c><c> now?</c>
+[18:13] What is my sum now?
+[18:13] What is my sum now? My<c> sum</c><c> is</c><c> six.</c>
+[18:15] My sum is six.
+[18:15] My sum is six. It<c> is</c><c> less</c><c> than</c><c> seven,</c><c> so</c><c> I</c><c> will</c><c> need</c><c> to</c>
+[18:18] It is less than seven, so I will need to
+[18:18] It is less than seven, so I will need to increase<c> my</c><c> right</c><c> pointer</c><c> to</c><c> increase</c>
+[18:21] increase my right pointer to increase
+[18:21] increase my right pointer to increase the<c> sum.</c>
+[18:22] the sum.
+[18:22] the sum. So,<c> when</c><c> I'm</c><c> increasing</c><c> the</c><c> size</c><c> of</c><c> my</c>
+[18:24] So, when I'm increasing the size of my
+[18:24] So, when I'm increasing the size of my window,<c> my</c><c> sum</c><c> increases.</c><c> When</c><c> I'm</c>
+[18:26] window, my sum increases. When I'm
+[18:26] window, my sum increases. When I'm decreasing<c> the</c><c> size</c><c> of</c><c> the</c><c> window,</c><c> the</c>
+[18:28] decreasing the size of the window, the
+[18:28] decreasing the size of the window, the sum<c> decreases.</c><c> I</c><c> add</c><c> the</c><c> next</c><c> element</c>
+[18:30] sum decreases. I add the next element
+[18:30] sum decreases. I add the next element and<c> now</c><c> the</c><c> sum</c><c> becomes</c><c> 10.</c>
+[18:33] and now the sum becomes 10.
+[18:33] and now the sum becomes 10. 10<c> is</c><c> greater</c><c> than</c><c> seven.</c><c> So,</c><c> this</c><c> is</c><c> a</c>
+[18:35] 10 is greater than seven. So, this is a
+[18:35] 10 is greater than seven. So, this is a possible<c> solution.</c><c> But</c><c> I</c><c> can</c><c> also</c><c> now</c>
+[18:38] possible solution. But I can also now
+[18:38] possible solution. But I can also now start<c> to</c><c> reduce</c><c> my</c><c> size.</c>
+[18:40] start to reduce my size.
+[18:40] start to reduce my size. I<c> see</c><c> 4</c><c> +</c><c> 2</c><c> 6</c><c> +</c><c> 1</c><c> 7,</c><c> so</c><c> I</c><c> found</c><c> an</c><c> even</c>
+[18:43] I see 4 + 2 6 + 1 7, so I found an even
+[18:43] I see 4 + 2 6 + 1 7, so I found an even smaller<c> size.</c>
+[18:45] smaller size.
+[18:45] smaller size. That<c> is</c><c> three.</c>
+[18:46] That is three.
+[18:46] That is three. Can<c> I</c><c> reduce</c><c> it</c><c> further?</c><c> No,</c><c> because</c><c> now</c>
+[18:49] Can I reduce it further? No, because now
+[18:49] Can I reduce it further? No, because now the<c> sum</c><c> becomes</c><c> six.</c>
+[18:51] the sum becomes six.
+[18:51] the sum becomes six. I<c> try</c><c> to</c><c> add</c><c> one</c><c> more</c><c> element.</c>
+[18:53] I try to add one more element.
+[18:53] I try to add one more element. The<c> sum</c><c> now</c><c> becomes</c><c> nine.</c><c> So,</c><c> I</c><c> found</c>
+[18:55] The sum now becomes nine. So, I found
+[18:55] The sum now becomes nine. So, I found one<c> more</c><c> answer.</c><c> But</c><c> I</c><c> can</c><c> also</c><c> try</c><c> to</c>
+[18:58] one more answer. But I can also try to
+[18:58] one more answer. But I can also try to reduce<c> it.</c><c> So,</c><c> when</c><c> I</c><c> reduce</c><c> it,</c><c> my</c><c> sum</c>
+[19:01] reduce it. So, when I reduce it, my sum
+[19:01] reduce it. So, when I reduce it, my sum is<c> still</c><c> seven.</c><c> So,</c><c> I</c><c> found</c><c> an</c><c> even</c>
+[19:04] is still seven. So, I found an even
+[19:04] is still seven. So, I found an even smaller<c> solution.</c><c> So,</c><c> I</c><c> will</c><c> update</c><c> this</c>
+[19:05] smaller solution. So, I will update this
+[19:05] smaller solution. So, I will update this value<c> to</c><c> two.</c><c> I</c><c> have</c><c> scanned</c><c> my</c><c> entire</c>
+[19:08] value to two. I have scanned my entire
+[19:08] value to two. I have scanned my entire array.<c> That</c><c> means</c><c> two</c><c> is</c><c> my</c><c> answer.</c><c> So,</c>
+[19:11] array. That means two is my answer. So,
+[19:11] array. That means two is my answer. So, a<c> sliding</c><c> window</c><c> is</c><c> also</c><c> helpful</c><c> when</c>
+[19:14] a sliding window is also helpful when
+[19:14] a sliding window is also helpful when you<c> have</c><c> to</c><c> find</c><c> the</c><c> minimum</c><c> of</c>
+[19:15] you have to find the minimum of
+[19:15] you have to find the minimum of something.
+[19:16] something.
+[19:16] something. The<c> next</c><c> problem</c><c> is</c><c> also</c><c> very</c><c> very</c>
+[19:18] The next problem is also very very
+[19:18] The next problem is also very very interesting,<c> maximum</c><c> consecutive</c><c> ones.</c>
+[19:21] interesting, maximum consecutive ones.
+[19:21] interesting, maximum consecutive ones. You<c> are</c><c> given</c><c> a</c><c> binary</c><c> array,</c><c> that</c><c> means</c>
+[19:23] You are given a binary array, that means
+[19:23] You are given a binary array, that means just<c> zeros</c><c> and</c><c> ones,</c><c> and</c><c> you</c><c> are</c><c> given</c><c> a</c>
+[19:25] just zeros and ones, and you are given a
+[19:25] just zeros and ones, and you are given a value<c> K.</c>
+[19:26] value K.
+[19:26] value K. What<c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c><c> pick</c><c> up</c><c> at</c>
+[19:29] What you can do is you can pick up at
+[19:29] What you can do is you can pick up at most<c> two</c><c> zeros</c><c> to</c><c> convert</c><c> it</c><c> to</c><c> one.</c>
+[19:33] most two zeros to convert it to one.
+[19:33] most two zeros to convert it to one. And<c> these</c><c> zeros</c><c> could</c><c> be</c><c> anywhere</c><c> in</c><c> the</c>
+[19:36] And these zeros could be anywhere in the
+[19:36] And these zeros could be anywhere in the array.
+[19:37] array.
+[19:37] array. And<c> then</c><c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> what</c><c> is</c><c> the</c>
+[19:40] And then you have to tell me what is the
+[19:40] And then you have to tell me what is the longest<c> length</c><c> of</c><c> all</c><c> ones</c><c> that</c><c> you</c><c> can</c>
+[19:42] longest length of all ones that you can
+[19:42] longest length of all ones that you can find<c> out.</c>
+[19:44] find out.
+[19:44] find out. So,<c> what</c><c> do</c><c> you</c><c> do</c><c> over</c><c> here?</c><c> Once</c>
+[19:46] So, what do you do over here? Once
+[19:46] So, what do you do over here? Once again,<c> a</c><c> variable</c><c> size</c><c> sliding</c><c> window.</c>
+[19:48] again, a variable size sliding window.
+[19:48] again, a variable size sliding window. You<c> have</c><c> to</c><c> find</c><c> out</c><c> the</c><c> ones,</c><c> correct?</c>
+[19:50] You have to find out the ones, correct?
+[19:50] You have to find out the ones, correct? So,<c> start</c><c> your</c><c> window.</c>
+[19:52] So, start your window.
+[19:52] So, start your window. Currently,<c> you</c><c> haven't</c><c> flipped</c><c> any</c><c> of</c>
+[19:55] Currently, you haven't flipped any of
+[19:55] Currently, you haven't flipped any of the<c> zeros.</c><c> That's</c><c> good.</c>
+[19:57] the zeros. That's good.
+[19:57] the zeros. That's good. Now,<c> increase</c><c> the</c><c> length.</c><c> This</c><c> is</c><c> good.</c>
+[19:59] Now, increase the length. This is good.
+[19:59] Now, increase the length. This is good. Increase<c> the</c><c> length,</c><c> that</c><c> is</c><c> good.</c><c> Now,</c>
+[20:01] Increase the length, that is good. Now,
+[20:01] Increase the length, that is good. Now, increase<c> the</c><c> length.</c>
+[20:02] increase the length.
+[20:02] increase the length. What<c> do</c><c> I</c><c> have?</c><c> I</c><c> have</c><c> a</c><c> zero.</c>
+[20:04] What do I have? I have a zero.
+[20:04] What do I have? I have a zero. I<c> haven't</c><c> used</c><c> any</c><c> of</c><c> this.</c><c> So,</c><c> what</c><c> I'm</c>
+[20:07] I haven't used any of this. So, what I'm
+[20:07] I haven't used any of this. So, what I'm just<c> going</c><c> to</c><c> do</c><c> is</c><c> I</c><c> will</c><c> change</c><c> this</c><c> K</c>
+[20:10] just going to do is I will change this K
+[20:10] just going to do is I will change this K to<c> one.</c>
+[20:11] to one.
+[20:11] to one. And<c> notice,</c><c> my</c><c> left</c><c> pointer</c><c> is</c><c> here,</c><c> my</c>
+[20:13] And notice, my left pointer is here, my
+[20:13] And notice, my left pointer is here, my right<c> pointer</c><c> is</c><c> here.</c>
+[20:14] right pointer is here.
+[20:15] right pointer is here. I<c> will</c><c> try</c><c> to</c><c> increase</c><c> the</c><c> length</c><c> more</c>
+[20:16] I will try to increase the length more
+[20:16] I will try to increase the length more because<c> I'm</c><c> still</c><c> allowed</c><c> to</c><c> flip</c><c> one</c>
+[20:19] because I'm still allowed to flip one
+[20:19] because I'm still allowed to flip one more<c> zero.</c>
+[20:20] more zero.
+[20:20] more zero. My<c> right</c><c> pointer</c><c> comes</c><c> here,</c><c> and</c><c> this</c>
+[20:23] My right pointer comes here, and this
+[20:23] My right pointer comes here, and this value<c> now</c><c> changes</c><c> to</c><c> zero.</c><c> It</c><c> means</c><c> I</c>
+[20:25] value now changes to zero. It means I
+[20:25] value now changes to zero. It means I cannot<c> flip</c><c> any</c><c> more</c><c> zeros.</c>
+[20:28] cannot flip any more zeros.
+[20:28] cannot flip any more zeros. So,<c> what</c><c> happens</c><c> if</c><c> I</c><c> try</c><c> to</c><c> go</c><c> ahead</c>
+[20:30] So, what happens if I try to go ahead
+[20:30] So, what happens if I try to go ahead now?<c> If</c><c> I</c><c> try</c><c> to</c><c> go</c><c> ahead,</c><c> I</c><c> cannot</c><c> flip</c>
+[20:33] now? If I try to go ahead, I cannot flip
+[20:33] now? If I try to go ahead, I cannot flip the<c> zero.</c>
+[20:34] the zero.
+[20:34] the zero. So,<c> I</c><c> actually</c><c> need</c><c> to</c><c> stop</c><c> over</c><c> here.</c>
+[20:37] So, I actually need to stop over here.
+[20:37] So, I actually need to stop over here. And<c> this</c><c> gives</c><c> me</c><c> one</c><c> particular</c><c> length.</c>
+[20:40] And this gives me one particular length.
+[20:40] And this gives me one particular length. I<c> now</c><c> know</c><c> that</c>
+[20:41] I now know that
+[20:41] I now know that I<c> can</c><c> have</c><c> at</c><c> least</c><c> five</c><c> consecutive</c>
+[20:44] I can have at least five consecutive
+[20:44] I can have at least five consecutive ones.
+[20:44] ones.
+[20:45] ones. This<c> fact</c><c> is</c><c> known.</c>
+[20:46] This fact is known.
+[20:46] This fact is known. I<c> still</c><c> have</c><c> to</c><c> scan</c><c> my</c><c> entire</c><c> array.</c>
+[20:48] I still have to scan my entire array.
+[20:49] I still have to scan my entire array. Notice<c> that</c><c> I</c><c> couldn't</c><c> have</c><c> included</c>
+[20:50] Notice that I couldn't have included
+[20:50] Notice that I couldn't have included this<c> array.</c><c> Why?</c><c> Because</c><c> the</c><c> value</c><c> of</c><c> K</c>
+[20:53] this array. Why? Because the value of K
+[20:53] this array. Why? Because the value of K is<c> zero.</c>
+[20:54] is zero.
+[20:54] is zero. So,<c> I</c><c> will</c><c> start</c><c> reducing</c><c> my</c><c> length.</c><c> I</c>
+[20:56] So, I will start reducing my length. I
+[20:56] So, I will start reducing my length. I reduce<c> this,</c><c> but</c><c> this</c><c> was</c><c> not</c><c> a</c><c> zero.</c>
+[20:59] reduce this, but this was not a zero.
+[20:59] reduce this, but this was not a zero. So,<c> the</c><c> value</c><c> of</c><c> K</c><c> still</c><c> remains</c><c> a</c><c> zero.</c>
+[21:02] So, the value of K still remains a zero.
+[21:02] So, the value of K still remains a zero. I<c> remove</c><c> one</c><c> more</c><c> one,</c><c> no</c><c> change.</c><c> I</c>
+[21:04] I remove one more one, no change. I
+[21:04] I remove one more one, no change. I remove<c> one</c><c> more</c><c> one,</c><c> no</c><c> change.</c><c> I</c><c> remove</c>
+[21:07] remove one more one, no change. I remove
+[21:07] remove one more one, no change. I remove the<c> zero.</c>
+[21:08] the zero.
+[21:08] the zero. Since<c> I</c><c> removed</c><c> a</c><c> zero,</c><c> my</c><c> this</c><c> value</c><c> of</c>
+[21:10] Since I removed a zero, my this value of
+[21:10] Since I removed a zero, my this value of K<c> now</c><c> changes</c><c> to</c><c> one.</c>
+[21:13] K now changes to one.
+[21:13] K now changes to one. It<c> means</c><c> I</c><c> can</c><c> include</c><c> one</c><c> more</c><c> zero.</c>
+[21:16] It means I can include one more zero.
+[21:16] It means I can include one more zero. As<c> soon</c><c> as</c><c> I</c><c> include</c><c> a</c><c> zero,</c>
+[21:18] As soon as I include a zero,
+[21:18] As soon as I include a zero, the<c> value</c><c> of</c><c> K</c><c> now</c><c> changes</c><c> to</c><c> zero</c>
+[21:20] the value of K now changes to zero
+[21:20] the value of K now changes to zero again.
+[21:21] again.
+[21:21] again. It<c> means</c><c> I</c><c> cannot</c><c> include</c><c> more</c><c> zeros.</c>
+[21:24] It means I cannot include more zeros.
+[21:24] It means I cannot include more zeros. But<c> I</c><c> still</c><c> want</c><c> to</c><c> keep</c><c> on</c><c> going</c><c> ahead.</c>
+[21:27] But I still want to keep on going ahead.
+[21:27] But I still want to keep on going ahead. That<c> is</c><c> only</c><c> I</c><c> will</c><c> know</c><c> if</c><c> I</c><c> have</c><c> more</c>
+[21:29] That is only I will know if I have more
+[21:29] That is only I will know if I have more zeros<c> or</c><c> ones.</c>
+[21:31] zeros or ones.
+[21:31] zeros or ones. I<c> see</c><c> a</c><c> one,</c><c> that</c><c> is</c><c> fine.</c>
+[21:33] I see a one, that is fine.
+[21:33] I see a one, that is fine. So,<c> you</c><c> keep</c><c> on</c><c> going</c><c> ahead</c><c> until</c><c> you</c>
+[21:35] So, you keep on going ahead until you
+[21:35] So, you keep on going ahead until you see<c> a</c><c> one.</c>
+[21:36] see a one.
+[21:36] see a one. So,<c> what</c><c> do</c><c> we</c><c> have</c><c> now?</c><c> We</c><c> have</c><c> another</c>
+[21:38] So, what do we have now? We have another
+[21:38] So, what do we have now? We have another window<c> of</c><c> a</c><c> greater</c><c> size.</c><c> This</c><c> window</c><c> is</c>
+[21:41] window of a greater size. This window is
+[21:41] window of a greater size. This window is of<c> the</c><c> size</c><c> six.</c><c> So,</c><c> I</c><c> can</c><c> update</c><c> it</c><c> and</c>
+[21:43] of the size six. So, I can update it and
+[21:43] of the size six. So, I can update it and I<c> can</c><c> store</c><c> six</c><c> is</c><c> my</c><c> longest</c><c> length</c><c> up</c>
+[21:46] I can store six is my longest length up
+[21:46] I can store six is my longest length up till<c> now.</c>
+[21:47] till now.
+[21:47] till now. Can<c> I</c><c> include</c><c> the</c><c> next</c><c> zero?</c><c> No.</c><c> So,</c><c> I</c>
+[21:50] Can I include the next zero? No. So, I
+[21:50] Can I include the next zero? No. So, I need<c> to</c><c> move</c><c> my</c><c> left</c><c> pointer</c><c> one</c><c> step</c>
+[21:53] need to move my left pointer one step
+[21:53] need to move my left pointer one step ahead.
+[21:54] ahead.
+[21:54] ahead. This<c> pointer</c><c> moves</c><c> ahead,</c><c> the</c><c> size</c><c> of</c>
+[21:56] This pointer moves ahead, the size of
+[21:56] This pointer moves ahead, the size of the<c> window</c><c> reduces,</c>
+[21:57] the window reduces,
+[21:57] the window reduces, and<c> now</c><c> I'm</c><c> able</c><c> to</c><c> ingest</c><c> one</c><c> more</c>
+[21:59] and now I'm able to ingest one more
+[21:59] and now I'm able to ingest one more zero.
+[22:00] zero.
+[22:00] zero. The<c> length,</c><c> however,</c><c> still</c><c> remains</c><c> six.</c>
+[22:03] The length, however, still remains six.
+[22:03] The length, however, still remains six. I<c> have</c><c> completed</c><c> the</c><c> scan</c><c> of</c><c> my</c><c> entire</c>
+[22:05] I have completed the scan of my entire
+[22:05] I have completed the scan of my entire array.<c> I</c><c> found</c><c> out</c><c> that,</c><c> okay,</c><c> six</c><c> is</c>
+[22:07] array. I found out that, okay, six is
+[22:07] array. I found out that, okay, six is the<c> maximum</c><c> length</c><c> of</c><c> maximum</c>
+[22:10] the maximum length of maximum
+[22:10] the maximum length of maximum consecutive<c> ones.</c>
+[22:11] consecutive ones.
+[22:11] consecutive ones. All<c> of</c><c> these</c><c> examples</c><c> give</c><c> you</c><c> a</c><c> good</c>
+[22:14] All of these examples give you a good
+[22:14] All of these examples give you a good summary<c> about</c><c> the</c><c> components</c><c> involved</c><c> in</c>
+[22:16] summary about the components involved in
+[22:16] summary about the components involved in a<c> variable-size</c><c> sliding</c><c> window.</c>
+[22:18] a variable-size sliding window.
+[22:18] a variable-size sliding window. The<c> idea</c><c> is</c><c> very,</c><c> very</c><c> simple.</c><c> If</c><c> you</c>
+[22:20] The idea is very, very simple. If you
+[22:20] The idea is very, very simple. If you want<c> to</c><c> expand</c><c> your</c><c> window,</c><c> then</c><c> you</c>
+[22:23] want to expand your window, then you
+[22:23] want to expand your window, then you take<c> up</c><c> your</c><c> two</c><c> pointers</c><c> and</c><c> then</c><c> you</c>
+[22:25] take up your two pointers and then you
+[22:25] take up your two pointers and then you do<c> a</c><c> right</c><c> plus</c><c> plus.</c>
+[22:26] do a right plus plus.
+[22:26] do a right plus plus. So,<c> I</c><c> have</c><c> my</c><c> two</c><c> pointers</c><c> over</c><c> here.</c>
+[22:29] So, I have my two pointers over here.
+[22:29] So, I have my two pointers over here. Doing<c> a</c><c> right</c><c> plus</c><c> plus</c><c> will</c><c> increase</c>
+[22:31] Doing a right plus plus will increase
+[22:31] Doing a right plus plus will increase the<c> size</c><c> of</c><c> my</c><c> window.</c>
+[22:33] the size of my window.
+[22:33] the size of my window. And<c> I</c><c> have</c><c> included</c><c> more</c><c> elements.</c>
+[22:36] And I have included more elements.
+[22:36] And I have included more elements. Based<c> upon</c><c> your</c><c> conditions,</c><c> you</c><c> might</c>
+[22:38] Based upon your conditions, you might
+[22:38] Based upon your conditions, you might want<c> to</c><c> shrink</c><c> your</c><c> window</c><c> also.</c>
+[22:40] want to shrink your window also.
+[22:40] want to shrink your window also. So,<c> you</c><c> do</c><c> left</c><c> plus</c><c> plus.</c><c> You</c><c> had</c><c> your</c>
+[22:42] So, you do left plus plus. You had your
+[22:42] So, you do left plus plus. You had your window<c> like</c><c> this.</c><c> You</c><c> have</c><c> a</c><c> left</c>
+[22:44] window like this. You have a left
+[22:44] window like this. You have a left pointer<c> and</c><c> a</c><c> right</c><c> pointer.</c><c> When</c><c> you</c><c> do</c>
+[22:46] pointer and a right pointer. When you do
+[22:46] pointer and a right pointer. When you do left<c> plus</c><c> plus,</c><c> your</c><c> window</c><c> size</c><c> becomes</c>
+[22:48] left plus plus, your window size becomes
+[22:48] left plus plus, your window size becomes smaller.
+[22:49] smaller.
+[22:49] smaller. Basically,<c> you</c><c> are</c><c> trying</c><c> to</c><c> maintain</c>
+[22:51] Basically, you are trying to maintain
+[22:51] Basically, you are trying to maintain the<c> state.</c><c> You</c><c> are</c><c> trying</c><c> to</c><c> maintain</c>
+[22:54] the state. You are trying to maintain
+[22:54] the state. You are trying to maintain the<c> particular</c><c> condition</c><c> that</c><c> is</c><c> being</c>
+[22:56] the particular condition that is being
+[22:56] the particular condition that is being asked<c> in</c><c> your</c><c> problem</c><c> statement.</c><c> So,</c><c> you</c>
+[22:59] asked in your problem statement. So, you
+[22:59] asked in your problem statement. So, you are<c> trying</c><c> to</c><c> validate</c><c> if</c><c> your</c><c> window</c>
+[23:01] are trying to validate if your window
+[23:01] are trying to validate if your window valid<c> or</c><c> not?</c><c> And</c><c> based</c><c> upon</c><c> that,</c><c> you</c>
+[23:04] valid or not? And based upon that, you
+[23:04] valid or not? And based upon that, you are<c> increasing</c><c> the</c><c> length</c><c> of</c><c> your</c><c> window</c>
+[23:05] are increasing the length of your window
+[23:05] are increasing the length of your window or<c> reducing</c><c> the</c><c> length.</c>
+[23:07] or reducing the length.
+[23:07] or reducing the length. To<c> maintain</c><c> this</c><c> state,</c><c> you</c><c> can</c><c> use</c><c> a</c>
+[23:09] To maintain this state, you can use a
+[23:09] To maintain this state, you can use a hash<c> set,</c><c> a</c><c> running</c><c> sum,</c><c> a</c><c> frequency</c>
+[23:12] hash set, a running sum, a frequency
+[23:12] hash set, a running sum, a frequency map,<c> or</c><c> min</c><c> and</c><c> max</c><c> queues.</c>
+[23:14] map, or min and max queues.
+[23:14] map, or min and max queues. And<c> while</c><c> you're</c><c> doing</c><c> all</c><c> of</c><c> this,</c><c> you</c>
+[23:16] And while you're doing all of this, you
+[23:16] And while you're doing all of this, you need<c> to</c><c> make</c><c> sure</c><c> that</c><c> you</c><c> reach</c><c> the</c>
+[23:18] need to make sure that you reach the
+[23:18] need to make sure that you reach the very<c> end</c><c> of</c><c> your</c><c> array.</c><c> It</c><c> means</c><c> you</c>
+[23:20] very end of your array. It means you
+[23:20] very end of your array. It means you have<c> completed</c><c> the</c><c> entire</c><c> scan.</c>
+[23:22] have completed the entire scan.
+[23:22] have completed the entire scan. And<c> while</c><c> doing</c><c> all</c><c> of</c><c> that,</c><c> you</c><c> might</c>
+[23:25] And while doing all of that, you might
+[23:25] And while doing all of that, you might want<c> to</c><c> update</c><c> a</c><c> counter,</c><c> you</c><c> might</c><c> want</c>
+[23:27] want to update a counter, you might want
+[23:27] want to update a counter, you might want to<c> keep</c><c> some</c><c> kind</c><c> of</c><c> a</c><c> track.</c>
+[23:29] to keep some kind of a track.
+[23:29] to keep some kind of a track. It<c> just</c><c> means</c><c> that</c><c> you</c><c> are</c><c> trying</c><c> to</c>
+[23:31] It just means that you are trying to
+[23:31] It just means that you are trying to update<c> the</c><c> end</c><c> result</c><c> that</c><c> will</c>
+[23:33] update the end result that will
+[23:33] update the end result that will eventually<c> solve</c><c> the</c><c> problem</c><c> for</c><c> you.</c>
+[23:35] eventually solve the problem for you.
+[23:35] eventually solve the problem for you. So,<c> what</c><c> did</c><c> we</c><c> learn</c><c> over</c><c> here?</c><c> You</c>
+[23:37] So, what did we learn over here? You
+[23:37] So, what did we learn over here? You need<c> to</c><c> somehow</c><c> look</c><c> at</c><c> the</c><c> problem</c><c> and</c>
+[23:39] need to somehow look at the problem and
+[23:40] need to somehow look at the problem and identify<c> the</c><c> sliding</c><c> window</c><c> opportunity.</c>
+[23:42] identify the sliding window opportunity.
+[23:42] identify the sliding window opportunity. For<c> example,</c><c> whenever</c><c> you're</c><c> being</c>
+[23:44] For example, whenever you're being
+[23:44] For example, whenever you're being talked<c> about</c><c> a</c><c> contiguous</c><c> sub</c><c> array</c><c> or</c><c> a</c>
+[23:46] talked about a contiguous sub array or a
+[23:46] talked about a contiguous sub array or a longest<c> or</c><c> a</c><c> shortest</c><c> segment,</c>
+[23:49] longest or a shortest segment,
+[23:49] longest or a shortest segment, it<c> means</c><c> that</c><c> you</c><c> want</c><c> to</c><c> look</c><c> at</c>
+[23:51] it means that you want to look at
+[23:51] it means that you want to look at different<c> sizes.</c>
+[23:53] different sizes.
+[23:53] different sizes. It<c> simply</c><c> means</c><c> you're</c><c> looking</c><c> at</c><c> a</c>
+[23:55] It simply means you're looking at a
+[23:55] It simply means you're looking at a variable-size<c> sliding</c><c> window.</c>
+[23:57] variable-size sliding window.
+[23:57] variable-size sliding window. When<c> you're</c><c> being</c><c> talked</c><c> about</c><c> the</c>
+[23:58] When you're being talked about the
+[23:58] When you're being talked about the maximum<c> sum</c><c> or</c><c> a</c><c> minimum</c><c> value</c><c> between</c>
+[24:01] maximum sum or a minimum value between
+[24:01] maximum sum or a minimum value between certain<c> key</c><c> elements,</c><c> it</c><c> means</c><c> you're</c>
+[24:04] certain key elements, it means you're
+[24:04] certain key elements, it means you're looking<c> at</c><c> a</c><c> fixed-size</c><c> sliding</c><c> window.</c>
+[24:06] looking at a fixed-size sliding window.
+[24:06] looking at a fixed-size sliding window. If<c> you're</c><c> looking</c><c> at</c><c> at</c><c> most</c><c> key</c>
+[24:08] If you're looking at at most key
+[24:08] If you're looking at at most key elements,<c> then</c><c> you</c><c> want</c><c> the</c><c> minimum</c>
+[24:11] elements, then you want the minimum
+[24:11] elements, then you want the minimum possible<c> sum.</c><c> You</c><c> want</c><c> the</c><c> minimum</c>
+[24:14] possible sum. You want the minimum
+[24:14] possible sum. You want the minimum possible<c> elements.</c><c> It</c><c> means</c><c> a</c><c> shrinking</c>
+[24:16] possible elements. It means a shrinking
+[24:16] possible elements. It means a shrinking window<c> strategy.</c><c> Meaning,</c><c> you</c><c> will</c><c> try</c>
+[24:19] window strategy. Meaning, you will try
+[24:19] window strategy. Meaning, you will try to<c> include</c><c> more</c><c> and</c><c> more</c><c> elements</c><c> and</c>
+[24:21] to include more and more elements and
+[24:21] to include more and more elements and then<c> try</c><c> to</c><c> shrink</c><c> it</c><c> as</c><c> per</c><c> your</c>
+[24:23] then try to shrink it as per your
+[24:23] then try to shrink it as per your requirement,<c> as</c><c> per</c><c> the</c><c> condition</c><c> that</c>
+[24:25] requirement, as per the condition that
+[24:25] requirement, as per the condition that you<c> want</c><c> to</c><c> meet.</c><c> And</c><c> likewise,</c><c> we</c><c> also</c>
+[24:28] you want to meet. And likewise, we also
+[24:28] you want to meet. And likewise, we also discussed<c> the</c><c> other</c><c> two</c><c> cases.</c><c> If</c><c> you're</c>
+[24:30] discussed the other two cases. If you're
+[24:30] discussed the other two cases. If you're looking<c> at</c><c> unique</c><c> elements,</c><c> that</c><c> means</c>
+[24:31] looking at unique elements, that means
+[24:31] looking at unique elements, that means you<c> might</c><c> want</c><c> to</c><c> use</c><c> a</c><c> hash</c><c> set</c><c> or</c><c> a</c>
+[24:33] you might want to use a hash set or a
+[24:33] you might want to use a hash set or a hash<c> map.</c><c> And</c><c> looking</c><c> at</c><c> moving</c><c> averages</c>
+[24:36] hash map. And looking at moving averages
+[24:36] hash map. And looking at moving averages or<c> rolling</c><c> sums,</c><c> those</c><c> are</c><c> once</c><c> again</c>
+[24:38] or rolling sums, those are once again
+[24:38] or rolling sums, those are once again fixed<c> window</c><c> where</c><c> you're</c><c> updating</c><c> your</c>
+[24:41] fixed window where you're updating your
+[24:41] fixed window where you're updating your result.
+[24:42] result.
+[24:42] result. I<c> hope</c><c> all</c><c> of</c><c> these</c><c> problems</c><c> now</c><c> give</c>
+[24:44] I hope all of these problems now give
+[24:44] I hope all of these problems now give you<c> a</c><c> very</c><c> good</c><c> idea</c><c> how</c><c> the</c><c> sliding</c>
+[24:47] you a very good idea how the sliding
+[24:47] you a very good idea how the sliding window<c> pattern</c><c> actually</c><c> looks</c><c> and</c><c> in</c>
+[24:49] window pattern actually looks and in
+[24:49] window pattern actually looks and in what<c> scenarios</c><c> can</c><c> you</c><c> apply</c><c> it.</c>
+[24:51] what scenarios can you apply it.
+[24:51] what scenarios can you apply it. Tell<c> me</c><c> in</c><c> the</c><c> comment</c><c> section</c><c> below</c>
+[24:53] Tell me in the comment section below
+[24:53] Tell me in the comment section below what<c> other</c><c> problems</c><c> have</c><c> you</c><c> seen</c><c> or</c>
+[24:55] what other problems have you seen or
+[24:55] what other problems have you seen or what<c> other</c><c> complex</c><c> cases</c><c> you</c><c> that</c><c> you</c>
+[24:57] what other complex cases you that you
+[24:57] what other complex cases you that you have<c> observed</c><c> where</c><c> a</c><c> sliding</c><c> window</c>
+[24:59] have observed where a sliding window
+[24:59] have observed where a sliding window pattern<c> is</c><c> very</c><c> very</c><c> helpful.</c><c> I</c><c> will</c><c> be</c>
+[25:01] pattern is very very helpful. I will be
+[25:01] pattern is very very helpful. I will be really<c> happy</c><c> to</c><c> discuss</c><c> all</c><c> of</c><c> them</c><c> and</c>
+[25:04] really happy to discuss all of them and
+[25:04] really happy to discuss all of them and it<c> will</c><c> also</c><c> become</c><c> a</c><c> very</c><c> good</c>
+[25:05] it will also become a very good
+[25:05] it will also become a very good collection<c> whenever</c><c> you</c><c> want</c><c> to</c><c> review</c>
+[25:07] collection whenever you want to review
+[25:07] collection whenever you want to review this<c> particular</c><c> concept.</c>
+[25:09] this particular concept.
+[25:09] this particular concept. As<c> a</c><c> reminder,</c><c> if</c><c> you</c><c> found</c><c> this</c><c> video</c>
+[25:11] As a reminder, if you found this video
+[25:11] As a reminder, if you found this video helpful,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[25:12] helpful, please do consider subscribing
+[25:12] helpful, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[25:13] to my channel and share this video with
+[25:13] to my channel and share this video with your<c> friends.</c><c> This</c><c> really</c><c> keeps</c><c> me</c>
+[25:15] your friends. This really keeps me
+[25:15] your friends. This really keeps me motivated<c> and</c><c> I</c><c> can</c><c> make</c><c> more</c><c> such</c>
+[25:17] motivated and I can make more such
+[25:17] motivated and I can make more such videos.<c> Also,</c><c> remember</c><c> you</c><c> can</c><c> now</c>
+[25:19] videos. Also, remember you can now
+[25:19] videos. Also, remember you can now schedule<c> one-to-one</c><c> sessions</c><c> with</c><c> me</c><c> to</c>
+[25:21] schedule one-to-one sessions with me to
+[25:21] schedule one-to-one sessions with me to solve<c> any</c><c> sort</c><c> of</c><c> doubts.</c><c> And</c><c> also</c><c> a</c>
+[25:23] solve any sort of doubts. And also a
+[25:23] solve any sort of doubts. And also a huge<c> shout-out</c><c> to</c><c> all</c><c> of</c><c> the</c><c> members</c><c> who</c>
+[25:25] huge shout-out to all of the members who
+[25:25] huge shout-out to all of the members who support<c> my</c><c> channel.</c><c> You</c><c> guys</c><c> really</c><c> keep</c>
+[25:27] support my channel. You guys really keep
+[25:27] support my channel. You guys really keep me<c> going</c><c> and</c><c> as</c><c> a</c><c> member,</c><c> you</c><c> do</c><c> get</c>
+[25:29] me going and as a member, you do get
+[25:29] me going and as a member, you do get priority<c> reply</c><c> to</c><c> your</c><c> comments</c><c> and</c>
+[25:30] priority reply to your comments and
+[25:30] priority reply to your comments and early<c> access</c><c> to</c><c> new</c><c> videos</c><c> as</c><c> well.</c><c> Stay</c>
+[25:32] early access to new videos as well. Stay
+[25:32] early access to new videos as well. Stay tuned<c> for</c><c> my</c><c> upcoming</c><c> video.</c><c> Until</c><c> then,</c>
+[25:34] tuned for my upcoming video. Until then,
+[25:34] tuned for my upcoming video. Until then, see<c> you.</c>

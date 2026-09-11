@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeetCode Top 150 JS — Master Visual Solutions Manual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0284c7',
+              600: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Marked Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Mermaid.js for Visual Flowcharts -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Prism.js Syntax Highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Markdown Styling */
+    .prose pre {
+      background-color: #0f172a !important;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      position: relative;
+    }
+    .prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+    .prose th, .prose td {
+      border: 1px solid #334155;
+      padding: 0.6rem 1rem;
+      text-align: left;
+    }
+    .prose th {
+      background-color: #1e293b;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+    .prose tr:nth-child(even) {
+      background-color: #0f172a50;
+    }
+    .prose h1 { font-size: 2rem; font-weight: 800; color: #f8fafc; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+    .prose h2 { font-size: 1.4rem; font-weight: 700; color: #38bdf8; margin-top: 2rem; margin-bottom: 0.8rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.4rem; }
+    .prose h3 { font-size: 1.15rem; font-weight: 600; color: #e2e8f0; margin-top: 1.2rem; margin-bottom: 0.5rem; }
+    .prose p { margin-bottom: 0.9rem; line-height: 1.65; color: #cbd5e1; }
+    .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; color: #cbd5e1; }
+    .prose li { margin-bottom: 0.4rem; }
+    .prose code:not(pre code) {
+      background-color: #1e293b;
+      color: #38bdf8;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.9em;
+    }
+    .mermaid {
+      background-color: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- Top Navbar -->
+  <header class="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center space-x-3">
+      <div class="h-9 w-9 rounded-lg bg-sky-500 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-sky-500/20">
+        JS
+      </div>
+      <div>
+        <h1 class="font-bold text-base md:text-lg text-white tracking-tight flex items-center gap-2">
+          LeetCode Top 150 <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30">MAANG JS Edition</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="relative w-64 md:w-96">
+      <input id="searchInput" type="text" placeholder="Search questions, patterns, keywords..." 
+             class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3.5 py-1.5 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+      <span class="absolute right-3 top-2 text-xs text-slate-400">⌘K</span>
+    </div>
+  </header>
+
+  <!-- Main App Layout -->
+  <div class="flex flex-1 overflow-hidden">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="w-80 border-r border-slate-800 bg-slate-900/50 flex flex-col shrink-0 overflow-y-auto">
+      <div class="p-4 border-b border-slate-800/60">
+        <div class="flex gap-1.5" id="difficultyFilters">
+          <button data-diff="ALL" class="filter-btn active text-xs px-2.5 py-1 rounded-md bg-sky-500 text-white font-medium">All</button>
+          <button data-diff="Easy" class="filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-emerald-400 font-medium">Easy</button>
+          <button data-diff="Medium" class="filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-400 font-medium">Medium</button>
+          <button data-diff="Hard" class="filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-rose-400 font-medium">Hard</button>
+        </div>
+      </div>
+      <nav id="curriculumNav" class="p-3 space-y-6 flex-1"></nav>
+    </aside>
+
+    <!-- Main Content Reader -->
+    <main id="contentContainer" class="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
+      <div id="articleContent" class="prose prose-invert max-w-none">
+        <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+          <p class="text-lg">Select a problem or pattern primer from the sidebar to begin.</p>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Load Data Bundle -->
+  <script src="curriculum-data.js"></script>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+    let activeFilter = 'ALL';
+    let searchQuery = '';
+    let currentItemId = null;
+
+    const nav = document.getElementById('curriculumNav');
+    const contentArea = document.getElementById('articleContent');
+    const searchInput = document.getElementById('searchInput');
+
+    function renderNav() {
+      nav.innerHTML = '';
+      if (!window.CURRICULUM_DATA) return;
+
+      window.CURRICULUM_DATA.forEach(category => {
+        const filteredItems = category.items.filter(item => {
+          const matchesDiff = (activeFilter === 'ALL' || item.difficulty.toLowerCase() === activeFilter.toLowerCase());
+          const matchesSearch = searchQuery === '' || 
+            item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            item.content.toLowerCase().includes(searchQuery.toLowerCase());
+          return matchesDiff && matchesSearch;
+        });
+
+        if (filteredItems.length === 0) return;
+
+        const catDiv = document.createElement('div');
+        catDiv.className = 'space-y-1';
+        
+        const catHeader = document.createElement('div');
+        catHeader.className = 'text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1';
+        catHeader.textContent = category.category;
+        catDiv.appendChild(catHeader);
+
+        filteredItems.forEach(item => {
+          const btn = document.createElement('button');
+          btn.className = `w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between group ${
+            item.id === currentItemId ? 'bg-sky-500/15 text-sky-400 font-semibold border border-sky-500/30' : 'text-slate-300 hover:bg-slate-800/80'
+          }`;
+          
+          let badgeColor = 'bg-slate-800 text-slate-400';
+          if (item.difficulty === 'Easy') badgeColor = 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+          if (item.difficulty === 'Medium') badgeColor = 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
+          if (item.difficulty === 'Hard') badgeColor = 'bg-rose-500/15 text-rose-400 border border-rose-500/30';
+          if (item.difficulty === 'Primer') badgeColor = 'bg-sky-500/15 text-sky-400 border border-sky-500/30';
+
+          btn.innerHTML = `
+            <span class="truncate pr-2">${item.title}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${badgeColor}">${item.difficulty}</span>
+          `;
+
+          btn.onclick = () => loadArticle(item);
+          catDiv.appendChild(btn);
+        });
+
+        nav.appendChild(catDiv);
+      });
+    }
+
+    async function loadArticle(item) {
+      currentItemId = item.id;
+      renderNav();
+
+      // Build Top Header Bar
+      let headerHtml = '';
+      if (item.leetcodeLink) {
+        headerHtml = `
+          <div class="mb-8 p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-lg shadow-black/20">
+            <div class="flex items-center gap-3">
+              <span class="text-xs px-2.5 py-1 rounded-md font-semibold ${
+                item.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                item.difficulty === 'Medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              }">${item.difficulty}</span>
+              <span class="text-xs text-slate-400 font-medium">${item.pattern || 'Pattern: General'}</span>
+            </div>
+            <a href="${item.leetcodeLink}" target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition-all shadow-md shadow-sky-500/25 active:scale-95">
+              <span>Solve on LeetCode</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        `;
+      }
+
+      // Custom Markdown parsing
+      const rawHtml = marked.parse(item.content);
+      contentArea.innerHTML = headerHtml + rawHtml;
+
+      // Transform code blocks for Mermaid & Prism
+      const codeBlocks = contentArea.querySelectorAll('pre code');
+      for (const block of codeBlocks) {
+        if (block.classList.contains('language-mermaid')) {
+          const mermaidCode = block.textContent;
+          const pre = block.parentElement;
+          const div = document.createElement('div');
+          div.className = 'mermaid';
+          div.textContent = mermaidCode;
+          pre.replaceWith(div);
+        }
+      }
+
+      Prism.highlightAllUnder(contentArea);
+      await mermaid.run();
+      document.getElementById('contentContainer').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Filter Buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.className = 'filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium';
+        });
+        btn.className = 'filter-btn active text-xs px-2.5 py-1 rounded-md bg-sky-500 text-white font-medium';
+        activeFilter = btn.dataset.diff;
+        renderNav();
+      };
+    });
+
+    // Search Input
+    searchInput.oninput = (e) => {
+      searchQuery = e.target.value;
+      renderNav();
+    };
+
+    // Auto-load first item
+    if (window.CURRICULUM_DATA && window.CURRICULUM_DATA[0]?.items[0]) {
+      loadArticle(window.CURRICULUM_DATA[0].items[0]);
+    }
+  </script>
+</body>
+</html>

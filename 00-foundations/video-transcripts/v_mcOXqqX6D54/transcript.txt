@@ -1,0 +1,1880 @@
+[0:02] When I think about stacks, mostly I
+[0:02] When I think about stacks, mostly I would<c> think</c><c> about</c><c> the</c><c> stack</c><c> data</c>
+[0:03] would think about the stack data
+[0:03] would think about the stack data structure.
+[0:04] structure.
+[0:04] structure. But,<c> when</c><c> you</c><c> solve</c><c> more</c><c> and</c><c> more</c>
+[0:06] But, when you solve more and more
+[0:06] But, when you solve more and more problems,<c> you</c><c> would</c><c> begin</c><c> to</c><c> realize</c>
+[0:09] problems, you would begin to realize
+[0:09] problems, you would begin to realize that<c> there</c><c> is</c><c> actually</c><c> a</c><c> coding</c><c> pattern</c>
+[0:12] that there is actually a coding pattern
+[0:12] that there is actually a coding pattern by<c> which</c><c> you</c><c> can</c><c> identify</c><c> that</c><c> okay,</c><c> I</c>
+[0:14] by which you can identify that okay, I
+[0:14] by which you can identify that okay, I need<c> to</c><c> apply</c><c> stacks</c><c> over</c><c> here.</c>
+[0:16] need to apply stacks over here.
+[0:17] need to apply stacks over here. And<c> that</c><c> is</c><c> what</c><c> we're</c><c> going</c><c> to</c><c> explore</c>
+[0:18] And that is what we're going to explore
+[0:18] And that is what we're going to explore in<c> this</c><c> video.</c><c> Hello</c><c> friends,</c><c> welcome</c>
+[0:20] in this video. Hello friends, welcome
+[0:20] in this video. Hello friends, welcome back<c> to</c><c> my</c><c> channel.</c>
+[0:25] The first thought that comes to my mind
+[0:25] The first thought that comes to my mind is<c> a</c><c> stack</c><c> of</c><c> plates</c><c> because</c><c> that</c><c> is</c>
+[0:28] is a stack of plates because that is
+[0:28] is a stack of plates because that is really<c> easy</c><c> to</c><c> visualize</c><c> and</c><c> you</c><c> can</c><c> see</c>
+[0:31] really easy to visualize and you can see
+[0:31] really easy to visualize and you can see the<c> last-in-first-out</c><c> principle</c><c> being</c>
+[0:33] the last-in-first-out principle being
+[0:33] the last-in-first-out principle being applied.
+[0:34] applied.
+[0:34] applied. In<c> a</c><c> cafeteria,</c><c> all</c><c> of</c><c> the</c><c> plates</c><c> get</c>
+[0:37] In a cafeteria, all of the plates get
+[0:37] In a cafeteria, all of the plates get collected<c> and</c><c> then</c><c> the</c><c> plate</c><c> on</c><c> the</c><c> top</c>
+[0:40] collected and then the plate on the top
+[0:40] collected and then the plate on the top is<c> the</c><c> first</c><c> one</c><c> to</c><c> get</c><c> washed.</c><c> So,</c><c> that</c>
+[0:43] is the first one to get washed. So, that
+[0:43] is the first one to get washed. So, that is<c> the</c><c> basic</c><c> idea</c><c> how</c><c> a</c><c> stack</c><c> data</c>
+[0:45] is the basic idea how a stack data
+[0:45] is the basic idea how a stack data structure<c> looks</c><c> like.</c><c> Basically,</c><c> you</c>
+[0:47] structure looks like. Basically, you
+[0:47] structure looks like. Basically, you will<c> have</c><c> some</c><c> kind</c><c> of</c><c> a</c><c> structure</c><c> where</c>
+[0:50] will have some kind of a structure where
+[0:50] will have some kind of a structure where you<c> store</c><c> all</c><c> of</c><c> your</c><c> elements</c><c> and</c><c> then</c>
+[0:53] you store all of your elements and then
+[0:53] you store all of your elements and then you<c> are</c><c> supporting</c><c> some</c><c> particular</c>
+[0:55] you are supporting some particular
+[0:55] you are supporting some particular operations.<c> For</c><c> example,</c><c> the</c><c> peek</c>
+[0:57] operations. For example, the peek
+[0:57] operations. For example, the peek operation.<c> You</c><c> are</c><c> just</c><c> accessing</c><c> the</c>
+[0:59] operation. You are just accessing the
+[0:59] operation. You are just accessing the top<c> element</c><c> but</c><c> not</c><c> removing</c><c> it.</c><c> Then,</c>
+[1:02] top element but not removing it. Then,
+[1:02] top element but not removing it. Then, you<c> have</c><c> the</c><c> pop</c><c> operation.</c><c> You</c><c> pop</c><c> out</c>
+[1:04] you have the pop operation. You pop out
+[1:04] you have the pop operation. You pop out the<c> element</c><c> from</c><c> the</c><c> stack</c><c> and</c><c> then</c><c> you</c>
+[1:06] the element from the stack and then you
+[1:06] the element from the stack and then you want<c> to</c><c> use</c><c> it</c><c> somehow.</c><c> Next,</c><c> you</c><c> have</c>
+[1:08] want to use it somehow. Next, you have
+[1:08] want to use it somehow. Next, you have the<c> push</c><c> operation.</c><c> As</c><c> soon</c><c> as</c><c> you</c><c> do</c><c> a</c>
+[1:11] the push operation. As soon as you do a
+[1:11] the push operation. As soon as you do a push,<c> this</c><c> element</c><c> will</c><c> go</c><c> on</c><c> the</c><c> top</c><c> of</c>
+[1:13] push, this element will go on the top of
+[1:13] push, this element will go on the top of the<c> stack.</c><c> And</c><c> after</c><c> that,</c><c> we</c><c> all</c><c> know</c>
+[1:16] the stack. And after that, we all know
+[1:16] the stack. And after that, we all know about<c> the</c><c> LIFO</c><c> principle</c><c> or</c><c> the</c>
+[1:18] about the LIFO principle or the
+[1:19] about the LIFO principle or the last-in-first-out.<c> The</c><c> last</c><c> element</c><c> that</c>
+[1:21] last-in-first-out. The last element that
+[1:21] last-in-first-out. The last element that gets<c> added</c><c> at</c><c> the</c><c> top</c><c> of</c><c> the</c><c> stack,</c><c> this</c>
+[1:24] gets added at the top of the stack, this
+[1:24] gets added at the top of the stack, this is<c> the</c><c> first</c><c> element</c><c> to</c><c> pop</c><c> out.</c><c> This</c><c> is</c>
+[1:27] is the first element to pop out. This is
+[1:27] is the first element to pop out. This is the<c> basic</c><c> ideology</c><c> how</c><c> a</c><c> stack</c><c> data</c>
+[1:29] the basic ideology how a stack data
+[1:29] the basic ideology how a stack data structure<c> looks</c><c> like.</c><c> Now,</c><c> more</c><c> than</c>
+[1:32] structure looks like. Now, more than
+[1:32] structure looks like. Now, more than just<c> real</c><c> life,</c><c> stacks</c><c> have</c><c> a</c><c> very</c><c> good</c>
+[1:34] just real life, stacks have a very good
+[1:34] just real life, stacks have a very good example<c> in</c><c> programming</c><c> as</c><c> well.</c><c> The</c><c> very</c>
+[1:37] example in programming as well. The very
+[1:37] example in programming as well. The very first<c> example</c><c> that</c><c> you</c><c> might</c><c> have</c><c> seen</c>
+[1:39] first example that you might have seen
+[1:39] first example that you might have seen with<c> stacks</c><c> is</c><c> valid</c><c> parentheses.</c><c> This</c>
+[1:42] with stacks is valid parentheses. This
+[1:42] with stacks is valid parentheses. This is<c> a</c><c> common</c><c> problem</c><c> where</c><c> you</c><c> are</c><c> given</c>
+[1:44] is a common problem where you are given
+[1:44] is a common problem where you are given a<c> mathematical</c><c> expression</c><c> and</c><c> you</c><c> have</c>
+[1:47] a mathematical expression and you have
+[1:47] a mathematical expression and you have to<c> identify</c><c> if</c><c> it</c><c> is</c><c> even</c><c> valid</c><c> or</c><c> not.</c>
+[1:50] to identify if it is even valid or not.
+[1:50] to identify if it is even valid or not. Think<c> about</c><c> it.</c><c> If</c><c> I</c><c> give</c><c> you</c><c> a</c><c> very</c>
+[1:52] Think about it. If I give you a very
+[1:52] Think about it. If I give you a very huge<c> mathematical</c><c> expression,</c><c> will</c><c> you</c>
+[1:55] huge mathematical expression, will you
+[1:55] huge mathematical expression, will you just<c> try</c><c> to</c><c> start</c><c> solving</c><c> it?</c><c> What</c><c> if</c>
+[1:57] just try to start solving it? What if
+[1:57] just try to start solving it? What if the<c> expression</c><c> is</c><c> not</c><c> even</c><c> valid?</c><c> You</c>
+[1:59] the expression is not even valid? You
+[1:59] the expression is not even valid? You want<c> that</c><c> your</c><c> process</c><c> is</c><c> very</c><c> fast.</c><c> You</c>
+[2:02] want that your process is very fast. You
+[2:02] want that your process is very fast. You want<c> your</c><c> program</c><c> to</c><c> be</c><c> efficient.</c><c> And</c>
+[2:04] want your program to be efficient. And
+[2:04] want your program to be efficient. And for<c> a</c><c> valid</c><c> expression,</c><c> the</c><c> number</c><c> of</c>
+[2:07] for a valid expression, the number of
+[2:07] for a valid expression, the number of opening<c> brackets</c><c> should</c><c> be</c><c> equal</c><c> to</c><c> the</c>
+[2:09] opening brackets should be equal to the
+[2:09] opening brackets should be equal to the number<c> of</c><c> closing</c><c> parentheses,</c><c> right?</c>
+[2:11] number of closing parentheses, right?
+[2:11] number of closing parentheses, right? And<c> they</c><c> should</c><c> follow</c><c> a</c><c> particular</c>
+[2:13] And they should follow a particular
+[2:13] And they should follow a particular order.
+[2:13] order.
+[2:13] order. You<c> cannot</c><c> have</c><c> a</c><c> closing</c><c> bracket</c><c> first</c>
+[2:15] You cannot have a closing bracket first
+[2:15] You cannot have a closing bracket first and<c> then</c><c> an</c><c> opening</c><c> bracket.</c><c> This</c><c> is</c>
+[2:17] and then an opening bracket. This is
+[2:17] and then an opening bracket. This is invalid.
+[2:18] invalid.
+[2:19] invalid. So,<c> in</c><c> this</c><c> particular</c><c> question,</c><c> you</c><c> are</c>
+[2:21] So, in this particular question, you are
+[2:21] So, in this particular question, you are given<c> a</c><c> set</c><c> of</c><c> parentheses</c><c> in</c><c> which</c><c> they</c>
+[2:23] given a set of parentheses in which they
+[2:24] given a set of parentheses in which they are<c> appearing,</c><c> and</c><c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c>
+[2:26] are appearing, and you have to tell me
+[2:26] are appearing, and you have to tell me if<c> this</c><c> is</c><c> valid</c><c> or</c><c> not.</c>
+[2:27] if this is valid or not.
+[2:27] if this is valid or not. So,<c> how</c><c> do</c><c> you</c><c> usually</c><c> go</c><c> about</c><c> solving</c>
+[2:29] So, how do you usually go about solving
+[2:29] So, how do you usually go about solving this<c> problem?</c><c> The</c><c> idea</c><c> over</c><c> here</c><c> is</c><c> that</c>
+[2:32] this problem? The idea over here is that
+[2:32] this problem? The idea over here is that you<c> take</c><c> up</c><c> a</c><c> stack</c><c> data</c><c> structure</c><c> and</c>
+[2:34] you take up a stack data structure and
+[2:34] you take up a stack data structure and as<c> soon</c><c> as</c><c> you</c><c> get</c><c> any</c><c> of</c><c> the</c><c> opening</c>
+[2:37] as soon as you get any of the opening
+[2:37] as soon as you get any of the opening parentheses,<c> you</c><c> will</c><c> add</c><c> it</c><c> to</c><c> your</c>
+[2:39] parentheses, you will add it to your
+[2:39] parentheses, you will add it to your stack.<c> So,</c><c> for</c><c> the</c><c> first</c><c> example,</c><c> I</c><c> add</c>
+[2:42] stack. So, for the first example, I add
+[2:42] stack. So, for the first example, I add a<c> opening</c><c> parenthesis</c><c> in</c><c> my</c><c> stack</c><c> over</c>
+[2:43] a opening parenthesis in my stack over
+[2:43] a opening parenthesis in my stack over here.
+[2:44] here.
+[2:44] here. Now,<c> move</c><c> ahead.</c><c> I</c><c> get</c><c> a</c><c> closing</c>
+[2:46] Now, move ahead. I get a closing
+[2:46] Now, move ahead. I get a closing parenthesis.<c> Look</c><c> for</c><c> the</c><c> top</c><c> element</c><c> of</c>
+[2:48] parenthesis. Look for the top element of
+[2:48] parenthesis. Look for the top element of your<c> stack.</c>
+[2:49] your stack.
+[2:49] your stack. If<c> they</c><c> are</c><c> matching</c><c> and</c><c> they</c><c> complement</c>
+[2:51] If they are matching and they complement
+[2:52] If they are matching and they complement each<c> other,</c>
+[2:52] each other,
+[2:52] each other, for<c> example,</c><c> this</c><c> is</c><c> the</c><c> opening</c>
+[2:54] for example, this is the opening
+[2:54] for example, this is the opening bracket,<c> this</c><c> is</c><c> the</c><c> closing</c><c> bracket.</c>
+[2:55] bracket, this is the closing bracket.
+[2:56] bracket, this is the closing bracket. Everything<c> is</c><c> good,</c><c> so</c><c> I</c><c> can</c><c> simply</c>
+[2:58] Everything is good, so I can simply
+[2:58] Everything is good, so I can simply remove<c> this</c><c> bracket</c><c> from</c><c> my</c><c> stack.</c><c> Next,</c>
+[3:01] remove this bracket from my stack. Next,
+[3:01] remove this bracket from my stack. Next, I<c> see</c><c> a</c><c> opening</c><c> curly</c><c> brace,</c><c> so</c><c> I</c><c> add</c>
+[3:03] I see a opening curly brace, so I add
+[3:03] I see a opening curly brace, so I add this<c> to</c><c> my</c><c> stack.</c>
+[3:05] this to my stack.
+[3:05] this to my stack. And<c> then,</c><c> going</c><c> forward,</c><c> I</c><c> have</c><c> a</c>
+[3:07] And then, going forward, I have a
+[3:07] And then, going forward, I have a closing<c> brace.</c>
+[3:08] closing brace.
+[3:08] closing brace. This<c> is</c><c> the</c><c> same</c><c> in</c><c> the</c><c> stack,</c><c> so</c><c> I</c><c> can</c>
+[3:10] This is the same in the stack, so I can
+[3:10] This is the same in the stack, so I can remove<c> it.</c>
+[3:11] remove it.
+[3:11] remove it. Next,<c> I</c><c> have</c><c> a</c><c> square</c><c> bracket.</c><c> And</c><c> then,</c>
+[3:13] Next, I have a square bracket. And then,
+[3:13] Next, I have a square bracket. And then, when<c> I</c><c> move</c><c> ahead,</c><c> I</c><c> have</c><c> a</c><c> closing</c>
+[3:15] when I move ahead, I have a closing
+[3:15] when I move ahead, I have a closing bracket.<c> I</c><c> match</c><c> it</c><c> and</c><c> okay.</c><c> I'm</c><c> able</c>
+[3:17] bracket. I match it and okay. I'm able
+[3:17] bracket. I match it and okay. I'm able to<c> remove</c><c> this</c><c> as</c><c> well.</c>
+[3:19] to remove this as well.
+[3:19] to remove this as well. I<c> have</c><c> iterated</c><c> my</c><c> all</c><c> the</c><c> parentheses</c>
+[3:21] I have iterated my all the parentheses
+[3:21] I have iterated my all the parentheses and<c> my</c><c> stack</c><c> is</c><c> also</c><c> empty,</c><c> so</c>
+[3:23] and my stack is also empty, so
+[3:23] and my stack is also empty, so everything<c> is</c><c> good.</c><c> This</c><c> is</c><c> a</c><c> very</c><c> basic</c>
+[3:25] everything is good. This is a very basic
+[3:25] everything is good. This is a very basic example.
+[3:26] example.
+[3:26] example. Let<c> us</c><c> look</c><c> at</c><c> one</c><c> complicated</c><c> example</c>
+[3:28] Let us look at one complicated example
+[3:28] Let us look at one complicated example and<c> see</c><c> what</c><c> is</c><c> happening.</c>
+[3:30] and see what is happening.
+[3:30] and see what is happening. You<c> just</c><c> have</c><c> to</c><c> follow</c><c> the</c><c> rules</c><c> that</c><c> I</c>
+[3:32] You just have to follow the rules that I
+[3:32] You just have to follow the rules that I just<c> told</c><c> you.</c>
+[3:33] just told you.
+[3:33] just told you. As<c> soon</c><c> as</c><c> you</c><c> see</c><c> a</c><c> opening</c>
+[3:34] As soon as you see a opening
+[3:34] As soon as you see a opening parenthesis,<c> just</c><c> add</c><c> it</c><c> to</c><c> your</c><c> stack.</c>
+[3:37] parenthesis, just add it to your stack.
+[3:37] parenthesis, just add it to your stack. Again,<c> you</c><c> have</c><c> a</c><c> opening</c><c> brace,</c><c> so</c><c> add</c>
+[3:38] Again, you have a opening brace, so add
+[3:38] Again, you have a opening brace, so add it<c> to</c><c> your</c><c> stack.</c><c> Next,</c><c> you</c><c> have</c><c> a</c>
+[3:41] it to your stack. Next, you have a
+[3:41] it to your stack. Next, you have a opening<c> parenthesis</c><c> again,</c><c> so</c><c> add</c><c> it</c><c> to</c>
+[3:43] opening parenthesis again, so add it to
+[3:43] opening parenthesis again, so add it to your<c> stack.</c>
+[3:44] your stack.
+[3:44] your stack. Now,<c> see,</c><c> you</c><c> are</c><c> getting</c><c> a</c><c> closing</c>
+[3:46] Now, see, you are getting a closing
+[3:46] Now, see, you are getting a closing bracket.<c> Match</c><c> it</c><c> to</c><c> the</c><c> top</c><c> element</c><c> of</c>
+[3:48] bracket. Match it to the top element of
+[3:48] bracket. Match it to the top element of your<c> stack.</c><c> They</c><c> are</c><c> complementary,</c>
+[3:50] your stack. They are complementary,
+[3:50] your stack. They are complementary, right?<c> This</c><c> is</c><c> closing</c><c> and</c><c> this</c><c> is</c>
+[3:51] right? This is closing and this is
+[3:51] right? This is closing and this is opening.<c> So,</c><c> what</c><c> you</c><c> will</c><c> do</c><c> is</c><c> you</c>
+[3:53] opening. So, what you will do is you
+[3:53] opening. So, what you will do is you will<c> just</c><c> remove</c><c> this</c><c> element.</c><c> Next,</c><c> you</c>
+[3:56] will just remove this element. Next, you
+[3:56] will just remove this element. Next, you have<c> a</c><c> opening</c><c> square</c><c> bracket.</c><c> So,</c><c> let</c>
+[3:57] have a opening square bracket. So, let
+[3:57] have a opening square bracket. So, let us<c> add</c><c> it</c><c> to</c><c> the</c><c> stack.</c><c> You</c><c> just</c><c> have</c><c> to</c>
+[3:59] us add it to the stack. You just have to
+[3:59] us add it to the stack. You just have to follow<c> simple</c><c> rules.</c><c> Then,</c><c> you</c><c> have</c><c> a</c>
+[4:01] follow simple rules. Then, you have a
+[4:01] follow simple rules. Then, you have a closing<c> bracket.</c><c> You</c><c> match</c><c> it.</c><c> It</c>
+[4:03] closing bracket. You match it. It
+[4:03] closing bracket. You match it. It matches.<c> So,</c><c> I</c><c> will</c><c> remove</c><c> this.</c>
+[4:05] matches. So, I will remove this.
+[4:05] matches. So, I will remove this. Next,<c> I</c><c> have</c><c> a</c><c> closing</c><c> curly</c><c> bracket.</c><c> It</c>
+[4:07] Next, I have a closing curly bracket. It
+[4:08] Next, I have a closing curly bracket. It matches.<c> So,</c><c> I'm</c><c> going</c><c> to</c><c> remove</c><c> this</c><c> as</c>
+[4:09] matches. So, I'm going to remove this as
+[4:09] matches. So, I'm going to remove this as well.<c> The</c><c> next</c><c> element</c><c> is</c><c> the</c><c> opening</c>
+[4:11] well. The next element is the opening
+[4:11] well. The next element is the opening curly<c> bracket.</c><c> I</c><c> add</c><c> it</c><c> again.</c><c> I</c><c> have</c><c> a</c>
+[4:14] curly bracket. I add it again. I have a
+[4:14] curly bracket. I add it again. I have a closing<c> bracket.</c><c> So,</c><c> this</c><c> gets</c><c> removed.</c>
+[4:16] closing bracket. So, this gets removed.
+[4:16] closing bracket. So, this gets removed. And<c> notice,</c><c> I</c><c> have</c><c> the</c><c> last</c><c> element</c><c> of</c><c> a</c>
+[4:17] And notice, I have the last element of a
+[4:17] And notice, I have the last element of a closing<c> bracket.</c><c> I</c><c> have</c><c> this</c><c> in</c><c> my</c><c> top</c>
+[4:19] closing bracket. I have this in my top
+[4:19] closing bracket. I have this in my top of<c> my</c><c> stack.</c><c> So,</c><c> I</c><c> will</c><c> remove</c><c> it</c><c> as</c>
+[4:21] of my stack. So, I will remove it as
+[4:21] of my stack. So, I will remove it as well.<c> So,</c><c> what</c><c> have</c><c> I</c><c> done?</c><c> I</c><c> have</c>
+[4:23] well. So, what have I done? I have
+[4:23] well. So, what have I done? I have traveled<c> my</c><c> entire</c><c> expression</c><c> and</c><c> my</c>
+[4:25] traveled my entire expression and my
+[4:25] traveled my entire expression and my stack<c> is</c><c> also</c><c> empty.</c><c> That</c><c> means</c><c> this</c>
+[4:27] stack is also empty. That means this
+[4:27] stack is also empty. That means this expression<c> was</c><c> valid.</c><c> Think</c><c> about</c><c> it.</c><c> If</c>
+[4:30] expression was valid. Think about it. If
+[4:30] expression was valid. Think about it. If there<c> had</c><c> been</c><c> any</c><c> other</c><c> bracket</c>
+[4:32] there had been any other bracket
+[4:32] there had been any other bracket somewhere<c> in</c><c> middle.</c><c> If</c><c> I</c><c> had</c><c> a</c><c> opening</c>
+[4:34] somewhere in middle. If I had a opening
+[4:34] somewhere in middle. If I had a opening bracket<c> over</c><c> here,</c><c> then</c><c> what</c><c> would</c>
+[4:36] bracket over here, then what would
+[4:36] bracket over here, then what would happen?<c> I</c><c> would</c><c> still</c><c> have</c><c> one</c><c> opening</c>
+[4:39] happen? I would still have one opening
+[4:39] happen? I would still have one opening bracket<c> dangling</c><c> in</c><c> my</c><c> stack</c><c> over</c><c> here.</c>
+[4:41] bracket dangling in my stack over here.
+[4:41] bracket dangling in my stack over here. That<c> means</c><c> my</c><c> expression</c><c> is</c><c> invalid.</c>
+[4:44] That means my expression is invalid.
+[4:44] That means my expression is invalid. So,<c> just</c><c> by</c><c> these</c><c> simple</c><c> checks,</c><c> a</c><c> stack</c>
+[4:46] So, just by these simple checks, a stack
+[4:47] So, just by these simple checks, a stack is<c> helping</c><c> you</c><c> to</c><c> identify</c><c> if</c><c> your</c>
+[4:49] is helping you to identify if your
+[4:49] is helping you to identify if your expression<c> is</c><c> valid</c><c> or</c><c> not.</c><c> And</c><c> this</c><c> is</c>
+[4:52] expression is valid or not. And this is
+[4:52] expression is valid or not. And this is one<c> of</c><c> the</c><c> most</c><c> basic</c><c> use</c><c> cases</c><c> that</c><c> you</c>
+[4:54] one of the most basic use cases that you
+[4:54] one of the most basic use cases that you would<c> have</c><c> seen</c><c> with</c><c> the</c><c> stack</c><c> data</c>
+[4:55] would have seen with the stack data
+[4:55] would have seen with the stack data structure.<c> But</c><c> definitely,</c><c> as</c><c> you</c><c> solve</c>
+[4:58] structure. But definitely, as you solve
+[4:58] structure. But definitely, as you solve more<c> and</c><c> more</c><c> problems,</c><c> you</c><c> will</c><c> see</c>
+[4:59] more and more problems, you will see
+[4:59] more and more problems, you will see more<c> applications</c><c> of</c><c> the</c><c> stack.</c><c> For</c>
+[5:01] more applications of the stack. For
+[5:01] more applications of the stack. For example,<c> the</c><c> problem</c><c> min</c><c> stack.</c>
+[5:04] example, the problem min stack.
+[5:04] example, the problem min stack. What<c> is</c><c> special</c><c> about</c><c> a</c><c> min</c><c> stack?</c><c> It</c>
+[5:06] What is special about a min stack? It
+[5:06] What is special about a min stack? It will<c> have</c><c> all</c><c> of</c><c> the</c><c> same</c><c> operations</c><c> as</c>
+[5:08] will have all of the same operations as
+[5:08] will have all of the same operations as a<c> stack</c><c> data</c><c> structure.</c><c> You</c><c> will</c><c> just</c>
+[5:10] a stack data structure. You will just
+[5:10] a stack data structure. You will just have<c> one</c><c> additional</c><c> operation</c><c> that</c><c> you</c>
+[5:12] have one additional operation that you
+[5:12] have one additional operation that you have<c> to</c><c> implement,</c><c> get</c><c> minimum.</c><c> The</c><c> idea</c>
+[5:14] have to implement, get minimum. The idea
+[5:14] have to implement, get minimum. The idea over<c> here</c><c> is</c><c> that</c><c> as</c><c> soon</c><c> as</c><c> you</c><c> call</c>
+[5:16] over here is that as soon as you call
+[5:16] over here is that as soon as you call get<c> minimum,</c><c> it</c><c> should</c><c> return</c><c> me</c><c> the</c>
+[5:19] get minimum, it should return me the
+[5:19] get minimum, it should return me the minimum<c> element</c><c> that</c><c> I</c><c> have</c><c> encountered</c>
+[5:21] minimum element that I have encountered
+[5:21] minimum element that I have encountered up<c> till</c><c> now.</c>
+[5:22] up till now.
+[5:22] up till now. So,<c> how</c><c> can</c><c> you</c><c> make</c><c> this</c><c> happen?</c><c> If</c><c> you</c>
+[5:25] So, how can you make this happen? If you
+[5:25] So, how can you make this happen? If you have<c> a</c><c> normal</c><c> stack,</c><c> and</c><c> this</c><c> is</c><c> the</c>
+[5:28] have a normal stack, and this is the
+[5:28] have a normal stack, and this is the input<c> sequence</c><c> that</c><c> you're</c><c> getting.</c>
+[5:30] input sequence that you're getting.
+[5:30] input sequence that you're getting. What<c> will</c><c> happen?</c><c> All</c><c> the</c><c> numbers</c><c> will</c>
+[5:31] What will happen? All the numbers will
+[5:31] What will happen? All the numbers will start<c> coming</c><c> in.</c><c> 1</c><c> 5</c><c> -3</c><c> and</c><c> then</c><c> a</c><c> 8.</c>
+[5:35] start coming in. 1 5 -3 and then a 8.
+[5:35] start coming in. 1 5 -3 and then a 8. If<c> someone</c><c> asks</c><c> you,</c><c> okay,</c><c> what</c><c> is</c><c> the</c>
+[5:37] If someone asks you, okay, what is the
+[5:37] If someone asks you, okay, what is the minimum<c> element?</c><c> Then,</c><c> you</c><c> cannot</c><c> just</c>
+[5:40] minimum element? Then, you cannot just
+[5:40] minimum element? Then, you cannot just iterate<c> over</c><c> a</c><c> stack.</c><c> You</c><c> will</c><c> have</c><c> to</c>
+[5:42] iterate over a stack. You will have to
+[5:42] iterate over a stack. You will have to pop<c> all</c><c> the</c><c> elements,</c><c> find</c><c> the</c><c> minimum,</c>
+[5:44] pop all the elements, find the minimum,
+[5:44] pop all the elements, find the minimum, return<c> them,</c><c> and</c><c> then</c><c> pop</c><c> them</c><c> back</c>
+[5:46] return them, and then pop them back
+[5:46] return them, and then pop them back again.
+[5:47] again.
+[5:47] again. This<c> means</c><c> you</c><c> are</c><c> having</c><c> so</c><c> many</c>
+[5:49] This means you are having so many
+[5:49] This means you are having so many useless<c> operations.</c>
+[5:50] useless operations.
+[5:50] useless operations. How<c> can</c><c> you</c><c> optimize</c><c> it?</c><c> The</c><c> idea</c><c> over</c>
+[5:52] How can you optimize it? The idea over
+[5:52] How can you optimize it? The idea over here<c> is</c><c> that</c><c> you</c><c> take</c><c> the</c><c> help</c><c> of</c><c> one</c>
+[5:55] here is that you take the help of one
+[5:55] here is that you take the help of one more<c> auxiliary</c><c> stack.</c><c> And</c><c> this</c><c> stack</c>
+[5:58] more auxiliary stack. And this stack
+[5:58] more auxiliary stack. And this stack will<c> keep</c><c> a</c><c> track</c><c> of</c><c> every</c><c> minimum</c>
+[6:00] will keep a track of every minimum
+[6:00] will keep a track of every minimum number<c> that</c><c> I</c><c> have</c><c> found</c><c> up</c><c> till</c><c> now.</c>
+[6:03] number that I have found up till now.
+[6:03] number that I have found up till now. So,<c> let</c><c> us</c><c> try</c><c> to</c><c> go</c><c> over</c><c> this</c><c> again.</c>
+[6:05] So, let us try to go over this again.
+[6:05] So, let us try to go over this again. I<c> get</c><c> the</c><c> first</c><c> number</c><c> and</c><c> this</c><c> is</c><c> one.</c>
+[6:08] I get the first number and this is one.
+[6:08] I get the first number and this is one. For<c> now,</c><c> this</c><c> is</c><c> the</c><c> minimum</c><c> number,</c><c> so</c>
+[6:10] For now, this is the minimum number, so
+[6:10] For now, this is the minimum number, so I<c> will</c><c> add</c><c> it</c><c> to</c><c> my</c><c> min</c><c> stack.</c><c> Next,</c><c> I</c>
+[6:12] I will add it to my min stack. Next, I
+[6:12] I will add it to my min stack. Next, I have<c> the</c><c> number</c><c> five.</c><c> Add</c><c> it</c><c> to</c><c> your</c>
+[6:14] have the number five. Add it to your
+[6:14] have the number five. Add it to your regular<c> stack.</c><c> That</c><c> is</c><c> fine.</c>
+[6:16] regular stack. That is fine.
+[6:16] regular stack. That is fine. But,<c> check</c><c> the</c><c> top</c><c> of</c><c> your</c><c> minimum</c>
+[6:18] But, check the top of your minimum
+[6:18] But, check the top of your minimum stack.<c> Five</c><c> is</c><c> greater</c><c> than</c><c> one,</c><c> right?</c>
+[6:21] stack. Five is greater than one, right?
+[6:21] stack. Five is greater than one, right? That<c> means</c><c> my</c><c> minimum</c><c> element</c><c> will</c><c> still</c>
+[6:23] That means my minimum element will still
+[6:23] That means my minimum element will still be<c> one</c><c> out</c><c> of</c><c> these.</c><c> So,</c><c> I</c><c> do</c><c> not</c><c> want</c>
+[6:26] be one out of these. So, I do not want
+[6:26] be one out of these. So, I do not want to<c> update</c><c> it.</c><c> I</c><c> will</c><c> let</c><c> five</c><c> live</c><c> only</c>
+[6:28] to update it. I will let five live only
+[6:28] to update it. I will let five live only here.
+[6:29] here.
+[6:29] here. The<c> next</c><c> element</c><c> is</c><c> minus</c><c> three.</c><c> Add</c><c> it</c>
+[6:31] The next element is minus three. Add it
+[6:31] The next element is minus three. Add it over<c> here.</c>
+[6:32] over here.
+[6:32] over here. And<c> then,</c><c> should</c><c> you</c><c> add</c><c> minus</c><c> three</c>
+[6:34] And then, should you add minus three
+[6:34] And then, should you add minus three over<c> here?</c><c> Yes,</c><c> because</c><c> minus</c><c> three</c><c> is</c>
+[6:36] over here? Yes, because minus three is
+[6:36] over here? Yes, because minus three is even<c> less</c><c> than</c><c> one.</c><c> That</c><c> means</c><c> up</c><c> till</c>
+[6:39] even less than one. That means up till
+[6:39] even less than one. That means up till this<c> limit,</c><c> I</c><c> have</c><c> a</c><c> new</c><c> minimum.</c>
+[6:41] this limit, I have a new minimum.
+[6:41] this limit, I have a new minimum. So,<c> I</c><c> add</c><c> minus</c><c> three</c><c> here.</c>
+[6:43] So, I add minus three here.
+[6:43] So, I add minus three here. Then,<c> next</c><c> element</c><c> is</c><c> eight.</c><c> So,</c><c> you</c>
+[6:45] Then, next element is eight. So, you
+[6:45] Then, next element is eight. So, you just<c> add</c><c> it</c><c> over</c><c> here.</c>
+[6:47] just add it over here.
+[6:47] just add it over here. Next<c> element</c><c> is</c><c> minus</c><c> one,</c><c> but</c><c> I</c><c> still</c>
+[6:49] Next element is minus one, but I still
+[6:50] Next element is minus one, but I still have<c> a</c><c> minus</c><c> three</c><c> which</c><c> is</c><c> even</c><c> lower.</c>
+[6:52] have a minus three which is even lower.
+[6:52] have a minus three which is even lower. So,<c> don't</c><c> add</c><c> it.</c>
+[6:53] So, don't add it.
+[6:53] So, don't add it. Up<c> till</c><c> now,</c><c> everything</c><c> is</c><c> good.</c><c> As</c><c> soon</c>
+[6:56] Up till now, everything is good. As soon
+[6:56] Up till now, everything is good. As soon as<c> someone</c><c> says,</c><c> "Okay,</c><c> get</c><c> me</c><c> the</c>
+[6:57] as someone says, "Okay, get me the
+[6:57] as someone says, "Okay, get me the minimum."<c> Instead</c><c> of</c><c> looking</c><c> in</c><c> this</c>
+[6:59] minimum." Instead of looking in this
+[6:59] minimum." Instead of looking in this stack,<c> look</c><c> in</c><c> your</c><c> min</c><c> stack.</c><c> And</c><c> you</c>
+[7:02] stack, look in your min stack. And you
+[7:02] stack, look in your min stack. And you can<c> tell</c><c> them,</c><c> "Okay,</c>
+[7:04] can tell them, "Okay,
+[7:04] can tell them, "Okay, minus<c> three</c><c> is</c><c> the</c><c> smallest</c><c> number</c><c> up</c>
+[7:05] minus three is the smallest number up
+[7:06] minus three is the smallest number up till<c> now."</c>
+[7:06] till now."
+[7:06] till now." And<c> that</c><c> is</c><c> how</c><c> you</c><c> can</c><c> make</c><c> use</c><c> of</c><c> a</c>
+[7:08] And that is how you can make use of a
+[7:08] And that is how you can make use of a helper<c> stack.</c>
+[7:10] helper stack.
+[7:10] helper stack. For<c> example,</c><c> what</c><c> happens</c><c> if</c><c> I</c><c> try</c><c> to</c>
+[7:12] For example, what happens if I try to
+[7:12] For example, what happens if I try to pop<c> from</c><c> my</c><c> stack</c><c> now?</c>
+[7:14] pop from my stack now?
+[7:14] pop from my stack now? Let<c> us</c><c> say</c><c> I</c><c> do</c><c> a</c><c> pop</c><c> operation,</c><c> so</c>
+[7:16] Let us say I do a pop operation, so
+[7:16] Let us say I do a pop operation, so minus<c> one</c><c> gets</c><c> out.</c><c> But,</c><c> at</c><c> the</c><c> same</c>
+[7:18] minus one gets out. But, at the same
+[7:18] minus one gets out. But, at the same time,<c> you</c><c> will</c><c> check</c><c> your</c><c> minimum</c><c> stack</c>
+[7:19] time, you will check your minimum stack
+[7:19] time, you will check your minimum stack also.<c> Are</c><c> you</c><c> popping</c><c> the</c><c> same</c><c> number?</c>
+[7:21] also. Are you popping the same number?
+[7:21] also. Are you popping the same number? No.<c> So,</c><c> leave</c><c> the</c><c> minimum</c><c> stack</c><c> as</c><c> is.</c>
+[7:24] No. So, leave the minimum stack as is.
+[7:24] No. So, leave the minimum stack as is. You<c> pop</c><c> out</c><c> the</c><c> next</c><c> number</c><c> and</c><c> that</c><c> is</c>
+[7:26] You pop out the next number and that is
+[7:26] You pop out the next number and that is eight.<c> You</c><c> don't</c><c> have</c><c> eight</c><c> in</c><c> your</c><c> min</c>
+[7:28] eight. You don't have eight in your min
+[7:28] eight. You don't have eight in your min stack,<c> so</c><c> let</c><c> it</c><c> be.</c><c> The</c><c> next</c><c> number</c><c> you</c>
+[7:30] stack, so let it be. The next number you
+[7:30] stack, so let it be. The next number you pop<c> is</c><c> minus</c><c> three.</c><c> So,</c><c> you</c><c> remove</c><c> this.</c>
+[7:33] pop is minus three. So, you remove this.
+[7:33] pop is minus three. So, you remove this. But,<c> in</c><c> your</c><c> min</c><c> stack,</c><c> you</c><c> have</c><c> minus</c>
+[7:35] But, in your min stack, you have minus
+[7:35] But, in your min stack, you have minus three<c> here</c><c> as</c><c> well.</c>
+[7:36] three here as well.
+[7:36] three here as well. So,<c> you</c><c> will</c><c> need</c><c> to</c><c> remove</c><c> minus</c><c> three</c>
+[7:38] So, you will need to remove minus three
+[7:38] So, you will need to remove minus three also.
+[7:39] also.
+[7:39] also. That<c> is</c><c> how</c><c> this</c><c> stack</c><c> and</c><c> this</c><c> stack</c>
+[7:42] That is how this stack and this stack
+[7:42] That is how this stack and this stack will<c> maintain</c><c> kind</c><c> of</c><c> the</c><c> same</c><c> state.</c>
+[7:44] will maintain kind of the same state.
+[7:44] will maintain kind of the same state. If<c> someone</c><c> asks</c><c> you,</c><c> "Give</c><c> me</c><c> the</c>
+[7:46] If someone asks you, "Give me the
+[7:46] If someone asks you, "Give me the minimum."<c> You</c><c> will</c><c> not</c><c> return</c><c> -3.</c><c> You</c>
+[7:48] minimum." You will not return -3. You
+[7:48] minimum." You will not return -3. You will<c> return</c><c> 1</c><c> because</c><c> out</c><c> of</c><c> the</c>
+[7:50] will return 1 because out of the
+[7:50] will return 1 because out of the remaining<c> elements</c><c> of</c><c> the</c><c> stack,</c><c> you</c>
+[7:52] remaining elements of the stack, you
+[7:52] remaining elements of the stack, you have<c> to</c><c> tell</c><c> me</c><c> the</c><c> minimum.</c>
+[7:53] have to tell me the minimum.
+[7:54] have to tell me the minimum. That<c> is</c><c> why</c><c> you</c><c> will</c><c> look</c><c> at</c><c> both</c><c> of</c>
+[7:55] That is why you will look at both of
+[7:55] That is why you will look at both of these<c> stacks</c><c> simultaneously</c><c> and</c><c> then</c>
+[7:57] these stacks simultaneously and then
+[7:57] these stacks simultaneously and then perform<c> your</c><c> operations.</c>
+[7:59] perform your operations.
+[7:59] perform your operations. If<c> you</c><c> have</c><c> more</c><c> elements</c><c> coming</c><c> in,</c>
+[8:00] If you have more elements coming in,
+[8:00] If you have more elements coming in, let's<c> say</c><c> 10</c><c> comes</c><c> in,</c><c> you</c><c> add</c><c> a</c><c> 10</c><c> over</c>
+[8:02] let's say 10 comes in, you add a 10 over
+[8:02] let's say 10 comes in, you add a 10 over here.
+[8:03] here.
+[8:03] here. Then<c> you</c><c> have</c><c> -99</c><c> coming,</c><c> add</c><c> a</c><c> -99</c>
+[8:06] Then you have -99 coming, add a -99
+[8:06] Then you have -99 coming, add a -99 here,<c> and</c><c> then</c><c> you're</c><c> going</c><c> to</c><c> update</c>
+[8:07] here, and then you're going to update
+[8:07] here, and then you're going to update your<c> min</c><c> stack</c><c> as</c><c> well.</c>
+[8:09] your min stack as well.
+[8:09] your min stack as well. That<c> is</c><c> how</c><c> you</c><c> keep</c><c> on</c><c> doing</c><c> it</c><c> and</c><c> you</c>
+[8:12] That is how you keep on doing it and you
+[8:12] That is how you keep on doing it and you can<c> return</c><c> the</c><c> minimum</c><c> element</c><c> in</c><c> just</c>
+[8:14] can return the minimum element in just
+[8:14] can return the minimum element in just order<c> of</c><c> one</c><c> time.</c>
+[8:16] order of one time.
+[8:16] order of one time. I<c> know</c><c> it</c><c> will</c><c> take</c><c> up</c><c> an</c><c> extra</c><c> space</c><c> of</c>
+[8:18] I know it will take up an extra space of
+[8:18] I know it will take up an extra space of order<c> of</c><c> n,</c><c> but</c><c> that</c><c> is</c><c> fine.</c><c> We</c><c> are</c>
+[8:21] order of n, but that is fine. We are
+[8:21] order of n, but that is fine. We are compromising<c> on</c><c> the</c><c> space</c><c> for</c><c> a</c><c> better</c>
+[8:23] compromising on the space for a better
+[8:23] compromising on the space for a better time<c> complexity.</c>
+[8:25] time complexity.
+[8:25] time complexity. So,<c> what</c><c> did</c><c> we</c><c> do</c><c> here?</c><c> We</c><c> took</c><c> a</c>
+[8:27] So, what did we do here? We took a
+[8:27] So, what did we do here? We took a helper<c> stack</c><c> and</c><c> that</c><c> helped</c><c> us</c><c> to</c>
+[8:29] helper stack and that helped us to
+[8:29] helper stack and that helped us to achieve<c> our</c><c> goal.</c>
+[8:30] achieve our goal.
+[8:30] achieve our goal. When<c> you</c><c> think</c><c> about</c><c> stacks,</c><c> one</c><c> other</c>
+[8:32] When you think about stacks, one other
+[8:32] When you think about stacks, one other data<c> structure</c><c> immediately</c><c> comes</c><c> to</c><c> your</c>
+[8:34] data structure immediately comes to your
+[8:34] data structure immediately comes to your mind<c> and</c><c> that</c><c> is</c><c> queue.</c>
+[8:36] mind and that is queue.
+[8:36] mind and that is queue. A<c> queue</c><c> follows</c><c> a</c><c> first</c><c> in</c><c> first</c><c> out</c>
+[8:38] A queue follows a first in first out
+[8:38] A queue follows a first in first out policy.<c> So,</c><c> you</c><c> might</c><c> have</c><c> seen</c><c> a</c>
+[8:40] policy. So, you might have seen a
+[8:40] policy. So, you might have seen a problem<c> like</c><c> this.</c><c> You</c><c> have</c><c> to</c><c> implement</c>
+[8:42] problem like this. You have to implement
+[8:42] problem like this. You have to implement a<c> queue,</c><c> but</c><c> you</c><c> have</c><c> to</c><c> use</c><c> stacks.</c>
+[8:45] a queue, but you have to use stacks.
+[8:45] a queue, but you have to use stacks. Naturally,<c> you</c><c> cannot</c><c> make</c><c> that</c><c> happen</c>
+[8:47] Naturally, you cannot make that happen
+[8:47] Naturally, you cannot make that happen just<c> by</c><c> using</c><c> a</c><c> single</c><c> stack.</c>
+[8:49] just by using a single stack.
+[8:49] just by using a single stack. So,<c> let</c><c> us</c><c> assume</c><c> I</c><c> am</c><c> taking</c><c> one</c><c> more</c>
+[8:52] So, let us assume I am taking one more
+[8:52] So, let us assume I am taking one more helper<c> stack.</c>
+[8:53] helper stack.
+[8:53] helper stack. And<c> I</c><c> have</c><c> to</c><c> somehow</c><c> perform</c><c> these</c>
+[8:56] And I have to somehow perform these
+[8:56] And I have to somehow perform these operations:<c> enqueue,</c><c> dequeue,</c><c> and</c><c> peek.</c>
+[8:59] operations: enqueue, dequeue, and peek.
+[8:59] operations: enqueue, dequeue, and peek. Peek<c> simply</c><c> means</c><c> looking</c><c> at</c><c> the</c><c> top</c>
+[9:00] Peek simply means looking at the top
+[9:00] Peek simply means looking at the top element.
+[9:01] element.
+[9:01] element. So,<c> now</c><c> let</c><c> us</c><c> say</c><c> I</c><c> am</c><c> adding</c><c> some</c>
+[9:03] So, now let us say I am adding some
+[9:03] So, now let us say I am adding some elements<c> in</c><c> my</c><c> queue.</c>
+[9:05] elements in my queue.
+[9:05] elements in my queue. Let<c> us</c><c> say</c><c> I</c><c> add</c><c> the</c><c> elements</c><c> 5</c><c> then</c><c> 8</c>
+[9:09] Let us say I add the elements 5 then 8
+[9:09] Let us say I add the elements 5 then 8 and<c> then</c><c> a</c><c> 16.</c>
+[9:10] and then a 16.
+[9:10] and then a 16. What<c> will</c><c> happen</c><c> in</c><c> a</c><c> queue?</c>
+[9:12] What will happen in a queue?
+[9:12] What will happen in a queue? In<c> a</c><c> queue,</c><c> 5</c><c> will</c><c> be</c><c> the</c><c> first</c><c> element</c>
+[9:14] In a queue, 5 will be the first element
+[9:14] In a queue, 5 will be the first element to<c> pop</c><c> out.</c>
+[9:15] to pop out.
+[9:15] to pop out. But<c> in</c><c> your</c><c> stack,</c><c> what</c><c> will</c><c> happen?</c><c> You</c>
+[9:17] But in your stack, what will happen? You
+[9:17] But in your stack, what will happen? You have<c> 5</c><c> and</c><c> then</c><c> a</c><c> 8</c><c> and</c><c> then</c><c> a</c><c> 16.</c>
+[9:20] have 5 and then a 8 and then a 16.
+[9:20] have 5 and then a 8 and then a 16. If<c> you</c><c> try</c><c> to</c><c> pop,</c><c> 16</c><c> will</c><c> get</c><c> out.</c><c> So,</c>
+[9:23] If you try to pop, 16 will get out. So,
+[9:23] If you try to pop, 16 will get out. So, these<c> are</c><c> not</c><c> the</c><c> same.</c>
+[9:24] these are not the same.
+[9:24] these are not the same. This<c> is</c><c> where</c><c> your</c><c> helper</c><c> stack</c><c> comes</c><c> in</c>
+[9:26] This is where your helper stack comes in
+[9:26] This is where your helper stack comes in handy.<c> When</c><c> you</c><c> are</c><c> enqueuing</c><c> elements,</c>
+[9:29] handy. When you are enqueuing elements,
+[9:29] handy. When you are enqueuing elements, just<c> keep</c><c> them</c><c> adding</c><c> to</c><c> your</c><c> primary</c>
+[9:31] just keep them adding to your primary
+[9:31] just keep them adding to your primary stack.<c> Don't</c><c> do</c><c> anything.</c>
+[9:33] stack. Don't do anything.
+[9:33] stack. Don't do anything. Now,<c> when</c><c> you</c><c> have</c><c> to</c><c> look</c><c> at</c><c> the</c>
+[9:35] Now, when you have to look at the
+[9:35] Now, when you have to look at the dequeue<c> operation,</c><c> this</c><c> is</c><c> what</c><c> you</c><c> need</c>
+[9:37] dequeue operation, this is what you need
+[9:37] dequeue operation, this is what you need to<c> do.</c><c> Just</c><c> follow</c><c> the</c><c> rules.</c>
+[9:39] to do. Just follow the rules.
+[9:40] to do. Just follow the rules. For<c> the</c><c> DQ</c><c> operation</c><c> in</c><c> a</c><c> queue,</c><c> five</c>
+[9:42] For the DQ operation in a queue, five
+[9:42] For the DQ operation in a queue, five will<c> get</c><c> out,</c><c> right?</c>
+[9:43] will get out, right?
+[9:43] will get out, right? Over<c> here,</c><c> I</c><c> have</c><c> five</c><c> at</c><c> the</c><c> very</c><c> last.</c>
+[9:46] Over here, I have five at the very last.
+[9:46] Over here, I have five at the very last. As<c> soon</c><c> as</c><c> you</c><c> get</c><c> a</c><c> DQ,</c>
+[9:48] As soon as you get a DQ,
+[9:48] As soon as you get a DQ, take<c> up</c><c> all</c><c> of</c><c> these</c><c> elements</c><c> and</c><c> put</c>
+[9:50] take up all of these elements and put
+[9:50] take up all of these elements and put them<c> in</c><c> your</c><c> helper</c><c> stack.</c>
+[9:52] them in your helper stack.
+[9:52] them in your helper stack. So,<c> what</c><c> will</c><c> happen?</c><c> 16</c><c> will</c><c> get</c><c> here,</c>
+[9:55] So, what will happen? 16 will get here,
+[9:55] So, what will happen? 16 will get here, eight<c> will</c><c> get</c><c> here,</c><c> and</c><c> then</c><c> five</c><c> will</c>
+[9:57] eight will get here, and then five will
+[9:57] eight will get here, and then five will get<c> here.</c>
+[9:58] get here.
+[9:58] get here. Now,<c> what</c><c> do</c><c> you</c><c> do?</c><c> As</c><c> soon</c><c> as</c><c> someone</c>
+[10:00] Now, what do you do? As soon as someone
+[10:00] Now, what do you do? As soon as someone says<c> you,</c><c> "Okay,</c><c> DQ."</c>
+[10:03] says you, "Okay, DQ."
+[10:03] says you, "Okay, DQ." You<c> need</c><c> to</c><c> return</c><c> me</c><c> an</c><c> element</c><c> from</c>
+[10:05] You need to return me an element from
+[10:05] You need to return me an element from this<c> particular</c><c> stack.</c><c> So,</c><c> five</c><c> will</c><c> get</c>
+[10:08] this particular stack. So, five will get
+[10:08] this particular stack. So, five will get returned.
+[10:09] returned.
+[10:09] returned. What<c> did</c><c> we</c><c> do?</c><c> We</c><c> were</c><c> able</c><c> to</c><c> simulate</c>
+[10:11] What did we do? We were able to simulate
+[10:11] What did we do? We were able to simulate a<c> queue</c><c> using</c><c> just</c><c> stacks.</c><c> Now,</c><c> let</c><c> us</c>
+[10:14] a queue using just stacks. Now, let us
+[10:14] a queue using just stacks. Now, let us say<c> more</c><c> elements</c><c> come</c><c> in.</c><c> Let</c><c> us</c><c> say</c><c> 23</c>
+[10:16] say more elements come in. Let us say 23
+[10:16] say more elements come in. Let us say 23 came<c> in,</c><c> and</c><c> then</c><c> 42</c><c> came</c><c> in.</c>
+[10:18] came in, and then 42 came in.
+[10:18] came in, and then 42 came in. Remember<c> what</c><c> I</c><c> told</c><c> you.</c><c> Whenever</c><c> you</c>
+[10:20] Remember what I told you. Whenever you
+[10:20] Remember what I told you. Whenever you are<c> having</c><c> NQ</c><c> operations,</c><c> just</c><c> add</c><c> these</c>
+[10:23] are having NQ operations, just add these
+[10:23] are having NQ operations, just add these elements<c> to</c><c> your</c><c> normal</c><c> stack.</c>
+[10:25] elements to your normal stack.
+[10:25] elements to your normal stack. Now,<c> let</c><c> us</c><c> say</c><c> someone</c><c> calls</c><c> DQ.</c>
+[10:28] Now, let us say someone calls DQ.
+[10:28] Now, let us say someone calls DQ. You<c> will</c><c> return</c><c> a</c><c> eight</c><c> over</c><c> here,</c>
+[10:29] You will return a eight over here,
+[10:29] You will return a eight over here, right?
+[10:30] right?
+[10:30] right? But,<c> what</c><c> do</c><c> you</c><c> do</c><c> this</c><c> time?</c>
+[10:32] But, what do you do this time?
+[10:32] But, what do you do this time? This<c> time,</c><c> this</c><c> helper</c><c> stack</c><c> is</c><c> not</c>
+[10:33] This time, this helper stack is not
+[10:34] This time, this helper stack is not empty.
+[10:34] empty.
+[10:35] empty. So,<c> you</c><c> do</c><c> not</c><c> want</c><c> to</c><c> transfer</c><c> all</c><c> of</c>
+[10:37] So, you do not want to transfer all of
+[10:37] So, you do not want to transfer all of the<c> elements</c><c> until</c><c> your</c><c> stack</c><c> is</c><c> empty.</c>
+[10:39] the elements until your stack is empty.
+[10:40] the elements until your stack is empty. If<c> someone</c><c> says</c><c> DQ,</c><c> look</c><c> in</c><c> your</c><c> helper</c>
+[10:42] If someone says DQ, look in your helper
+[10:42] If someone says DQ, look in your helper stack.<c> If</c><c> there</c><c> are</c><c> elements,</c><c> return</c>
+[10:44] stack. If there are elements, return
+[10:44] stack. If there are elements, return this.<c> So,</c><c> what</c><c> will</c><c> happen?</c><c> Eight</c><c> gets</c>
+[10:46] this. So, what will happen? Eight gets
+[10:47] this. So, what will happen? Eight gets out<c> of</c><c> your</c><c> queue,</c><c> and</c><c> eight</c><c> gets</c><c> out</c><c> of</c>
+[10:49] out of your queue, and eight gets out of
+[10:49] out of your queue, and eight gets out of this<c> particular</c><c> stack</c><c> as</c><c> well.</c>
+[10:51] this particular stack as well.
+[10:51] this particular stack as well. We<c> are</c><c> having</c><c> a</c><c> one-to-one</c><c> operation,</c>
+[10:53] We are having a one-to-one operation,
+[10:53] We are having a one-to-one operation, correct?<c> If</c><c> someone</c><c> says</c><c> DQ</c><c> again,</c>
+[10:56] correct? If someone says DQ again,
+[10:56] correct? If someone says DQ again, 16<c> will</c><c> get</c><c> out</c><c> of</c><c> the</c><c> queue,</c><c> and</c><c> 16</c>
+[10:58] 16 will get out of the queue, and 16
+[10:58] 16 will get out of the queue, and 16 will<c> get</c><c> out</c><c> of</c><c> here.</c>
+[11:00] will get out of here.
+[11:00] will get out of here. So,<c> we</c><c> are</c><c> having</c><c> a</c><c> feature</c><c> parity.</c>
+[11:02] So, we are having a feature parity.
+[11:02] So, we are having a feature parity. Now,<c> if</c><c> someone</c><c> calls</c><c> a</c><c> DQ,</c><c> this</c><c> time</c><c> 23</c>
+[11:05] Now, if someone calls a DQ, this time 23
+[11:05] Now, if someone calls a DQ, this time 23 will<c> get</c><c> out,</c><c> but</c><c> your</c><c> other</c><c> stack</c><c> is</c>
+[11:08] will get out, but your other stack is
+[11:08] will get out, but your other stack is now<c> empty.</c><c> So,</c><c> first</c><c> of</c><c> all,</c><c> you</c><c> will</c>
+[11:10] now empty. So, first of all, you will
+[11:10] now empty. So, first of all, you will need<c> to</c><c> pop</c><c> all</c><c> of</c><c> your</c><c> elements</c><c> from</c>
+[11:12] need to pop all of your elements from
+[11:12] need to pop all of your elements from the<c> current</c><c> stack</c><c> to</c><c> the</c><c> helper</c><c> stack,</c>
+[11:14] the current stack to the helper stack,
+[11:14] the current stack to the helper stack, and<c> then</c><c> you</c><c> pop</c><c> out</c><c> an</c><c> element,</c><c> and</c>
+[11:16] and then you pop out an element, and
+[11:16] and then you pop out an element, and then<c> 23</c><c> will</c><c> get</c><c> out,</c><c> and</c><c> you</c><c> will</c><c> have</c>
+[11:18] then 23 will get out, and you will have
+[11:18] then 23 will get out, and you will have maintained<c> the</c><c> same</c><c> kind</c><c> of</c><c> feature</c>
+[11:20] maintained the same kind of feature
+[11:20] maintained the same kind of feature using<c> two</c><c> stacks</c><c> and</c><c> a</c><c> queue</c><c> that</c><c> you</c>
+[11:24] using two stacks and a queue that you
+[11:24] using two stacks and a queue that you didn't<c> even</c><c> have</c><c> in</c><c> the</c><c> first</c><c> place.</c>
+[11:27] didn't even have in the first place.
+[11:27] didn't even have in the first place. The<c> peek</c><c> operation</c><c> is</c><c> also</c><c> very,</c><c> very</c>
+[11:28] The peek operation is also very, very
+[11:28] The peek operation is also very, very similar,<c> and</c><c> I</c><c> I</c><c> you</c><c> can</c><c> figure</c><c> that</c><c> out</c>
+[11:31] similar, and I I you can figure that out
+[11:31] similar, and I I you can figure that out on<c> your</c><c> own.</c>
+[11:32] on your own.
+[11:32] on your own. So,<c> what</c><c> are</c><c> we</c><c> doing</c><c> up</c><c> till</c><c> now?</c><c> We</c>
+[11:34] So, what are we doing up till now? We
+[11:34] So, what are we doing up till now? We are<c> just</c><c> exploring</c><c> some</c><c> of</c><c> the</c><c> basic</c>
+[11:36] are just exploring some of the basic
+[11:36] are just exploring some of the basic applications<c> of</c><c> a</c><c> stack.</c><c> For</c><c> example,</c><c> we</c>
+[11:38] applications of a stack. For example, we
+[11:38] applications of a stack. For example, we are<c> matching</c><c> parentheses.</c>
+[11:40] are matching parentheses.
+[11:40] are matching parentheses. Once<c> you</c><c> are</c><c> done</c><c> matching</c><c> parentheses,</c>
+[11:42] Once you are done matching parentheses,
+[11:42] Once you are done matching parentheses, you<c> can</c><c> also</c><c> use</c><c> it</c><c> to</c><c> evaluate</c>
+[11:43] you can also use it to evaluate
+[11:43] you can also use it to evaluate expressions.<c> You</c><c> will</c><c> just</c><c> use</c><c> the</c><c> same</c>
+[11:46] expressions. You will just use the same
+[11:46] expressions. You will just use the same stack<c> to</c><c> solve</c><c> small</c><c> portions</c><c> and</c><c> then</c>
+[11:49] stack to solve small portions and then
+[11:50] stack to solve small portions and then you<c> get</c><c> your</c><c> result</c><c> from</c><c> it.</c>
+[11:51] you get your result from it.
+[11:52] you get your result from it. Similarly,<c> you</c><c> can</c><c> also</c><c> think</c><c> about</c>
+[11:54] Similarly, you can also think about
+[11:54] Similarly, you can also think about parsing<c> code.</c>
+[11:55] parsing code.
+[11:55] parsing code. A<c> code</c><c> also</c><c> has</c><c> brackets,</c><c> right?</c><c> And</c>
+[11:58] A code also has brackets, right? And
+[11:58] A code also has brackets, right? And this<c> is</c><c> the</c><c> same</c><c> as</c><c> matching</c><c> your</c>
+[11:59] this is the same as matching your
+[11:59] this is the same as matching your parentheses.
+[12:00] parentheses.
+[12:01] parentheses. That<c> is</c><c> how</c><c> a</c><c> compiler</c><c> knows</c><c> that</c><c> okay,</c>
+[12:03] That is how a compiler knows that okay,
+[12:03] That is how a compiler knows that okay, one<c> of</c><c> the</c><c> bracket</c><c> was</c><c> not</c><c> matched.</c>
+[12:05] one of the bracket was not matched.
+[12:05] one of the bracket was not matched. And<c> similarly,</c><c> you</c><c> can</c><c> think</c><c> about</c>
+[12:07] And similarly, you can think about
+[12:07] And similarly, you can think about tracking<c> histories</c><c> as</c><c> well.</c>
+[12:09] tracking histories as well.
+[12:09] tracking histories as well. For<c> example,</c><c> you</c><c> have</c><c> your</c><c> undo</c><c> and</c><c> redo</c>
+[12:12] For example, you have your undo and redo
+[12:12] For example, you have your undo and redo buttons.<c> What</c><c> do</c><c> they</c><c> do?</c>
+[12:14] buttons. What do they do?
+[12:14] buttons. What do they do? The<c> undo</c><c> button</c><c> keeps</c><c> a</c><c> stack</c><c> of</c><c> each</c><c> of</c>
+[12:16] The undo button keeps a stack of each of
+[12:17] The undo button keeps a stack of each of the<c> operation</c><c> that</c><c> you</c><c> have</c><c> done.</c>
+[12:18] the operation that you have done.
+[12:19] the operation that you have done. And<c> when</c><c> you</c><c> do</c><c> an</c><c> undo,</c>
+[12:21] And when you do an undo,
+[12:21] And when you do an undo, it<c> will</c><c> look</c><c> at</c><c> the</c><c> topmost</c><c> operation</c>
+[12:23] it will look at the topmost operation
+[12:23] it will look at the topmost operation and<c> then</c><c> it</c><c> will</c><c> keep</c><c> on</c><c> going</c><c> down</c><c> till</c>
+[12:25] and then it will keep on going down till
+[12:25] and then it will keep on going down till you<c> keep</c><c> clicking</c><c> back.</c>
+[12:27] you keep clicking back.
+[12:27] you keep clicking back. Once<c> you're</c><c> clear</c><c> with</c><c> all</c><c> of</c><c> this,</c><c> it</c>
+[12:29] Once you're clear with all of this, it
+[12:29] Once you're clear with all of this, it is<c> actually</c><c> time</c><c> that</c><c> you</c><c> dive</c><c> into</c><c> some</c>
+[12:32] is actually time that you dive into some
+[12:32] is actually time that you dive into some of<c> the</c><c> advanced</c><c> concepts</c><c> which</c><c> are</c>
+[12:34] of the advanced concepts which are
+[12:34] of the advanced concepts which are solved<c> using</c><c> a</c><c> stack</c><c> data</c><c> structure.</c>
+[12:36] solved using a stack data structure.
+[12:36] solved using a stack data structure. For<c> example,</c><c> you</c><c> might</c><c> have</c><c> heard</c><c> of</c><c> the</c>
+[12:38] For example, you might have heard of the
+[12:38] For example, you might have heard of the problem<c> next</c><c> greater</c><c> element.</c>
+[12:40] problem next greater element.
+[12:41] problem next greater element. Basically,<c> you</c><c> are</c><c> given</c><c> this</c><c> particular</c>
+[12:43] Basically, you are given this particular
+[12:43] Basically, you are given this particular array<c> and</c><c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> the</c><c> next</c>
+[12:46] array and you have to tell me the next
+[12:46] array and you have to tell me the next greater<c> element</c><c> for</c><c> each</c><c> of</c><c> these</c>
+[12:48] greater element for each of these
+[12:48] greater element for each of these elements<c> in</c><c> the</c><c> array.</c>
+[12:50] elements in the array.
+[12:50] elements in the array. What<c> does</c><c> that</c><c> mean?</c><c> For</c><c> example,</c><c> when</c><c> I</c>
+[12:52] What does that mean? For example, when I
+[12:52] What does that mean? For example, when I look<c> at</c><c> three,</c>
+[12:53] look at three,
+[12:53] look at three, I<c> will</c><c> start</c><c> to</c><c> traverse</c><c> and</c><c> what</c><c> is</c><c> the</c>
+[12:55] I will start to traverse and what is the
+[12:55] I will start to traverse and what is the next<c> greater</c><c> element</c><c> I</c><c> can</c><c> find?</c><c> It</c><c> is</c>
+[12:58] next greater element I can find? It is
+[12:58] next greater element I can find? It is five.<c> So,</c><c> for</c><c> my</c><c> answer,</c><c> I</c><c> will</c><c> write</c>
+[13:00] five. So, for my answer, I will write
+[13:00] five. So, for my answer, I will write down<c> a</c><c> five</c><c> over</c><c> here.</c>
+[13:02] down a five over here.
+[13:02] down a five over here. For<c> one,</c><c> what</c><c> is</c><c> the</c><c> next</c><c> greater</c>
+[13:03] For one, what is the next greater
+[13:03] For one, what is the next greater element?<c> It</c><c> is</c><c> five</c><c> again.</c><c> So,</c><c> I</c><c> will</c>
+[13:05] element? It is five again. So, I will
+[13:05] element? It is five again. So, I will write<c> down</c><c> a</c><c> five</c><c> here.</c>
+[13:07] write down a five here.
+[13:07] write down a five here. For<c> five,</c><c> what</c><c> is</c><c> the</c><c> next</c><c> greater</c>
+[13:08] For five, what is the next greater
+[13:09] For five, what is the next greater element?<c> I</c><c> keep</c><c> going,</c><c> I</c><c> keep</c><c> going,</c><c> I</c>
+[13:11] element? I keep going, I keep going, I
+[13:11] element? I keep going, I keep going, I find<c> a</c><c> seven.</c>
+[13:12] find a seven.
+[13:12] find a seven. So,<c> I</c><c> write</c><c> down</c><c> seven</c><c> here.</c>
+[13:14] So, I write down seven here.
+[13:14] So, I write down seven here. For<c> two,</c><c> what</c><c> is</c><c> the</c><c> next</c><c> greater</c>
+[13:15] For two, what is the next greater
+[13:16] For two, what is the next greater element?<c> It</c><c> is</c><c> seven</c><c> again.</c><c> So,</c><c> seven.</c>
+[13:18] element? It is seven again. So, seven.
+[13:18] element? It is seven again. So, seven. For<c> one,</c><c> I</c><c> have</c><c> seven.</c>
+[13:20] For one, I have seven.
+[13:20] For one, I have seven. For<c> zero,</c><c> I</c><c> have</c><c> seven.</c>
+[13:22] For zero, I have seven.
+[13:22] For zero, I have seven. For<c> seven,</c><c> I</c><c> have</c><c> nine.</c>
+[13:24] For seven, I have nine.
+[13:24] For seven, I have nine. For<c> nine,</c><c> I</c><c> do</c><c> not</c><c> have</c><c> any</c><c> greater</c>
+[13:26] For nine, I do not have any greater
+[13:26] For nine, I do not have any greater element.<c> That</c><c> means</c><c> I</c><c> can</c><c> write</c><c> down</c><c> a</c>
+[13:28] element. That means I can write down a
+[13:29] element. That means I can write down a minus<c> one</c><c> over</c><c> here.</c><c> It</c><c> just</c><c> depends</c>
+[13:31] minus one over here. It just depends
+[13:31] minus one over here. It just depends upon<c> the</c><c> problem</c><c> you</c><c> are</c><c> solving.</c>
+[13:33] upon the problem you are solving.
+[13:33] upon the problem you are solving. For<c> two,</c><c> I</c><c> have</c><c> the</c><c> next</c><c> greater</c><c> element</c>
+[13:35] For two, I have the next greater element
+[13:35] For two, I have the next greater element as<c> three.</c>
+[13:36] as three.
+[13:36] as three. And<c> for</c><c> three,</c><c> I</c><c> don't</c><c> have</c><c> anything,</c><c> so</c>
+[13:38] And for three, I don't have anything, so
+[13:38] And for three, I don't have anything, so I<c> can</c><c> write</c><c> down</c><c> a</c><c> minus</c><c> one</c><c> over</c><c> here.</c>
+[13:40] I can write down a minus one over here.
+[13:40] I can write down a minus one over here. This<c> is</c><c> the</c><c> answer</c><c> that</c><c> I'm</c><c> expecting.</c>
+[13:43] This is the answer that I'm expecting.
+[13:43] This is the answer that I'm expecting. But<c> how</c><c> do</c><c> you</c><c> reach</c><c> here?</c>
+[13:45] But how do you reach here?
+[13:45] But how do you reach here? If<c> you</c><c> have</c><c> already</c><c> noticed,</c><c> for</c><c> finding</c>
+[13:48] If you have already noticed, for finding
+[13:48] If you have already noticed, for finding the<c> next</c><c> greater</c><c> element,</c><c> we</c><c> are</c><c> always</c>
+[13:50] the next greater element, we are always
+[13:50] the next greater element, we are always going<c> from</c><c> the</c><c> left</c><c> towards</c><c> the</c><c> right.</c>
+[13:52] going from the left towards the right.
+[13:53] going from the left towards the right. And<c> it</c><c> is</c><c> certainly</c><c> possible</c><c> that</c><c> you</c>
+[13:55] And it is certainly possible that you
+[13:55] And it is certainly possible that you might<c> have</c><c> to</c><c> go</c><c> all</c><c> the</c><c> way</c><c> to</c><c> the</c><c> end</c>
+[13:58] might have to go all the way to the end
+[13:58] might have to go all the way to the end for<c> every</c><c> element</c><c> to</c><c> find</c><c> out</c><c> the</c><c> next</c>
+[14:00] for every element to find out the next
+[14:00] for every element to find out the next greater<c> element.</c>
+[14:01] greater element.
+[14:01] greater element. So,<c> think</c><c> about</c><c> it.</c><c> What</c><c> if</c><c> we</c><c> start</c>
+[14:04] So, think about it. What if we start
+[14:04] So, think about it. What if we start from<c> the</c><c> very</c><c> back</c><c> and</c><c> then</c><c> try</c><c> to</c><c> build</c>
+[14:07] from the very back and then try to build
+[14:07] from the very back and then try to build upon<c> our</c><c> solution?</c>
+[14:08] upon our solution?
+[14:08] upon our solution? That<c> can</c><c> maybe</c><c> give</c><c> us</c><c> a</c><c> small</c><c> hint</c><c> and</c>
+[14:11] That can maybe give us a small hint and
+[14:11] That can maybe give us a small hint and maybe<c> help</c><c> to</c><c> solve</c><c> efficiently</c><c> as</c><c> well.</c>
+[14:14] maybe help to solve efficiently as well.
+[14:14] maybe help to solve efficiently as well. But<c> how</c><c> do</c><c> you</c><c> get</c><c> an</c><c> intuition</c><c> that</c><c> I</c>
+[14:16] But how do you get an intuition that I
+[14:16] But how do you get an intuition that I might<c> need</c><c> a</c><c> stack</c><c> data</c><c> structure</c><c> over</c>
+[14:18] might need a stack data structure over
+[14:18] might need a stack data structure over here?
+[14:19] here?
+[14:19] here? Remember<c> that</c><c> I</c><c> told</c><c> you</c><c> we</c><c> have</c><c> to</c><c> go</c>
+[14:21] Remember that I told you we have to go
+[14:21] Remember that I told you we have to go from<c> the</c><c> reverse</c><c> direction.</c>
+[14:22] from the reverse direction.
+[14:22] from the reverse direction. And<c> if</c><c> I</c><c> will</c><c> take</c><c> up</c><c> a</c><c> stack</c><c> and</c><c> add</c>
+[14:25] And if I will take up a stack and add
+[14:25] And if I will take up a stack and add all<c> of</c><c> the</c><c> elements</c><c> in</c><c> a</c><c> reverse</c>
+[14:27] all of the elements in a reverse
+[14:27] all of the elements in a reverse direction<c> over</c><c> here,</c>
+[14:28] direction over here,
+[14:28] direction over here, what<c> will</c><c> happen?</c><c> The</c><c> top</c><c> most</c><c> element</c>
+[14:31] what will happen? The top most element
+[14:31] what will happen? The top most element will<c> be</c><c> somewhere</c><c> over</c><c> here,</c><c> right?</c><c> It</c>
+[14:34] will be somewhere over here, right? It
+[14:34] will be somewhere over here, right? It will<c> be</c><c> the</c><c> leftmost</c><c> element.</c>
+[14:35] will be the leftmost element.
+[14:35] will be the leftmost element. And<c> think</c><c> about</c><c> it.</c><c> That</c><c> is</c><c> what</c><c> I</c><c> need</c>
+[14:38] And think about it. That is what I need
+[14:38] And think about it. That is what I need to<c> explore</c><c> also.</c>
+[14:40] to explore also.
+[14:40] to explore also. For<c> example,</c><c> when</c><c> I</c><c> look</c><c> at</c><c> three,</c><c> I</c><c> may</c>
+[14:42] For example, when I look at three, I may
+[14:42] For example, when I look at three, I may not<c> want</c><c> to</c><c> go</c><c> all</c><c> the</c><c> way</c><c> to</c><c> the</c><c> end</c><c> to</c>
+[14:45] not want to go all the way to the end to
+[14:45] not want to go all the way to the end to find<c> a</c><c> nine.</c>
+[14:46] find a nine.
+[14:46] find a nine. I<c> could</c><c> have</c><c> find</c><c> a</c><c> next</c><c> greater</c><c> element</c>
+[14:49] I could have find a next greater element
+[14:49] I could have find a next greater element somewhere<c> earlier.</c>
+[14:50] somewhere earlier.
+[14:51] somewhere earlier. So,<c> these</c><c> elements</c><c> should</c><c> be</c><c> somewhere</c>
+[14:53] So, these elements should be somewhere
+[14:53] So, these elements should be somewhere on<c> the</c><c> top</c><c> of</c><c> the</c><c> stack.</c>
+[14:54] on the top of the stack.
+[14:55] on the top of the stack. And<c> all</c><c> of</c><c> these</c><c> elements</c><c> should</c><c> be</c>
+[14:56] And all of these elements should be
+[14:56] And all of these elements should be somewhere<c> at</c><c> the</c><c> lower</c><c> most</c><c> portion</c><c> of</c>
+[14:58] somewhere at the lower most portion of
+[14:58] somewhere at the lower most portion of the<c> stack.</c>
+[14:59] the stack.
+[14:59] the stack. We<c> are</c><c> still</c><c> going</c><c> to</c><c> decide</c><c> how</c><c> to</c><c> add</c>
+[15:01] We are still going to decide how to add
+[15:02] We are still going to decide how to add and<c> remove</c><c> elements</c><c> from</c><c> the</c><c> stack,</c><c> but</c>
+[15:04] and remove elements from the stack, but
+[15:04] and remove elements from the stack, but this<c> is</c><c> the</c><c> general</c><c> idea.</c>
+[15:05] this is the general idea.
+[15:05] this is the general idea. So,<c> how</c><c> do</c><c> you</c><c> start?</c>
+[15:07] So, how do you start?
+[15:07] So, how do you start? Let<c> us</c><c> try</c><c> to</c><c> build</c><c> our</c><c> output</c><c> area</c>
+[15:09] Let us try to build our output area
+[15:09] Let us try to build our output area again.
+[15:10] again.
+[15:10] again. What<c> is</c><c> the</c><c> first</c><c> element</c><c> I</c><c> see?</c><c> I</c><c> see</c><c> a</c>
+[15:12] What is the first element I see? I see a
+[15:12] What is the first element I see? I see a three.
+[15:13] three.
+[15:13] three. My<c> stack</c><c> is</c><c> currently</c><c> empty.</c><c> That</c><c> means</c>
+[15:16] My stack is currently empty. That means
+[15:16] My stack is currently empty. That means I<c> do</c><c> not</c><c> have</c><c> any</c><c> greater</c><c> element.</c>
+[15:19] I do not have any greater element.
+[15:19] I do not have any greater element. So,<c> what</c><c> I</c><c> can</c><c> do</c><c> is</c><c> I</c><c> can</c><c> write</c><c> down</c><c> a</c>
+[15:21] So, what I can do is I can write down a
+[15:21] So, what I can do is I can write down a minus<c> one</c><c> over</c><c> here.</c>
+[15:22] minus one over here.
+[15:22] minus one over here. And<c> I</c><c> will</c><c> add</c><c> this</c><c> element</c><c> to</c><c> my</c><c> stack.</c>
+[15:25] And I will add this element to my stack.
+[15:25] And I will add this element to my stack. So,<c> three</c><c> gets</c><c> added</c><c> to</c><c> the</c><c> stack.</c>
+[15:27] So, three gets added to the stack.
+[15:27] So, three gets added to the stack. Now,<c> go</c><c> ahead.</c><c> Look</c><c> at</c><c> the</c><c> next</c><c> element.</c>
+[15:30] Now, go ahead. Look at the next element.
+[15:30] Now, go ahead. Look at the next element. Next<c> element</c><c> is</c><c> two.</c>
+[15:31] Next element is two.
+[15:31] Next element is two. Check<c> your</c><c> stack.</c>
+[15:33] Check your stack.
+[15:33] Check your stack. Do<c> you</c><c> find</c><c> a</c><c> next</c><c> greater</c><c> element</c><c> over</c>
+[15:35] Do you find a next greater element over
+[15:35] Do you find a next greater element over here?
+[15:36] here?
+[15:36] here? Yes.
+[15:37] Yes.
+[15:37] Yes. So,<c> what</c><c> I</c><c> can</c><c> do</c><c> is</c><c> I</c><c> can</c><c> write</c><c> down</c>
+[15:39] So, what I can do is I can write down
+[15:39] So, what I can do is I can write down three<c> over</c><c> here.</c>
+[15:40] three over here.
+[15:40] three over here. This<c> is</c><c> the</c><c> next</c><c> greater</c><c> element,</c>
+[15:42] This is the next greater element,
+[15:43] This is the next greater element, correct?
+[15:44] correct?
+[15:44] correct? But<c> also,</c>
+[15:45] But also,
+[15:45] But also, this<c> two</c><c> itself,</c>
+[15:47] this two itself,
+[15:47] this two itself, it<c> might</c><c> be</c><c> a</c><c> next</c><c> greater</c><c> element</c><c> for</c>
+[15:50] it might be a next greater element for
+[15:50] it might be a next greater element for some<c> of</c><c> the</c><c> previous</c><c> elements.</c><c> I</c><c> don't</c>
+[15:52] some of the previous elements. I don't
+[15:52] some of the previous elements. I don't know<c> yet</c><c> because</c><c> I</c><c> haven't</c><c> seen</c><c> them</c>
+[15:53] know yet because I haven't seen them
+[15:54] know yet because I haven't seen them yet.
+[15:54] yet.
+[15:55] yet. So,<c> I</c><c> will</c><c> want</c><c> to</c><c> keep</c><c> it</c><c> in</c><c> my</c><c> stack</c>
+[15:57] So, I will want to keep it in my stack
+[15:57] So, I will want to keep it in my stack also.
+[15:58] also.
+[15:58] also. So,<c> I</c><c> will</c><c> write</c><c> down</c><c> two</c><c> in</c><c> my</c><c> stack</c>
+[16:00] So, I will write down two in my stack
+[16:00] So, I will write down two in my stack over<c> here.</c><c> Correct?</c>
+[16:02] over here. Correct?
+[16:02] over here. Correct? Look<c> at</c><c> the</c><c> next</c><c> element.</c><c> The</c><c> next</c>
+[16:04] Look at the next element. The next
+[16:04] Look at the next element. The next element<c> is</c><c> nine.</c>
+[16:06] element is nine.
+[16:06] element is nine. Check<c> the</c><c> top</c><c> of</c><c> your</c><c> stack.</c>
+[16:08] Check the top of your stack.
+[16:08] Check the top of your stack. Do<c> you</c><c> find</c><c> any</c><c> greater</c><c> element?</c>
+[16:10] Do you find any greater element?
+[16:10] Do you find any greater element? The<c> top</c><c> element</c><c> is</c><c> two.</c><c> It</c><c> is</c><c> not</c>
+[16:12] The top element is two. It is not
+[16:12] The top element is two. It is not greater.<c> So,</c><c> what</c><c> I</c><c> can</c><c> do</c><c> is</c><c> I</c><c> can</c>
+[16:15] greater. So, what I can do is I can
+[16:15] greater. So, what I can do is I can remove<c> this</c><c> element.</c>
+[16:16] remove this element.
+[16:16] remove this element. Why?
+[16:17] Why?
+[16:17] Why? Because<c> I</c><c> know</c><c> that</c><c> in</c><c> my</c><c> stack,</c><c> I</c><c> will</c>
+[16:20] Because I know that in my stack, I will
+[16:20] Because I know that in my stack, I will have<c> stored</c><c> all</c><c> of</c><c> the</c><c> greater</c><c> elements</c>
+[16:23] have stored all of the greater elements
+[16:23] have stored all of the greater elements at<c> the</c><c> very</c><c> end.</c>
+[16:25] at the very end.
+[16:25] at the very end. So,<c> I</c><c> need</c><c> to</c><c> keep</c><c> popping</c><c> the</c><c> elements</c>
+[16:27] So, I need to keep popping the elements
+[16:27] So, I need to keep popping the elements until<c> I</c><c> find</c><c> a</c><c> greater</c><c> element.</c>
+[16:29] until I find a greater element.
+[16:29] until I find a greater element. And<c> this</c><c> is</c><c> why</c><c> this</c><c> stack</c><c> is</c><c> called</c><c> a</c>
+[16:32] And this is why this stack is called a
+[16:32] And this is why this stack is called a monotonic<c> stack.</c>
+[16:33] monotonic stack.
+[16:33] monotonic stack. At<c> every</c><c> instance,</c><c> I</c><c> will</c><c> ensure</c><c> that</c>
+[16:37] At every instance, I will ensure that
+[16:37] At every instance, I will ensure that this<c> stack</c><c> has</c><c> increasing</c><c> number</c><c> of</c>
+[16:39] this stack has increasing number of
+[16:39] this stack has increasing number of elements<c> when</c><c> I</c><c> keep</c><c> popping</c><c> them.</c>
+[16:41] elements when I keep popping them.
+[16:41] elements when I keep popping them. If<c> I</c><c> pop</c><c> the</c><c> next</c><c> element,</c><c> that</c><c> is</c>
+[16:43] If I pop the next element, that is
+[16:43] If I pop the next element, that is three.<c> Three</c><c> is</c><c> also</c><c> less</c><c> than</c><c> nine.</c>
+[16:45] three. Three is also less than nine.
+[16:45] three. Three is also less than nine. So,<c> I</c><c> will</c><c> remove</c><c> this</c><c> element</c><c> also.</c>
+[16:49] So, I will remove this element also.
+[16:49] So, I will remove this element also. Now,<c> my</c><c> stack</c><c> is</c><c> empty.</c>
+[16:51] Now, my stack is empty.
+[16:51] Now, my stack is empty. So,<c> I</c><c> can</c><c> say</c><c> that</c><c> I</c><c> don't</c><c> have</c><c> any</c>
+[16:53] So, I can say that I don't have any
+[16:53] So, I can say that I don't have any greater<c> element</c><c> than</c><c> this.</c>
+[16:55] greater element than this.
+[16:55] greater element than this. And<c> I</c><c> will</c><c> add</c><c> this</c><c> nine</c><c> to</c><c> my</c><c> stack.</c>
+[16:58] And I will add this nine to my stack.
+[16:58] And I will add this nine to my stack. Just<c> wait</c><c> a</c><c> little</c><c> while</c><c> and</c><c> everything</c>
+[16:59] Just wait a little while and everything
+[16:59] Just wait a little while and everything will<c> become</c><c> clear.</c>
+[17:01] will become clear.
+[17:01] will become clear. What<c> is</c><c> the</c><c> next</c><c> element?</c><c> That</c><c> is</c><c> seven.</c>
+[17:03] What is the next element? That is seven.
+[17:03] What is the next element? That is seven. So,<c> check.</c><c> Can</c><c> you</c><c> find</c><c> a</c><c> next</c><c> greater</c>
+[17:05] So, check. Can you find a next greater
+[17:05] So, check. Can you find a next greater element<c> in</c><c> your</c><c> stack?</c><c> Yes,</c><c> nine</c><c> is</c>
+[17:07] element in your stack? Yes, nine is
+[17:07] element in your stack? Yes, nine is greater.<c> So,</c><c> I</c><c> can</c><c> write</c><c> down</c><c> nine</c><c> over</c>
+[17:10] greater. So, I can write down nine over
+[17:10] greater. So, I can write down nine over here.
+[17:11] here.
+[17:11] here. Also,<c> what</c><c> I</c><c> will</c><c> do</c><c> is</c><c> I</c><c> will</c><c> add</c><c> this</c>
+[17:13] Also, what I will do is I will add this
+[17:13] Also, what I will do is I will add this seven<c> to</c><c> my</c><c> stack</c><c> because</c><c> this</c><c> seven</c>
+[17:16] seven to my stack because this seven
+[17:16] seven to my stack because this seven could<c> be</c><c> a</c><c> next</c><c> greater</c><c> element</c><c> to</c><c> some</c>
+[17:18] could be a next greater element to some
+[17:18] could be a next greater element to some other<c> element</c><c> that</c><c> I</c><c> yet</c><c> have</c><c> to</c><c> see.</c>
+[17:21] other element that I yet have to see.
+[17:21] other element that I yet have to see. Look<c> at</c><c> the</c><c> next</c><c> element.</c><c> It</c><c> is</c><c> a</c><c> zero.</c>
+[17:23] Look at the next element. It is a zero.
+[17:23] Look at the next element. It is a zero. Check<c> in</c><c> your</c><c> stack.</c><c> Do</c><c> you</c><c> find</c><c> a</c><c> next</c>
+[17:26] Check in your stack. Do you find a next
+[17:26] Check in your stack. Do you find a next greater<c> element?</c><c> Yes,</c><c> I</c><c> didn't</c><c> have</c><c> to</c>
+[17:28] greater element? Yes, I didn't have to
+[17:28] greater element? Yes, I didn't have to pop.<c> So,</c><c> I</c><c> can</c><c> straight</c><c> away</c><c> use</c><c> this</c>
+[17:30] pop. So, I can straight away use this
+[17:30] pop. So, I can straight away use this seven.
+[17:31] seven.
+[17:31] seven. So,<c> I</c><c> write</c><c> down</c><c> this</c><c> seven</c><c> here.</c>
+[17:33] So, I write down this seven here.
+[17:33] So, I write down this seven here. Also,<c> I</c><c> will</c><c> add</c><c> this</c><c> zero</c><c> to</c><c> my</c><c> stack.</c>
+[17:36] Also, I will add this zero to my stack.
+[17:36] Also, I will add this zero to my stack. Notice<c> what</c><c> is</c><c> happening.</c><c> This</c><c> stack</c><c> is</c>
+[17:38] Notice what is happening. This stack is
+[17:38] Notice what is happening. This stack is always<c> monotonic.</c><c> It</c><c> will</c><c> have</c><c> elements</c>
+[17:40] always monotonic. It will have elements
+[17:40] always monotonic. It will have elements in<c> an</c><c> increasing</c><c> order</c><c> every</c><c> time.</c><c> And</c>
+[17:43] in an increasing order every time. And
+[17:43] in an increasing order every time. And I'm<c> doing</c><c> this</c><c> so</c><c> I</c><c> can</c><c> reach</c><c> at</c><c> my</c>
+[17:45] I'm doing this so I can reach at my
+[17:45] I'm doing this so I can reach at my solution.
+[17:46] solution.
+[17:47] solution. Look<c> at</c><c> the</c><c> next</c><c> element.</c><c> It</c><c> is</c><c> one.</c>
+[17:49] Look at the next element. It is one.
+[17:49] Look at the next element. It is one. Check<c> your</c><c> stack.</c>
+[17:50] Check your stack.
+[17:50] Check your stack. Do<c> you</c><c> find</c><c> a</c><c> greater</c><c> element</c><c> than</c><c> one?</c>
+[17:53] Do you find a greater element than one?
+[17:53] Do you find a greater element than one? No.<c> So,</c><c> what</c><c> did</c><c> we</c><c> do?</c><c> Our</c><c> stack</c><c> have</c>
+[17:56] No. So, what did we do? Our stack have
+[17:56] No. So, what did we do? Our stack have all<c> the</c><c> elements</c><c> in</c><c> an</c><c> increasing</c><c> order.</c>
+[17:59] all the elements in an increasing order.
+[17:59] all the elements in an increasing order. So,<c> I</c><c> know</c><c> that</c><c> if</c><c> I</c><c> pop</c><c> elements,</c><c> I</c><c> may</c>
+[18:01] So, I know that if I pop elements, I may
+[18:01] So, I know that if I pop elements, I may find<c> the</c><c> next</c><c> greater</c><c> element</c><c> over</c><c> here.</c>
+[18:03] find the next greater element over here.
+[18:03] find the next greater element over here. So,<c> I</c><c> will</c><c> remove</c><c> this</c><c> zero.</c>
+[18:05] So, I will remove this zero.
+[18:05] So, I will remove this zero. Do<c> I</c><c> find</c><c> a</c><c> next</c><c> greater</c><c> element?</c><c> Yes.</c>
+[18:08] Do I find a next greater element? Yes.
+[18:08] Do I find a next greater element? Yes. So,<c> I</c><c> will</c><c> write</c><c> down</c><c> a</c><c> seven</c><c> over</c><c> here.</c>
+[18:11] So, I will write down a seven over here.
+[18:11] So, I will write down a seven over here. And<c> what</c><c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I</c><c> will</c><c> add</c>
+[18:13] And what I'm going to do is I will add
+[18:13] And what I'm going to do is I will add this<c> one</c><c> over</c><c> here.</c>
+[18:14] this one over here.
+[18:15] this one over here. And<c> once</c><c> again,</c><c> we</c><c> do</c><c> this</c><c> because</c><c> it</c>
+[18:17] And once again, we do this because it
+[18:17] And once again, we do this because it might<c> be</c><c> possible</c><c> that</c><c> this</c><c> one</c><c> itself</c>
+[18:19] might be possible that this one itself
+[18:19] might be possible that this one itself is<c> a</c><c> next</c><c> greater</c><c> element</c><c> to</c><c> some</c><c> other</c>
+[18:22] is a next greater element to some other
+[18:22] is a next greater element to some other element<c> that</c><c> we</c><c> haven't</c><c> yet</c><c> seen.</c>
+[18:24] element that we haven't yet seen.
+[18:25] element that we haven't yet seen. And<c> your</c><c> stack</c><c> is</c><c> still</c><c> in</c><c> an</c><c> increasing</c>
+[18:26] And your stack is still in an increasing
+[18:26] And your stack is still in an increasing order.
+[18:27] order.
+[18:27] order. Notice<c> the</c><c> next</c><c> element.</c><c> That</c><c> is</c><c> two.</c>
+[18:30] Notice the next element. That is two.
+[18:30] Notice the next element. That is two. Do<c> you</c><c> find</c><c> a</c><c> next</c><c> greater</c><c> element</c><c> over</c>
+[18:31] Do you find a next greater element over
+[18:31] Do you find a next greater element over here?<c> No.</c><c> So,</c><c> I</c><c> can</c><c> remove</c><c> this.</c>
+[18:34] here? No. So, I can remove this.
+[18:34] here? No. So, I can remove this. Do<c> you</c><c> find</c><c> a</c><c> next</c><c> greater</c><c> element</c><c> here?</c>
+[18:36] Do you find a next greater element here?
+[18:36] Do you find a next greater element here? Yes,<c> that</c><c> is</c><c> seven.</c>
+[18:37] Yes, that is seven.
+[18:37] Yes, that is seven. So,<c> I</c><c> can</c><c> write</c><c> down</c><c> a</c><c> seven</c><c> over</c><c> here.</c>
+[18:40] So, I can write down a seven over here.
+[18:40] So, I can write down a seven over here. And<c> I</c><c> will</c><c> also</c><c> write</c><c> down</c><c> a</c><c> two</c><c> in</c><c> my</c>
+[18:42] And I will also write down a two in my
+[18:42] And I will also write down a two in my stack.
+[18:43] stack.
+[18:43] stack. Check<c> out</c><c> five.</c><c> Is</c><c> two</c><c> the</c><c> next</c><c> greater</c>
+[18:45] Check out five. Is two the next greater
+[18:45] Check out five. Is two the next greater element?<c> No.</c><c> So,</c><c> I</c><c> will</c><c> remove</c><c> this.</c>
+[18:48] element? No. So, I will remove this.
+[18:48] element? No. So, I will remove this. Is<c> seven</c><c> the</c><c> next</c><c> greater</c><c> element?</c><c> Yes.</c>
+[18:50] Is seven the next greater element? Yes.
+[18:50] Is seven the next greater element? Yes. So,<c> what</c><c> I</c><c> will</c><c> do</c><c> is</c><c> I</c><c> will</c><c> write</c><c> down</c>
+[18:52] So, what I will do is I will write down
+[18:52] So, what I will do is I will write down seven<c> again.</c>
+[18:54] seven again.
+[18:54] seven again. And<c> this</c><c> five</c><c> gets</c><c> added</c><c> to</c><c> the</c><c> stack.</c>
+[18:56] And this five gets added to the stack.
+[18:56] And this five gets added to the stack. Notice<c> how</c><c> our</c><c> stack</c><c> is</c><c> always</c>
+[18:58] Notice how our stack is always
+[18:58] Notice how our stack is always monotonic.<c> It</c><c> is</c><c> always</c><c> increasing</c><c> in</c>
+[19:00] monotonic. It is always increasing in
+[19:00] monotonic. It is always increasing in nature.
+[19:01] nature.
+[19:01] nature. Now,<c> I</c><c> have</c><c> one.</c>
+[19:03] Now, I have one.
+[19:03] Now, I have one. Check<c> the</c><c> next</c><c> greater</c><c> element.</c><c> Yes,</c><c> you</c>
+[19:04] Check the next greater element. Yes, you
+[19:04] Check the next greater element. Yes, you can<c> find</c><c> it.</c><c> Five.</c><c> So,</c><c> no</c><c> need</c><c> to</c><c> worry.</c>
+[19:07] can find it. Five. So, no need to worry.
+[19:07] can find it. Five. So, no need to worry. I<c> can</c><c> simply</c><c> write</c><c> down</c><c> over</c><c> here.</c>
+[19:09] I can simply write down over here.
+[19:09] I can simply write down over here. And<c> at</c><c> the</c><c> same</c><c> time,</c><c> add</c><c> this</c><c> one</c><c> also</c>
+[19:12] And at the same time, add this one also
+[19:12] And at the same time, add this one also to<c> my</c><c> stack.</c>
+[19:13] to my stack.
+[19:14] to my stack. For<c> the</c><c> next</c><c> element,</c><c> you</c><c> see</c><c> three.</c><c> Is</c>
+[19:15] For the next element, you see three. Is
+[19:15] For the next element, you see three. Is one<c> the</c><c> next</c><c> greater</c><c> element?</c><c> No,</c>
+[19:17] one the next greater element? No,
+[19:17] one the next greater element? No, because<c> one</c><c> is</c><c> smaller.</c>
+[19:18] because one is smaller.
+[19:18] because one is smaller. So,<c> I</c><c> remove</c><c> this.</c>
+[19:20] So, I remove this.
+[19:20] So, I remove this. Check<c> the</c><c> next</c><c> element.</c><c> Is</c><c> five</c><c> greater?</c>
+[19:22] Check the next element. Is five greater?
+[19:22] Check the next element. Is five greater? Yes,<c> so</c><c> I</c><c> will</c><c> write</c><c> down</c><c> over</c><c> here.</c>
+[19:25] Yes, so I will write down over here.
+[19:25] Yes, so I will write down over here. And<c> that's</c><c> it.</c><c> I</c><c> have</c><c> traversed</c><c> my</c>
+[19:27] And that's it. I have traversed my
+[19:27] And that's it. I have traversed my entire<c> array</c><c> and</c><c> I</c><c> used</c><c> this</c><c> monotonic</c>
+[19:30] entire array and I used this monotonic
+[19:30] entire array and I used this monotonic stack<c> to</c><c> get</c><c> my</c><c> same</c><c> answer.</c>
+[19:33] stack to get my same answer.
+[19:33] stack to get my same answer. If<c> you</c><c> notice,</c><c> they</c><c> both</c><c> are</c><c> the</c><c> same.</c>
+[19:36] If you notice, they both are the same.
+[19:36] If you notice, they both are the same. So,<c> what</c><c> are</c><c> we</c><c> doing</c><c> over</c><c> here?</c>
+[19:37] So, what are we doing over here?
+[19:37] So, what are we doing over here? We<c> took</c><c> an</c><c> advantage</c><c> of</c><c> the</c><c> fact</c><c> that</c>
+[19:39] We took an advantage of the fact that
+[19:39] We took an advantage of the fact that this<c> stack</c><c> can</c><c> hold</c><c> all</c><c> the</c><c> elements</c><c> in</c>
+[19:42] this stack can hold all the elements in
+[19:42] this stack can hold all the elements in an<c> increasing</c><c> order.</c>
+[19:44] an increasing order.
+[19:44] an increasing order. And<c> the</c><c> pop</c><c> operation</c><c> is</c><c> ensuring</c><c> me</c>
+[19:46] And the pop operation is ensuring me
+[19:46] And the pop operation is ensuring me that<c> I</c><c> get</c><c> all</c><c> of</c><c> these</c><c> elements</c><c> one</c><c> by</c>
+[19:49] that I get all of these elements one by
+[19:49] that I get all of these elements one by one.
+[19:50] one.
+[19:50] one. Make<c> sure</c><c> to</c><c> pause</c><c> this</c><c> video</c><c> right</c><c> over</c>
+[19:52] Make sure to pause this video right over
+[19:52] Make sure to pause this video right over here<c> and</c><c> understand</c><c> this</c><c> concept</c><c> of</c><c> next</c>
+[19:54] here and understand this concept of next
+[19:54] here and understand this concept of next greater<c> element.</c>
+[19:56] greater element.
+[19:56] greater element. This<c> is</c><c> a</c><c> very</c><c> good</c><c> use</c><c> case</c><c> and</c><c> you</c>
+[19:59] This is a very good use case and you
+[19:59] This is a very good use case and you will<c> find</c><c> a</c><c> lot</c><c> of</c><c> problems</c><c> that</c><c> utilize</c>
+[20:02] will find a lot of problems that utilize
+[20:02] will find a lot of problems that utilize the<c> same</c><c> concept</c><c> in</c><c> one</c><c> way</c><c> or</c><c> the</c>
+[20:03] the same concept in one way or the
+[20:03] the same concept in one way or the other.
+[20:04] other.
+[20:04] other. And<c> that</c><c> is</c><c> what</c><c> makes</c><c> monotonic</c><c> stacks</c>
+[20:07] And that is what makes monotonic stacks
+[20:07] And that is what makes monotonic stacks very,<c> very</c><c> important</c><c> to</c><c> understand.</c>
+[20:09] very, very important to understand.
+[20:09] very, very important to understand. For<c> example,</c><c> you</c><c> might</c><c> have</c><c> seen</c><c> one</c>
+[20:11] For example, you might have seen one
+[20:11] For example, you might have seen one more<c> problem</c><c> on</c><c> Leadcode</c><c> and</c><c> that</c><c> is</c>
+[20:13] more problem on Leadcode and that is
+[20:13] more problem on Leadcode and that is called<c> daily</c><c> temperatures.</c>
+[20:15] called daily temperatures.
+[20:15] called daily temperatures. I<c> will</c><c> now</c><c> show</c><c> you</c><c> how</c><c> this</c><c> problem</c><c> is</c>
+[20:18] I will now show you how this problem is
+[20:18] I will now show you how this problem is very,<c> very</c><c> similar</c><c> to</c><c> finding</c><c> the</c><c> next</c>
+[20:20] very, very similar to finding the next
+[20:20] very, very similar to finding the next greater<c> element.</c><c> Basically,</c><c> what</c><c> happens</c>
+[20:22] greater element. Basically, what happens
+[20:23] greater element. Basically, what happens is<c> you</c><c> are</c><c> given</c><c> a</c><c> temperatures</c><c> array.</c>
+[20:26] is you are given a temperatures array.
+[20:26] is you are given a temperatures array. All<c> of</c><c> these</c><c> are</c><c> representing</c><c> the</c>
+[20:28] All of these are representing the
+[20:28] All of these are representing the temperature<c> on</c><c> a</c><c> certain</c><c> day.</c>
+[20:30] temperature on a certain day.
+[20:30] temperature on a certain day. The<c> temperature</c><c> on</c><c> first</c><c> day</c><c> is</c><c> 73,</c><c> then</c>
+[20:32] The temperature on first day is 73, then
+[20:32] The temperature on first day is 73, then 74,<c> 75</c><c> and</c><c> so</c><c> on.</c>
+[20:34] 74, 75 and so on.
+[20:34] 74, 75 and so on. You<c> have</c><c> to</c><c> tell</c><c> me</c><c> after</c><c> how</c><c> many</c><c> days</c>
+[20:38] You have to tell me after how many days
+[20:38] You have to tell me after how many days will<c> I</c><c> get</c><c> a</c><c> warmer</c><c> temperature?</c>
+[20:40] will I get a warmer temperature?
+[20:40] will I get a warmer temperature? So,<c> if</c><c> I</c><c> try</c><c> to</c><c> just</c><c> brute</c><c> force</c><c> this</c>
+[20:42] So, if I try to just brute force this
+[20:42] So, if I try to just brute force this problem,
+[20:43] problem,
+[20:43] problem, for<c> the</c><c> first</c><c> element,</c><c> after</c><c> how</c><c> many</c>
+[20:45] for the first element, after how many
+[20:45] for the first element, after how many days<c> do</c><c> I</c><c> get</c><c> a</c><c> hotter</c><c> temperature?</c>
+[20:47] days do I get a hotter temperature?
+[20:48] days do I get a hotter temperature? After<c> just</c><c> one</c><c> day.</c><c> So,</c><c> I</c><c> will</c><c> write</c>
+[20:49] After just one day. So, I will write
+[20:49] After just one day. So, I will write down<c> a</c><c> one</c><c> over</c><c> here.</c>
+[20:51] down a one over here.
+[20:51] down a one over here. For<c> the</c><c> next</c><c> element,</c><c> after</c><c> how</c><c> many</c>
+[20:52] For the next element, after how many
+[20:52] For the next element, after how many days<c> do</c><c> I</c><c> get</c><c> a</c><c> hotter</c><c> temperature?</c><c> One</c>
+[20:54] days do I get a hotter temperature? One
+[20:54] days do I get a hotter temperature? One day.<c> So,</c><c> I</c><c> will</c><c> write</c><c> down</c><c> one</c><c> here.</c>
+[20:56] day. So, I will write down one here.
+[20:56] day. So, I will write down one here. For<c> 75,</c>
+[20:58] For 75,
+[20:58] For 75, after<c> how</c><c> many</c><c> days</c><c> do</c><c> I</c><c> get</c><c> a</c><c> hotter</c>
+[21:00] after how many days do I get a hotter
+[21:00] after how many days do I get a hotter temperature?<c> For</c><c> one,</c>
+[21:02] temperature? For one,
+[21:02] temperature? For one, two,<c> three</c><c> and</c><c> then</c><c> four,</c><c> because</c><c> 76</c><c> is</c>
+[21:06] two, three and then four, because 76 is
+[21:06] two, three and then four, because 76 is greater<c> than</c><c> 75.</c>
+[21:08] greater than 75.
+[21:08] greater than 75. So,<c> I</c><c> write</c><c> down</c><c> four</c><c> here.</c>
+[21:10] So, I write down four here.
+[21:10] So, I write down four here. For<c> 71,</c><c> one,</c><c> two.</c>
+[21:12] For 71, one, two.
+[21:12] For 71, one, two. For<c> 69,</c><c> just</c><c> one.</c>
+[21:15] For 69, just one.
+[21:15] For 69, just one. For<c> 72,</c><c> just</c><c> one</c><c> again.</c>
+[21:17] For 72, just one again.
+[21:17] For 72, just one again. For<c> 76,</c><c> I</c><c> do</c><c> not</c><c> get</c><c> a</c><c> hotter</c>
+[21:19] For 76, I do not get a hotter
+[21:19] For 76, I do not get a hotter temperature.<c> So,</c><c> for</c><c> this</c><c> particular</c>
+[21:21] temperature. So, for this particular
+[21:21] temperature. So, for this particular problem<c> statement,</c><c> you</c><c> have</c><c> to</c><c> write</c>
+[21:23] problem statement, you have to write
+[21:23] problem statement, you have to write down<c> a</c><c> zero</c><c> here.</c>
+[21:25] down a zero here.
+[21:25] down a zero here. And<c> then</c><c> for</c><c> 73,</c><c> I</c><c> again</c><c> do</c><c> not</c><c> get</c><c> a</c>
+[21:27] And then for 73, I again do not get a
+[21:27] And then for 73, I again do not get a hotter<c> temperature.</c><c> So,</c><c> once</c><c> again,</c><c> I</c>
+[21:29] hotter temperature. So, once again, I
+[21:29] hotter temperature. So, once again, I have<c> to</c><c> write</c><c> down</c><c> a</c><c> zero.</c>
+[21:31] have to write down a zero.
+[21:31] have to write down a zero. So,<c> while</c><c> going</c><c> through</c><c> this,</c><c> what</c><c> did</c>
+[21:33] So, while going through this, what did
+[21:33] So, while going through this, what did you<c> observe?</c><c> Tell</c><c> me.</c>
+[21:35] you observe? Tell me.
+[21:35] you observe? Tell me. Is<c> this</c><c> problem</c><c> anywhere</c><c> related</c><c> to</c>
+[21:37] Is this problem anywhere related to
+[21:37] Is this problem anywhere related to temperatures<c> or</c><c> getting</c><c> hotter?</c>
+[21:39] temperatures or getting hotter?
+[21:39] temperatures or getting hotter? No.<c> All</c><c> you</c><c> are</c><c> doing</c><c> is</c><c> you</c><c> are</c><c> finding</c>
+[21:42] No. All you are doing is you are finding
+[21:42] No. All you are doing is you are finding the<c> next</c><c> greater</c><c> element.</c>
+[21:44] the next greater element.
+[21:44] the next greater element. For<c> example,</c><c> for</c><c> 73,</c><c> you</c><c> are</c><c> finding</c><c> the</c>
+[21:46] For example, for 73, you are finding the
+[21:46] For example, for 73, you are finding the next<c> greater</c><c> element</c><c> to</c><c> be</c><c> 74.</c><c> Then</c><c> once</c>
+[21:49] next greater element to be 74. Then once
+[21:49] next greater element to be 74. Then once again,<c> 75.</c><c> Then</c><c> once</c><c> again,</c><c> 76.</c>
+[21:53] again, 75. Then once again, 76.
+[21:53] again, 75. Then once again, 76. You<c> are</c><c> finding</c><c> the</c><c> next</c><c> greater</c>
+[21:54] You are finding the next greater
+[21:55] You are finding the next greater element,<c> right?</c>
+[21:56] element, right?
+[21:56] element, right? But<c> instead</c><c> of</c><c> writing</c><c> the</c><c> actual</c><c> value,</c>
+[21:59] But instead of writing the actual value,
+[21:59] But instead of writing the actual value, you<c> don't</c><c> have</c><c> to</c><c> write</c><c> 74,</c><c> 75,</c><c> and</c><c> 76</c>
+[22:01] you don't have to write 74, 75, and 76
+[22:01] you don't have to write 74, 75, and 76 here.
+[22:02] here.
+[22:02] here. All<c> you</c><c> have</c><c> to</c><c> do</c><c> is</c><c> you</c><c> have</c><c> to</c><c> tell</c>
+[22:04] All you have to do is you have to tell
+[22:05] All you have to do is you have to tell me<c> after</c><c> how</c><c> many</c><c> days</c><c> do</c><c> I</c><c> get</c><c> that</c>
+[22:06] me after how many days do I get that
+[22:06] me after how many days do I get that temperature.
+[22:08] temperature.
+[22:08] temperature. So,<c> what</c><c> are</c><c> you</c><c> doing?</c>
+[22:09] So, what are you doing?
+[22:09] So, what are you doing? You<c> just</c><c> need</c><c> to</c><c> find</c><c> out</c><c> the</c><c> index</c>
+[22:11] You just need to find out the index
+[22:11] You just need to find out the index difference<c> between</c><c> these</c><c> two</c><c> things.</c>
+[22:14] difference between these two things.
+[22:14] difference between these two things. So,<c> instead</c><c> of</c><c> storing</c><c> the</c><c> actual</c>
+[22:17] So, instead of storing the actual
+[22:17] So, instead of storing the actual numbers<c> in</c><c> your</c><c> stack,</c>
+[22:18] numbers in your stack,
+[22:18] numbers in your stack, what<c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c><c> also</c><c> store</c>
+[22:20] what you can do is you can also store
+[22:20] what you can do is you can also store the<c> positions</c><c> of</c><c> each</c><c> of</c><c> the</c><c> number.</c>
+[22:23] the positions of each of the number.
+[22:23] the positions of each of the number. By<c> that,</c><c> when</c><c> you</c><c> are</c><c> iterating</c>
+[22:25] By that, when you are iterating
+[22:25] By that, when you are iterating backwards,
+[22:27] backwards,
+[22:27] backwards, as<c> soon</c><c> as</c><c> you</c><c> find</c><c> 75</c><c> and</c><c> you</c><c> find</c><c> 76,</c>
+[22:30] as soon as you find 75 and you find 76,
+[22:30] as soon as you find 75 and you find 76, for<c> this</c><c> particular</c><c> problem,</c><c> 76</c><c> will</c>
+[22:32] for this particular problem, 76 will
+[22:32] for this particular problem, 76 will have<c> a</c><c> position</c><c> associated</c><c> six,</c><c> and</c><c> 75</c>
+[22:34] have a position associated six, and 75
+[22:34] have a position associated six, and 75 will<c> have</c><c> a</c><c> position</c><c> associated</c><c> two.</c><c> So,</c>
+[22:36] will have a position associated two. So,
+[22:36] will have a position associated two. So, 6<c> minus</c><c> 2</c><c> gives</c><c> you</c><c> a</c><c> four.</c>
+[22:38] 6 minus 2 gives you a four.
+[22:38] 6 minus 2 gives you a four. And<c> that</c><c> is</c><c> it.</c><c> This</c><c> problem</c><c> is</c>
+[22:40] And that is it. This problem is
+[22:40] And that is it. This problem is literally<c> the</c><c> same.</c>
+[22:42] literally the same.
+[22:42] literally the same. If<c> you</c><c> understand</c><c> monotonic</c><c> stacks,</c>
+[22:44] If you understand monotonic stacks,
+[22:44] If you understand monotonic stacks, you<c> can</c><c> solve</c><c> this</c><c> problem</c><c> really</c>
+[22:46] you can solve this problem really
+[22:46] you can solve this problem really easily.
+[22:47] easily.
+[22:47] easily. And<c> monotonic</c><c> stacks</c><c> usually</c><c> work</c><c> around</c>
+[22:50] And monotonic stacks usually work around
+[22:50] And monotonic stacks usually work around the<c> same</c><c> principle.</c>
+[22:52] the same principle.
+[22:52] the same principle. Basically,<c> first</c><c> of</c><c> all,</c><c> you</c><c> initialize</c>
+[22:54] Basically, first of all, you initialize
+[22:54] Basically, first of all, you initialize the<c> stack.</c>
+[22:55] the stack.
+[22:55] the stack. Then<c> you</c><c> will</c><c> try</c><c> to</c><c> scan</c><c> through</c><c> all</c><c> of</c>
+[22:57] Then you will try to scan through all of
+[22:57] Then you will try to scan through all of your<c> elements.</c>
+[22:58] your elements.
+[22:58] your elements. And<c> then</c><c> the</c><c> most</c><c> important</c><c> condition</c><c> is</c>
+[23:01] And then the most important condition is
+[23:01] And then the most important condition is you<c> have</c><c> to</c><c> maintain</c><c> your</c><c> monotonicity.</c>
+[23:04] you have to maintain your monotonicity.
+[23:04] you have to maintain your monotonicity. You<c> have</c><c> to</c><c> find</c><c> out</c><c> how</c><c> to</c><c> pop</c><c> and</c><c> how</c>
+[23:07] You have to find out how to pop and how
+[23:07] You have to find out how to pop and how to<c> push</c><c> elements</c><c> such</c><c> that</c><c> the</c><c> stack</c>
+[23:10] to push elements such that the stack
+[23:10] to push elements such that the stack maintains<c> its</c><c> state.</c>
+[23:11] maintains its state.
+[23:11] maintains its state. You<c> resolve</c><c> and</c><c> you</c><c> find</c><c> the</c><c> next</c>
+[23:14] You resolve and you find the next
+[23:14] You resolve and you find the next greater<c> elements</c><c> or</c><c> the</c><c> next</c><c> smaller</c>
+[23:16] greater elements or the next smaller
+[23:16] greater elements or the next smaller elements<c> based</c><c> upon</c><c> your</c><c> condition.</c>
+[23:18] elements based upon your condition.
+[23:18] elements based upon your condition. And<c> then</c><c> you</c><c> want</c><c> to</c><c> update</c><c> your</c><c> stack.</c>
+[23:21] And then you want to update your stack.
+[23:21] And then you want to update your stack. This<c> is</c><c> how</c><c> we're</c><c> maintaining</c><c> the</c><c> state.</c>
+[23:23] This is how we're maintaining the state.
+[23:23] This is how we're maintaining the state. And<c> this</c><c> loop</c><c> just</c><c> goes</c><c> on.</c>
+[23:25] And this loop just goes on.
+[23:25] And this loop just goes on. This<c> is</c><c> the</c><c> idea</c><c> how</c><c> monotonic</c><c> stacks</c>
+[23:27] This is the idea how monotonic stacks
+[23:27] This is the idea how monotonic stacks actually<c> work.</c>
+[23:28] actually work.
+[23:28] actually work. And<c> this</c><c> particular</c><c> concept</c><c> is</c><c> very</c><c> very</c>
+[23:31] And this particular concept is very very
+[23:31] And this particular concept is very very essential.<c> I</c><c> keep</c><c> repeating</c><c> the</c><c> fact</c>
+[23:34] essential. I keep repeating the fact
+[23:34] essential. I keep repeating the fact because<c> I</c><c> have</c><c> seen</c><c> a</c><c> lot</c><c> of</c><c> very</c><c> hard</c>
+[23:36] because I have seen a lot of very hard
+[23:36] because I have seen a lot of very hard problems,<c> but</c><c> once</c><c> you</c><c> have</c><c> figured</c><c> out,</c>
+[23:39] problems, but once you have figured out,
+[23:39] problems, but once you have figured out, "Hey,<c> this</c><c> is</c><c> the</c><c> solution."</c><c> They</c><c> become</c>
+[23:41] "Hey, this is the solution." They become
+[23:41] "Hey, this is the solution." They become really<c> really</c><c> simple</c><c> to</c><c> solve.</c>
+[23:43] really really simple to solve.
+[23:43] really really simple to solve. And<c> I</c><c> want</c><c> to</c><c> take</c><c> up</c><c> an</c><c> example</c><c> problem</c>
+[23:46] And I want to take up an example problem
+[23:46] And I want to take up an example problem which<c> I</c><c> have</c><c> found</c><c> very</c><c> hard</c><c> myself.</c>
+[23:49] which I have found very hard myself.
+[23:49] which I have found very hard myself. Just<c> reading</c><c> through</c><c> it,</c><c> I</c><c> wasn't</c><c> sure</c>
+[23:51] Just reading through it, I wasn't sure
+[23:51] Just reading through it, I wasn't sure what<c> is</c><c> happening.</c>
+[23:53] what is happening.
+[23:53] what is happening. And<c> I</c><c> will</c><c> try</c><c> to</c><c> break</c><c> it</c><c> down</c><c> as</c><c> much</c>
+[23:55] And I will try to break it down as much
+[23:55] And I will try to break it down as much as<c> possible.</c>
+[23:56] as possible.
+[23:56] as possible. But<c> remember,</c><c> the</c><c> underlying</c><c> idea</c><c> of</c><c> a</c>
+[23:58] But remember, the underlying idea of a
+[23:58] But remember, the underlying idea of a monotonic<c> stack</c><c> will</c><c> still</c><c> remain</c><c> the</c>
+[24:00] monotonic stack will still remain the
+[24:00] monotonic stack will still remain the same.<c> Let</c><c> us</c><c> see</c><c> if</c><c> you</c><c> are</c><c> able</c><c> to</c>
+[24:01] same. Let us see if you are able to
+[24:02] same. Let us see if you are able to figure<c> it</c><c> out.</c><c> The</c><c> problem</c><c> I'm</c><c> talking</c>
+[24:04] figure it out. The problem I'm talking
+[24:04] figure it out. The problem I'm talking about<c> is</c><c> called</c><c> trapping</c><c> rainwater.</c>
+[24:06] about is called trapping rainwater.
+[24:06] about is called trapping rainwater. Over<c> here,</c><c> you</c><c> are</c><c> given</c><c> a</c><c> certain</c>
+[24:08] Over here, you are given a certain
+[24:08] Over here, you are given a certain array.
+[24:09] array.
+[24:09] array. And<c> this</c><c> array</c><c> is</c><c> representing</c><c> the</c>
+[24:12] And this array is representing the
+[24:12] And this array is representing the height<c> of</c><c> each</c><c> building.</c>
+[24:14] height of each building.
+[24:14] height of each building. So,<c> building</c><c> one</c><c> has</c><c> a</c><c> height</c><c> of</c><c> zero,</c>
+[24:16] So, building one has a height of zero,
+[24:16] So, building one has a height of zero, building<c> two</c><c> has</c><c> a</c><c> height</c><c> of</c><c> one,</c><c> then</c>
+[24:18] building two has a height of one, then
+[24:18] building two has a height of one, then zero<c> again,</c><c> then</c><c> two,</c><c> then</c><c> one,</c><c> and</c><c> so</c>
+[24:20] zero again, then two, then one, and so
+[24:20] zero again, then two, then one, and so on.
+[24:21] on.
+[24:21] on. So,<c> basically,</c><c> if</c><c> you</c><c> will</c><c> try</c><c> to</c><c> map</c>
+[24:23] So, basically, if you will try to map
+[24:24] So, basically, if you will try to map all<c> of</c><c> these</c><c> heights</c><c> on</c><c> a</c><c> grid,</c>
+[24:26] all of these heights on a grid,
+[24:26] all of these heights on a grid, you<c> are</c><c> trying</c><c> to</c><c> see</c><c> a</c><c> horizontal</c>
+[24:28] you are trying to see a horizontal
+[24:28] you are trying to see a horizontal section<c> of</c><c> a</c><c> city.</c><c> So,</c><c> the</c><c> first</c>
+[24:30] section of a city. So, the first
+[24:30] section of a city. So, the first building<c> doesn't</c><c> have</c><c> any</c><c> height.</c><c> The</c>
+[24:32] building doesn't have any height. The
+[24:32] building doesn't have any height. The next<c> building</c><c> has</c><c> a</c><c> height</c><c> of</c><c> one,</c><c> then</c>
+[24:34] next building has a height of one, then
+[24:34] next building has a height of one, then again<c> zero,</c><c> then</c><c> a</c><c> height</c><c> of</c><c> two,</c><c> then</c><c> a</c>
+[24:37] again zero, then a height of two, then a
+[24:37] again zero, then a height of two, then a height<c> of</c><c> one,</c><c> then</c><c> zero,</c>
+[24:39] height of one, then zero,
+[24:39] height of one, then zero, then<c> one</c><c> again,</c><c> and</c><c> this</c><c> time</c><c> you</c><c> have</c><c> a</c>
+[24:40] then one again, and this time you have a
+[24:40] then one again, and this time you have a height<c> of</c><c> three,</c>
+[24:42] height of three,
+[24:42] height of three, then<c> two,</c>
+[24:43] then two,
+[24:43] then two, then<c> one,</c><c> then</c><c> two,</c><c> and</c><c> then</c><c> one</c><c> again.</c>
+[24:47] then one, then two, and then one again.
+[24:47] then one, then two, and then one again. So,<c> you</c><c> are</c><c> kind</c><c> of</c><c> looking</c><c> at</c><c> the</c>
+[24:49] So, you are kind of looking at the
+[24:49] So, you are kind of looking at the horizon<c> view</c><c> of</c><c> a</c><c> city,</c><c> right?</c><c> You</c><c> might</c>
+[24:51] horizon view of a city, right? You might
+[24:51] horizon view of a city, right? You might have<c> seen</c><c> this</c><c> kind</c><c> of</c><c> a</c><c> view.</c>
+[24:53] have seen this kind of a view.
+[24:53] have seen this kind of a view. Our<c> city</c><c> kind</c><c> of</c><c> looks</c><c> like</c><c> this.</c>
+[24:55] Our city kind of looks like this.
+[24:55] Our city kind of looks like this. And<c> now</c><c> what</c><c> happens?</c><c> This</c><c> is</c><c> it,</c><c> the</c>
+[24:57] And now what happens? This is it, the
+[24:58] And now what happens? This is it, the programming<c> part</c><c> begins.</c>
+[24:59] programming part begins.
+[24:59] programming part begins. You<c> have</c><c> to</c><c> treat</c><c> all</c><c> of</c><c> these</c><c> cities</c><c> or</c>
+[25:02] You have to treat all of these cities or
+[25:03] You have to treat all of these cities or towers<c> as</c><c> containers</c><c> or</c><c> walls.</c>
+[25:06] towers as containers or walls.
+[25:06] towers as containers or walls. And<c> water</c><c> just</c><c> came</c><c> down.</c>
+[25:08] And water just came down.
+[25:08] And water just came down. So,<c> basically</c><c> it</c><c> started</c><c> to</c><c> rain.</c>
+[25:10] So, basically it started to rain.
+[25:11] So, basically it started to rain. And<c> when</c><c> it</c><c> rains,</c><c> what</c><c> will</c><c> happen?</c>
+[25:13] And when it rains, what will happen?
+[25:13] And when it rains, what will happen? Water<c> will</c><c> get</c><c> filled</c><c> up</c><c> in</c><c> all</c><c> of</c><c> these</c>
+[25:15] Water will get filled up in all of these
+[25:15] Water will get filled up in all of these places,<c> right?</c>
+[25:17] places, right?
+[25:17] places, right? Notice<c> what</c><c> will</c><c> happen</c><c> at</c><c> the</c><c> very</c><c> end.</c>
+[25:19] Notice what will happen at the very end.
+[25:19] Notice what will happen at the very end. Since<c> you</c><c> do</c><c> not</c><c> have</c><c> any</c><c> wall</c><c> here,</c><c> all</c>
+[25:22] Since you do not have any wall here, all
+[25:22] Since you do not have any wall here, all of<c> this</c><c> water</c><c> will</c><c> just</c><c> flow</c><c> down,</c>
+[25:23] of this water will just flow down,
+[25:23] of this water will just flow down, correct?
+[25:24] correct?
+[25:24] correct? And<c> similarly,</c><c> check</c><c> out</c><c> this</c><c> height.</c>
+[25:27] And similarly, check out this height.
+[25:27] And similarly, check out this height. You<c> do</c><c> not</c><c> have</c><c> any</c><c> building</c><c> or</c><c> any</c><c> wall</c>
+[25:29] You do not have any building or any wall
+[25:29] You do not have any building or any wall here.<c> So,</c><c> the</c><c> water</c><c> will</c><c> simply</c><c> flow</c>
+[25:32] here. So, the water will simply flow
+[25:32] here. So, the water will simply flow out.
+[25:33] out.
+[25:33] out. You<c> have</c><c> to</c><c> remember</c><c> these</c><c> things.</c>
+[25:35] You have to remember these things.
+[25:35] You have to remember these things. What<c> about</c><c> this</c><c> particular</c><c> section?</c>
+[25:38] What about this particular section?
+[25:38] What about this particular section? You<c> will</c><c> fill</c><c> water</c><c> over</c><c> here</c><c> because</c><c> it</c>
+[25:40] You will fill water over here because it
+[25:40] You will fill water over here because it is<c> bounded</c><c> by</c><c> two</c><c> places.</c>
+[25:42] is bounded by two places.
+[25:42] is bounded by two places. But<c> you</c><c> cannot</c><c> get</c><c> any</c><c> top</c><c> because</c><c> any</c>
+[25:44] But you cannot get any top because any
+[25:44] But you cannot get any top because any water<c> that</c><c> comes</c><c> here,</c><c> it</c><c> will</c><c> just</c>
+[25:46] water that comes here, it will just
+[25:46] water that comes here, it will just start<c> to</c><c> flow</c><c> down.</c>
+[25:48] start to flow down.
+[25:48] start to flow down. For<c> this</c><c> particular</c><c> section,</c><c> you</c><c> will</c>
+[25:49] For this particular section, you will
+[25:49] For this particular section, you will have<c> a</c><c> lot</c><c> of</c><c> water</c><c> here</c><c> and</c><c> then</c><c> any</c>
+[25:51] have a lot of water here and then any
+[25:51] have a lot of water here and then any additional<c> water</c><c> will</c><c> start</c><c> to</c><c> flow</c><c> down</c>
+[25:53] additional water will start to flow down
+[25:53] additional water will start to flow down and<c> it</c><c> will</c><c> ultimately</c><c> flow</c><c> down</c><c> over</c>
+[25:55] and it will ultimately flow down over
+[25:55] and it will ultimately flow down over here.
+[25:56] here.
+[25:56] here. So,<c> after</c><c> it</c><c> has</c><c> rained,</c>
+[25:58] So, after it has rained,
+[25:58] So, after it has rained, how<c> much</c><c> water</c><c> is</c><c> trapped?</c>
+[26:00] how much water is trapped?
+[26:00] how much water is trapped? You<c> are</c><c> looking</c><c> at</c><c> this</c><c> particular</c>
+[26:02] You are looking at this particular
+[26:02] You are looking at this particular cross-sectional<c> view.</c>
+[26:04] cross-sectional view.
+[26:04] cross-sectional view. This<c> is</c><c> the</c><c> ultimate</c><c> amount</c><c> of</c><c> water</c>
+[26:06] This is the ultimate amount of water
+[26:06] This is the ultimate amount of water that<c> will</c><c> get</c><c> trapped,</c><c> correct?</c>
+[26:09] that will get trapped, correct?
+[26:09] that will get trapped, correct? Notice,<c> I</c><c> cannot</c><c> have</c><c> any</c><c> water</c><c> over</c>
+[26:11] Notice, I cannot have any water over
+[26:11] Notice, I cannot have any water over here.<c> Any</c><c> water</c><c> I</c><c> have</c><c> here,</c><c> it</c><c> will</c>
+[26:13] here. Any water I have here, it will
+[26:13] here. Any water I have here, it will start<c> to</c><c> flow</c><c> down</c><c> because</c><c> there</c><c> is</c><c> no</c>
+[26:15] start to flow down because there is no
+[26:15] start to flow down because there is no wall.
+[26:16] wall.
+[26:16] wall. So,<c> it</c><c> will</c><c> flow</c><c> down</c><c> from</c><c> here</c><c> and</c><c> then</c>
+[26:18] So, it will flow down from here and then
+[26:18] So, it will flow down from here and then from<c> here.</c>
+[26:19] from here.
+[26:19] from here. Similarly,<c> I</c><c> could</c><c> not</c><c> trap</c><c> any</c><c> water</c>
+[26:21] Similarly, I could not trap any water
+[26:21] Similarly, I could not trap any water here<c> or</c><c> here.</c><c> It</c><c> simply</c><c> flows</c><c> down.</c><c> And</c>
+[26:23] here or here. It simply flows down. And
+[26:23] here or here. It simply flows down. And same<c> is</c><c> the</c><c> condition</c><c> for</c><c> this</c><c> section</c>
+[26:26] same is the condition for this section
+[26:26] same is the condition for this section as<c> well.</c>
+[26:27] as well.
+[26:27] as well. The<c> only</c><c> water</c><c> I</c><c> have</c><c> trapped</c><c> are</c><c> these</c>
+[26:29] The only water I have trapped are these
+[26:29] The only water I have trapped are these units.
+[26:30] units.
+[26:30] units. And<c> you</c><c> have</c><c> to</c><c> tell</c><c> me,</c><c> given</c><c> this</c>
+[26:33] And you have to tell me, given this
+[26:33] And you have to tell me, given this array,
+[26:34] array,
+[26:34] array, how<c> much</c><c> water</c><c> have</c><c> I</c><c> trapped?</c>
+[26:36] how much water have I trapped?
+[26:36] how much water have I trapped? In<c> this</c><c> particular</c><c> problem,</c><c> how</c><c> much</c>
+[26:38] In this particular problem, how much
+[26:38] In this particular problem, how much water<c> did</c><c> I</c><c> trap?</c>
+[26:39] water did I trap?
+[26:39] water did I trap? I<c> trapped</c><c> a</c><c> total</c><c> of</c><c> six</c><c> units.</c><c> 1</c><c> 2</c><c> 3</c><c> 4</c>
+[26:44] I trapped a total of six units. 1 2 3 4
+[26:44] I trapped a total of six units. 1 2 3 4 5<c> and</c><c> then</c><c> 6.</c>
+[26:45] 5 and then 6.
+[26:45] 5 and then 6. So,<c> for</c><c> this</c><c> particular</c><c> test</c><c> case,</c><c> six</c>
+[26:47] So, for this particular test case, six
+[26:47] So, for this particular test case, six is<c> your</c><c> answer.</c>
+[26:49] is your answer.
+[26:49] is your answer. Now<c> the</c><c> tricky</c><c> part.</c><c> Where</c><c> do</c><c> you</c><c> even</c>
+[26:51] Now the tricky part. Where do you even
+[26:51] Now the tricky part. Where do you even begin<c> solving</c><c> this</c><c> problem?</c><c> There</c><c> are</c><c> so</c>
+[26:53] begin solving this problem? There are so
+[26:53] begin solving this problem? There are so many<c> different</c><c> ways</c><c> to</c><c> approach</c><c> it.</c>
+[26:55] many different ways to approach it.
+[26:55] many different ways to approach it. How<c> do</c><c> you</c><c> start</c><c> to</c><c> even</c><c> calculate</c><c> the</c>
+[26:57] How do you start to even calculate the
+[26:57] How do you start to even calculate the water<c> at</c><c> a</c><c> particular</c><c> place?</c>
+[27:00] water at a particular place?
+[27:00] water at a particular place? To<c> understand</c><c> it,</c><c> let</c><c> us</c><c> focus</c><c> on</c><c> the</c>
+[27:02] To understand it, let us focus on the
+[27:02] To understand it, let us focus on the very<c> basic</c><c> concept.</c>
+[27:04] very basic concept.
+[27:04] very basic concept. For<c> example,</c><c> when</c><c> I'm</c><c> looking</c><c> at</c><c> just</c>
+[27:07] For example, when I'm looking at just
+[27:07] For example, when I'm looking at just this<c> particular</c><c> section,</c>
+[27:09] this particular section,
+[27:09] this particular section, how<c> much</c><c> water</c><c> is</c><c> it</c><c> going</c><c> to</c><c> trap?</c>
+[27:11] how much water is it going to trap?
+[27:11] how much water is it going to trap? You<c> have</c><c> a</c><c> wall</c><c> on</c><c> the</c><c> left,</c><c> and</c><c> you</c>
+[27:14] You have a wall on the left, and you
+[27:14] You have a wall on the left, and you have<c> a</c><c> wall</c><c> on</c><c> the</c><c> right.</c>
+[27:16] have a wall on the right.
+[27:16] have a wall on the right. You<c> know</c><c> that</c><c> you</c><c> will</c><c> only</c><c> trap</c><c> the</c>
+[27:18] You know that you will only trap the
+[27:18] You know that you will only trap the minimum<c> height,</c><c> because</c><c> any</c><c> height</c>
+[27:21] minimum height, because any height
+[27:21] minimum height, because any height greater<c> than</c><c> this,</c><c> the</c><c> water</c><c> will</c><c> just</c>
+[27:22] greater than this, the water will just
+[27:22] greater than this, the water will just flow.
+[27:23] flow.
+[27:23] flow. This<c> is</c><c> giving</c><c> you</c><c> the</c><c> height</c><c> that</c><c> you</c>
+[27:25] This is giving you the height that you
+[27:25] This is giving you the height that you can<c> trap.</c>
+[27:27] can trap.
+[27:27] can trap. And<c> how</c><c> much</c><c> water</c><c> can</c><c> you</c><c> trap</c><c> above</c>
+[27:29] And how much water can you trap above
+[27:29] And how much water can you trap above the<c> ground</c><c> level?</c>
+[27:31] the ground level?
+[27:31] the ground level? If<c> you</c><c> are</c><c> at</c><c> ground</c><c> zero,</c>
+[27:33] If you are at ground zero,
+[27:33] If you are at ground zero, then<c> simply</c><c> high</c><c> minus</c><c> low,</c><c> and</c><c> this</c><c> is</c>
+[27:36] then simply high minus low, and this is
+[27:36] then simply high minus low, and this is the<c> water</c><c> you're</c><c> trapping.</c>
+[27:37] the water you're trapping.
+[27:37] the water you're trapping. But,<c> check</c><c> out</c><c> this</c><c> particular</c><c> unit.</c>
+[27:40] But, check out this particular unit.
+[27:40] But, check out this particular unit. You<c> see</c><c> that</c><c> you</c><c> have</c><c> a</c><c> wall</c><c> of</c><c> height</c>
+[27:42] You see that you have a wall of height
+[27:42] You see that you have a wall of height two<c> on</c><c> the</c><c> left,</c><c> and</c><c> you</c><c> have</c><c> a</c><c> wall</c><c> of</c>
+[27:45] two on the left, and you have a wall of
+[27:45] two on the left, and you have a wall of height<c> two</c><c> on</c><c> the</c><c> right.</c>
+[27:46] height two on the right.
+[27:46] height two on the right. But,<c> can</c><c> you</c><c> trap</c><c> two</c><c> units</c><c> over</c><c> here?</c>
+[27:49] But, can you trap two units over here?
+[27:49] But, can you trap two units over here? No,<c> because</c><c> this</c><c> building</c><c> already</c><c> has</c><c> a</c>
+[27:52] No, because this building already has a
+[27:52] No, because this building already has a height<c> of</c><c> one.</c>
+[27:53] height of one.
+[27:53] height of one. So,<c> how</c><c> much</c><c> water</c><c> you</c><c> can</c><c> trap?</c>
+[27:55] So, how much water you can trap?
+[27:55] So, how much water you can trap? Whatever<c> is</c><c> the</c><c> minimum</c><c> height</c><c> out</c><c> of</c>
+[27:57] Whatever is the minimum height out of
+[27:57] Whatever is the minimum height out of left<c> and</c><c> right,</c>
+[27:59] left and right,
+[27:59] left and right, minus<c> your</c><c> current</c><c> height.</c>
+[28:01] minus your current height.
+[28:01] minus your current height. Once<c> again,</c><c> check</c><c> out</c><c> this</c><c> particular</c>
+[28:03] Once again, check out this particular
+[28:03] Once again, check out this particular location.<c> Your</c><c> left</c><c> has</c><c> a</c><c> height</c><c> of</c><c> two,</c>
+[28:06] location. Your left has a height of two,
+[28:06] location. Your left has a height of two, and<c> your</c><c> maximum</c><c> height</c><c> on</c><c> the</c><c> right</c><c> is</c>
+[28:09] and your maximum height on the right is
+[28:09] and your maximum height on the right is three.
+[28:10] three.
+[28:10] three. But,<c> can</c><c> you</c><c> trap</c><c> all</c><c> of</c><c> this?</c><c> No.</c>
+[28:13] But, can you trap all of this? No.
+[28:13] But, can you trap all of this? No. You<c> have</c><c> a</c><c> left</c><c> height</c><c> of</c><c> two,</c><c> and</c><c> right</c>
+[28:14] You have a left height of two, and right
+[28:14] You have a left height of two, and right height<c> of</c><c> three.</c>
+[28:16] height of three.
+[28:16] height of three. You<c> will</c><c> only</c><c> be</c><c> able</c><c> to</c><c> trap</c><c> the</c>
+[28:17] You will only be able to trap the
+[28:17] You will only be able to trap the minimum<c> of</c><c> these.</c><c> So,</c><c> you</c><c> can</c><c> trap</c><c> a</c>
+[28:20] minimum of these. So, you can trap a
+[28:20] minimum of these. So, you can trap a maximum<c> of</c><c> two</c><c> units.</c>
+[28:22] maximum of two units.
+[28:23] maximum of two units. But,<c> you're</c><c> already</c><c> elevated</c><c> one</c><c> unit.</c>
+[28:26] But, you're already elevated one unit.
+[28:26] But, you're already elevated one unit. So,<c> for</c><c> this</c><c> particular</c><c> block,</c><c> you</c><c> can</c>
+[28:28] So, for this particular block, you can
+[28:29] So, for this particular block, you can only<c> trap</c><c> one</c><c> unit.</c>
+[28:31] only trap one unit.
+[28:31] only trap one unit. And<c> that</c><c> is</c><c> the</c><c> building</c><c> block</c><c> of</c><c> this</c>
+[28:33] And that is the building block of this
+[28:33] And that is the building block of this particular<c> question.</c>
+[28:34] particular question.
+[28:34] particular question. Instead<c> of</c><c> looking</c><c> at</c><c> areas,</c><c> you</c><c> need</c><c> to</c>
+[28:36] Instead of looking at areas, you need to
+[28:36] Instead of looking at areas, you need to look<c> at</c><c> each</c><c> of</c><c> these</c><c> individual</c><c> units,</c>
+[28:39] look at each of these individual units,
+[28:39] look at each of these individual units, and<c> try</c><c> to</c><c> determine</c><c> how</c><c> much</c><c> water</c><c> can</c>
+[28:42] and try to determine how much water can
+[28:42] and try to determine how much water can I<c> trap</c><c> in</c><c> each</c><c> of</c><c> these</c><c> individual</c>
+[28:45] I trap in each of these individual
+[28:45] I trap in each of these individual units.
+[28:46] units.
+[28:46] units. It<c> could</c><c> be</c><c> zero,</c><c> it</c><c> could</c><c> be</c><c> anything.</c>
+[28:48] It could be zero, it could be anything.
+[28:48] It could be zero, it could be anything. And<c> then</c><c> you</c><c> just</c><c> add</c><c> all</c><c> of</c><c> them.</c>
+[28:51] And then you just add all of them.
+[28:51] And then you just add all of them. So,<c> this</c><c> is</c><c> what</c><c> we</c><c> have</c><c> right</c><c> now.</c>
+[28:53] So, this is what we have right now.
+[28:53] So, this is what we have right now. We<c> are</c><c> finding</c><c> out</c><c> the</c><c> water</c><c> at</c><c> i-th</c>
+[28:55] We are finding out the water at i-th
+[28:55] We are finding out the water at i-th location.<c> And</c><c> i-th</c><c> location</c><c> is</c><c> each</c>
+[28:58] location. And i-th location is each
+[28:58] location. And i-th location is each element<c> in</c><c> my</c><c> array.</c>
+[29:00] element in my array.
+[29:00] element in my array. And<c> how</c><c> do</c><c> you</c><c> find</c><c> it?</c>
+[29:01] And how do you find it?
+[29:01] And how do you find it? You<c> find</c><c> the</c><c> minimum</c><c> of</c>
+[29:03] You find the minimum of
+[29:03] You find the minimum of maximum<c> of</c><c> left</c><c> and</c><c> maximum</c><c> of</c><c> right.</c>
+[29:06] maximum of left and maximum of right.
+[29:06] maximum of left and maximum of right. What<c> does</c><c> this</c><c> mean?</c>
+[29:07] What does this mean?
+[29:07] What does this mean? For<c> example,</c><c> when</c><c> I</c><c> am</c><c> standing</c><c> at</c><c> this</c>
+[29:10] For example, when I am standing at this
+[29:10] For example, when I am standing at this particular<c> location,</c>
+[29:11] particular location,
+[29:11] particular location, what<c> is</c><c> the</c><c> maximum</c><c> height</c><c> I</c><c> can</c><c> find</c><c> on</c>
+[29:13] what is the maximum height I can find on
+[29:13] what is the maximum height I can find on left?<c> This</c><c> is</c><c> my</c><c> maximum</c><c> height.</c>
+[29:16] left? This is my maximum height.
+[29:16] left? This is my maximum height. And<c> what</c><c> is</c><c> the</c><c> maximum</c><c> height</c><c> I</c><c> can</c>
+[29:18] And what is the maximum height I can
+[29:18] And what is the maximum height I can find<c> on</c><c> right?</c><c> This</c><c> is</c><c> a</c><c> maximum</c><c> height.</c>
+[29:20] find on right? This is a maximum height.
+[29:20] find on right? This is a maximum height. So,<c> maximum</c><c> left</c><c> is</c><c> one</c><c> and</c><c> maximum</c>
+[29:22] So, maximum left is one and maximum
+[29:22] So, maximum left is one and maximum right<c> is</c><c> two.</c>
+[29:23] right is two.
+[29:23] right is two. I<c> want</c><c> the</c><c> minimum</c><c> of</c><c> these.</c><c> This.</c>
+[29:26] I want the minimum of these. This.
+[29:26] I want the minimum of these. This. So,<c> I</c><c> get</c><c> this</c><c> and</c><c> minus</c><c> the</c><c> current</c>
+[29:28] So, I get this and minus the current
+[29:28] So, I get this and minus the current height.
+[29:29] height.
+[29:29] height. The<c> height</c><c> is</c><c> zero,</c><c> so</c><c> I</c><c> trap</c><c> one</c><c> unit</c>
+[29:31] The height is zero, so I trap one unit
+[29:31] The height is zero, so I trap one unit of<c> water</c><c> here.</c>
+[29:32] of water here.
+[29:32] of water here. Notice<c> what</c><c> happens</c><c> for</c><c> this</c><c> particular</c>
+[29:34] Notice what happens for this particular
+[29:34] Notice what happens for this particular condition.
+[29:35] condition.
+[29:35] condition. I'm<c> finding</c><c> out</c><c> the</c><c> water</c><c> at</c><c> I.</c>
+[29:37] I'm finding out the water at I.
+[29:37] I'm finding out the water at I. So,<c> what</c><c> is</c><c> the</c><c> maximum</c><c> of</c><c> left?</c>
+[29:40] So, what is the maximum of left?
+[29:40] So, what is the maximum of left? On<c> the</c><c> left,</c><c> I</c><c> don't</c><c> have</c><c> any</c><c> value</c><c> that</c>
+[29:42] On the left, I don't have any value that
+[29:42] On the left, I don't have any value that is<c> higher</c><c> than</c><c> two.</c>
+[29:44] is higher than two.
+[29:44] is higher than two. So,<c> this</c><c> becomes</c><c> zero.</c>
+[29:46] So, this becomes zero.
+[29:46] So, this becomes zero. And<c> on</c><c> the</c><c> right,</c><c> do</c><c> I</c><c> have</c><c> a</c><c> maximum</c>
+[29:48] And on the right, do I have a maximum
+[29:48] And on the right, do I have a maximum value?
+[29:49] value?
+[29:49] value? So,<c> on</c><c> the</c><c> right,</c><c> I</c><c> have</c><c> a</c><c> value</c><c> of</c>
+[29:51] So, on the right, I have a value of
+[29:51] So, on the right, I have a value of three.<c> So,</c><c> max</c><c> right</c><c> is</c><c> three,</c><c> but</c>
+[29:53] three. So, max right is three, but
+[29:53] three. So, max right is three, but minimum<c> of</c><c> these</c><c> is</c><c> zero.</c>
+[29:55] minimum of these is zero.
+[29:55] minimum of these is zero. So,<c> if</c><c> this</c><c> is</c><c> zero,</c><c> I</c><c> cannot</c><c> trap</c><c> any</c>
+[29:58] So, if this is zero, I cannot trap any
+[29:58] So, if this is zero, I cannot trap any water.
+[29:59] water.
+[29:59] water. And<c> that's</c><c> it.</c>
+[30:00] And that's it.
+[30:00] And that's it. That<c> is</c><c> what</c><c> I'm</c><c> seeing.</c><c> I'm</c><c> not</c><c> able</c><c> to</c>
+[30:02] That is what I'm seeing. I'm not able to
+[30:02] That is what I'm seeing. I'm not able to trap<c> any</c><c> water</c><c> here.</c>
+[30:04] trap any water here.
+[30:04] trap any water here. That<c> is</c><c> how</c><c> you</c><c> have</c><c> to</c><c> go</c><c> on</c><c> for</c><c> each</c>
+[30:06] That is how you have to go on for each
+[30:06] That is how you have to go on for each and<c> every</c><c> location.</c>
+[30:08] and every location.
+[30:08] and every location. But<c> where</c><c> are</c><c> stacks</c><c> coming</c><c> into</c><c> the</c>
+[30:09] But where are stacks coming into the
+[30:09] But where are stacks coming into the picture?
+[30:10] picture?
+[30:10] picture? If<c> you</c><c> have</c><c> already</c><c> noticed,</c><c> and</c><c> if</c>
+[30:12] If you have already noticed, and if
+[30:12] If you have already noticed, and if you're<c> observant</c><c> enough,</c><c> how</c><c> do</c><c> you</c><c> find</c>
+[30:14] you're observant enough, how do you find
+[30:14] you're observant enough, how do you find out<c> the</c><c> max</c><c> left</c><c> and</c><c> max</c><c> right?</c>
+[30:16] out the max left and max right?
+[30:16] out the max left and max right? What<c> are</c><c> actually</c><c> max</c><c> left</c><c> and</c><c> max</c>
+[30:18] What are actually max left and max
+[30:18] What are actually max left and max right?
+[30:19] right?
+[30:19] right? These<c> are</c><c> the</c><c> next</c><c> greater</c><c> elements</c>
+[30:21] These are the next greater elements
+[30:21] These are the next greater elements towards<c> the</c><c> left</c><c> and</c><c> next</c><c> greater</c>
+[30:23] towards the left and next greater
+[30:23] towards the left and next greater elements<c> towards</c><c> the</c><c> right.</c>
+[30:25] elements towards the right.
+[30:25] elements towards the right. So,<c> when</c><c> you're</c><c> looking</c><c> from</c><c> over</c><c> here,</c>
+[30:28] So, when you're looking from over here,
+[30:28] So, when you're looking from over here, what<c> will</c><c> you</c><c> find</c><c> out?</c><c> For</c><c> each</c>
+[30:30] what will you find out? For each
+[30:30] what will you find out? For each location,<c> you</c><c> are</c><c> finding</c><c> out</c><c> the</c><c> max</c>
+[30:32] location, you are finding out the max
+[30:33] location, you are finding out the max right.
+[30:34] right.
+[30:34] right. I<c> have</c><c> evaluated</c><c> the</c><c> max</c><c> right</c><c> for</c><c> each</c>
+[30:37] I have evaluated the max right for each
+[30:37] I have evaluated the max right for each of<c> the</c><c> indexes.</c>
+[30:38] of the indexes.
+[30:38] of the indexes. And<c> this</c><c> happened</c><c> in</c><c> order</c><c> of</c><c> n</c><c> time.</c>
+[30:41] And this happened in order of n time.
+[30:41] And this happened in order of n time. How<c> about</c><c> finding</c><c> out</c><c> the</c><c> max</c><c> left?</c>
+[30:44] How about finding out the max left?
+[30:44] How about finding out the max left? This<c> time</c><c> you</c><c> have</c><c> to</c><c> solve</c><c> the</c><c> same</c>
+[30:45] This time you have to solve the same
+[30:45] This time you have to solve the same problem,<c> but</c><c> you're</c><c> looking</c><c> at</c><c> this</c>
+[30:47] problem, but you're looking at this
+[30:47] problem, but you're looking at this particular<c> direction.</c>
+[30:48] particular direction.
+[30:48] particular direction. And<c> this</c><c> is</c><c> simply</c><c> you</c><c> want</c><c> to</c><c> iterate</c>
+[30:51] And this is simply you want to iterate
+[30:51] And this is simply you want to iterate from<c> this</c><c> direction</c><c> and</c><c> keep</c><c> a</c><c> monotonic</c>
+[30:53] from this direction and keep a monotonic
+[30:53] from this direction and keep a monotonic stack.
+[30:54] stack.
+[30:54] stack. So,<c> you</c><c> are</c><c> just</c><c> solving</c><c> the</c><c> same</c>
+[30:56] So, you are just solving the same
+[30:56] So, you are just solving the same problem<c> twice.</c><c> You're</c><c> looking</c><c> from</c><c> the</c>
+[30:58] problem twice. You're looking from the
+[30:58] problem twice. You're looking from the left<c> and</c><c> now</c><c> you're</c><c> looking</c><c> from</c><c> the</c>
+[30:59] left and now you're looking from the
+[30:59] left and now you're looking from the right.<c> So,</c><c> what</c><c> do</c><c> you</c><c> have</c><c> now?</c><c> You</c>
+[31:01] right. So, what do you have now? You
+[31:01] right. So, what do you have now? You have<c> the</c><c> max</c><c> left</c><c> for</c><c> each</c><c> of</c><c> these</c>
+[31:03] have the max left for each of these
+[31:03] have the max left for each of these indices<c> and</c><c> you</c><c> have</c><c> the</c><c> max</c><c> right</c><c> for</c>
+[31:05] indices and you have the max right for
+[31:05] indices and you have the max right for each<c> of</c><c> these</c><c> indices.</c>
+[31:07] each of these indices.
+[31:07] each of these indices. Now,<c> what</c><c> is</c><c> left?</c><c> You</c><c> just</c><c> have</c><c> to</c>
+[31:09] Now, what is left? You just have to
+[31:09] Now, what is left? You just have to apply<c> this</c><c> formula</c><c> at</c><c> each</c><c> index</c><c> and</c>
+[31:12] apply this formula at each index and
+[31:12] apply this formula at each index and find<c> out</c><c> the</c><c> total</c><c> water.</c>
+[31:14] find out the total water.
+[31:14] find out the total water. Notice<c> that</c><c> if</c><c> any</c><c> of</c><c> the</c><c> value</c><c> is</c><c> zero,</c>
+[31:17] Notice that if any of the value is zero,
+[31:17] Notice that if any of the value is zero, you<c> can</c><c> simply</c><c> discard</c><c> it</c><c> because</c><c> if</c><c> you</c>
+[31:20] you can simply discard it because if you
+[31:20] you can simply discard it because if you are<c> not</c><c> having</c><c> any</c><c> wall,</c><c> then</c><c> you</c><c> cannot</c>
+[31:22] are not having any wall, then you cannot
+[31:22] are not having any wall, then you cannot trap<c> any</c><c> water.</c>
+[31:24] trap any water.
+[31:24] trap any water. So,<c> some</c><c> of</c><c> the</c><c> indices</c><c> will</c><c> just</c><c> simply</c>
+[31:26] So, some of the indices will just simply
+[31:26] So, some of the indices will just simply rule<c> out.</c>
+[31:27] rule out.
+[31:27] rule out. Because<c> in</c><c> all</c><c> of</c><c> these,</c><c> one</c><c> of</c><c> the</c>
+[31:29] Because in all of these, one of the
+[31:29] Because in all of these, one of the element<c> is</c><c> zero.</c>
+[31:31] element is zero.
+[31:31] element is zero. And<c> how</c><c> many</c><c> are</c><c> we</c><c> remaining</c><c> with?</c>
+[31:33] And how many are we remaining with?
+[31:33] And how many are we remaining with? Notice<c> that</c><c> wherever</c><c> we</c><c> have</c><c> water,</c>
+[31:36] Notice that wherever we have water,
+[31:36] Notice that wherever we have water, we<c> have</c><c> some</c><c> value</c><c> for</c><c> left</c><c> and</c><c> right.</c>
+[31:39] we have some value for left and right.
+[31:39] we have some value for left and right. To<c> find</c><c> the</c><c> total</c><c> water,</c><c> calculate</c><c> all</c>
+[31:41] To find the total water, calculate all
+[31:41] To find the total water, calculate all of<c> these</c><c> values.</c>
+[31:43] of these values.
+[31:43] of these values. Now,<c> you</c><c> have</c><c> everything</c><c> and</c><c> I</c><c> will</c>
+[31:45] Now, you have everything and I will
+[31:45] Now, you have everything and I will leave<c> the</c><c> last</c><c> part</c><c> to</c><c> you</c><c> as</c><c> an</c>
+[31:47] leave the last part to you as an
+[31:47] leave the last part to you as an exercise.<c> You</c><c> notice</c><c> how</c><c> we</c><c> can</c><c> use</c><c> the</c>
+[31:50] exercise. You notice how we can use the
+[31:50] exercise. You notice how we can use the stack<c> data</c><c> structure</c><c> in</c><c> so</c><c> many</c>
+[31:51] stack data structure in so many
+[31:51] stack data structure in so many different<c> places,</c><c> especially</c><c> a</c><c> monotonic</c>
+[31:54] different places, especially a monotonic
+[31:54] different places, especially a monotonic stack.<c> This</c><c> way</c><c> you're</c><c> ensuring</c><c> your</c>
+[31:56] stack. This way you're ensuring your
+[31:56] stack. This way you're ensuring your stack<c> has</c><c> always</c><c> greater</c><c> elements</c><c> or</c>
+[31:58] stack has always greater elements or
+[31:58] stack has always greater elements or smaller<c> elements.</c>
+[32:00] smaller elements.
+[32:00] smaller elements. And<c> the</c><c> concept</c><c> of</c><c> a</c><c> next</c><c> greater</c>
+[32:02] And the concept of a next greater
+[32:02] And the concept of a next greater element<c> can</c><c> be</c><c> used</c><c> at</c><c> a</c><c> lot</c><c> of</c>
+[32:04] element can be used at a lot of
+[32:04] element can be used at a lot of different<c> places.</c>
+[32:05] different places.
+[32:05] different places. Just<c> tell</c><c> me</c><c> in</c><c> the</c><c> comment</c><c> section</c>
+[32:06] Just tell me in the comment section
+[32:07] Just tell me in the comment section below<c> where</c><c> all</c><c> have</c><c> you</c><c> found</c><c> this</c>
+[32:09] below where all have you found this
+[32:09] below where all have you found this particular<c> concept</c><c> being</c><c> used.</c><c> This</c><c> will</c>
+[32:12] particular concept being used. This will
+[32:12] particular concept being used. This will become<c> a</c><c> very</c><c> good</c><c> collection</c><c> and</c><c> I</c>
+[32:14] become a very good collection and I
+[32:14] become a very good collection and I would<c> also</c><c> love</c><c> to</c><c> discuss</c><c> all</c><c> of</c><c> this.</c>
+[32:16] would also love to discuss all of this.
+[32:16] would also love to discuss all of this. As<c> a</c><c> reminder,</c><c> if</c><c> you</c><c> found</c><c> this</c><c> video</c>
+[32:17] As a reminder, if you found this video
+[32:17] As a reminder, if you found this video helpful,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[32:19] helpful, please do consider subscribing
+[32:19] helpful, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[32:20] to my channel and share this video with
+[32:20] to my channel and share this video with your<c> friends.</c><c> This</c><c> really</c><c> keeps</c><c> me</c>
+[32:22] your friends. This really keeps me
+[32:22] your friends. This really keeps me motivated<c> and</c><c> I</c><c> can</c><c> make</c><c> more</c><c> such</c>
+[32:23] motivated and I can make more such
+[32:23] motivated and I can make more such videos.<c> Also,</c><c> a</c><c> huge</c><c> shout</c><c> out</c><c> to</c><c> all</c><c> of</c>
+[32:25] videos. Also, a huge shout out to all of
+[32:25] videos. Also, a huge shout out to all of the<c> members</c><c> who</c><c> support</c><c> my</c><c> channel.</c><c> You</c>
+[32:27] the members who support my channel. You
+[32:27] the members who support my channel. You guys<c> really</c><c> keep</c><c> me</c><c> going.</c><c> And</c><c> as</c><c> a</c>
+[32:29] guys really keep me going. And as a
+[32:29] guys really keep me going. And as a member,<c> you</c><c> do</c><c> get</c><c> priority</c><c> reply</c><c> to</c>
+[32:30] member, you do get priority reply to
+[32:30] member, you do get priority reply to your<c> comments</c><c> and</c><c> early</c><c> access</c><c> to</c><c> new</c>
+[32:31] your comments and early access to new
+[32:31] your comments and early access to new videos<c> as</c><c> well.</c>
+[32:33] videos as well.
+[32:33] videos as well. Also,<c> remember</c><c> you</c><c> can</c><c> now</c><c> schedule</c><c> a</c>
+[32:34] Also, remember you can now schedule a
+[32:34] Also, remember you can now schedule a one-to-one<c> session</c><c> with</c><c> me</c><c> and</c><c> we</c><c> can</c>
+[32:36] one-to-one session with me and we can
+[32:36] one-to-one session with me and we can chat<c> about</c><c> anything.</c>
+[32:37] chat about anything.
+[32:37] chat about anything. Stay<c> tuned</c><c> for</c><c> my</c><c> upcoming</c><c> video.</c><c> Until</c>
+[32:39] Stay tuned for my upcoming video. Until
+[32:39] Stay tuned for my upcoming video. Until then,<c> see</c><c> you.</c>

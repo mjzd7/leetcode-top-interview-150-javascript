@@ -1,0 +1,1230 @@
+[0:02] Binary search is something that you
+[0:02] Binary search is something that you might<c> have</c><c> learned</c><c> in</c><c> your</c><c> initial</c>
+[0:04] might have learned in your initial
+[0:04] might have learned in your initial programming<c> days.</c><c> But</c><c> you</c><c> might</c><c> be</c>
+[0:06] programming days. But you might be
+[0:06] programming days. But you might be surprised<c> to</c><c> know</c><c> that</c><c> it</c><c> involves</c><c> some</c>
+[0:09] surprised to know that it involves some
+[0:09] surprised to know that it involves some of<c> the</c><c> most</c><c> efficient</c><c> algorithms</c><c> and</c><c> it</c>
+[0:12] of the most efficient algorithms and it
+[0:12] of the most efficient algorithms and it is<c> also</c><c> used</c><c> in</c><c> a</c><c> lot</c><c> of</c><c> production</c>
+[0:14] is also used in a lot of production
+[0:14] is also used in a lot of production workloads<c> almost</c><c> every</c><c> day.</c><c> So</c><c> in</c><c> this</c>
+[0:17] workloads almost every day. So in this
+[0:17] workloads almost every day. So in this particular<c> video</c><c> we</c><c> are</c><c> going</c><c> to</c><c> explore</c>
+[0:19] particular video we are going to explore
+[0:19] particular video we are going to explore more<c> about</c><c> this</c><c> pattern.</c><c> Hello</c><c> friends,</c>
+[0:21] more about this pattern. Hello friends,
+[0:21] more about this pattern. Hello friends, welcome<c> back</c><c> to</c><c> my</c><c> channel.</c>
+[0:27] When you think about binary search, what
+[0:27] When you think about binary search, what is<c> the</c><c> first</c><c> thing</c><c> that</c><c> comes</c><c> to</c><c> your</c>
+[0:28] is the first thing that comes to your
+[0:28] is the first thing that comes to your mind?<c> It</c><c> is</c><c> not</c><c> simply</c><c> looking</c><c> through</c><c> a</c>
+[0:31] mind? It is not simply looking through a
+[0:31] mind? It is not simply looking through a sorted<c> array</c><c> and</c><c> finding</c><c> an</c><c> element.</c><c> It</c>
+[0:34] sorted array and finding an element. It
+[0:34] sorted array and finding an element. It has<c> some</c><c> of</c><c> the</c><c> most</c><c> practical</c><c> use</c>
+[0:36] has some of the most practical use
+[0:36] has some of the most practical use cases.<c> For</c><c> example,</c><c> when</c><c> I</c><c> take</c><c> a</c><c> book,</c>
+[0:39] cases. For example, when I take a book,
+[0:39] cases. For example, when I take a book, let<c> us</c><c> say</c><c> I</c><c> have</c><c> to</c><c> search</c><c> for</c><c> the</c><c> page</c>
+[0:41] let us say I have to search for the page
+[0:41] let us say I have to search for the page number<c> 78.</c><c> My</c><c> general</c><c> idea</c><c> to</c><c> find</c><c> that</c>
+[0:44] number 78. My general idea to find that
+[0:44] number 78. My general idea to find that page<c> will</c><c> be</c><c> I</c><c> will</c><c> look</c><c> at</c><c> the</c><c> middle</c>
+[0:47] page will be I will look at the middle
+[0:47] page will be I will look at the middle page<c> approximately</c><c> middle</c><c> and</c><c> then</c><c> look</c>
+[0:50] page approximately middle and then look
+[0:50] page approximately middle and then look at<c> where</c><c> I</c><c> landed.</c><c> I</c><c> landed</c><c> on</c><c> 156.</c><c> So</c><c> I</c>
+[0:55] at where I landed. I landed on 156. So I
+[0:55] at where I landed. I landed on 156. So I know<c> for</c><c> sure</c><c> that</c><c> the</c><c> page</c><c> 78</c><c> that</c><c> I'm</c>
+[0:58] know for sure that the page 78 that I'm
+[0:58] know for sure that the page 78 that I'm trying<c> to</c><c> search</c><c> will</c><c> be</c><c> in</c><c> the</c><c> first</c>
+[1:00] trying to search will be in the first
+[1:00] trying to search will be in the first half.<c> I</c><c> can</c><c> immediately</c><c> discard</c><c> the</c>
+[1:03] half. I can immediately discard the
+[1:03] half. I can immediately discard the remaining<c> half</c><c> of</c><c> the</c><c> search</c><c> space.</c><c> So</c>
+[1:05] remaining half of the search space. So
+[1:06] remaining half of the search space. So what<c> is</c><c> this</c><c> doing?</c><c> At</c><c> every</c><c> iteration</c>
+[1:09] what is this doing? At every iteration
+[1:09] what is this doing? At every iteration you<c> reduce</c><c> your</c><c> first</c><c> space</c><c> by</c><c> half</c><c> and</c>
+[1:12] you reduce your first space by half and
+[1:12] you reduce your first space by half and it<c> may</c><c> feel</c><c> that</c><c> it</c><c> is</c><c> very</c><c> small</c><c> but</c>
+[1:15] it may feel that it is very small but
+[1:15] it may feel that it is very small but when<c> you</c><c> do</c><c> it</c><c> for</c><c> a</c><c> very</c><c> large</c><c> data</c><c> set</c>
+[1:18] when you do it for a very large data set
+[1:18] when you do it for a very large data set the<c> order</c><c> of</c><c> log</c><c> and</c><c> time</c><c> complexity</c>
+[1:21] the order of log and time complexity
+[1:21] the order of log and time complexity actually<c> becomes</c><c> very</c><c> very</c><c> fast</c><c> and</c><c> that</c>
+[1:23] actually becomes very very fast and that
+[1:23] actually becomes very very fast and that is<c> why</c><c> this</c><c> divide</c><c> and</c><c> conquer</c><c> technique</c>
+[1:26] is why this divide and conquer technique
+[1:26] is why this divide and conquer technique can<c> help</c><c> you</c><c> to</c><c> solve</c><c> a</c><c> lot</c><c> of</c><c> problems.</c>
+[1:28] can help you to solve a lot of problems.
+[1:28] can help you to solve a lot of problems. So<c> let</c><c> us</c><c> start</c><c> off</c><c> with</c><c> something</c><c> very</c>
+[1:30] So let us start off with something very
+[1:30] So let us start off with something very very<c> basic.</c><c> How</c><c> do</c><c> you</c><c> actually</c><c> apply</c>
+[1:32] very basic. How do you actually apply
+[1:32] very basic. How do you actually apply the<c> binary</c><c> search?</c><c> So</c><c> let</c><c> us</c><c> say</c><c> I</c><c> am</c>
+[1:35] the binary search? So let us say I am
+[1:35] the binary search? So let us say I am given<c> a</c><c> sorted</c><c> array</c><c> and</c><c> you</c><c> have</c><c> to</c>
+[1:37] given a sorted array and you have to
+[1:37] given a sorted array and you have to search<c> for</c><c> a</c><c> number.</c><c> You</c><c> can</c><c> see</c><c> that</c><c> I</c>
+[1:39] search for a number. You can see that I
+[1:40] search for a number. You can see that I have<c> this</c><c> sorted</c><c> array</c><c> with</c><c> me.</c><c> It</c><c> is</c>
+[1:41] have this sorted array with me. It is
+[1:41] have this sorted array with me. It is sorted<c> in</c><c> an</c><c> ascending</c><c> order</c><c> and</c><c> I</c><c> have</c>
+[1:44] sorted in an ascending order and I have
+[1:44] sorted in an ascending order and I have to<c> search</c><c> for</c><c> the</c><c> number</c><c> three.</c><c> A</c><c> linear</c>
+[1:46] to search for the number three. A linear
+[1:46] to search for the number three. A linear search<c> would</c><c> mean</c><c> that</c><c> you</c><c> start</c><c> from</c>
+[1:48] search would mean that you start from
+[1:48] search would mean that you start from the<c> beginning</c><c> and</c><c> then</c><c> keep</c><c> on</c>
+[1:49] the beginning and then keep on
+[1:49] the beginning and then keep on traversing<c> the</c><c> array</c><c> until</c><c> unless</c><c> you</c>
+[1:51] traversing the array until unless you
+[1:51] traversing the array until unless you find<c> your</c><c> number.</c><c> But</c><c> with</c><c> a</c><c> binary</c>
+[1:54] find your number. But with a binary
+[1:54] find your number. But with a binary search,<c> you</c><c> can</c><c> take</c><c> advantage</c><c> of</c><c> the</c>
+[1:56] search, you can take advantage of the
+[1:56] search, you can take advantage of the fact<c> that</c><c> your</c><c> array</c><c> is</c><c> already</c><c> sorted.</c>
+[1:58] fact that your array is already sorted.
+[1:58] fact that your array is already sorted. The<c> basic</c><c> idea</c><c> for</c><c> a</c><c> binary</c><c> search</c><c> is</c>
+[2:00] The basic idea for a binary search is
+[2:00] The basic idea for a binary search is that<c> I</c><c> will</c><c> have</c><c> a</c><c> left</c><c> pointer</c><c> and</c><c> I</c>
+[2:03] that I will have a left pointer and I
+[2:03] that I will have a left pointer and I will<c> have</c><c> a</c><c> right</c><c> pointer.</c><c> Now</c><c> based</c>
+[2:06] will have a right pointer. Now based
+[2:06] will have a right pointer. Now based upon<c> these</c><c> two</c><c> indexes,</c><c> I</c><c> can</c><c> look</c><c> at</c><c> my</c>
+[2:10] upon these two indexes, I can look at my
+[2:10] upon these two indexes, I can look at my middle<c> element.</c><c> I</c><c> land</c><c> at</c><c> my</c><c> middle</c>
+[2:12] middle element. I land at my middle
+[2:12] middle element. I land at my middle element<c> and</c><c> that</c><c> is</c><c> four.</c><c> Now</c><c> how</c><c> am</c><c> I</c>
+[2:15] element and that is four. Now how am I
+[2:15] element and that is four. Now how am I taking<c> advantage</c><c> of</c><c> this?</c><c> I</c><c> have</c><c> to</c>
+[2:17] taking advantage of this? I have to
+[2:17] taking advantage of this? I have to search<c> for</c><c> the</c><c> element</c><c> three.</c><c> It</c><c> is</c><c> very</c>
+[2:19] search for the element three. It is very
+[2:19] search for the element three. It is very sure<c> that</c><c> all</c><c> of</c><c> the</c><c> elements</c><c> after</c><c> this</c>
+[2:22] sure that all of the elements after this
+[2:22] sure that all of the elements after this particular<c> element</c><c> will</c><c> be</c><c> greater.</c><c> So</c>
+[2:24] particular element will be greater. So
+[2:24] particular element will be greater. So what<c> does</c><c> that</c><c> mean?</c><c> my</c><c> result</c><c> it</c><c> won't</c>
+[2:27] what does that mean? my result it won't
+[2:28] what does that mean? my result it won't exist<c> over</c><c> here.</c><c> I</c><c> can</c><c> straight</c><c> away</c>
+[2:30] exist over here. I can straight away
+[2:30] exist over here. I can straight away discard<c> this</c><c> particular</c><c> array</c><c> but</c><c> I</c><c> am</c>
+[2:33] discard this particular array but I am
+[2:33] discard this particular array but I am now<c> left</c><c> with</c><c> an</c><c> even</c><c> smaller</c><c> array.</c><c> So</c>
+[2:35] now left with an even smaller array. So
+[2:35] now left with an even smaller array. So what<c> do</c><c> I</c><c> do</c><c> next?</c><c> I</c><c> will</c><c> update</c><c> my</c>
+[2:38] what do I do next? I will update my
+[2:38] what do I do next? I will update my right<c> pointer</c><c> and</c><c> I</c><c> am</c><c> going</c><c> to</c><c> move</c><c> it</c>
+[2:40] right pointer and I am going to move it
+[2:40] right pointer and I am going to move it at<c> this</c><c> particular</c><c> location.</c><c> Once</c><c> again</c>
+[2:43] at this particular location. Once again
+[2:43] at this particular location. Once again you<c> take</c><c> the</c><c> left</c><c> and</c><c> right</c><c> find</c><c> out</c><c> the</c>
+[2:46] you take the left and right find out the
+[2:46] you take the left and right find out the middle<c> element</c><c> and</c><c> then</c><c> again</c><c> compare</c><c> it</c>
+[2:48] middle element and then again compare it
+[2:48] middle element and then again compare it with<c> the</c><c> number</c><c> you</c><c> have</c><c> to</c><c> search.</c><c> This</c>
+[2:50] with the number you have to search. This
+[2:50] with the number you have to search. This time<c> your</c><c> number</c><c> is</c><c> higher.</c><c> So</c><c> what</c><c> had</c>
+[2:52] time your number is higher. So what had
+[2:52] time your number is higher. So what had we<c> done</c><c> in</c><c> the</c><c> first</c><c> iteration?</c><c> In</c><c> the</c>
+[2:54] we done in the first iteration? In the
+[2:54] we done in the first iteration? In the first<c> iteration,</c><c> we</c><c> got</c><c> rid</c><c> of</c><c> some</c><c> part</c>
+[2:57] first iteration, we got rid of some part
+[2:57] first iteration, we got rid of some part of<c> the</c><c> array.</c><c> In</c><c> the</c><c> second</c><c> iteration,</c><c> I</c>
+[3:00] of the array. In the second iteration, I
+[3:00] of the array. In the second iteration, I can<c> get</c><c> rid</c><c> of</c><c> some</c><c> more</c><c> additional</c>
+[3:02] can get rid of some more additional
+[3:02] can get rid of some more additional array.<c> So</c><c> now</c><c> what</c><c> will</c><c> happen</c><c> is</c><c> my</c>
+[3:04] array. So now what will happen is my
+[3:04] array. So now what will happen is my sample<c> space</c><c> gets</c><c> even</c><c> more</c><c> smaller.</c><c> You</c>
+[3:07] sample space gets even more smaller. You
+[3:07] sample space gets even more smaller. You see<c> how</c><c> in</c><c> just</c><c> two</c><c> iterations,</c><c> I</c><c> am</c><c> now</c>
+[3:10] see how in just two iterations, I am now
+[3:10] see how in just two iterations, I am now looking<c> at</c><c> such</c><c> a</c><c> small</c><c> space.</c><c> That</c><c> is</c>
+[3:13] looking at such a small space. That is
+[3:13] looking at such a small space. That is the<c> power</c><c> of</c><c> binary</c><c> search.</c><c> And</c><c> that</c><c> is</c>
+[3:15] the power of binary search. And that is
+[3:16] the power of binary search. And that is how<c> you</c><c> can</c><c> quickly</c><c> look</c><c> up</c><c> elements</c><c> in</c>
+[3:17] how you can quickly look up elements in
+[3:18] how you can quickly look up elements in a<c> sorted</c><c> array.</c><c> So</c><c> that</c><c> is</c><c> the</c><c> very</c>
+[3:20] a sorted array. So that is the very
+[3:20] a sorted array. So that is the very basic<c> idea</c><c> upon</c><c> which</c><c> this</c><c> pattern</c><c> is</c>
+[3:22] basic idea upon which this pattern is
+[3:22] basic idea upon which this pattern is built.<c> We</c><c> are</c><c> looking</c><c> at</c><c> sorted</c><c> numbers,</c>
+[3:26] built. We are looking at sorted numbers,
+[3:26] built. We are looking at sorted numbers, sorted<c> sequences</c><c> and</c><c> then</c><c> we</c><c> divide</c><c> and</c>
+[3:29] sorted sequences and then we divide and
+[3:29] sorted sequences and then we divide and conquer<c> until</c><c> we</c><c> get</c><c> the</c><c> solution.</c>
+[3:31] conquer until we get the solution.
+[3:31] conquer until we get the solution. Similarly,<c> you</c><c> can</c><c> now</c><c> extend</c><c> this</c>
+[3:33] Similarly, you can now extend this
+[3:33] Similarly, you can now extend this pattern.<c> For</c><c> example,</c><c> take</c><c> a</c><c> look</c><c> at</c>
+[3:35] pattern. For example, take a look at
+[3:35] pattern. For example, take a look at this<c> particular</c><c> question.</c><c> Search</c><c> insert</c>
+[3:37] this particular question. Search insert
+[3:37] this particular question. Search insert position.<c> What</c><c> you</c><c> have</c><c> to</c><c> do</c><c> is</c><c> you</c><c> are</c>
+[3:40] position. What you have to do is you are
+[3:40] position. What you have to do is you are given<c> a</c><c> certain</c><c> array</c><c> and</c><c> you</c><c> have</c><c> to</c>
+[3:43] given a certain array and you have to
+[3:43] given a certain array and you have to tell<c> me</c><c> where</c><c> can</c><c> I</c><c> insert</c><c> the</c><c> number</c><c> 15</c>
+[3:46] tell me where can I insert the number 15
+[3:46] tell me where can I insert the number 15 such<c> that</c><c> this</c><c> array</c><c> remains</c><c> sorted.</c><c> How</c>
+[3:49] such that this array remains sorted. How
+[3:49] such that this array remains sorted. How would<c> you</c><c> approach</c><c> it</c><c> with</c><c> a</c><c> linear</c>
+[3:51] would you approach it with a linear
+[3:51] would you approach it with a linear method?<c> you</c><c> will</c><c> start</c><c> to</c><c> navigate</c><c> your</c>
+[3:53] method? you will start to navigate your
+[3:53] method? you will start to navigate your entire<c> array</c><c> and</c><c> you</c><c> will</c><c> keep</c><c> on</c><c> going</c>
+[3:56] entire array and you will keep on going
+[3:56] entire array and you will keep on going ahead<c> until</c><c> you</c><c> reach</c><c> a</c><c> number</c><c> that</c><c> is</c>
+[3:58] ahead until you reach a number that is
+[3:58] ahead until you reach a number that is bigger<c> than</c><c> 15.</c><c> It</c><c> simply</c><c> means</c><c> that</c><c> you</c>
+[4:01] bigger than 15. It simply means that you
+[4:01] bigger than 15. It simply means that you will<c> have</c><c> to</c><c> insert</c><c> 15</c><c> at</c><c> this</c>
+[4:03] will have to insert 15 at this
+[4:03] will have to insert 15 at this particular<c> position.</c><c> So</c><c> you</c><c> return</c><c> this</c>
+[4:05] particular position. So you return this
+[4:05] particular position. So you return this position<c> as</c><c> your</c><c> answer.</c><c> This</c><c> is</c><c> the</c>
+[4:07] position as your answer. This is the
+[4:07] position as your answer. This is the method,<c> right?</c><c> How</c><c> can</c><c> binary</c><c> search</c>
+[4:09] method, right? How can binary search
+[4:10] method, right? How can binary search help<c> you?</c><c> Once</c><c> again,</c><c> what</c><c> I'm</c><c> going</c><c> to</c>
+[4:11] help you? Once again, what I'm going to
+[4:11] help you? Once again, what I'm going to do<c> is</c><c> I</c><c> will</c><c> take</c><c> up</c><c> two</c><c> pointers</c><c> left</c>
+[4:13] do is I will take up two pointers left
+[4:14] do is I will take up two pointers left and<c> right.</c><c> What</c><c> is</c><c> the</c><c> middle</c><c> element?</c>
+[4:16] and right. What is the middle element?
+[4:16] and right. What is the middle element? The<c> middle</c><c> element</c><c> is</c><c> four.</c><c> So</c><c> in</c><c> just</c>
+[4:19] The middle element is four. So in just
+[4:19] The middle element is four. So in just one<c> instant</c><c> I</c><c> know</c><c> that</c><c> this</c><c> number</c><c> that</c>
+[4:22] one instant I know that this number that
+[4:22] one instant I know that this number that I'm<c> inserting</c><c> it</c><c> will</c><c> never</c><c> be</c><c> inserted</c>
+[4:25] I'm inserting it will never be inserted
+[4:25] I'm inserting it will never be inserted at<c> the</c><c> left</c><c> of</c><c> this</c><c> middle</c><c> element.</c><c> So</c><c> I</c>
+[4:28] at the left of this middle element. So I
+[4:28] at the left of this middle element. So I can<c> straight</c><c> away</c><c> discard</c><c> this</c><c> entire</c>
+[4:30] can straight away discard this entire
+[4:30] can straight away discard this entire space.<c> Right?</c><c> I</c><c> am</c><c> only</c><c> left</c><c> with</c><c> this</c>
+[4:33] space. Right? I am only left with this
+[4:33] space. Right? I am only left with this smaller<c> space</c><c> now.</c><c> So</c><c> what</c><c> I</c><c> will</c><c> do</c><c> is</c>
+[4:35] smaller space now. So what I will do is
+[4:35] smaller space now. So what I will do is I<c> will</c><c> update</c><c> my</c><c> left</c><c> pointer</c><c> over</c><c> here.</c>
+[4:38] I will update my left pointer over here.
+[4:38] I will update my left pointer over here. What<c> do</c><c> you</c><c> do</c><c> in</c><c> the</c><c> next</c><c> iteration?</c>
+[4:39] What do you do in the next iteration?
+[4:39] What do you do in the next iteration? Again<c> you</c><c> will</c><c> apply</c><c> the</c><c> binary</c><c> search</c>
+[4:41] Again you will apply the binary search
+[4:41] Again you will apply the binary search and<c> you</c><c> will</c><c> land</c><c> at</c><c> a</c><c> middle</c><c> element.</c>
+[4:44] and you will land at a middle element.
+[4:44] and you will land at a middle element. So<c> what</c><c> do</c><c> we</c><c> know</c><c> now?</c><c> We</c><c> know</c><c> that</c><c> I</c>
+[4:47] So what do we know now? We know that I
+[4:47] So what do we know now? We know that I will<c> not</c><c> find</c><c> my</c><c> result</c><c> even</c><c> here.</c><c> So</c>
+[4:50] will not find my result even here. So
+[4:50] will not find my result even here. So what<c> am</c><c> I</c><c> doing</c><c> over</c><c> here?</c><c> At</c><c> each</c><c> step</c>
+[4:53] what am I doing over here? At each step
+[4:53] what am I doing over here? At each step I'm<c> reducing</c><c> my</c><c> sample</c><c> space.</c><c> And</c><c> now</c><c> I</c>
+[4:56] I'm reducing my sample space. And now I
+[4:56] I'm reducing my sample space. And now I can<c> simply</c><c> say</c><c> that</c><c> okay</c><c> after</c><c> this</c>
+[4:58] can simply say that okay after this
+[4:58] can simply say that okay after this particular<c> position</c><c> I</c><c> will</c><c> want</c><c> to</c>
+[5:00] particular position I will want to
+[5:00] particular position I will want to insert<c> my</c><c> element</c><c> because</c><c> I</c><c> have</c><c> removed</c>
+[5:04] insert my element because I have removed
+[5:04] insert my element because I have removed this<c> half</c><c> of</c><c> the</c><c> array</c><c> also.</c><c> My</c><c> pointers</c>
+[5:07] this half of the array also. My pointers
+[5:07] this half of the array also. My pointers have<c> now</c><c> moved.</c><c> Look</c><c> at</c><c> left</c><c> and</c><c> right.</c>
+[5:09] have now moved. Look at left and right.
+[5:10] have now moved. Look at left and right. Right<c> is</c><c> at</c><c> 11</c><c> and</c><c> I</c><c> know</c><c> that</c><c> all</c><c> of</c>
+[5:12] Right is at 11 and I know that all of
+[5:12] Right is at 11 and I know that all of these<c> elements</c><c> are</c><c> greater</c><c> than</c><c> 15.</c><c> So</c>
+[5:14] these elements are greater than 15. So
+[5:14] these elements are greater than 15. So where<c> will</c><c> it</c><c> go?</c><c> It</c><c> will</c><c> definitely</c><c> go</c>
+[5:16] where will it go? It will definitely go
+[5:16] where will it go? It will definitely go between<c> 11</c><c> and</c><c> the</c><c> remaining</c><c> elements.</c>
+[5:19] between 11 and the remaining elements.
+[5:19] between 11 and the remaining elements. So<c> that</c><c> is</c><c> your</c><c> answer.</c><c> Once</c><c> again,</c>
+[5:22] So that is your answer. Once again,
+[5:22] So that is your answer. Once again, binary<c> search</c><c> help</c><c> you</c><c> to</c><c> quickly</c><c> get</c><c> to</c>
+[5:24] binary search help you to quickly get to
+[5:24] binary search help you to quickly get to the<c> solution.</c><c> You</c><c> might</c><c> have</c><c> noticed</c>
+[5:27] the solution. You might have noticed
+[5:27] the solution. You might have noticed that<c> in</c><c> both</c><c> these</c><c> examples,</c><c> my</c><c> array</c>
+[5:29] that in both these examples, my array
+[5:29] that in both these examples, my array was<c> sorted</c><c> in</c><c> an</c><c> ascending</c><c> order</c><c> from</c>
+[5:31] was sorted in an ascending order from
+[5:32] was sorted in an ascending order from beginning<c> all</c><c> the</c><c> way</c><c> towards</c><c> the</c><c> end.</c>
+[5:34] beginning all the way towards the end.
+[5:34] beginning all the way towards the end. There<c> are</c><c> also</c><c> different</c><c> questions</c>
+[5:35] There are also different questions
+[5:35] There are also different questions possible<c> where</c><c> an</c><c> array</c><c> might</c><c> be</c><c> sorted</c>
+[5:39] possible where an array might be sorted
+[5:39] possible where an array might be sorted but<c> it</c><c> is</c><c> rotated</c><c> also.</c><c> What</c><c> does</c><c> that</c>
+[5:41] but it is rotated also. What does that
+[5:41] but it is rotated also. What does that mean?<c> For</c><c> example,</c><c> I</c><c> have</c><c> this</c>
+[5:43] mean? For example, I have this
+[5:43] mean? For example, I have this particular<c> problem.</c><c> You</c><c> have</c><c> to</c><c> search</c>
+[5:45] particular problem. You have to search
+[5:45] particular problem. You have to search for<c> a</c><c> number</c><c> in</c><c> a</c><c> rotated</c><c> sorted</c><c> array.</c>
+[5:48] for a number in a rotated sorted array.
+[5:48] for a number in a rotated sorted array. So<c> look</c><c> at</c><c> this</c><c> particular</c><c> array.</c><c> It</c><c> is</c>
+[5:51] So look at this particular array. It is
+[5:51] So look at this particular array. It is sorted<c> but</c><c> rotated</c><c> also.</c><c> Because</c><c> if</c><c> you</c>
+[5:54] sorted but rotated also. Because if you
+[5:54] sorted but rotated also. Because if you start<c> from</c><c> minus12,</c><c> all</c><c> of</c><c> these</c><c> numbers</c>
+[5:57] start from minus12, all of these numbers
+[5:57] start from minus12, all of these numbers are<c> in</c><c> an</c><c> ascending</c><c> order.</c><c> And</c><c> now</c><c> it</c><c> is</c>
+[6:00] are in an ascending order. And now it is
+[6:00] are in an ascending order. And now it is rotated<c> to</c><c> find</c><c> other</c><c> numbers</c><c> in</c><c> an</c>
+[6:03] rotated to find other numbers in an
+[6:03] rotated to find other numbers in an ascending<c> order</c><c> also</c><c> 11</c><c> and</c><c> 20.</c><c> So</c><c> the</c>
+[6:06] ascending order also 11 and 20. So the
+[6:06] ascending order also 11 and 20. So the array<c> is</c><c> sorted.</c><c> Can</c><c> you</c><c> leverage</c><c> the</c>
+[6:09] array is sorted. Can you leverage the
+[6:09] array is sorted. Can you leverage the binary<c> search?</c><c> Yes,</c><c> but</c><c> you</c><c> might</c><c> want</c>
+[6:13] binary search? Yes, but you might want
+[6:13] binary search? Yes, but you might want to<c> have</c><c> some</c><c> additional</c><c> checks</c><c> also.</c><c> For</c>
+[6:16] to have some additional checks also. For
+[6:16] to have some additional checks also. For example,<c> if</c><c> you</c><c> try</c><c> to</c><c> apply</c><c> binary</c>
+[6:18] example, if you try to apply binary
+[6:18] example, if you try to apply binary search<c> in</c><c> the</c><c> most</c><c> conventional</c><c> way,</c><c> you</c>
+[6:20] search in the most conventional way, you
+[6:20] search in the most conventional way, you have<c> a</c><c> left</c><c> pointer</c><c> and</c><c> a</c><c> right</c><c> pointer.</c>
+[6:23] have a left pointer and a right pointer.
+[6:23] have a left pointer and a right pointer. What<c> will</c><c> happen?</c><c> You</c><c> get</c><c> the</c><c> middle</c>
+[6:25] What will happen? You get the middle
+[6:25] What will happen? You get the middle element.<c> Let</c><c> us</c><c> say</c><c> you</c><c> will</c><c> have</c><c> your</c>
+[6:28] element. Let us say you will have your
+[6:28] element. Let us say you will have your mid<c> somewhere</c><c> over</c><c> here.</c><c> Correct?</c><c> Now,</c>
+[6:31] mid somewhere over here. Correct? Now,
+[6:31] mid somewhere over here. Correct? Now, as<c> soon</c><c> as</c><c> you</c><c> find</c><c> the</c><c> mid,</c><c> notice</c><c> what</c>
+[6:34] as soon as you find the mid, notice what
+[6:34] as soon as you find the mid, notice what will<c> happen.</c><c> one</c><c> half</c><c> of</c><c> the</c><c> array</c><c> will</c>
+[6:37] will happen. one half of the array will
+[6:37] will happen. one half of the array will always<c> be</c><c> sorted</c><c> and</c><c> the</c><c> other</c><c> half</c><c> of</c>
+[6:40] always be sorted and the other half of
+[6:40] always be sorted and the other half of the<c> array</c><c> will</c><c> again</c><c> be</c><c> a</c><c> rotated</c><c> sorted</c>
+[6:43] the array will again be a rotated sorted
+[6:43] the array will again be a rotated sorted array.<c> And</c><c> how</c><c> can</c><c> you</c><c> check</c><c> that?</c><c> Just</c>
+[6:46] array. And how can you check that? Just
+[6:46] array. And how can you check that? Just look<c> at</c><c> the</c><c> first</c><c> element</c><c> and</c><c> the</c><c> last</c>
+[6:48] look at the first element and the last
+[6:48] look at the first element and the last element.<c> If</c><c> the</c><c> first</c><c> element</c><c> is</c><c> smaller</c>
+[6:51] element. If the first element is smaller
+[6:51] element. If the first element is smaller than<c> the</c><c> last</c><c> element,</c><c> it</c><c> means</c><c> that</c>
+[6:53] than the last element, it means that
+[6:53] than the last element, it means that this<c> array</c><c> is</c><c> completely</c><c> sorted.</c>
+[6:55] this array is completely sorted.
+[6:55] this array is completely sorted. However,<c> if</c><c> the</c><c> first</c><c> element</c><c> is</c><c> larger</c>
+[6:58] However, if the first element is larger
+[6:58] However, if the first element is larger than<c> the</c><c> last</c><c> element,</c><c> it</c><c> means</c><c> that</c>
+[7:01] than the last element, it means that
+[7:01] than the last element, it means that this<c> array</c><c> is</c><c> again</c><c> a</c><c> rotated</c><c> sorted</c>
+[7:03] this array is again a rotated sorted
+[7:03] this array is again a rotated sorted array.<c> So</c><c> you</c><c> can</c><c> find</c><c> a</c><c> problem</c><c> within</c>
+[7:06] array. So you can find a problem within
+[7:06] array. So you can find a problem within a<c> sub</c><c> problem.</c><c> Right?</c><c> If</c><c> you</c><c> also</c><c> look</c>
+[7:09] a sub problem. Right? If you also look
+[7:09] a sub problem. Right? If you also look back<c> at</c><c> the</c><c> original</c><c> problem,</c><c> the</c><c> first</c>
+[7:11] back at the original problem, the first
+[7:11] back at the original problem, the first element<c> is</c><c> greater</c><c> than</c><c> the</c><c> last</c>
+[7:13] element is greater than the last
+[7:13] element is greater than the last element.<c> That</c><c> is</c><c> why</c><c> this</c><c> array</c><c> was</c>
+[7:16] element. That is why this array was
+[7:16] element. That is why this array was rotated<c> and</c><c> sorted.</c><c> So</c><c> what</c><c> does</c><c> this</c>
+[7:19] rotated and sorted. So what does this
+[7:19] rotated and sorted. So what does this land<c> up</c><c> to?</c><c> I</c><c> can</c><c> say</c><c> that</c><c> I</c><c> will</c><c> need</c>
+[7:22] land up to? I can say that I will need
+[7:22] land up to? I can say that I will need to<c> find</c><c> my</c><c> number</c><c> within</c><c> this</c><c> particular</c>
+[7:25] to find my number within this particular
+[7:25] to find my number within this particular array<c> because</c><c> I</c><c> have</c><c> to</c><c> look</c><c> for</c><c> three</c>
+[7:28] array because I have to look for three
+[7:28] array because I have to look for three and<c> three</c><c> will</c><c> lie</c><c> somewhere</c><c> between</c><c> 1</c>
+[7:30] and three will lie somewhere between 1
+[7:30] and three will lie somewhere between 1 and<c> 8.</c><c> So</c><c> what</c><c> can</c><c> I</c><c> do</c><c> immediately?</c><c> I</c>
+[7:33] and 8. So what can I do immediately? I
+[7:34] and 8. So what can I do immediately? I can<c> discard</c><c> this</c><c> particular</c><c> array</c><c> and</c><c> I</c>
+[7:36] can discard this particular array and I
+[7:36] can discard this particular array and I can<c> safely</c><c> apply</c><c> my</c><c> binary</c><c> search</c>
+[7:38] can safely apply my binary search
+[7:38] can safely apply my binary search technique<c> as</c><c> usual</c><c> in</c><c> this</c><c> part</c><c> of</c><c> the</c>
+[7:41] technique as usual in this part of the
+[7:41] technique as usual in this part of the array.<c> That's</c><c> it.</c><c> Binary</c><c> search</c><c> can</c><c> help</c>
+[7:43] array. That's it. Binary search can help
+[7:43] array. That's it. Binary search can help me<c> again.</c><c> But</c><c> what</c><c> happened</c><c> if</c><c> I</c><c> would</c>
+[7:47] me again. But what happened if I would
+[7:47] me again. But what happened if I would be<c> looking</c><c> for</c><c> a</c><c> number</c><c> let</c><c> us</c><c> say</c><c> 20</c>
+[7:49] be looking for a number let us say 20
+[7:50] be looking for a number let us say 20 over<c> here.</c><c> I</c><c> have</c><c> determined</c><c> that</c><c> okay</c>
+[7:52] over here. I have determined that okay
+[7:52] over here. I have determined that okay this<c> part</c><c> of</c><c> the</c><c> array</c><c> is</c><c> sorted.</c><c> But</c>
+[7:55] this part of the array is sorted. But
+[7:55] this part of the array is sorted. But will<c> you</c><c> be</c><c> able</c><c> to</c><c> find</c><c> a</c><c> 20</c><c> in</c><c> here?</c>
+[7:57] will you be able to find a 20 in here?
+[7:57] will you be able to find a 20 in here? No.<c> Because</c><c> the</c><c> largest</c><c> number</c><c> is</c><c> 8</c>
+[7:59] No. Because the largest number is 8
+[7:59] No. Because the largest number is 8 itself.<c> So</c><c> what</c><c> will</c><c> happen</c><c> now?</c><c> You</c><c> are</c>
+[8:02] itself. So what will happen now? You are
+[8:02] itself. So what will happen now? You are going<c> to</c><c> remove</c><c> this</c><c> entire</c><c> search</c><c> space</c>
+[8:05] going to remove this entire search space
+[8:05] going to remove this entire search space and<c> you</c><c> are</c><c> left</c><c> with</c><c> this</c><c> particular</c>
+[8:07] and you are left with this particular
+[8:07] and you are left with this particular array.<c> You</c><c> will</c><c> again</c><c> take</c><c> your</c><c> left</c>
+[8:09] array. You will again take your left
+[8:10] array. You will again take your left pointer<c> and</c><c> the</c><c> right</c><c> pointer.</c><c> And</c><c> now</c>
+[8:12] pointer and the right pointer. And now
+[8:12] pointer and the right pointer. And now once<c> again</c><c> you</c><c> will</c><c> try</c><c> to</c><c> partition</c>
+[8:14] once again you will try to partition
+[8:14] once again you will try to partition your<c> array.</c><c> As</c><c> soon</c><c> as</c><c> you</c><c> partition</c><c> it,</c>
+[8:17] your array. As soon as you partition it,
+[8:17] your array. As soon as you partition it, once<c> again</c><c> you</c><c> will</c><c> be</c><c> left</c><c> with</c><c> one</c>
+[8:19] once again you will be left with one
+[8:19] once again you will be left with one half<c> of</c><c> the</c><c> array</c><c> that</c><c> is</c><c> sorted</c><c> and</c><c> one</c>
+[8:22] half of the array that is sorted and one
+[8:22] half of the array that is sorted and one half<c> of</c><c> the</c><c> array</c><c> that</c><c> might</c><c> be</c><c> rotated</c>
+[8:24] half of the array that might be rotated
+[8:24] half of the array that might be rotated and<c> sorted.</c><c> So</c><c> once</c><c> again</c><c> it</c><c> is</c><c> a</c>
+[8:27] and sorted. So once again it is a
+[8:27] and sorted. So once again it is a repeated<c> pattern</c><c> and</c><c> you</c><c> can</c><c> use</c><c> the</c>
+[8:29] repeated pattern and you can use the
+[8:29] repeated pattern and you can use the same<c> technique</c><c> to</c><c> search</c><c> for</c><c> this</c><c> number</c>
+[8:32] same technique to search for this number
+[8:32] same technique to search for this number in<c> the</c><c> remaining</c><c> halves</c><c> as</c><c> well.</c><c> So</c><c> once</c>
+[8:35] in the remaining halves as well. So once
+[8:35] in the remaining halves as well. So once again<c> applying</c><c> binary</c><c> search</c><c> two</c><c> times</c>
+[8:38] again applying binary search two times
+[8:38] again applying binary search two times helped<c> you</c><c> just</c><c> with</c><c> a</c><c> little</c><c> bit</c><c> of</c>
+[8:39] helped you just with a little bit of
+[8:39] helped you just with a little bit of slight<c> logic.</c><c> Now</c><c> when</c><c> you</c><c> think</c><c> about</c>
+[8:42] slight logic. Now when you think about
+[8:42] slight logic. Now when you think about it<c> there</c><c> is</c><c> a</c><c> lot</c><c> of</c><c> things</c><c> that</c><c> go</c>
+[8:44] it there is a lot of things that go
+[8:44] it there is a lot of things that go behind<c> a</c><c> binary</c><c> search</c><c> framework.</c><c> The</c>
+[8:46] behind a binary search framework. The
+[8:46] behind a binary search framework. The binary<c> search</c><c> algorithm</c><c> is</c><c> just</c><c> kind</c><c> of</c>
+[8:49] binary search algorithm is just kind of
+[8:49] binary search algorithm is just kind of a<c> tip</c><c> of</c><c> the</c><c> iceberg.</c><c> You</c><c> are</c><c> all</c>
+[8:51] a tip of the iceberg. You are all
+[8:51] a tip of the iceberg. You are all knowing<c> the</c><c> common</c><c> algorithm.</c><c> Take</c><c> a</c>
+[8:53] knowing the common algorithm. Take a
+[8:53] knowing the common algorithm. Take a left<c> pointer.</c><c> Take</c><c> a</c><c> right</c><c> pointer</c>
+[8:55] left pointer. Take a right pointer
+[8:55] left pointer. Take a right pointer divide<c> by</c><c> two</c><c> get</c><c> the</c><c> mid</c><c> position</c><c> and</c>
+[8:57] divide by two get the mid position and
+[8:57] divide by two get the mid position and then<c> proceed</c><c> ahead.</c><c> That</c><c> is</c><c> just</c><c> the</c>
+[8:59] then proceed ahead. That is just the
+[8:59] then proceed ahead. That is just the algorithm.<c> But</c><c> underneath</c><c> a</c><c> lot</c><c> of</c><c> other</c>
+[9:02] algorithm. But underneath a lot of other
+[9:02] algorithm. But underneath a lot of other things<c> are</c><c> happening</c><c> at</c><c> each</c><c> instance.</c>
+[9:05] things are happening at each instance.
+[9:05] things are happening at each instance. You<c> just</c><c> half</c><c> the</c><c> search</c><c> space</c><c> that</c><c> will</c>
+[9:08] You just half the search space that will
+[9:08] You just half the search space that will greatly<c> help</c><c> you</c><c> with</c><c> your</c><c> very</c><c> huge</c>
+[9:10] greatly help you with your very huge
+[9:10] greatly help you with your very huge data<c> sets</c><c> and</c><c> that</c><c> is</c><c> why</c><c> you</c><c> have</c>
+[9:12] data sets and that is why you have
+[9:12] data sets and that is why you have logarithmic<c> time</c><c> complexity.</c><c> That</c><c> is</c><c> the</c>
+[9:15] logarithmic time complexity. That is the
+[9:15] logarithmic time complexity. That is the best<c> time</c><c> complexity</c><c> you</c><c> can</c><c> practically</c>
+[9:17] best time complexity you can practically
+[9:17] best time complexity you can practically have.<c> Along</c><c> with</c><c> it,</c><c> you</c><c> also</c><c> have</c>
+[9:20] have. Along with it, you also have
+[9:20] have. Along with it, you also have adaptive<c> problem</c><c> solving</c><c> because</c><c> based</c>
+[9:23] adaptive problem solving because based
+[9:23] adaptive problem solving because based upon<c> certain</c><c> conditions,</c><c> you</c><c> can</c><c> still</c>
+[9:25] upon certain conditions, you can still
+[9:25] upon certain conditions, you can still apply<c> the</c><c> binary</c><c> search</c><c> technique</c><c> and</c><c> we</c>
+[9:28] apply the binary search technique and we
+[9:28] apply the binary search technique and we are<c> going</c><c> to</c><c> see</c><c> more</c><c> of</c><c> this</c><c> in</c><c> the</c>
+[9:30] are going to see more of this in the
+[9:30] are going to see more of this in the upcoming<c> problems</c><c> that</c><c> I</c><c> have</c><c> to</c><c> discuss</c>
+[9:31] upcoming problems that I have to discuss
+[9:32] upcoming problems that I have to discuss with<c> you.</c><c> The</c><c> last</c><c> part</c><c> is</c><c> really</c><c> very</c>
+[9:34] with you. The last part is really very
+[9:34] with you. The last part is really very very<c> interesting.</c><c> Searching</c><c> for</c><c> answers.</c>
+[9:36] very interesting. Searching for answers.
+[9:36] very interesting. Searching for answers. This<c> is</c><c> the</c><c> time</c><c> when</c><c> we</c><c> apply</c><c> binary</c>
+[9:39] This is the time when we apply binary
+[9:39] This is the time when we apply binary search<c> in</c><c> answers</c><c> itself.</c><c> But</c><c> let</c><c> us</c>
+[9:41] search in answers itself. But let us
+[9:41] search in answers itself. But let us wait<c> before</c><c> getting</c><c> to</c><c> it.</c><c> The</c><c> next</c><c> type</c>
+[9:44] wait before getting to it. The next type
+[9:44] wait before getting to it. The next type of<c> problem</c><c> that</c><c> I</c><c> want</c><c> to</c><c> discuss</c><c> is</c>
+[9:46] of problem that I want to discuss is
+[9:46] of problem that I want to discuss is finding<c> the</c><c> first</c><c> and</c><c> the</c><c> last</c><c> position</c>
+[9:48] finding the first and the last position
+[9:48] finding the first and the last position in<c> a</c><c> certain</c><c> array</c><c> over</c><c> here.</c><c> If</c><c> you</c>
+[9:51] in a certain array over here. If you
+[9:51] in a certain array over here. If you notice<c> I</c><c> have</c><c> this</c><c> sorted</c><c> array</c>
+[9:53] notice I have this sorted array
+[9:53] notice I have this sorted array available<c> and</c><c> it</c><c> straight</c><c> away</c><c> means</c><c> you</c>
+[9:55] available and it straight away means you
+[9:55] available and it straight away means you can<c> try</c><c> to</c><c> apply</c><c> the</c><c> binary</c><c> search</c>
+[9:57] can try to apply the binary search
+[9:57] can try to apply the binary search algorithm.<c> You</c><c> see</c><c> that</c><c> all</c><c> of</c><c> this</c>
+[9:59] algorithm. You see that all of this
+[9:59] algorithm. You see that all of this array<c> is</c><c> sorted</c><c> but</c><c> this</c><c> number</c><c> three</c><c> is</c>
+[10:02] array is sorted but this number three is
+[10:02] array is sorted but this number three is repeated<c> several</c><c> times.</c><c> And</c><c> what</c><c> do</c><c> you</c>
+[10:04] repeated several times. And what do you
+[10:04] repeated several times. And what do you have<c> to</c><c> do</c><c> for</c><c> this</c><c> given</c><c> particular</c>
+[10:07] have to do for this given particular
+[10:07] have to do for this given particular number?<c> You</c><c> need</c><c> to</c><c> tell</c><c> me</c><c> the</c><c> first</c>
+[10:09] number? You need to tell me the first
+[10:09] number? You need to tell me the first position<c> and</c><c> the</c><c> last</c><c> position.</c><c> So</c><c> when</c>
+[10:12] position and the last position. So when
+[10:12] position and the last position. So when you're<c> actually</c><c> searching,</c><c> are</c><c> you</c>
+[10:14] you're actually searching, are you
+[10:14] you're actually searching, are you searching<c> for</c><c> the</c><c> number</c><c> three?</c><c> No,</c><c> you</c>
+[10:16] searching for the number three? No, you
+[10:16] searching for the number three? No, you are<c> searching</c><c> for</c><c> the</c><c> first</c><c> position</c><c> of</c>
+[10:19] are searching for the first position of
+[10:19] are searching for the first position of number<c> three.</c><c> Just</c><c> look</c><c> at</c><c> all</c><c> of</c><c> these</c>
+[10:21] number three. Just look at all of these
+[10:21] number three. Just look at all of these threes.<c> They</c><c> may</c><c> look</c><c> the</c><c> same,</c><c> but</c><c> this</c>
+[10:25] threes. They may look the same, but this
+[10:25] threes. They may look the same, but this first<c> three</c><c> is</c><c> very</c><c> different</c><c> from</c><c> all</c>
+[10:28] first three is very different from all
+[10:28] first three is very different from all of<c> these</c><c> threes.</c><c> And</c><c> this</c><c> last</c><c> three</c><c> is</c>
+[10:31] of these threes. And this last three is
+[10:32] of these threes. And this last three is again<c> very</c><c> different.</c><c> How?</c><c> For</c><c> the</c><c> first</c>
+[10:35] again very different. How? For the first
+[10:35] again very different. How? For the first three,<c> the</c><c> left</c><c> element</c><c> is</c><c> smaller</c><c> and</c>
+[10:38] three, the left element is smaller and
+[10:38] three, the left element is smaller and the<c> right</c><c> element</c><c> is</c><c> equal</c><c> to</c><c> three.</c><c> And</c>
+[10:41] the right element is equal to three. And
+[10:41] the right element is equal to three. And for<c> the</c><c> last</c><c> three,</c><c> the</c><c> left</c><c> element</c><c> is</c>
+[10:43] for the last three, the left element is
+[10:43] for the last three, the left element is equal<c> and</c><c> the</c><c> right</c><c> element</c><c> is</c><c> greater.</c>
+[10:46] equal and the right element is greater.
+[10:46] equal and the right element is greater. So<c> technically</c><c> we</c><c> need</c><c> to</c><c> apply</c><c> the</c>
+[10:49] So technically we need to apply the
+[10:49] So technically we need to apply the binary<c> search</c><c> algorithm</c><c> two</c><c> times.</c><c> For</c>
+[10:52] binary search algorithm two times. For
+[10:52] binary search algorithm two times. For the<c> first</c><c> time</c><c> we</c><c> will</c><c> try</c><c> to</c><c> find</c><c> a</c>
+[10:54] the first time we will try to find a
+[10:54] the first time we will try to find a three<c> which</c><c> has</c><c> the</c><c> left</c><c> element</c><c> smaller</c>
+[10:57] three which has the left element smaller
+[10:57] three which has the left element smaller and<c> the</c><c> right</c><c> element</c><c> as</c><c> equal.</c><c> And</c><c> then</c>
+[11:00] and the right element as equal. And then
+[11:00] and the right element as equal. And then we<c> will</c><c> again</c><c> apply</c><c> the</c><c> binary</c><c> search</c>
+[11:02] we will again apply the binary search
+[11:02] we will again apply the binary search technique<c> to</c><c> find</c><c> where</c><c> the</c><c> left</c><c> element</c>
+[11:05] technique to find where the left element
+[11:05] technique to find where the left element is<c> equal</c><c> and</c><c> the</c><c> right</c><c> element</c><c> is</c>
+[11:07] is equal and the right element is
+[11:07] is equal and the right element is greater.<c> So</c><c> let</c><c> us</c><c> say</c><c> you</c><c> want</c><c> to</c><c> find</c>
+[11:09] greater. So let us say you want to find
+[11:09] greater. So let us say you want to find the<c> leftmost</c><c> occurrence</c><c> first.</c><c> You</c><c> are</c>
+[11:12] the leftmost occurrence first. You are
+[11:12] the leftmost occurrence first. You are going<c> to</c><c> apply</c><c> your</c><c> binary</c><c> search</c>
+[11:13] going to apply your binary search
+[11:13] going to apply your binary search technique.<c> You</c><c> take</c><c> up</c><c> two</c><c> pointers</c><c> and</c>
+[11:16] technique. You take up two pointers and
+[11:16] technique. You take up two pointers and then<c> you</c><c> land</c><c> at</c><c> the</c><c> middle</c><c> element.</c><c> You</c>
+[11:18] then you land at the middle element. You
+[11:18] then you land at the middle element. You see<c> that</c><c> okay</c><c> this</c><c> is</c><c> a</c><c> three.</c><c> But</c><c> is</c>
+[11:21] see that okay this is a three. But is
+[11:21] see that okay this is a three. But is this<c> the</c><c> three</c><c> you</c><c> want?</c><c> No.</c><c> You</c><c> want</c><c> a</c>
+[11:24] this the three you want? No. You want a
+[11:24] this the three you want? No. You want a three<c> where</c><c> the</c><c> left</c><c> element</c><c> is</c><c> smaller</c>
+[11:26] three where the left element is smaller
+[11:26] three where the left element is smaller but<c> the</c><c> right</c><c> element</c><c> is</c><c> equal.</c><c> This</c><c> is</c>
+[11:29] but the right element is equal. This is
+[11:29] but the right element is equal. This is not<c> your</c><c> scenario</c><c> but</c><c> it</c><c> is</c><c> a</c><c> three.</c><c> So</c>
+[11:32] not your scenario but it is a three. So
+[11:32] not your scenario but it is a three. So you<c> know</c><c> that</c><c> I</c><c> will</c><c> find</c><c> my</c><c> leftmost</c>
+[11:35] you know that I will find my leftmost
+[11:35] you know that I will find my leftmost element<c> somewhere</c><c> over</c><c> here.</c><c> So</c><c> what</c><c> can</c>
+[11:37] element somewhere over here. So what can
+[11:38] element somewhere over here. So what can I<c> do?</c><c> I</c><c> can</c><c> simply</c><c> get</c><c> rid</c><c> of</c><c> this</c><c> half</c>
+[11:41] I do? I can simply get rid of this half
+[11:41] I do? I can simply get rid of this half of<c> the</c><c> array.</c><c> I</c><c> reduced</c><c> my</c><c> search</c><c> space.</c>
+[11:44] of the array. I reduced my search space.
+[11:44] of the array. I reduced my search space. And<c> now</c><c> what</c><c> will</c><c> I</c><c> do?</c><c> I</c><c> will</c><c> take</c><c> up</c>
+[11:46] And now what will I do? I will take up
+[11:46] And now what will I do? I will take up my<c> right</c><c> pointer</c><c> and</c><c> I'm</c><c> going</c><c> to</c><c> move</c>
+[11:47] my right pointer and I'm going to move
+[11:47] my right pointer and I'm going to move it<c> over</c><c> here.</c><c> Once</c><c> again</c><c> apply</c><c> the</c>
+[11:49] it over here. Once again apply the
+[11:50] it over here. Once again apply the binary<c> search</c><c> technique</c><c> and</c><c> you</c><c> will</c>
+[11:51] binary search technique and you will
+[11:51] binary search technique and you will land<c> here.</c><c> Ultimately</c><c> what</c><c> is</c><c> going</c><c> to</c>
+[11:53] land here. Ultimately what is going to
+[11:53] land here. Ultimately what is going to happen<c> is</c><c> you</c><c> will</c><c> land</c><c> at</c><c> this</c>
+[11:55] happen is you will land at this
+[11:55] happen is you will land at this particular<c> three</c><c> where</c><c> your</c><c> condition</c><c> is</c>
+[11:57] particular three where your condition is
+[11:57] particular three where your condition is satisfied.<c> You</c><c> found</c><c> out</c><c> the</c><c> leftmost</c>
+[12:00] satisfied. You found out the leftmost
+[12:00] satisfied. You found out the leftmost position.<c> Similarly,</c><c> you</c><c> will</c><c> apply</c><c> the</c>
+[12:03] position. Similarly, you will apply the
+[12:03] position. Similarly, you will apply the same<c> technique</c><c> to</c><c> find</c><c> out</c><c> the</c><c> rightmost</c>
+[12:05] same technique to find out the rightmost
+[12:05] same technique to find out the rightmost position<c> and</c><c> you</c><c> are</c><c> going</c><c> to</c><c> land</c><c> at</c>
+[12:07] position and you are going to land at
+[12:07] position and you are going to land at this<c> particular</c><c> three.</c><c> So</c><c> once</c><c> again</c>
+[12:09] this particular three. So once again
+[12:09] this particular three. So once again applying<c> a</c><c> binary</c><c> search</c><c> by</c><c> adapting</c><c> you</c>
+[12:13] applying a binary search by adapting you
+[12:13] applying a binary search by adapting you adapted<c> to</c><c> a</c><c> certain</c><c> condition</c><c> and</c><c> then</c>
+[12:15] adapted to a certain condition and then
+[12:16] adapted to a certain condition and then you<c> found</c><c> out</c><c> your</c><c> answer.</c><c> Similarly</c>
+[12:18] you found out your answer. Similarly
+[12:18] you found out your answer. Similarly there<c> is</c><c> one</c><c> more</c><c> problem</c><c> statement</c><c> also</c>
+[12:20] there is one more problem statement also
+[12:20] there is one more problem statement also finding<c> the</c><c> peak</c><c> index</c><c> in</c><c> a</c><c> mountain</c>
+[12:22] finding the peak index in a mountain
+[12:22] finding the peak index in a mountain array.<c> Now</c><c> a</c><c> mountain</c><c> array</c><c> is</c><c> just</c><c> a</c>
+[12:25] array. Now a mountain array is just a
+[12:25] array. Now a mountain array is just a madeup<c> word.</c><c> Just</c><c> look</c><c> at</c><c> this</c>
+[12:27] madeup word. Just look at this
+[12:27] madeup word. Just look at this particular<c> array.</c><c> If</c><c> you</c><c> notice,</c><c> this</c>
+[12:30] particular array. If you notice, this
+[12:30] particular array. If you notice, this array<c> has</c><c> elements</c><c> that</c><c> keep</c><c> on</c>
+[12:32] array has elements that keep on
+[12:32] array has elements that keep on increasing<c> all</c><c> the</c><c> way</c><c> up</c><c> to</c><c> 8</c><c> and</c><c> then</c>
+[12:36] increasing all the way up to 8 and then
+[12:36] increasing all the way up to 8 and then they<c> start</c><c> to</c><c> decrease</c><c> again.</c><c> So</c>
+[12:39] they start to decrease again. So
+[12:39] they start to decrease again. So technically,<c> what</c><c> are</c><c> you</c><c> looking</c><c> over</c>
+[12:41] technically, what are you looking over
+[12:41] technically, what are you looking over here?<c> You</c><c> have</c><c> to</c><c> find</c><c> a</c><c> peak</c><c> in</c><c> a</c>
+[12:44] here? You have to find a peak in a
+[12:44] here? You have to find a peak in a mountain<c> array.</c><c> And</c><c> this</c><c> is</c><c> a</c><c> mountain</c>
+[12:46] mountain array. And this is a mountain
+[12:46] mountain array. And this is a mountain because<c> it</c><c> increases</c><c> and</c><c> then</c><c> decreases.</c>
+[12:49] because it increases and then decreases.
+[12:49] because it increases and then decreases. Where<c> is</c><c> the</c><c> peak?</c><c> The</c><c> peak</c><c> is</c><c> this</c>
+[12:51] Where is the peak? The peak is this
+[12:51] Where is the peak? The peak is this particular<c> element.</c><c> You</c><c> have</c><c> to</c><c> return</c>
+[12:53] particular element. You have to return
+[12:54] particular element. You have to return this<c> location.</c><c> But</c><c> you</c><c> are</c><c> not</c><c> searching</c>
+[12:56] this location. But you are not searching
+[12:56] this location. But you are not searching for<c> eight.</c><c> Neither</c><c> you</c><c> are</c><c> searching</c><c> for</c>
+[12:58] for eight. Neither you are searching for
+[12:58] for eight. Neither you are searching for any<c> specific</c><c> element.</c><c> What</c><c> are</c><c> you</c>
+[13:00] any specific element. What are you
+[13:00] any specific element. What are you searching<c> for?</c><c> You</c><c> are</c><c> searching</c><c> for</c><c> an</c>
+[13:03] searching for? You are searching for an
+[13:03] searching for? You are searching for an element<c> which</c><c> is</c><c> greater</c><c> than</c><c> the</c><c> left</c>
+[13:05] element which is greater than the left
+[13:06] element which is greater than the left element<c> and</c><c> which</c><c> is</c><c> greater</c><c> than</c><c> the</c>
+[13:07] element and which is greater than the
+[13:08] element and which is greater than the right<c> element.</c><c> And</c><c> this</c><c> is</c><c> true</c><c> only</c><c> for</c>
+[13:11] right element. And this is true only for
+[13:11] right element. And this is true only for the<c> peak</c><c> element.</c><c> If</c><c> you</c><c> notice</c><c> for</c><c> all</c>
+[13:14] the peak element. If you notice for all
+[13:14] the peak element. If you notice for all the<c> other</c><c> elements,</c><c> this</c><c> is</c><c> the</c>
+[13:16] the other elements, this is the
+[13:16] the other elements, this is the scenario.<c> You</c><c> will</c><c> only</c><c> have</c><c> one</c><c> element</c>
+[13:20] scenario. You will only have one element
+[13:20] scenario. You will only have one element which<c> is</c><c> greater</c><c> than</c><c> its</c><c> left</c><c> and</c><c> right</c>
+[13:22] which is greater than its left and right
+[13:22] which is greater than its left and right as<c> well.</c><c> So</c><c> how</c><c> do</c><c> you</c><c> adapt</c><c> for</c><c> binary</c>
+[13:25] as well. So how do you adapt for binary
+[13:25] as well. So how do you adapt for binary search?<c> Once</c><c> again</c><c> you</c><c> will</c><c> take</c><c> two</c>
+[13:27] search? Once again you will take two
+[13:27] search? Once again you will take two pointers<c> and</c><c> now</c><c> are</c><c> you</c><c> looking</c><c> for</c>
+[13:30] pointers and now are you looking for
+[13:30] pointers and now are you looking for something?<c> Yes,</c><c> but</c><c> it</c><c> is</c><c> not</c><c> the</c>
+[13:32] something? Yes, but it is not the
+[13:32] something? Yes, but it is not the element.<c> You</c><c> will</c><c> sort</c><c> and</c><c> you</c><c> will</c><c> try</c>
+[13:35] element. You will sort and you will try
+[13:36] element. You will sort and you will try to<c> look</c><c> at</c><c> the</c><c> middle</c><c> position.</c><c> You</c>
+[13:38] to look at the middle position. You
+[13:38] to look at the middle position. You found<c> out</c><c> this</c><c> middle</c><c> position</c><c> but</c><c> over</c>
+[13:41] found out this middle position but over
+[13:41] found out this middle position but over here<c> this</c><c> particular</c><c> number</c><c> is</c><c> not</c><c> the</c>
+[13:43] here this particular number is not the
+[13:43] here this particular number is not the peak<c> because</c><c> the</c><c> left</c><c> number</c><c> and</c><c> the</c>
+[13:45] peak because the left number and the
+[13:46] peak because the left number and the right<c> number</c><c> they</c><c> they</c><c> are</c><c> smaller</c><c> and</c>
+[13:48] right number they they are smaller and
+[13:48] right number they they are smaller and larger<c> respectively.</c><c> So</c><c> you</c><c> know</c><c> that</c>
+[13:50] larger respectively. So you know that
+[13:50] larger respectively. So you know that hey<c> my</c><c> peak</c><c> does</c><c> not</c><c> exist</c><c> over</c><c> here.</c><c> So</c>
+[13:53] hey my peak does not exist over here. So
+[13:53] hey my peak does not exist over here. So either<c> your</c><c> peak</c><c> is</c><c> going</c><c> to</c><c> exist</c><c> in</c>
+[13:55] either your peak is going to exist in
+[13:55] either your peak is going to exist in this<c> part</c><c> or</c><c> your</c><c> peak</c><c> is</c><c> going</c><c> to</c><c> exist</c>
+[13:57] this part or your peak is going to exist
+[13:57] this part or your peak is going to exist in<c> this</c><c> part.</c><c> You</c><c> can</c><c> apply</c><c> the</c><c> same</c>
+[14:00] in this part. You can apply the same
+[14:00] in this part. You can apply the same technique<c> recursively</c><c> on</c><c> both</c><c> these</c>
+[14:02] technique recursively on both these
+[14:02] technique recursively on both these parts<c> and</c><c> ultimately</c><c> you</c><c> will</c><c> find</c><c> a</c>
+[14:05] parts and ultimately you will find a
+[14:05] parts and ultimately you will find a specific<c> number</c><c> which</c><c> is</c><c> greater</c><c> than</c>
+[14:08] specific number which is greater than
+[14:08] specific number which is greater than both<c> the</c><c> left</c><c> element</c><c> and</c><c> the</c><c> right</c>
+[14:09] both the left element and the right
+[14:09] both the left element and the right element.<c> Once</c><c> again</c><c> binary</c><c> search</c><c> help</c>
+[14:12] element. Once again binary search help
+[14:12] element. Once again binary search help you<c> to</c><c> narrow</c><c> down</c><c> the</c><c> entire</c><c> space</c><c> and</c>
+[14:15] you to narrow down the entire space and
+[14:15] you to narrow down the entire space and you<c> adapted</c><c> your</c><c> binary</c><c> search</c><c> algorithm</c>
+[14:17] you adapted your binary search algorithm
+[14:17] you adapted your binary search algorithm according<c> to</c><c> the</c><c> condition</c><c> that</c><c> you</c><c> have</c>
+[14:19] according to the condition that you have
+[14:19] according to the condition that you have to<c> solve</c><c> for.</c><c> From</c><c> all</c><c> these</c><c> examples,</c>
+[14:22] to solve for. From all these examples,
+[14:22] to solve for. From all these examples, what<c> do</c><c> you</c><c> understand</c><c> about</c><c> binary</c>
+[14:24] what do you understand about binary
+[14:24] what do you understand about binary search?<c> It</c><c> is</c><c> not</c><c> just</c><c> looking</c><c> at</c><c> a</c>
+[14:26] search? It is not just looking at a
+[14:26] search? It is not just looking at a sorted<c> array.</c><c> Binary</c><c> search</c><c> is</c><c> an</c>
+[14:28] sorted array. Binary search is an
+[14:28] sorted array. Binary search is an algorithm<c> or</c><c> a</c><c> pattern</c><c> which</c><c> you</c><c> can</c>
+[14:30] algorithm or a pattern which you can
+[14:30] algorithm or a pattern which you can adapt<c> and</c><c> solve</c><c> and</c><c> apply</c><c> at</c><c> multiple</c>
+[14:33] adapt and solve and apply at multiple
+[14:33] adapt and solve and apply at multiple different<c> places.</c><c> And</c><c> we</c><c> are</c><c> certainly</c>
+[14:36] different places. And we are certainly
+[14:36] different places. And we are certainly going<c> to</c><c> see</c><c> more</c><c> examples</c><c> on</c><c> it.</c><c> But</c>
+[14:38] going to see more examples on it. But
+[14:38] going to see more examples on it. But you<c> might</c><c> be</c><c> getting</c><c> a</c><c> general</c><c> idea.</c><c> For</c>
+[14:41] you might be getting a general idea. For
+[14:41] you might be getting a general idea. For example,<c> if</c><c> you</c><c> have</c><c> a</c><c> monotonic</c><c> search</c>
+[14:43] example, if you have a monotonic search
+[14:43] example, if you have a monotonic search space,<c> that</c><c> means</c><c> you</c><c> know</c><c> a</c><c> certain</c>
+[14:46] space, that means you know a certain
+[14:46] space, that means you know a certain pattern.<c> You</c><c> know</c><c> things</c><c> are</c><c> going</c><c> to</c>
+[14:47] pattern. You know things are going to
+[14:48] pattern. You know things are going to increase<c> and</c><c> things</c><c> are</c><c> going</c><c> to</c>
+[14:49] increase and things are going to
+[14:49] increase and things are going to decrease.<c> So</c><c> there</c><c> is</c><c> a</c><c> certain</c><c> pattern</c>
+[14:52] decrease. So there is a certain pattern
+[14:52] decrease. So there is a certain pattern you<c> can</c><c> follow</c><c> that</c><c> is</c><c> a</c><c> straightaway</c>
+[14:55] you can follow that is a straightaway
+[14:55] you can follow that is a straightaway giveaway<c> that</c><c> you</c><c> can</c><c> apply</c><c> the</c><c> binary</c>
+[14:57] giveaway that you can apply the binary
+[14:57] giveaway that you can apply the binary search<c> technique</c><c> over</c><c> here.</c><c> Similarly</c>
+[14:59] search technique over here. Similarly
+[14:59] search technique over here. Similarly try<c> to</c><c> think</c><c> how</c><c> we</c><c> were</c><c> adapting</c><c> to</c><c> the</c>
+[15:01] try to think how we were adapting to the
+[15:02] try to think how we were adapting to the situation.<c> It</c><c> was</c><c> not</c><c> just</c><c> that</c><c> we</c>
+[15:04] situation. It was not just that we
+[15:04] situation. It was not just that we looked<c> at</c><c> a</c><c> specific</c><c> number.</c><c> You</c><c> are</c>
+[15:07] looked at a specific number. You are
+[15:07] looked at a specific number. You are actually<c> trying</c><c> to</c><c> determine</c><c> a</c><c> boolean</c>
+[15:09] actually trying to determine a boolean
+[15:09] actually trying to determine a boolean condition<c> based</c><c> upon</c><c> a</c><c> certain</c><c> condition</c>
+[15:12] condition based upon a certain condition
+[15:12] condition based upon a certain condition if<c> it</c><c> is</c><c> true</c><c> or</c><c> false.</c><c> You</c><c> can</c><c> decide</c>
+[15:14] if it is true or false. You can decide
+[15:14] if it is true or false. You can decide to<c> reject</c><c> one</c><c> half</c><c> of</c><c> the</c><c> array</c><c> and</c><c> then</c>
+[15:17] to reject one half of the array and then
+[15:17] to reject one half of the array and then only<c> search</c><c> in</c><c> a</c><c> defined</c><c> space.</c><c> And</c><c> that</c>
+[15:21] only search in a defined space. And that
+[15:21] only search in a defined space. And that gives<c> me</c><c> the</c><c> next</c><c> point.</c><c> Your</c><c> search</c>
+[15:23] gives me the next point. Your search
+[15:23] gives me the next point. Your search space<c> is</c><c> defined.</c><c> If</c><c> you</c><c> are</c><c> not</c><c> sure</c>
+[15:26] space is defined. If you are not sure
+[15:26] space is defined. If you are not sure where<c> the</c><c> answer</c><c> can</c><c> be,</c><c> then</c><c> binary</c>
+[15:29] where the answer can be, then binary
+[15:29] where the answer can be, then binary search<c> will</c><c> never</c><c> help</c><c> you.</c><c> Binary</c>
+[15:31] search will never help you. Binary
+[15:31] search will never help you. Binary search<c> is</c><c> always</c><c> good</c><c> for</c><c> spaces</c><c> which</c>
+[15:34] search is always good for spaces which
+[15:34] search is always good for spaces which are<c> monotonic</c><c> in</c><c> nature</c><c> and</c><c> you</c><c> know</c><c> the</c>
+[15:36] are monotonic in nature and you know the
+[15:36] are monotonic in nature and you know the limits<c> as</c><c> well</c><c> because</c><c> only</c><c> then</c><c> you</c>
+[15:38] limits as well because only then you
+[15:38] limits as well because only then you will<c> be</c><c> able</c><c> to</c><c> have</c><c> a</c><c> left</c><c> pointer</c><c> and</c>
+[15:40] will be able to have a left pointer and
+[15:40] will be able to have a left pointer and a<c> right</c><c> pointer,</c><c> right?</c><c> and</c><c> then</c><c> you</c><c> can</c>
+[15:42] a right pointer, right? and then you can
+[15:42] a right pointer, right? and then you can narrow<c> down</c><c> and</c><c> this</c><c> brings</c><c> me</c><c> to</c><c> a</c><c> very</c>
+[15:45] narrow down and this brings me to a very
+[15:45] narrow down and this brings me to a very interesting<c> concept.</c><c> You</c><c> do</c><c> not</c><c> have</c><c> to</c>
+[15:48] interesting concept. You do not have to
+[15:48] interesting concept. You do not have to apply<c> the</c><c> binary</c><c> search</c><c> just</c><c> on</c><c> the</c>
+[15:50] apply the binary search just on the
+[15:50] apply the binary search just on the given<c> input</c><c> set.</c><c> I</c><c> know</c><c> that</c><c> this</c><c> is</c><c> the</c>
+[15:53] given input set. I know that this is the
+[15:53] given input set. I know that this is the first<c> thought</c><c> that</c><c> comes</c><c> to</c><c> our</c><c> mind.</c><c> As</c>
+[15:55] first thought that comes to our mind. As
+[15:55] first thought that comes to our mind. As soon<c> as</c><c> we</c><c> see</c><c> a</c><c> problem,</c><c> we</c><c> try</c><c> to</c>
+[15:57] soon as we see a problem, we try to
+[15:57] soon as we see a problem, we try to analyze<c> the</c><c> input</c><c> and</c><c> we</c><c> will</c><c> try</c><c> to</c>
+[15:59] analyze the input and we will try to
+[15:59] analyze the input and we will try to apply<c> the</c><c> binary</c><c> search</c><c> technique</c><c> on</c><c> it.</c>
+[16:01] apply the binary search technique on it.
+[16:01] apply the binary search technique on it. And<c> sometimes</c><c> we</c><c> may</c><c> realize,</c><c> hey,</c><c> I</c>
+[16:03] And sometimes we may realize, hey, I
+[16:03] And sometimes we may realize, hey, I can't<c> even</c><c> apply</c><c> binary</c><c> search</c><c> over</c>
+[16:04] can't even apply binary search over
+[16:04] can't even apply binary search over here.<c> But</c><c> that</c><c> is</c><c> not</c><c> always</c><c> true.</c>
+[16:08] here. But that is not always true.
+[16:08] here. But that is not always true. Sometimes<c> you</c><c> can</c><c> also</c><c> apply</c><c> the</c><c> binary</c>
+[16:10] Sometimes you can also apply the binary
+[16:10] Sometimes you can also apply the binary search<c> on</c><c> your</c><c> answer</c><c> space</c><c> as</c><c> well.</c><c> And</c>
+[16:13] search on your answer space as well. And
+[16:13] search on your answer space as well. And that<c> is</c><c> why</c><c> I</c><c> mentioned</c><c> your</c><c> search</c>
+[16:15] that is why I mentioned your search
+[16:15] that is why I mentioned your search space<c> should</c><c> be</c><c> defined.</c><c> You</c><c> must</c><c> know</c>
+[16:17] space should be defined. You must know
+[16:17] space should be defined. You must know that<c> okay</c><c> I</c><c> can</c><c> have</c><c> my</c><c> maximum</c><c> answers</c>
+[16:20] that okay I can have my maximum answers
+[16:20] that okay I can have my maximum answers between<c> zero</c><c> and</c><c> this</c><c> particular</c><c> limit.</c>
+[16:24] between zero and this particular limit.
+[16:24] between zero and this particular limit. So<c> let</c><c> us</c><c> take</c><c> up</c><c> an</c><c> example</c><c> on</c><c> this</c>
+[16:26] So let us take up an example on this
+[16:26] So let us take up an example on this particular<c> scenario.</c><c> There</c><c> is</c><c> a</c>
+[16:28] particular scenario. There is a
+[16:28] particular scenario. There is a particular<c> question</c><c> on</c><c> lead</c><c> code</c>
+[16:30] particular question on lead code
+[16:30] particular question on lead code capacity<c> to</c><c> ship</c><c> packages</c><c> within</c><c> D</c><c> days.</c>
+[16:33] capacity to ship packages within D days.
+[16:33] capacity to ship packages within D days. The<c> idea</c><c> over</c><c> here</c><c> is</c><c> very</c><c> very</c><c> simple.</c>
+[16:35] The idea over here is very very simple.
+[16:35] The idea over here is very very simple. You<c> have</c><c> packages</c><c> that</c><c> arrive</c><c> in</c><c> this</c>
+[16:38] You have packages that arrive in this
+[16:38] You have packages that arrive in this following<c> order</c><c> and</c><c> these</c><c> are</c><c> the</c>
+[16:41] following order and these are the
+[16:41] following order and these are the weights<c> of</c><c> these</c><c> packages.</c><c> So</c><c> first</c>
+[16:42] weights of these packages. So first
+[16:42] weights of these packages. So first package<c> is</c><c> 3</c><c> kg</c><c> then</c><c> 2</c><c> kg</c><c> then</c><c> 2</c><c> kg</c><c> 4</c><c> 1</c>
+[16:45] package is 3 kg then 2 kg then 2 kg 4 1
+[16:45] package is 3 kg then 2 kg then 2 kg 4 1 and<c> then</c><c> again</c><c> 4</c><c> kg.</c><c> What</c><c> you</c><c> have</c><c> to</c><c> do</c>
+[16:49] and then again 4 kg. What you have to do
+[16:49] and then again 4 kg. What you have to do is<c> you</c><c> have</c><c> to</c><c> ship</c><c> all</c><c> of</c><c> these</c>
+[16:52] is you have to ship all of these
+[16:52] is you have to ship all of these packages<c> within</c><c> 3</c><c> days.</c><c> On</c><c> a</c><c> single</c><c> day</c>
+[16:56] packages within 3 days. On a single day
+[16:56] packages within 3 days. On a single day you<c> can</c><c> have</c><c> one</c><c> boat</c><c> that</c><c> can</c><c> carry</c><c> all</c>
+[16:59] you can have one boat that can carry all
+[16:59] you can have one boat that can carry all your<c> packages</c><c> but</c><c> that</c><c> boat</c><c> will</c><c> have</c>
+[17:02] your packages but that boat will have
+[17:02] your packages but that boat will have some<c> capacity.</c><c> So</c><c> you</c><c> need</c><c> to</c><c> minimize</c>
+[17:06] some capacity. So you need to minimize
+[17:06] some capacity. So you need to minimize the<c> weight</c><c> required</c><c> for</c><c> the</c><c> boat.</c><c> So</c><c> try</c>
+[17:09] the weight required for the boat. So try
+[17:09] the weight required for the boat. So try to<c> think</c><c> like</c><c> this.</c><c> If</c><c> I</c><c> have</c><c> a</c><c> boat</c>
+[17:11] to think like this. If I have a boat
+[17:11] to think like this. If I have a boat that<c> has</c><c> an</c><c> infinite</c><c> capacity</c><c> just</c><c> on</c>
+[17:14] that has an infinite capacity just on
+[17:14] that has an infinite capacity just on day<c> one,</c><c> I</c><c> can</c><c> load</c><c> all</c><c> of</c><c> these</c>
+[17:16] day one, I can load all of these
+[17:16] day one, I can load all of these packages<c> and</c><c> send</c><c> it</c><c> away.</c><c> Right?</c><c> I</c><c> was</c>
+[17:19] packages and send it away. Right? I was
+[17:19] packages and send it away. Right? I was able<c> to</c><c> ship</c><c> all</c><c> the</c><c> packages</c><c> in</c><c> just</c>
+[17:22] able to ship all the packages in just
+[17:22] able to ship all the packages in just one<c> day.</c><c> But</c><c> that</c><c> is</c><c> not</c><c> the</c><c> answer.</c><c> I</c>
+[17:25] one day. But that is not the answer. I
+[17:25] one day. But that is not the answer. I need<c> to</c><c> find</c><c> the</c><c> minimum</c><c> weight</c><c> capacity</c>
+[17:27] need to find the minimum weight capacity
+[17:27] need to find the minimum weight capacity required<c> for</c><c> the</c><c> boat.</c><c> And</c><c> I</c><c> also</c><c> have</c>
+[17:30] required for the boat. And I also have
+[17:30] required for the boat. And I also have to<c> use</c><c> up</c><c> all</c><c> of</c><c> my</c><c> 3</c><c> days.</c><c> That</c><c> is</c><c> also</c>
+[17:32] to use up all of my 3 days. That is also
+[17:32] to use up all of my 3 days. That is also a<c> very</c><c> big</c><c> hint.</c><c> So</c><c> what</c><c> am</c><c> I</c><c> defining</c>
+[17:35] a very big hint. So what am I defining
+[17:35] a very big hint. So what am I defining over<c> here?</c><c> I</c><c> am</c><c> defining</c><c> a</c><c> kind</c><c> of</c>
+[17:38] over here? I am defining a kind of
+[17:38] over here? I am defining a kind of search<c> space.</c><c> I</c><c> know</c><c> that</c><c> I</c><c> cannot</c><c> have</c>
+[17:41] search space. I know that I cannot have
+[17:41] search space. I know that I cannot have a<c> boat</c><c> with</c><c> a</c><c> capacity</c><c> zero</c><c> because</c><c> if</c>
+[17:44] a boat with a capacity zero because if
+[17:44] a boat with a capacity zero because if it<c> is</c><c> zero,</c><c> I</c><c> cannot</c><c> ship</c><c> any</c><c> packages.</c>
+[17:46] it is zero, I cannot ship any packages.
+[17:46] it is zero, I cannot ship any packages. Can<c> I</c><c> have</c><c> a</c><c> capacity</c><c> of</c><c> one?</c><c> Yes,</c><c> I</c><c> may</c>
+[17:49] Can I have a capacity of one? Yes, I may
+[17:50] Can I have a capacity of one? Yes, I may have<c> a</c><c> capacity</c><c> of</c><c> one,</c><c> but</c><c> I</c><c> do</c><c> not</c>
+[17:52] have a capacity of one, but I do not
+[17:52] have a capacity of one, but I do not know<c> yet</c><c> how</c><c> many</c><c> packages</c><c> can</c><c> I</c><c> ship.</c>
+[17:55] know yet how many packages can I ship.
+[17:55] know yet how many packages can I ship. And<c> what</c><c> is</c><c> the</c><c> maximum</c><c> capacity?</c><c> We</c>
+[17:58] And what is the maximum capacity? We
+[17:58] And what is the maximum capacity? We just<c> said</c><c> that</c><c> if</c><c> a</c><c> boat</c><c> has</c><c> infinite</c>
+[18:00] just said that if a boat has infinite
+[18:00] just said that if a boat has infinite capacity,<c> you</c><c> can</c><c> ship</c><c> all</c><c> the</c><c> packages.</c>
+[18:03] capacity, you can ship all the packages.
+[18:03] capacity, you can ship all the packages. But<c> do</c><c> you</c><c> really</c><c> need</c><c> an</c><c> infinite</c>
+[18:05] But do you really need an infinite
+[18:05] But do you really need an infinite capacity?<c> No.</c><c> If</c><c> you</c><c> have</c><c> a</c><c> capacity</c><c> of</c>
+[18:09] capacity? No. If you have a capacity of
+[18:09] capacity? No. If you have a capacity of the<c> total</c><c> of</c><c> all</c><c> of</c><c> these</c><c> weights,</c><c> that</c>
+[18:12] the total of all of these weights, that
+[18:12] the total of all of these weights, that is<c> equal</c><c> to</c><c> 16.</c><c> So</c><c> if</c><c> I</c><c> have</c><c> a</c><c> capacity</c>
+[18:15] is equal to 16. So if I have a capacity
+[18:15] is equal to 16. So if I have a capacity of<c> 16,</c><c> then</c><c> also</c><c> I</c><c> will</c><c> ship</c><c> all</c><c> of</c><c> my</c>
+[18:20] of 16, then also I will ship all of my
+[18:20] of 16, then also I will ship all of my packages<c> in</c><c> just</c><c> one</c><c> day.</c><c> So</c><c> what</c><c> did</c><c> I</c>
+[18:23] packages in just one day. So what did I
+[18:23] packages in just one day. So what did I just<c> do</c><c> over</c><c> here?</c><c> I</c><c> made</c><c> my</c><c> search</c>
+[18:25] just do over here? I made my search
+[18:25] just do over here? I made my search space<c> finite.</c><c> I</c><c> know</c><c> that</c><c> my</c><c> answer</c><c> will</c>
+[18:28] space finite. I know that my answer will
+[18:28] space finite. I know that my answer will lie<c> somewhere</c><c> between</c><c> 1</c><c> to</c><c> 16.</c><c> That's</c>
+[18:31] lie somewhere between 1 to 16. That's
+[18:31] lie somewhere between 1 to 16. That's it.<c> It</c><c> is</c><c> giving</c><c> me</c><c> a</c><c> hint</c><c> of</c><c> binary</c>
+[18:34] it. It is giving me a hint of binary
+[18:34] it. It is giving me a hint of binary search.<c> And</c><c> how</c><c> do</c><c> I</c><c> do</c><c> it?</c><c> I</c><c> know</c><c> that</c>
+[18:37] search. And how do I do it? I know that
+[18:37] search. And how do I do it? I know that my<c> answer</c><c> will</c><c> be</c><c> between</c><c> 1</c><c> and</c><c> 16.</c><c> So</c>
+[18:39] my answer will be between 1 and 16. So
+[18:39] my answer will be between 1 and 16. So these<c> are</c><c> intentionally</c><c> my</c><c> two</c><c> pointers.</c>
+[18:42] these are intentionally my two pointers.
+[18:42] these are intentionally my two pointers. Find<c> the</c><c> middle</c><c> element.</c><c> The</c><c> middle</c>
+[18:43] Find the middle element. The middle
+[18:44] Find the middle element. The middle element<c> will</c><c> be</c><c> eight.</c><c> So</c><c> what</c><c> you</c><c> can</c>
+[18:46] element will be eight. So what you can
+[18:46] element will be eight. So what you can do<c> is</c><c> you</c><c> can</c><c> try</c><c> to</c><c> keep</c><c> the</c><c> weight</c><c> of</c>
+[18:49] do is you can try to keep the weight of
+[18:49] do is you can try to keep the weight of the<c> boat</c><c> as</c><c> eight.</c><c> And</c><c> now</c><c> try</c><c> to</c><c> ship</c>
+[18:52] the boat as eight. And now try to ship
+[18:52] the boat as eight. And now try to ship packages.<c> when</c><c> the</c><c> boot</c><c> was</c><c> 8.</c><c> On</c><c> day</c>
+[18:55] packages. when the boot was 8. On day
+[18:55] packages. when the boot was 8. On day one,<c> you</c><c> can</c><c> send</c><c> 3</c><c> +</c><c> 2</c><c> +</c><c> 2</c><c> that</c><c> is</c>
+[19:00] one, you can send 3 + 2 + 2 that is
+[19:00] one, you can send 3 + 2 + 2 that is seven.<c> It</c><c> is</c><c> within</c><c> the</c><c> limit.</c><c> I</c><c> can</c>
+[19:02] seven. It is within the limit. I can
+[19:02] seven. It is within the limit. I can send<c> the</c><c> packages.</c><c> On</c><c> the</c><c> next</c><c> day,</c><c> what</c>
+[19:05] send the packages. On the next day, what
+[19:05] send the packages. On the next day, what can<c> I</c><c> send?</c><c> I</c><c> can</c><c> send</c><c> four</c><c> plus</c><c> of</c><c> one</c>
+[19:08] can I send? I can send four plus of one
+[19:08] can I send? I can send four plus of one that<c> is</c><c> five.</c><c> That</c><c> is</c><c> good</c><c> too.</c><c> And</c><c> on</c>
+[19:10] that is five. That is good too. And on
+[19:10] that is five. That is good too. And on day<c> three,</c><c> I</c><c> can</c><c> send</c><c> the</c><c> four</c><c> remaining</c>
+[19:13] day three, I can send the four remaining
+[19:13] day three, I can send the four remaining package.<c> So,</c><c> in</c><c> 3</c><c> days,</c><c> I</c><c> was</c><c> able</c><c> to</c>
+[19:16] package. So, in 3 days, I was able to
+[19:16] package. So, in 3 days, I was able to ship<c> all</c><c> of</c><c> the</c><c> packages.</c><c> So,</c><c> 8</c><c> does</c>
+[19:18] ship all of the packages. So, 8 does
+[19:18] ship all of the packages. So, 8 does look<c> like</c><c> a</c><c> good</c><c> candidate.</c><c> But</c><c> is</c><c> it</c>
+[19:21] look like a good candidate. But is it
+[19:21] look like a good candidate. But is it the<c> answer?</c><c> I</c><c> am</c><c> not</c><c> sure</c><c> yet</c><c> but</c>
+[19:24] the answer? I am not sure yet but
+[19:24] the answer? I am not sure yet but definitely<c> we</c><c> did</c><c> one</c><c> thing.</c><c> Do</c><c> you</c>
+[19:27] definitely we did one thing. Do you
+[19:27] definitely we did one thing. Do you remember<c> how</c><c> my</c><c> search</c><c> space</c><c> was</c><c> between</c>
+[19:29] remember how my search space was between
+[19:29] remember how my search space was between 1<c> all</c><c> the</c><c> way</c><c> up</c><c> to</c><c> 16?</c><c> With</c><c> binary</c>
+[19:32] 1 all the way up to 16? With binary
+[19:32] 1 all the way up to 16? With binary search<c> what</c><c> I</c><c> did</c><c> is</c><c> I</c><c> found</c><c> out</c><c> the</c>
+[19:34] search what I did is I found out the
+[19:34] search what I did is I found out the middle<c> element</c><c> that</c><c> is</c><c> eight.</c><c> I</c><c> knew</c>
+[19:37] middle element that is eight. I knew
+[19:37] middle element that is eight. I knew that<c> with</c><c> 16</c><c> I</c><c> will</c><c> be</c><c> able</c><c> to</c><c> ship</c><c> all</c>
+[19:39] that with 16 I will be able to ship all
+[19:39] that with 16 I will be able to ship all of<c> my</c><c> packages.</c><c> I</c><c> know</c><c> that</c><c> with</c><c> 8</c><c> I</c>
+[19:43] of my packages. I know that with 8 I
+[19:43] of my packages. I know that with 8 I will<c> be</c><c> able</c><c> to</c><c> ship</c><c> all</c><c> of</c><c> my</c><c> packages.</c>
+[19:45] will be able to ship all of my packages.
+[19:45] will be able to ship all of my packages. It<c> clearly</c><c> means</c><c> that</c><c> any</c><c> number</c><c> between</c>
+[19:47] It clearly means that any number between
+[19:47] It clearly means that any number between 8<c> to</c><c> 16</c><c> I</c><c> will</c><c> be</c><c> able</c><c> to</c><c> ship</c><c> all</c><c> of</c>
+[19:50] 8 to 16 I will be able to ship all of
+[19:50] 8 to 16 I will be able to ship all of the<c> packages.</c><c> So</c><c> it</c><c> is</c><c> the</c><c> time</c><c> for</c>
+[19:52] the packages. So it is the time for
+[19:52] the packages. So it is the time for elimination.<c> I</c><c> know</c><c> that</c><c> the</c><c> minimum</c>
+[19:54] elimination. I know that the minimum
+[19:54] elimination. I know that the minimum weight<c> it</c><c> will</c><c> never</c><c> be</c><c> between</c><c> this</c>
+[19:57] weight it will never be between this
+[19:57] weight it will never be between this range.<c> So</c><c> once</c><c> again</c><c> what</c><c> did</c><c> I</c><c> get?</c><c> I</c>
+[20:00] range. So once again what did I get? I
+[20:00] range. So once again what did I get? I am<c> getting</c><c> a</c><c> left</c><c> pointer</c><c> as</c><c> one</c><c> and</c><c> a</c>
+[20:02] am getting a left pointer as one and a
+[20:02] am getting a left pointer as one and a right<c> pointer</c><c> as</c><c> 8.</c><c> So</c><c> once</c><c> again</c><c> what</c>
+[20:05] right pointer as 8. So once again what
+[20:05] right pointer as 8. So once again what will<c> you</c><c> do?</c><c> You</c><c> will</c><c> try</c><c> to</c><c> find</c><c> a</c>
+[20:07] will you do? You will try to find a
+[20:07] will you do? You will try to find a number<c> between</c><c> over</c><c> here.</c><c> Let</c><c> us</c><c> say</c><c> you</c>
+[20:10] number between over here. Let us say you
+[20:10] number between over here. Let us say you found<c> the</c><c> number</c><c> four.</c><c> So</c><c> what</c><c> you're</c>
+[20:12] found the number four. So what you're
+[20:12] found the number four. So what you're going<c> to</c><c> do</c><c> is</c><c> you</c><c> will</c><c> try</c><c> to</c><c> determine</c>
+[20:15] going to do is you will try to determine
+[20:15] going to do is you will try to determine if<c> you</c><c> can</c><c> ship</c><c> all</c><c> of</c><c> the</c><c> packages</c><c> with</c>
+[20:17] if you can ship all of the packages with
+[20:17] if you can ship all of the packages with a<c> weight</c><c> of</c><c> four.</c><c> with</c><c> a</c><c> weight</c><c> of</c><c> four.</c>
+[20:20] a weight of four. with a weight of four.
+[20:20] a weight of four. with a weight of four. On<c> the</c><c> first</c><c> day,</c><c> you</c><c> can</c><c> only</c><c> ship</c>
+[20:21] On the first day, you can only ship
+[20:21] On the first day, you can only ship three.<c> On</c><c> the</c><c> second</c><c> day,</c><c> you</c><c> can</c><c> ship</c><c> 2</c>
+[20:23] three. On the second day, you can ship 2
+[20:23] three. On the second day, you can ship 2 +<c> 2.</c><c> On</c><c> the</c><c> third</c><c> day,</c><c> you</c><c> can</c><c> only</c><c> ship</c>
+[20:26] + 2. On the third day, you can only ship
+[20:26] + 2. On the third day, you can only ship four.<c> So,</c><c> you</c><c> still</c><c> have</c><c> these</c><c> packages</c>
+[20:29] four. So, you still have these packages
+[20:29] four. So, you still have these packages remaining.<c> That</c><c> means</c><c> four</c><c> does</c><c> not</c><c> work</c>
+[20:32] remaining. That means four does not work
+[20:32] remaining. That means four does not work for<c> you.</c><c> So,</c><c> I</c><c> can</c><c> again</c><c> eliminate</c><c> all</c>
+[20:35] for you. So, I can again eliminate all
+[20:35] for you. So, I can again eliminate all of<c> these</c><c> options</c><c> as</c><c> well.</c><c> So,</c><c> what</c><c> I'm</c>
+[20:38] of these options as well. So, what I'm
+[20:38] of these options as well. So, what I'm doing,<c> I</c><c> am</c><c> applying</c><c> binary</c><c> search</c><c> on</c><c> my</c>
+[20:40] doing, I am applying binary search on my
+[20:40] doing, I am applying binary search on my answer<c> space.</c><c> Notice</c><c> what</c><c> I</c><c> did</c><c> over</c>
+[20:42] answer space. Notice what I did over
+[20:42] answer space. Notice what I did over here.<c> My</c><c> initial</c><c> search</c><c> space</c><c> was</c>
+[20:44] here. My initial search space was
+[20:44] here. My initial search space was between<c> 1</c><c> to</c><c> infinite.</c><c> I</c><c> reduced</c><c> that</c><c> to</c>
+[20:47] between 1 to infinite. I reduced that to
+[20:48] between 1 to infinite. I reduced that to 16.
+[20:48] 16.
+[20:48] 16. Then<c> again</c><c> I</c><c> reduce</c><c> that</c><c> to</c><c> 8.</c><c> I</c>
+[20:51] Then again I reduce that to 8. I
+[20:51] Then again I reduce that to 8. I eliminated<c> this.</c><c> Now</c><c> I'm</c><c> reducing</c><c> it</c>
+[20:54] eliminated this. Now I'm reducing it
+[20:54] eliminated this. Now I'm reducing it between<c> 4</c><c> to</c><c> 8.</c><c> So</c><c> eventually</c><c> you</c><c> will</c>
+[20:57] between 4 to 8. So eventually you will
+[20:57] between 4 to 8. So eventually you will land<c> at</c><c> the</c><c> perfect</c><c> answer.</c><c> And</c><c> that</c><c> is</c>
+[20:59] land at the perfect answer. And that is
+[20:59] land at the perfect answer. And that is the<c> minimum</c><c> weight</c><c> capacity</c><c> required</c><c> for</c>
+[21:01] the minimum weight capacity required for
+[21:01] the minimum weight capacity required for your<c> boat.</c><c> And</c><c> that</c><c> is</c><c> how</c><c> you</c><c> are</c>
+[21:04] your boat. And that is how you are
+[21:04] your boat. And that is how you are applying<c> binary</c><c> search</c><c> on</c><c> your</c><c> answer.</c>
+[21:07] applying binary search on your answer.
+[21:07] applying binary search on your answer. Let<c> us</c><c> look</c><c> at</c><c> one</c><c> more</c><c> example.</c><c> And</c><c> now</c>
+[21:09] Let us look at one more example. And now
+[21:09] Let us look at one more example. And now I<c> think</c><c> you</c><c> will</c><c> be</c><c> able</c><c> to</c><c> solve</c><c> it</c><c> on</c>
+[21:11] I think you will be able to solve it on
+[21:11] I think you will be able to solve it on your<c> own.</c><c> You</c><c> might</c><c> have</c><c> seen</c><c> another</c>
+[21:13] your own. You might have seen another
+[21:13] your own. You might have seen another similar<c> problem.</c><c> And</c><c> that</c><c> is</c><c> Koko</c><c> eating</c>
+[21:16] similar problem. And that is Koko eating
+[21:16] similar problem. And that is Koko eating bananas.<c> Koko</c><c> is</c><c> a</c><c> monkey</c><c> and</c><c> it</c><c> has</c><c> to</c>
+[21:19] bananas. Koko is a monkey and it has to
+[21:19] bananas. Koko is a monkey and it has to eat<c> bananas</c><c> from</c><c> these</c><c> piles.</c><c> First</c><c> pile</c>
+[21:22] eat bananas from these piles. First pile
+[21:22] eat bananas from these piles. First pile has<c> 30</c><c> bananas,</c><c> then</c><c> 11,</c><c> then</c><c> 23,</c><c> then</c>
+[21:24] has 30 bananas, then 11, then 23, then
+[21:24] has 30 bananas, then 11, then 23, then four,<c> and</c><c> then</c><c> 20.</c><c> Koko</c><c> also</c><c> has</c><c> some</c>
+[21:28] four, and then 20. Koko also has some
+[21:28] four, and then 20. Koko also has some hours<c> available.</c><c> He</c><c> has</c><c> to</c><c> eat</c><c> all</c><c> of</c>
+[21:31] hours available. He has to eat all of
+[21:31] hours available. He has to eat all of these<c> bananas</c><c> in</c><c> these</c><c> 9</c><c> hours</c><c> available</c>
+[21:33] these bananas in these 9 hours available
+[21:34] these bananas in these 9 hours available to<c> you.</c><c> And</c><c> now</c><c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> what</c>
+[21:37] to you. And now you have to tell me what
+[21:37] to you. And now you have to tell me what is<c> the</c><c> minimum</c><c> eating</c><c> speed</c><c> that</c><c> Koko</c>
+[21:40] is the minimum eating speed that Koko
+[21:40] is the minimum eating speed that Koko must<c> have</c><c> so</c><c> he</c><c> can</c><c> finish</c><c> all</c><c> of</c><c> these</c>
+[21:42] must have so he can finish all of these
+[21:42] must have so he can finish all of these bananas.<c> The</c><c> only</c><c> catch</c><c> with</c><c> this</c>
+[21:44] bananas. The only catch with this
+[21:44] bananas. The only catch with this problem<c> is</c><c> that</c><c> let</c><c> us</c><c> say</c><c> Koko</c><c> is</c>
+[21:47] problem is that let us say Koko is
+[21:47] problem is that let us say Koko is eating<c> at</c><c> a</c><c> speed</c><c> of</c><c> eight</c><c> bananas</c><c> per</c>
+[21:50] eating at a speed of eight bananas per
+[21:50] eating at a speed of eight bananas per hour.<c> So</c><c> for</c><c> the</c><c> first</c><c> pile</c><c> he's</c><c> going</c>
+[21:52] hour. So for the first pile he's going
+[21:52] hour. So for the first pile he's going to<c> eat</c><c> eight</c><c> then</c><c> eight</c><c> and</c><c> then</c><c> eight.</c>
+[21:55] to eat eight then eight and then eight.
+[21:55] to eat eight then eight and then eight. He<c> has</c><c> eaten</c><c> 24</c><c> bananas.</c><c> So</c><c> six</c><c> are</c>
+[21:58] He has eaten 24 bananas. So six are
+[21:58] He has eaten 24 bananas. So six are still<c> remaining.</c><c> In</c><c> the</c><c> next</c><c> hour</c><c> he</c><c> has</c>
+[22:01] still remaining. In the next hour he has
+[22:02] still remaining. In the next hour he has to<c> eat</c><c> six</c><c> and</c><c> then</c><c> he</c><c> has</c><c> to</c><c> stop.</c><c> He</c>
+[22:05] to eat six and then he has to stop. He
+[22:05] to eat six and then he has to stop. He cannot<c> eat</c><c> two</c><c> bananas</c><c> from</c><c> this</c><c> pile.</c>
+[22:08] cannot eat two bananas from this pile.
+[22:08] cannot eat two bananas from this pile. That's<c> it.</c><c> This</c><c> is</c><c> the</c><c> only</c><c> catch</c><c> you</c>
+[22:10] That's it. This is the only catch you
+[22:10] That's it. This is the only catch you have<c> to</c><c> be</c><c> careful</c><c> about.</c><c> So</c><c> how</c><c> do</c><c> you</c>
+[22:13] have to be careful about. So how do you
+[22:13] have to be careful about. So how do you find<c> out</c><c> the</c><c> minimum</c><c> eating</c><c> speed</c><c> of</c>
+[22:15] find out the minimum eating speed of
+[22:15] find out the minimum eating speed of Koko?<c> You</c><c> might</c><c> have</c><c> already</c><c> guessed</c><c> it.</c>
+[22:18] Koko? You might have already guessed it.
+[22:18] Koko? You might have already guessed it. It<c> is</c><c> very</c><c> similar</c><c> to</c><c> the</c><c> previous</c>
+[22:19] It is very similar to the previous
+[22:19] It is very similar to the previous problem,<c> right?</c><c> Try</c><c> to</c><c> think</c><c> like</c><c> this.</c>
+[22:22] problem, right? Try to think like this.
+[22:22] problem, right? Try to think like this. If<c> Koko</c><c> was</c><c> eating</c><c> at</c><c> an</c><c> infinite</c><c> speed,</c>
+[22:25] If Koko was eating at an infinite speed,
+[22:25] If Koko was eating at an infinite speed, what<c> will</c><c> happen?</c><c> In</c><c> the</c><c> first</c><c> hour,</c><c> he</c>
+[22:27] what will happen? In the first hour, he
+[22:27] what will happen? In the first hour, he eats<c> first</c><c> pile,</c><c> then</c><c> second</c><c> pile,</c><c> then</c>
+[22:29] eats first pile, then second pile, then
+[22:29] eats first pile, then second pile, then third,<c> then</c><c> fourth,</c><c> and</c><c> then</c><c> fifth.</c><c> So</c>
+[22:31] third, then fourth, and then fifth. So
+[22:31] third, then fourth, and then fifth. So in<c> just</c><c> 5</c><c> hours,</c><c> he</c><c> was</c><c> able</c><c> to</c><c> eat</c><c> all</c>
+[22:33] in just 5 hours, he was able to eat all
+[22:33] in just 5 hours, he was able to eat all the<c> bananas.</c><c> But</c><c> he</c><c> has</c><c> 9</c><c> hours</c>
+[22:36] the bananas. But he has 9 hours
+[22:36] the bananas. But he has 9 hours available.<c> So</c><c> you</c><c> need</c><c> to</c><c> use</c><c> that.</c><c> But</c>
+[22:39] available. So you need to use that. But
+[22:39] available. So you need to use that. But at<c> the</c><c> same</c><c> time,</c><c> if</c><c> you</c><c> notice,</c><c> he</c><c> does</c>
+[22:41] at the same time, if you notice, he does
+[22:42] at the same time, if you notice, he does not<c> need</c><c> an</c><c> infinite</c><c> eating</c><c> speed.</c><c> If</c><c> he</c>
+[22:44] not need an infinite eating speed. If he
+[22:44] not need an infinite eating speed. If he is<c> able</c><c> to</c><c> eat</c><c> at</c><c> the</c><c> speed</c><c> of</c><c> the</c>
+[22:47] is able to eat at the speed of the
+[22:47] is able to eat at the speed of the maximum<c> bananas</c><c> in</c><c> a</c><c> pile,</c><c> then</c><c> also</c><c> he</c>
+[22:50] maximum bananas in a pile, then also he
+[22:50] maximum bananas in a pile, then also he can<c> achieve</c><c> it.</c><c> So</c><c> if</c><c> instead</c><c> of</c><c> eating</c>
+[22:52] can achieve it. So if instead of eating
+[22:52] can achieve it. So if instead of eating at<c> infinite</c><c> speed,</c><c> Koko</c><c> eats</c><c> at</c><c> 30</c>
+[22:55] at infinite speed, Koko eats at 30
+[22:55] at infinite speed, Koko eats at 30 bananas<c> per</c><c> hour,</c><c> then</c><c> once</c><c> again</c><c> in</c>
+[22:58] bananas per hour, then once again in
+[22:58] bananas per hour, then once again in every<c> hour</c><c> he</c><c> will</c><c> eat</c><c> all</c><c> the</c><c> piles</c><c> and</c>
+[23:01] every hour he will eat all the piles and
+[23:01] every hour he will eat all the piles and he<c> will</c><c> be</c><c> done.</c><c> So</c><c> up</c><c> till</c><c> now,</c><c> what</c>
+[23:03] he will be done. So up till now, what
+[23:04] he will be done. So up till now, what have<c> we</c><c> done?</c><c> We</c><c> reduced</c><c> our</c><c> search</c>
+[23:06] have we done? We reduced our search
+[23:06] have we done? We reduced our search space<c> from</c><c> one</c><c> all</c><c> the</c><c> way</c><c> up</c><c> to</c><c> 30.</c><c> You</c>
+[23:09] space from one all the way up to 30. You
+[23:09] space from one all the way up to 30. You definitely<c> know</c><c> the</c><c> next</c><c> steps,</c><c> right?</c><c> I</c>
+[23:11] definitely know the next steps, right? I
+[23:11] definitely know the next steps, right? I will<c> have</c><c> my</c><c> left</c><c> pointer</c><c> at</c><c> 1</c><c> and</c><c> right</c>
+[23:13] will have my left pointer at 1 and right
+[23:13] will have my left pointer at 1 and right pointer<c> at</c><c> 30.</c><c> So</c><c> where</c><c> is</c><c> 15?</c><c> I</c><c> get</c><c> 15</c>
+[23:16] pointer at 30. So where is 15? I get 15
+[23:16] pointer at 30. So where is 15? I get 15 over<c> here.</c><c> So</c><c> now</c><c> what</c><c> I</c><c> will</c><c> try</c><c> is</c><c> I</c>
+[23:20] over here. So now what I will try is I
+[23:20] over here. So now what I will try is I will<c> try</c><c> to</c><c> eat</c><c> at</c><c> 15</c><c> bananas</c><c> per</c><c> hour.</c>
+[23:23] will try to eat at 15 bananas per hour.
+[23:23] will try to eat at 15 bananas per hour. The<c> first</c><c> pile</c><c> is</c><c> going</c><c> to</c><c> take</c><c> me</c><c> 2</c>
+[23:24] The first pile is going to take me 2
+[23:24] The first pile is going to take me 2 hours.<c> The</c><c> second</c><c> pile</c><c> is</c><c> going</c><c> to</c><c> take</c>
+[23:26] hours. The second pile is going to take
+[23:26] hours. The second pile is going to take me<c> 1</c><c> hour.</c><c> Third</c><c> pile</c><c> takes</c><c> 2</c><c> hours.</c>
+[23:28] me 1 hour. Third pile takes 2 hours.
+[23:28] me 1 hour. Third pile takes 2 hours. Fourth<c> pile</c><c> takes</c><c> 1</c><c> hour.</c><c> And</c><c> fifth</c><c> pile</c>
+[23:31] Fourth pile takes 1 hour. And fifth pile
+[23:31] Fourth pile takes 1 hour. And fifth pile again<c> takes</c><c> up</c><c> 2</c><c> hours.</c><c> So</c><c> how</c><c> many</c>
+[23:34] again takes up 2 hours. So how many
+[23:34] again takes up 2 hours. So how many hours<c> did</c><c> it</c><c> take?</c><c> Eight.</c><c> In</c><c> 8</c><c> hours,</c>
+[23:37] hours did it take? Eight. In 8 hours,
+[23:38] hours did it take? Eight. In 8 hours, Koko<c> was</c><c> able</c><c> to</c><c> eat</c><c> all</c><c> of</c><c> the</c><c> bananas.</c>
+[23:41] Koko was able to eat all of the bananas.
+[23:41] Koko was able to eat all of the bananas. That<c> means</c><c> I'm</c><c> still</c><c> left</c><c> with</c><c> 1</c><c> hour.</c>
+[23:43] That means I'm still left with 1 hour.
+[23:43] That means I'm still left with 1 hour. But<c> also,</c><c> I</c><c> know</c><c> that</c><c> for</c><c> any</c><c> value</c><c> that</c>
+[23:45] But also, I know that for any value that
+[23:45] But also, I know that for any value that is<c> greater</c><c> than</c><c> 15,</c><c> I</c><c> am</c><c> not</c><c> utilizing</c>
+[23:48] is greater than 15, I am not utilizing
+[23:48] is greater than 15, I am not utilizing all<c> of</c><c> the</c><c> 9</c><c> hours</c><c> available.</c><c> So,</c><c> what</c>
+[23:50] all of the 9 hours available. So, what
+[23:50] all of the 9 hours available. So, what I'm<c> doing</c><c> over</c><c> here,</c><c> I</c><c> am</c><c> reducing</c><c> this</c>
+[23:53] I'm doing over here, I am reducing this
+[23:53] I'm doing over here, I am reducing this search<c> space.</c><c> I</c><c> know</c><c> that</c><c> my</c><c> answer</c><c> will</c>
+[23:55] search space. I know that my answer will
+[23:55] search space. I know that my answer will lie<c> somewhere</c><c> between</c><c> 1</c><c> and</c><c> 15.</c><c> Once</c>
+[23:58] lie somewhere between 1 and 15. Once
+[23:58] lie somewhere between 1 and 15. Once again,<c> apply</c><c> the</c><c> binary</c><c> search.</c><c> Take</c><c> the</c>
+[24:00] again, apply the binary search. Take the
+[24:00] again, apply the binary search. Take the right<c> pointer</c><c> at</c><c> 15.</c><c> And</c><c> now,</c><c> find</c><c> a</c>
+[24:02] right pointer at 15. And now, find a
+[24:02] right pointer at 15. And now, find a midpoint.<c> Using</c><c> this</c><c> midpoint,</c><c> try</c><c> to</c>
+[24:05] midpoint. Using this midpoint, try to
+[24:05] midpoint. Using this midpoint, try to eat<c> all</c><c> the</c><c> piles</c><c> and</c><c> see</c><c> how</c><c> many</c><c> Rs</c><c> do</c>
+[24:07] eat all the piles and see how many Rs do
+[24:07] eat all the piles and see how many Rs do you<c> take.</c><c> Based</c><c> upon</c><c> this,</c><c> you</c><c> will</c><c> find</c>
+[24:10] you take. Based upon this, you will find
+[24:10] you take. Based upon this, you will find your<c> answer.</c><c> And</c><c> once</c><c> again,</c><c> binary</c>
+[24:12] your answer. And once again, binary
+[24:12] your answer. And once again, binary search<c> helped</c><c> you</c><c> in</c><c> your</c><c> answer</c><c> space</c>
+[24:14] search helped you in your answer space
+[24:14] search helped you in your answer space rather<c> than</c><c> the</c><c> input</c><c> set.</c><c> These</c><c> are</c><c> all</c>
+[24:17] rather than the input set. These are all
+[24:17] rather than the input set. These are all the<c> reasons</c><c> which</c><c> make</c><c> binary</c><c> search</c>
+[24:19] the reasons which make binary search
+[24:19] the reasons which make binary search super<c> interesting.</c><c> You</c><c> are</c><c> not</c><c> only</c>
+[24:22] super interesting. You are not only
+[24:22] super interesting. You are not only applying<c> it</c><c> at</c><c> your</c><c> input</c><c> space,</c><c> but</c><c> you</c>
+[24:25] applying it at your input space, but you
+[24:25] applying it at your input space, but you can<c> also</c><c> apply</c><c> it</c><c> at</c><c> your</c><c> answer</c><c> space</c>
+[24:27] can also apply it at your answer space
+[24:27] can also apply it at your answer space as<c> well.</c><c> So</c><c> whenever</c><c> you</c><c> are</c><c> approaching</c>
+[24:30] as well. So whenever you are approaching
+[24:30] as well. So whenever you are approaching a<c> problem,</c><c> look</c><c> for</c><c> all</c><c> of</c><c> these</c><c> pattern</c>
+[24:32] a problem, look for all of these pattern
+[24:32] a problem, look for all of these pattern recognition<c> cues.</c><c> They</c><c> will</c><c> help</c><c> you</c><c> to</c>
+[24:35] recognition cues. They will help you to
+[24:35] recognition cues. They will help you to understand<c> if</c><c> you</c><c> can</c><c> apply</c><c> the</c><c> binary</c>
+[24:36] understand if you can apply the binary
+[24:36] understand if you can apply the binary search<c> technique</c><c> or</c><c> not.</c><c> For</c><c> example,</c>
+[24:38] search technique or not. For example,
+[24:38] search technique or not. For example, space<c> properties.</c><c> Your</c><c> space</c><c> is</c><c> sorted,</c>
+[24:41] space properties. Your space is sorted,
+[24:41] space properties. Your space is sorted, monotonic,<c> bounded.</c><c> You</c><c> have</c><c> a</c>
+[24:43] monotonic, bounded. You have a
+[24:43] monotonic, bounded. You have a increasing<c> or</c><c> a</c><c> decreasing</c><c> function.</c>
+[24:45] increasing or a decreasing function.
+[24:45] increasing or a decreasing function. Sorting<c> simply</c><c> means</c><c> try</c><c> the</c><c> binary</c>
+[24:47] Sorting simply means try the binary
+[24:47] Sorting simply means try the binary search.<c> You</c><c> are</c><c> picking</c><c> up</c><c> an</c><c> option</c>
+[24:49] search. You are picking up an option
+[24:50] search. You are picking up an option based<c> upon</c><c> a</c><c> boolean</c><c> condition.</c><c> You</c><c> are</c>
+[24:52] based upon a boolean condition. You are
+[24:52] based upon a boolean condition. You are able<c> to</c><c> discard</c><c> some</c><c> of</c><c> the</c><c> spaces.</c><c> You</c>
+[24:54] able to discard some of the spaces. You
+[24:54] able to discard some of the spaces. You are<c> want</c><c> to</c><c> finding</c><c> out</c><c> the</c><c> minimum</c>
+[24:56] are want to finding out the minimum
+[24:56] are want to finding out the minimum value.<c> you're</c><c> trying</c><c> to</c><c> achieve</c><c> a</c>
+[24:58] value. you're trying to achieve a
+[24:58] value. you're trying to achieve a certain<c> target,</c><c> some</c><c> kind</c><c> of</c><c> a</c>
+[25:00] certain target, some kind of a
+[25:00] certain target, some kind of a feasibility.<c> This</c><c> is</c><c> a</c><c> very</c><c> good</c>
+[25:02] feasibility. This is a very good
+[25:02] feasibility. This is a very good indication<c> that</c><c> you</c><c> have</c><c> to</c><c> search</c><c> in</c>
+[25:05] indication that you have to search in
+[25:05] indication that you have to search in your<c> answer</c><c> space</c><c> rather</c><c> than</c><c> looking</c><c> in</c>
+[25:07] your answer space rather than looking in
+[25:07] your answer space rather than looking in your<c> input</c><c> space.</c><c> So</c><c> try</c><c> to</c><c> look</c><c> for</c><c> all</c>
+[25:11] your input space. So try to look for all
+[25:11] your input space. So try to look for all of<c> these</c><c> cues</c><c> and</c><c> I</c><c> truly</c><c> believe</c><c> this</c>
+[25:14] of these cues and I truly believe this
+[25:14] of these cues and I truly believe this pattern<c> is</c><c> going</c><c> to</c><c> do</c><c> wonders</c><c> for</c><c> you.</c>
+[25:16] pattern is going to do wonders for you.
+[25:16] pattern is going to do wonders for you. Just<c> tell</c><c> me</c><c> all</c><c> in</c><c> the</c><c> comment</c><c> section</c>
+[25:19] Just tell me all in the comment section
+[25:19] Just tell me all in the comment section below<c> where</c><c> else</c><c> have</c><c> you</c><c> been</c><c> able</c><c> to</c>
+[25:21] below where else have you been able to
+[25:21] below where else have you been able to apply<c> this</c><c> binary</c><c> search</c><c> pattern.</c><c> This</c>
+[25:24] apply this binary search pattern. This
+[25:24] apply this binary search pattern. This will<c> become</c><c> a</c><c> very</c><c> good</c><c> collection</c><c> of</c>
+[25:25] will become a very good collection of
+[25:25] will become a very good collection of all<c> such</c><c> problems</c><c> and</c><c> it</c><c> will</c><c> help</c><c> you</c>
+[25:28] all such problems and it will help you
+[25:28] all such problems and it will help you also<c> when</c><c> you</c><c> come</c><c> back</c><c> to</c><c> this</c><c> video</c>
+[25:30] also when you come back to this video
+[25:30] also when you come back to this video for<c> a</c><c> review</c><c> and</c><c> you</c><c> will</c><c> have</c><c> all</c><c> these</c>
+[25:32] for a review and you will have all these
+[25:32] for a review and you will have all these questions<c> ready</c><c> for</c><c> you.</c><c> Do</c><c> let</c><c> me</c><c> know</c>
+[25:34] questions ready for you. Do let me know
+[25:34] questions ready for you. Do let me know in<c> the</c><c> comment</c><c> section</c><c> below</c><c> and</c><c> I</c><c> will</c>
+[25:36] in the comment section below and I will
+[25:36] in the comment section below and I will be<c> happy</c><c> to</c><c> discuss</c><c> everything.</c><c> As</c><c> a</c>
+[25:38] be happy to discuss everything. As a
+[25:38] be happy to discuss everything. As a reminder,<c> if</c><c> you</c><c> found</c><c> this</c><c> video</c>
+[25:39] reminder, if you found this video
+[25:39] reminder, if you found this video helpful,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[25:41] helpful, please do consider subscribing
+[25:41] helpful, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[25:42] to my channel and share this video with
+[25:42] to my channel and share this video with your<c> friends.</c><c> This</c><c> really</c><c> keeps</c><c> me</c>
+[25:43] your friends. This really keeps me
+[25:44] your friends. This really keeps me motivated<c> and</c><c> I</c><c> can</c><c> make</c><c> more</c><c> such</c>
+[25:45] motivated and I can make more such
+[25:45] motivated and I can make more such videos.<c> Remember,</c><c> you</c><c> can</c><c> now</c><c> schedule</c><c> a</c>
+[25:47] videos. Remember, you can now schedule a
+[25:47] videos. Remember, you can now schedule a one-to-one<c> session</c><c> with</c><c> me</c><c> and</c><c> we</c><c> can</c>
+[25:49] one-to-one session with me and we can
+[25:49] one-to-one session with me and we can solve<c> any</c><c> sort</c><c> of</c><c> doubts</c><c> or</c><c> questions</c>
+[25:51] solve any sort of doubts or questions
+[25:51] solve any sort of doubts or questions that<c> you</c><c> might</c><c> have.</c><c> Also,</c><c> a</c><c> huge</c><c> shout</c>
+[25:53] that you might have. Also, a huge shout
+[25:53] that you might have. Also, a huge shout out<c> to</c><c> all</c><c> other</c><c> members</c><c> who</c><c> support</c><c> my</c>
+[25:55] out to all other members who support my
+[25:55] out to all other members who support my channel.<c> You</c><c> guys</c><c> really</c><c> keep</c><c> me</c><c> going</c>
+[25:57] channel. You guys really keep me going
+[25:57] channel. You guys really keep me going because<c> as</c><c> a</c><c> member,</c><c> you</c><c> do</c><c> get</c><c> prior</c><c> to</c>
+[25:59] because as a member, you do get prior to
+[25:59] because as a member, you do get prior to reply<c> to</c><c> your</c><c> comments</c><c> and</c><c> early</c><c> access</c>
+[26:00] reply to your comments and early access
+[26:00] reply to your comments and early access to<c> new</c><c> videos</c><c> as</c><c> well.</c><c> Stay</c><c> tuned</c><c> for</c><c> my</c>
+[26:02] to new videos as well. Stay tuned for my
+[26:02] to new videos as well. Stay tuned for my upcoming<c> video.</c><c> Underland</c><c> FIA.</c>

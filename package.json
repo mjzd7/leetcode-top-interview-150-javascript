@@ -1,0 +1,15 @@
+{
+  "name": "leetcode-150-javascript-mastery",
+  "version": "1.0.0",
+  "description": "Comprehensive visual study guide and solutions manual for LeetCode Top Interview 150 in JavaScript",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate-guide.mjs",
+    "build": "node scripts/build-site.mjs",
+    "test": "node scripts/test-runner.mjs",
+    "verify": "npm run validate && npm test && npm run build"
+  },
+  "keywords": ["leetcode", "javascript", "dsa", "algorithms", "maang", "interview-prep"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,1680 @@
+[0:01] Problems involving the greedy pattern
+[0:01] Problems involving the greedy pattern are<c> actually</c><c> very</c><c> fun</c><c> to</c><c> solve.</c><c> Well,</c>
+[0:04] are actually very fun to solve. Well,
+[0:04] are actually very fun to solve. Well, that<c> is</c><c> when</c><c> you</c><c> have</c><c> identified</c><c> what</c>
+[0:06] that is when you have identified what
+[0:06] that is when you have identified what will<c> be</c><c> your</c><c> greed</c><c> criteria</c><c> and</c><c> the</c>
+[0:08] will be your greed criteria and the
+[0:08] will be your greed criteria and the hardest<c> part</c><c> is</c><c> proving</c><c> the</c><c> fact</c><c> that</c>
+[0:11] hardest part is proving the fact that
+[0:11] hardest part is proving the fact that your<c> local</c><c> maxima</c><c> or</c><c> your</c><c> local</c><c> optimum</c>
+[0:14] your local maxima or your local optimum
+[0:14] your local maxima or your local optimum solution<c> will</c><c> eventually</c><c> lead</c><c> you</c><c> to</c><c> the</c>
+[0:16] solution will eventually lead you to the
+[0:16] solution will eventually lead you to the global<c> optimum</c><c> solution.</c><c> Once</c><c> you</c><c> have</c>
+[0:19] global optimum solution. Once you have
+[0:19] global optimum solution. Once you have proved<c> that</c><c> most</c><c> of</c><c> these</c><c> solutions</c><c> work</c>
+[0:21] proved that most of these solutions work
+[0:21] proved that most of these solutions work in<c> a</c><c> linear</c><c> time</c><c> complexity.</c><c> So</c><c> how</c><c> do</c>
+[0:24] in a linear time complexity. So how do
+[0:24] in a linear time complexity. So how do you<c> go</c><c> about</c><c> solving</c><c> that?</c><c> We</c><c> are</c><c> going</c>
+[0:26] you go about solving that? We are going
+[0:26] you go about solving that? We are going to<c> look</c><c> at</c><c> some</c><c> of</c><c> the</c><c> problems</c><c> that</c>
+[0:27] to look at some of the problems that
+[0:27] to look at some of the problems that involve<c> a</c><c> greedy</c><c> approach</c><c> and</c><c> by</c><c> the</c><c> end</c>
+[0:30] involve a greedy approach and by the end
+[0:30] involve a greedy approach and by the end of<c> this</c><c> video</c><c> you</c><c> may</c><c> start</c><c> to</c><c> get</c><c> an</c>
+[0:32] of this video you may start to get an
+[0:32] of this video you may start to get an idea<c> when</c><c> you</c><c> can</c><c> apply</c><c> this</c><c> pattern.</c>
+[0:35] idea when you can apply this pattern.
+[0:35] idea when you can apply this pattern. What<c> factors</c><c> do</c><c> you</c><c> need</c><c> to</c><c> look</c><c> out</c><c> for</c>
+[0:37] What factors do you need to look out for
+[0:37] What factors do you need to look out for and<c> how</c><c> can</c><c> you</c><c> start</c><c> to</c><c> think</c><c> what</c><c> is</c>
+[0:39] and how can you start to think what is
+[0:39] and how can you start to think what is your<c> greed</c><c> criteria</c><c> and</c><c> how</c><c> can</c><c> you</c><c> take</c>
+[0:41] your greed criteria and how can you take
+[0:41] your greed criteria and how can you take advantage<c> of</c><c> that.</c><c> So</c><c> let</c><c> us</c><c> dive</c><c> away</c>
+[0:43] advantage of that. So let us dive away
+[0:43] advantage of that. So let us dive away straight<c> into</c><c> the</c><c> problems.</c><c> Hello</c>
+[0:45] straight into the problems. Hello
+[0:45] straight into the problems. Hello friends,<c> welcome</c><c> back</c><c> to</c><c> my</c><c> channel.</c>
+[0:51] Let us do a quick recap on how the
+[0:51] Let us do a quick recap on how the greedy<c> pattern</c><c> actually</c><c> works.</c><c> The</c><c> idea</c>
+[0:53] greedy pattern actually works. The idea
+[0:53] greedy pattern actually works. The idea is<c> fairly</c><c> simple.</c><c> You</c><c> are</c><c> given</c><c> a</c><c> sample</c>
+[0:55] is fairly simple. You are given a sample
+[0:55] is fairly simple. You are given a sample space.<c> What</c><c> you</c><c> do</c><c> is</c><c> you</c><c> choose</c><c> the</c>
+[0:58] space. What you do is you choose the
+[0:58] space. What you do is you choose the local<c> optimum</c><c> solution</c><c> from</c><c> your</c>
+[1:00] local optimum solution from your
+[1:00] local optimum solution from your available<c> sample</c><c> space.</c><c> After</c><c> this,</c><c> you</c>
+[1:03] available sample space. After this, you
+[1:03] available sample space. After this, you take<c> up</c><c> this</c><c> solution</c><c> and</c><c> add</c><c> it</c><c> to</c><c> your</c>
+[1:05] take up this solution and add it to your
+[1:05] take up this solution and add it to your final<c> solution</c><c> set.</c><c> You</c><c> will</c><c> still</c><c> be</c>
+[1:07] final solution set. You will still be
+[1:07] final solution set. You will still be remaining<c> with</c><c> some</c><c> other</c><c> sample</c><c> space.</c>
+[1:09] remaining with some other sample space.
+[1:09] remaining with some other sample space. Correct?<c> For</c><c> a</c><c> greedy</c><c> approach,</c><c> you</c><c> want</c>
+[1:11] Correct? For a greedy approach, you want
+[1:11] Correct? For a greedy approach, you want to<c> just</c><c> keep</c><c> doing</c><c> this</c><c> process</c>
+[1:13] to just keep doing this process
+[1:13] to just keep doing this process iteratively.<c> From</c><c> this</c><c> remaining</c><c> sample</c>
+[1:16] iteratively. From this remaining sample
+[1:16] iteratively. From this remaining sample space,<c> again,</c><c> apply</c><c> the</c><c> same</c><c> technique</c>
+[1:18] space, again, apply the same technique
+[1:18] space, again, apply the same technique and<c> choose</c><c> your</c><c> local</c><c> optimum</c><c> solution</c>
+[1:20] and choose your local optimum solution
+[1:20] and choose your local optimum solution and<c> then</c><c> add</c><c> it</c><c> back</c><c> to</c><c> your</c><c> solution</c>
+[1:22] and then add it back to your solution
+[1:22] and then add it back to your solution set.<c> This</c><c> way</c><c> you</c><c> will</c><c> keep</c><c> on</c><c> building</c>
+[1:24] set. This way you will keep on building
+[1:24] set. This way you will keep on building up<c> your</c><c> solution</c><c> set</c><c> and</c><c> by</c><c> the</c><c> time</c>
+[1:27] up your solution set and by the time
+[1:27] up your solution set and by the time your<c> sample</c><c> space</c><c> is</c><c> empty.</c><c> You</c><c> hope</c>
+[1:30] your sample space is empty. You hope
+[1:30] your sample space is empty. You hope that<c> whatever</c><c> solution</c><c> you</c><c> achieved</c><c> is</c>
+[1:32] that whatever solution you achieved is
+[1:32] that whatever solution you achieved is the<c> global</c><c> optimum</c><c> solution</c><c> also.</c><c> Now</c>
+[1:35] the global optimum solution also. Now
+[1:35] the global optimum solution also. Now all<c> of</c><c> these</c><c> are</c><c> words.</c><c> How</c><c> do</c><c> you</c>
+[1:37] all of these are words. How do you
+[1:37] all of these are words. How do you actually<c> apply</c><c> this</c><c> algorithm?</c><c> Let</c><c> us</c>
+[1:40] actually apply this algorithm? Let us
+[1:40] actually apply this algorithm? Let us look<c> at</c><c> the</c><c> very</c><c> basic</c><c> problem</c><c> something</c>
+[1:43] look at the very basic problem something
+[1:43] look at the very basic problem something that<c> we</c><c> all</c><c> have</c><c> been</c><c> doing</c><c> without</c><c> even</c>
+[1:45] that we all have been doing without even
+[1:45] that we all have been doing without even thinking<c> about</c><c> it.</c><c> And</c><c> this</c><c> is</c><c> the</c><c> main</c>
+[1:48] thinking about it. And this is the main
+[1:48] thinking about it. And this is the main crux<c> of</c><c> how</c><c> greedy</c><c> algorithms</c><c> actually</c>
+[1:50] crux of how greedy algorithms actually
+[1:50] crux of how greedy algorithms actually work.<c> So</c><c> let</c><c> us</c><c> say</c><c> I</c><c> have</c><c> this</c><c> set</c><c> of</c>
+[1:53] work. So let us say I have this set of
+[1:53] work. So let us say I have this set of integers<c> and</c><c> now</c><c> I</c><c> ask</c><c> you</c><c> okay</c><c> use</c>
+[1:57] integers and now I ask you okay use
+[1:57] integers and now I ask you okay use these<c> integers</c><c> and</c><c> construct</c><c> me</c><c> the</c>
+[2:00] these integers and construct me the
+[2:00] these integers and construct me the largest<c> integer</c><c> possible</c><c> without</c><c> even</c>
+[2:02] largest integer possible without even
+[2:02] largest integer possible without even thinking<c> what</c><c> will</c><c> you</c><c> do</c><c> you</c><c> will</c><c> pick</c>
+[2:04] thinking what will you do you will pick
+[2:04] thinking what will you do you will pick up<c> the</c><c> maximum</c><c> integer</c><c> that</c><c> you</c><c> can</c><c> find</c>
+[2:07] up the maximum integer that you can find
+[2:07] up the maximum integer that you can find over<c> here</c><c> it</c><c> is</c><c> a</c><c> 9.</c><c> So</c><c> what</c><c> you're</c>
+[2:09] over here it is a 9. So what you're
+[2:09] over here it is a 9. So what you're going<c> to</c><c> do</c><c> is</c><c> you</c><c> will</c><c> add</c><c> nine</c><c> to</c><c> your</c>
+[2:11] going to do is you will add nine to your
+[2:11] going to do is you will add nine to your solution<c> set</c><c> and</c><c> remove</c><c> let's</c><c> say</c><c> one</c><c> of</c>
+[2:14] solution set and remove let's say one of
+[2:14] solution set and remove let's say one of the<c> nines</c><c> from</c><c> here.</c><c> You</c><c> are</c><c> now</c><c> left</c>
+[2:16] the nines from here. You are now left
+[2:16] the nines from here. You are now left with<c> another</c><c> sample</c><c> space</c><c> a</c><c> smaller</c>
+[2:18] with another sample space a smaller
+[2:18] with another sample space a smaller sample<c> space.</c><c> Again</c><c> you</c><c> will</c><c> apply</c><c> the</c>
+[2:21] sample space. Again you will apply the
+[2:21] sample space. Again you will apply the same<c> technique.</c><c> Find</c><c> out</c><c> the</c><c> local</c>
+[2:23] same technique. Find out the local
+[2:23] same technique. Find out the local optimal<c> solution.</c><c> Out</c><c> of</c><c> these</c><c> inteious</c>
+[2:26] optimal solution. Out of these inteious
+[2:26] optimal solution. Out of these inteious what<c> is</c><c> the</c><c> largest?</c><c> It</c><c> is</c><c> nine</c><c> again.</c>
+[2:28] what is the largest? It is nine again.
+[2:28] what is the largest? It is nine again. So<c> you</c><c> pick</c><c> up</c><c> this</c><c> nine</c><c> and</c><c> then</c><c> this</c>
+[2:31] So you pick up this nine and then this
+[2:31] So you pick up this nine and then this gets<c> removed.</c><c> What</c><c> is</c><c> happening</c><c> over</c>
+[2:33] gets removed. What is happening over
+[2:33] gets removed. What is happening over here?<c> After</c><c> each</c><c> iteration</c><c> your</c><c> sample</c>
+[2:35] here? After each iteration your sample
+[2:35] here? After each iteration your sample space<c> is</c><c> reducing</c><c> and</c><c> you</c><c> are</c><c> using</c><c> the</c>
+[2:38] space is reducing and you are using the
+[2:38] space is reducing and you are using the same<c> technique</c><c> to</c><c> pick</c><c> up</c><c> the</c><c> optimal</c>
+[2:40] same technique to pick up the optimal
+[2:40] same technique to pick up the optimal solution.<c> Once</c><c> again</c><c> from</c><c> this</c><c> sample</c>
+[2:43] solution. Once again from this sample
+[2:43] solution. Once again from this sample space<c> you</c><c> will</c><c> pick</c><c> up</c><c> the</c><c> maximum</c>
+[2:45] space you will pick up the maximum
+[2:45] space you will pick up the maximum integer<c> that</c><c> you</c><c> can</c><c> find.</c><c> So</c><c> this</c><c> time</c>
+[2:47] integer that you can find. So this time
+[2:47] integer that you can find. So this time you<c> will</c><c> find</c><c> a</c><c> seven</c><c> and</c><c> you</c><c> remove</c>
+[2:49] you will find a seven and you remove
+[2:49] you will find a seven and you remove this<c> from</c><c> your</c><c> original</c><c> sample</c><c> space.</c>
+[2:51] this from your original sample space.
+[2:51] this from your original sample space. Similarly<c> then</c><c> you</c><c> will</c><c> get</c><c> a</c><c> six</c><c> then</c>
+[2:53] Similarly then you will get a six then
+[2:53] Similarly then you will get a six then you<c> get</c><c> a</c><c> four</c><c> then</c><c> you</c><c> get</c><c> a</c><c> 1</c><c> and</c><c> then</c>
+[2:56] you get a four then you get a 1 and then
+[2:56] you get a four then you get a 1 and then you<c> get</c><c> a</c><c> zero.</c><c> You</c><c> kept</c><c> on</c><c> applying</c><c> the</c>
+[2:58] you get a zero. You kept on applying the
+[2:58] you get a zero. You kept on applying the same<c> technique</c><c> trying</c><c> to</c><c> get</c><c> the</c><c> maximum</c>
+[3:02] same technique trying to get the maximum
+[3:02] same technique trying to get the maximum inteious<c> from</c><c> what</c><c> is</c><c> available</c><c> to</c><c> you.</c>
+[3:04] inteious from what is available to you.
+[3:04] inteious from what is available to you. You<c> kept</c><c> on</c><c> repeating</c><c> this</c><c> and</c><c> you</c><c> got</c>
+[3:07] You kept on repeating this and you got
+[3:07] You kept on repeating this and you got the<c> global</c><c> optimal</c><c> solution.</c><c> You</c><c> cannot</c>
+[3:11] the global optimal solution. You cannot
+[3:11] the global optimal solution. You cannot have<c> a</c><c> integer</c><c> larger</c><c> than</c><c> this</c><c> that</c><c> can</c>
+[3:13] have a integer larger than this that can
+[3:13] have a integer larger than this that can be<c> constructed</c><c> from</c><c> this</c><c> set</c><c> of</c>
+[3:15] be constructed from this set of
+[3:15] be constructed from this set of integers.<c> So</c><c> over</c><c> here</c><c> our</c><c> greedy</c>
+[3:17] integers. So over here our greedy
+[3:18] integers. So over here our greedy approach<c> work</c><c> perfectly.</c><c> But</c><c> the</c><c> caveat</c>
+[3:21] approach work perfectly. But the caveat
+[3:21] approach work perfectly. But the caveat over<c> here</c><c> is</c><c> that</c><c> you</c><c> need</c><c> to</c><c> be</c><c> a</c>
+[3:23] over here is that you need to be a
+[3:23] over here is that you need to be a little<c> careful</c><c> when</c><c> it</c><c> comes</c><c> to</c><c> greedy</c>
+[3:25] little careful when it comes to greedy
+[3:25] little careful when it comes to greedy algorithms<c> because</c><c> sometimes</c><c> the</c><c> greedy</c>
+[3:28] algorithms because sometimes the greedy
+[3:28] algorithms because sometimes the greedy approach<c> may</c><c> not</c><c> be</c><c> the</c><c> optimal</c><c> one</c><c> or</c>
+[3:30] approach may not be the optimal one or
+[3:30] approach may not be the optimal one or it<c> may</c><c> not</c><c> even</c><c> lead</c><c> you</c><c> to</c><c> a</c><c> correct</c>
+[3:32] it may not even lead you to a correct
+[3:32] it may not even lead you to a correct solution.<c> For</c><c> example,</c><c> think</c><c> like</c><c> this.</c>
+[3:35] solution. For example, think like this.
+[3:35] solution. For example, think like this. Let<c> us</c><c> say</c><c> there</c><c> is</c><c> a</c><c> mountain</c><c> correct</c>
+[3:37] Let us say there is a mountain correct
+[3:37] Let us say there is a mountain correct and<c> you're</c><c> standing</c><c> over</c><c> here</c><c> at</c><c> the</c>
+[3:38] and you're standing over here at the
+[3:38] and you're standing over here at the bottom.<c> What</c><c> does</c><c> a</c><c> greedy</c><c> approach</c><c> say?</c>
+[3:41] bottom. What does a greedy approach say?
+[3:41] bottom. What does a greedy approach say? If<c> you</c><c> have</c><c> to</c><c> climb</c><c> to</c><c> the</c><c> top,</c><c> what</c><c> is</c>
+[3:43] If you have to climb to the top, what is
+[3:43] If you have to climb to the top, what is the<c> shortest</c><c> path?</c><c> Just</c><c> go</c><c> straight</c>
+[3:45] the shortest path? Just go straight
+[3:45] the shortest path? Just go straight ahead,<c> right?</c><c> This</c><c> is</c><c> the</c><c> shortest</c><c> path.</c>
+[3:48] ahead, right? This is the shortest path.
+[3:48] ahead, right? This is the shortest path. But<c> it</c><c> is</c><c> a</c><c> mountain.</c><c> So</c><c> an</c><c> optimal</c><c> way</c>
+[3:52] But it is a mountain. So an optimal way
+[3:52] But it is a mountain. So an optimal way might<c> not</c><c> even</c><c> look</c><c> like</c><c> this.</c><c> You</c><c> might</c>
+[3:54] might not even look like this. You might
+[3:54] might not even look like this. You might have<c> to</c><c> traverse</c><c> a</c><c> lot</c><c> of</c><c> different</c>
+[3:56] have to traverse a lot of different
+[3:56] have to traverse a lot of different paths<c> and</c><c> you</c><c> might</c><c> have</c><c> to</c><c> take</c>
+[3:58] paths and you might have to take
+[3:58] paths and you might have to take different<c> turns</c><c> to</c><c> finally</c><c> reach</c><c> the</c>
+[3:59] different turns to finally reach the
+[3:59] different turns to finally reach the peak<c> and</c><c> that</c><c> might</c><c> be</c><c> the</c><c> optimum</c>
+[4:02] peak and that might be the optimum
+[4:02] peak and that might be the optimum solution.<c> Sure</c><c> there</c><c> might</c><c> be</c><c> lot</c>
+[4:04] solution. Sure there might be lot
+[4:04] solution. Sure there might be lot different<c> other</c><c> ways</c><c> to</c><c> go</c><c> around</c><c> the</c>
+[4:05] different other ways to go around the
+[4:06] different other ways to go around the mountain<c> but</c><c> there</c><c> will</c><c> be</c><c> one</c><c> global</c>
+[4:08] mountain but there will be one global
+[4:08] mountain but there will be one global optimum<c> way</c><c> which</c><c> you</c><c> can</c><c> be</c><c> arriving</c><c> in</c>
+[4:11] optimum way which you can be arriving in
+[4:11] optimum way which you can be arriving in the<c> shortest</c><c> possible</c><c> way.</c><c> Correct?</c><c> So</c>
+[4:14] the shortest possible way. Correct? So
+[4:14] the shortest possible way. Correct? So this<c> is</c><c> a</c><c> typical</c><c> scenario</c><c> in</c><c> which</c><c> a</c>
+[4:16] this is a typical scenario in which a
+[4:16] this is a typical scenario in which a greedy<c> approach</c><c> might</c><c> not</c><c> be</c><c> successful.</c>
+[4:19] greedy approach might not be successful.
+[4:19] greedy approach might not be successful. So<c> you</c><c> have</c><c> to</c><c> be</c><c> a</c><c> little</c><c> careful</c><c> when</c>
+[4:21] So you have to be a little careful when
+[4:21] So you have to be a little careful when applying<c> the</c><c> greedy</c><c> algorithmic</c>
+[4:22] applying the greedy algorithmic
+[4:22] applying the greedy algorithmic approach.<c> So</c><c> this</c><c> gives</c><c> you</c><c> your</c><c> first</c>
+[4:25] approach. So this gives you your first
+[4:25] approach. So this gives you your first pointer.<c> When</c><c> can</c><c> you</c><c> apply</c><c> the</c><c> greedy</c>
+[4:26] pointer. When can you apply the greedy
+[4:26] pointer. When can you apply the greedy algorithmic<c> approach?</c><c> Basically</c><c> when</c><c> you</c>
+[4:29] algorithmic approach? Basically when you
+[4:29] algorithmic approach? Basically when you have<c> determined</c><c> that</c><c> the</c><c> local</c><c> optimum</c>
+[4:32] have determined that the local optimum
+[4:32] have determined that the local optimum solution<c> will</c><c> lead</c><c> you</c><c> to</c><c> the</c><c> global</c>
+[4:34] solution will lead you to the global
+[4:34] solution will lead you to the global optimum<c> solution,</c><c> greedy</c><c> approach</c><c> is</c>
+[4:36] optimum solution, greedy approach is
+[4:36] optimum solution, greedy approach is your<c> friend.</c><c> It</c><c> will</c><c> be</c><c> fast,</c><c> it</c><c> will</c><c> be</c>
+[4:38] your friend. It will be fast, it will be
+[4:38] your friend. It will be fast, it will be linear<c> and</c><c> it</c><c> will</c><c> work</c><c> efficiently.</c><c> But</c>
+[4:42] linear and it will work efficiently. But
+[4:42] linear and it will work efficiently. But if<c> you</c><c> see</c><c> that</c><c> there</c><c> are</c><c> some</c>
+[4:44] if you see that there are some
+[4:44] if you see that there are some interdependent<c> steps,</c><c> if</c><c> there</c><c> are</c>
+[4:46] interdependent steps, if there are
+[4:46] interdependent steps, if there are subsequent<c> steps</c><c> which</c><c> affect</c><c> how</c><c> you</c>
+[4:49] subsequent steps which affect how you
+[4:49] subsequent steps which affect how you would<c> have</c><c> approached</c><c> over</c><c> there,</c><c> then</c>
+[4:51] would have approached over there, then
+[4:51] would have approached over there, then you<c> might</c><c> have</c><c> to</c><c> look</c><c> into</c><c> alternate</c>
+[4:53] you might have to look into alternate
+[4:53] you might have to look into alternate solutions<c> also.</c><c> And</c><c> that</c><c> is</c><c> where</c><c> other</c>
+[4:56] solutions also. And that is where other
+[4:56] solutions also. And that is where other programming<c> techniques</c><c> like</c><c> dynamic</c>
+[4:57] programming techniques like dynamic
+[4:57] programming techniques like dynamic programming<c> come</c><c> in.</c><c> You</c><c> are</c><c> building</c>
+[4:59] programming come in. You are building
+[4:59] programming come in. You are building upon<c> different</c><c> solutions.</c><c> So</c><c> this</c><c> is</c><c> the</c>
+[5:02] upon different solutions. So this is the
+[5:02] upon different solutions. So this is the first<c> thing</c><c> that</c><c> you</c><c> need</c><c> to</c><c> watch</c><c> out</c>
+[5:04] first thing that you need to watch out
+[5:04] first thing that you need to watch out for.<c> And</c><c> what</c><c> we</c><c> just</c><c> discussed</c><c> was</c><c> a</c>
+[5:07] for. And what we just discussed was a
+[5:07] for. And what we just discussed was a standard<c> example</c><c> of</c><c> how</c><c> a</c><c> greedy</c>
+[5:09] standard example of how a greedy
+[5:09] standard example of how a greedy approach<c> would</c><c> look</c><c> like.</c><c> You</c><c> might</c><c> have</c>
+[5:11] approach would look like. You might have
+[5:11] approach would look like. You might have seen<c> its</c><c> application</c><c> in</c><c> a</c><c> lot</c><c> of</c>
+[5:12] seen its application in a lot of
+[5:12] seen its application in a lot of different<c> places.</c><c> For</c><c> example,</c><c> when</c><c> you</c>
+[5:14] different places. For example, when you
+[5:14] different places. For example, when you are<c> giving</c><c> change</c><c> to</c><c> a</c><c> person,</c><c> how</c><c> do</c>
+[5:16] are giving change to a person, how do
+[5:16] are giving change to a person, how do you<c> start?</c><c> If</c><c> you</c><c> have</c><c> to</c><c> give</c><c> them</c><c> the</c>
+[5:18] you start? If you have to give them the
+[5:18] you start? If you have to give them the minimum<c> number</c><c> of</c><c> currency</c><c> notes,</c><c> what</c>
+[5:20] minimum number of currency notes, what
+[5:20] minimum number of currency notes, what do<c> you</c><c> do?</c><c> You</c><c> start</c><c> with</c><c> the</c><c> biggest</c>
+[5:23] do you do? You start with the biggest
+[5:23] do you do? You start with the biggest note<c> that</c><c> is</c><c> available</c><c> to</c><c> you</c><c> and</c><c> then</c>
+[5:25] note that is available to you and then
+[5:25] note that is available to you and then you<c> go</c><c> on</c><c> to</c><c> the</c><c> smaller</c><c> notes.</c><c> So</c><c> your</c>
+[5:28] you go on to the smaller notes. So your
+[5:28] you go on to the smaller notes. So your greed<c> criteria</c><c> is</c><c> I</c><c> will</c><c> pick</c><c> up</c><c> the</c>
+[5:30] greed criteria is I will pick up the
+[5:30] greed criteria is I will pick up the biggest<c> note</c><c> that</c><c> I</c><c> can</c><c> pick</c><c> up</c><c> right</c>
+[5:32] biggest note that I can pick up right
+[5:32] biggest note that I can pick up right now.<c> If</c><c> you</c><c> cannot</c><c> do</c><c> that,</c><c> choose</c><c> the</c>
+[5:34] now. If you cannot do that, choose the
+[5:34] now. If you cannot do that, choose the next<c> biggest</c><c> note.</c><c> And</c><c> that</c><c> is</c><c> how</c><c> you</c>
+[5:37] next biggest note. And that is how you
+[5:37] next biggest note. And that is how you can<c> guarantee</c><c> that</c><c> okay</c><c> I</c><c> will</c><c> give</c><c> them</c>
+[5:39] can guarantee that okay I will give them
+[5:39] can guarantee that okay I will give them the<c> minimum</c><c> number</c><c> of</c><c> currency</c><c> nodes.</c><c> So</c>
+[5:42] the minimum number of currency nodes. So
+[5:42] the minimum number of currency nodes. So all<c> of</c><c> these</c><c> are</c><c> very</c><c> standard</c><c> examples</c>
+[5:44] all of these are very standard examples
+[5:44] all of these are very standard examples that<c> you</c><c> see</c><c> in</c><c> everyday</c><c> life.</c><c> How</c><c> about</c>
+[5:46] that you see in everyday life. How about
+[5:46] that you see in everyday life. How about some<c> coding</c><c> problems?</c><c> For</c><c> example,</c><c> let</c>
+[5:49] some coding problems? For example, let
+[5:49] some coding problems? For example, let us<c> take</c><c> a</c><c> look</c><c> at</c><c> this</c><c> particular</c>
+[5:51] us take a look at this particular
+[5:51] us take a look at this particular problem.<c> Assign</c><c> cookies.</c><c> The</c><c> problem</c><c> is</c>
+[5:53] problem. Assign cookies. The problem is
+[5:53] problem. Assign cookies. The problem is very<c> very</c><c> simple.</c><c> There</c><c> are</c><c> some</c>
+[5:55] very very simple. There are some
+[5:55] very very simple. There are some children<c> available</c><c> and</c><c> they</c><c> are</c><c> hungry.</c>
+[5:58] children available and they are hungry.
+[5:58] children available and they are hungry. So<c> children</c><c> one</c><c> has</c><c> a</c><c> hunger</c><c> criteria</c><c> of</c>
+[6:01] So children one has a hunger criteria of
+[6:01] So children one has a hunger criteria of one.<c> Child</c><c> two</c><c> has</c><c> two</c><c> and</c><c> child</c><c> three</c>
+[6:04] one. Child two has two and child three
+[6:04] one. Child two has two and child three has<c> three.</c><c> and</c><c> you</c><c> have</c><c> cookies</c>
+[6:06] has three. and you have cookies
+[6:06] has three. and you have cookies available.<c> Now</c><c> each</c><c> cookie</c><c> is</c><c> a</c>
+[6:09] available. Now each cookie is a
+[6:09] available. Now each cookie is a different<c> size.</c><c> It</c><c> simply</c><c> means</c><c> that</c><c> if</c>
+[6:11] different size. It simply means that if
+[6:11] different size. It simply means that if the<c> cookie</c><c> size</c><c> is</c><c> one,</c><c> then</c><c> you</c><c> can</c>
+[6:14] the cookie size is one, then you can
+[6:14] the cookie size is one, then you can satisfy<c> one</c><c> of</c><c> the</c><c> children</c><c> whose</c>
+[6:17] satisfy one of the children whose
+[6:17] satisfy one of the children whose appetite<c> is</c><c> also</c><c> one.</c><c> Similarly,</c><c> if</c><c> this</c>
+[6:20] appetite is also one. Similarly, if this
+[6:20] appetite is also one. Similarly, if this child<c> has</c><c> an</c><c> appetite</c><c> of</c><c> two,</c><c> they</c><c> will</c>
+[6:22] child has an appetite of two, they will
+[6:22] child has an appetite of two, they will need<c> two</c><c> cookies.</c><c> And</c><c> a</c><c> child</c><c> of</c>
+[6:25] need two cookies. And a child of
+[6:25] need two cookies. And a child of appetite<c> three,</c><c> they</c><c> won't</c><c> be</c><c> able</c><c> to</c><c> be</c>
+[6:28] appetite three, they won't be able to be
+[6:28] appetite three, they won't be able to be satisfied<c> with</c><c> the</c><c> cookies</c><c> that</c><c> you</c><c> have</c>
+[6:29] satisfied with the cookies that you have
+[6:29] satisfied with the cookies that you have available.<c> So</c><c> given</c><c> all</c><c> of</c><c> this</c>
+[6:32] available. So given all of this
+[6:32] available. So given all of this scenario,<c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> how</c><c> many</c>
+[6:35] scenario, you have to tell me how many
+[6:35] scenario, you have to tell me how many maximum<c> children</c><c> you</c><c> can</c><c> satisfy</c><c> from</c>
+[6:37] maximum children you can satisfy from
+[6:37] maximum children you can satisfy from the<c> hunger.</c><c> Over</c><c> here,</c><c> if</c><c> I</c><c> don't</c><c> apply</c>
+[6:39] the hunger. Over here, if I don't apply
+[6:39] the hunger. Over here, if I don't apply any<c> algorithm,</c><c> I</c><c> pick</c><c> up</c><c> let's</c><c> say</c><c> this</c>
+[6:41] any algorithm, I pick up let's say this
+[6:42] any algorithm, I pick up let's say this child<c> in</c><c> random.</c><c> This</c><c> child</c><c> has</c><c> a</c><c> hunger</c>
+[6:44] child in random. This child has a hunger
+[6:44] child in random. This child has a hunger of<c> three.</c><c> But</c><c> I</c><c> have</c><c> cookies</c><c> available</c>
+[6:47] of three. But I have cookies available
+[6:47] of three. But I have cookies available for<c> a</c><c> maximum</c><c> appetite</c><c> of</c><c> two.</c><c> So</c><c> can</c><c> I</c>
+[6:50] for a maximum appetite of two. So can I
+[6:50] for a maximum appetite of two. So can I satisfy<c> this</c><c> child?</c><c> No.</c><c> So</c><c> I'm</c><c> out</c><c> of</c>
+[6:53] satisfy this child? No. So I'm out of
+[6:53] satisfy this child? No. So I'm out of all<c> my</c><c> cookies</c><c> and</c><c> none</c><c> of</c><c> the</c><c> childs</c>
+[6:55] all my cookies and none of the childs
+[6:55] all my cookies and none of the childs are<c> satisfied.</c><c> So</c><c> how</c><c> do</c><c> you</c><c> go</c><c> about</c>
+[6:57] are satisfied. So how do you go about
+[6:57] are satisfied. So how do you go about it?<c> You</c><c> will</c><c> apply</c><c> a</c><c> greedy</c><c> approach.</c>
+[6:59] it? You will apply a greedy approach.
+[6:59] it? You will apply a greedy approach. What<c> you're</c><c> going</c><c> to</c><c> do</c><c> is</c><c> you</c><c> are</c><c> going</c>
+[7:01] What you're going to do is you are going
+[7:01] What you're going to do is you are going to<c> sort</c><c> the</c><c> children</c><c> in</c><c> the</c><c> order</c><c> of</c>
+[7:03] to sort the children in the order of
+[7:03] to sort the children in the order of their<c> hunger.</c><c> So</c><c> the</c><c> first</c><c> child</c><c> will</c>
+[7:06] their hunger. So the first child will
+[7:06] their hunger. So the first child will have<c> the</c><c> least</c><c> hunger</c><c> and</c><c> the</c><c> last</c><c> child</c>
+[7:08] have the least hunger and the last child
+[7:08] have the least hunger and the last child will<c> have</c><c> the</c><c> maximum</c><c> hunger.</c><c> And</c>
+[7:10] will have the maximum hunger. And
+[7:10] will have the maximum hunger. And similarly<c> you</c><c> are</c><c> going</c><c> to</c><c> sort</c><c> the</c>
+[7:12] similarly you are going to sort the
+[7:12] similarly you are going to sort the cookies<c> available</c><c> to</c><c> you</c><c> as</c><c> well.</c><c> If</c><c> you</c>
+[7:14] cookies available to you as well. If you
+[7:14] cookies available to you as well. If you have<c> the</c><c> smallest</c><c> cookie</c><c> that</c><c> will</c><c> be</c><c> in</c>
+[7:16] have the smallest cookie that will be in
+[7:16] have the smallest cookie that will be in the<c> beginning</c><c> and</c><c> the</c><c> largest</c><c> cookie</c>
+[7:18] the beginning and the largest cookie
+[7:18] the beginning and the largest cookie will<c> be</c><c> at</c><c> the</c><c> very</c><c> end.</c><c> You</c><c> will</c><c> start</c>
+[7:20] will be at the very end. You will start
+[7:20] will be at the very end. You will start with<c> the</c><c> first</c><c> child.</c><c> Now</c><c> whatever</c><c> the</c>
+[7:23] with the first child. Now whatever the
+[7:23] with the first child. Now whatever the hunger<c> is</c><c> start</c><c> giving</c><c> them</c><c> cookies</c>
+[7:25] hunger is start giving them cookies
+[7:25] hunger is start giving them cookies until<c> their</c><c> hunger</c><c> is</c><c> completely</c>
+[7:28] until their hunger is completely
+[7:28] until their hunger is completely satisfied.<c> This</c><c> particular</c><c> child</c><c> gets</c>
+[7:30] satisfied. This particular child gets
+[7:30] satisfied. This particular child gets satisfied<c> with</c><c> one</c><c> cookie.</c><c> So</c><c> this</c><c> is</c>
+[7:32] satisfied with one cookie. So this is
+[7:32] satisfied with one cookie. So this is done.<c> The</c><c> next</c><c> child</c><c> has</c><c> a</c><c> hunger</c><c> of</c>
+[7:35] done. The next child has a hunger of
+[7:35] done. The next child has a hunger of two.<c> But</c><c> you</c><c> have</c><c> only</c><c> one</c><c> cookie</c>
+[7:37] two. But you have only one cookie
+[7:37] two. But you have only one cookie available.<c> Can</c><c> this</c><c> child</c><c> be</c><c> satisfied?</c>
+[7:40] available. Can this child be satisfied?
+[7:40] available. Can this child be satisfied? No.<c> So</c><c> the</c><c> maximum</c><c> number</c><c> of</c><c> children</c>
+[7:43] No. So the maximum number of children
+[7:43] No. So the maximum number of children whose<c> hunger</c><c> can</c><c> be</c><c> satisfied</c><c> is</c><c> just</c>
+[7:45] whose hunger can be satisfied is just
+[7:45] whose hunger can be satisfied is just one.<c> So</c><c> one</c><c> will</c><c> be</c><c> your</c><c> answer</c><c> in</c><c> this</c>
+[7:47] one. So one will be your answer in this
+[7:47] one. So one will be your answer in this particular<c> test</c><c> case.</c><c> Now</c><c> let</c><c> us</c><c> try</c><c> to</c>
+[7:50] particular test case. Now let us try to
+[7:50] particular test case. Now let us try to look<c> at</c><c> a</c><c> bigger</c><c> example</c><c> and</c><c> that</c><c> will</c>
+[7:52] look at a bigger example and that will
+[7:52] look at a bigger example and that will make<c> things</c><c> clear.</c><c> Over</c><c> here</c><c> I</c><c> have</c><c> six</c>
+[7:54] make things clear. Over here I have six
+[7:54] make things clear. Over here I have six children<c> available</c><c> and</c><c> as</c><c> you</c><c> can</c><c> notice</c>
+[7:57] children available and as you can notice
+[7:57] children available and as you can notice they<c> all</c><c> have</c><c> a</c><c> different</c><c> appetite.</c>
+[7:59] they all have a different appetite.
+[7:59] they all have a different appetite. Similarly<c> this</c><c> time</c><c> I</c><c> have</c><c> five</c><c> cookies</c>
+[8:02] Similarly this time I have five cookies
+[8:02] Similarly this time I have five cookies and<c> all</c><c> the</c><c> cookies</c><c> are</c><c> of</c><c> different</c>
+[8:04] and all the cookies are of different
+[8:04] and all the cookies are of different sizes.<c> First</c><c> thing</c><c> is</c><c> very</c><c> obvious.</c><c> I</c>
+[8:07] sizes. First thing is very obvious. I
+[8:07] sizes. First thing is very obvious. I have<c> six</c><c> children</c><c> and</c><c> I</c><c> have</c><c> just</c><c> five</c>
+[8:09] have six children and I have just five
+[8:09] have six children and I have just five cookies.<c> In</c><c> no</c><c> way</c><c> I</c><c> can</c><c> satisfy</c><c> all</c><c> of</c>
+[8:12] cookies. In no way I can satisfy all of
+[8:12] cookies. In no way I can satisfy all of the<c> six</c><c> children.</c><c> So</c><c> the</c><c> answer</c><c> will</c><c> be</c>
+[8:14] the six children. So the answer will be
+[8:14] the six children. So the answer will be less<c> than</c><c> or</c><c> equal</c><c> to</c><c> five.</c><c> That</c><c> is</c>
+[8:17] less than or equal to five. That is
+[8:17] less than or equal to five. That is guaranteed.<c> But</c><c> can</c><c> you</c><c> satisfy</c><c> all</c>
+[8:19] guaranteed. But can you satisfy all
+[8:19] guaranteed. But can you satisfy all these<c> five</c><c> children?</c><c> Let</c><c> us</c><c> check</c><c> it</c>
+[8:21] these five children? Let us check it
+[8:21] these five children? Let us check it out.<c> How</c><c> do</c><c> you</c><c> go</c><c> about</c><c> it?</c><c> First</c><c> of</c>
+[8:24] out. How do you go about it? First of
+[8:24] out. How do you go about it? First of all,<c> what</c><c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I</c><c> will</c><c> sort</c>
+[8:26] all, what I'm going to do is I will sort
+[8:26] all, what I'm going to do is I will sort all<c> of</c><c> my</c><c> children's</c><c> hunger.</c>
+[8:29] all of my children's hunger.
+[8:29] all of my children's hunger. They<c> are</c><c> now</c><c> sorted</c><c> in</c><c> an</c><c> ascending</c>
+[8:31] They are now sorted in an ascending
+[8:31] They are now sorted in an ascending order.<c> Similarly,</c><c> I</c><c> will</c><c> sort</c><c> all</c><c> of</c><c> my</c>
+[8:34] order. Similarly, I will sort all of my
+[8:34] order. Similarly, I will sort all of my cookies<c> also.</c>
+[8:36] cookies also.
+[8:36] cookies also. Now,<c> what</c><c> I</c><c> will</c><c> do</c><c> is</c><c> I</c><c> will</c><c> start</c>
+[8:38] Now, what I will do is I will start
+[8:38] Now, what I will do is I will start assigning<c> these</c><c> cookies</c><c> one</c><c> by</c><c> one</c><c> to</c>
+[8:40] assigning these cookies one by one to
+[8:40] assigning these cookies one by one to each<c> of</c><c> the</c><c> children.</c><c> For</c><c> the</c><c> first</c>
+[8:41] each of the children. For the first
+[8:42] each of the children. For the first child,<c> I</c><c> take</c><c> up</c><c> the</c><c> first</c><c> cookie</c><c> and</c><c> I</c>
+[8:43] child, I take up the first cookie and I
+[8:43] child, I take up the first cookie and I give<c> it</c><c> to</c><c> him.</c><c> His</c><c> appetite</c><c> is</c>
+[8:45] give it to him. His appetite is
+[8:45] give it to him. His appetite is satisfied.<c> So,</c><c> okay,</c><c> first</c><c> child</c><c> is</c>
+[8:47] satisfied. So, okay, first child is
+[8:47] satisfied. So, okay, first child is happy.<c> What</c><c> about</c><c> the</c><c> next</c><c> child?</c><c> He</c><c> can</c>
+[8:50] happy. What about the next child? He can
+[8:50] happy. What about the next child? He can get<c> a</c><c> cookie</c><c> of</c><c> two.</c><c> So,</c><c> he</c><c> is</c><c> also</c>
+[8:52] get a cookie of two. So, he is also
+[8:52] get a cookie of two. So, he is also happy.<c> What</c><c> about</c><c> the</c><c> next</c><c> child?</c><c> He</c><c> can</c>
+[8:54] happy. What about the next child? He can
+[8:54] happy. What about the next child? He can get<c> a</c><c> cookie</c><c> of</c><c> two.</c><c> So,</c><c> he</c><c> is</c><c> also</c>
+[8:56] get a cookie of two. So, he is also
+[8:56] get a cookie of two. So, he is also happy.<c> Meanwhile,</c><c> I'm</c><c> done</c><c> with</c><c> three</c>
+[8:59] happy. Meanwhile, I'm done with three
+[8:59] happy. Meanwhile, I'm done with three cookies,<c> right?</c><c> Look</c><c> at</c><c> this</c><c> next</c><c> child.</c>
+[9:01] cookies, right? Look at this next child.
+[9:01] cookies, right? Look at this next child. He<c> has</c><c> an</c><c> appetite</c><c> of</c><c> three.</c><c> And</c><c> I</c><c> have</c>
+[9:05] He has an appetite of three. And I have
+[9:05] He has an appetite of three. And I have a<c> cookie</c><c> available</c><c> that</c><c> is</c><c> of</c><c> the</c><c> size</c>
+[9:07] a cookie available that is of the size
+[9:07] a cookie available that is of the size four.<c> So,</c><c> what</c><c> do</c><c> you</c><c> do?</c><c> Do</c><c> you</c><c> give</c>
+[9:10] four. So, what do you do? Do you give
+[9:10] four. So, what do you do? Do you give this<c> cookie</c><c> to</c><c> this</c><c> child</c><c> or</c><c> do</c><c> you</c><c> skip</c>
+[9:12] this cookie to this child or do you skip
+[9:12] this cookie to this child or do you skip this<c> child</c><c> and</c><c> maybe</c><c> wait</c><c> for</c><c> another</c>
+[9:15] this child and maybe wait for another
+[9:15] this child and maybe wait for another child?<c> My</c><c> greed</c><c> criteria</c><c> says</c><c> that</c><c> if</c><c> I</c>
+[9:18] child? My greed criteria says that if I
+[9:18] child? My greed criteria says that if I have<c> a</c><c> cookie</c><c> available</c><c> just</c><c> give</c><c> it</c><c> to</c>
+[9:20] have a cookie available just give it to
+[9:20] have a cookie available just give it to the<c> child</c><c> and</c><c> then</c><c> we'll</c><c> worry</c><c> about</c><c> the</c>
+[9:22] the child and then we'll worry about the
+[9:22] the child and then we'll worry about the future.<c> So</c><c> what</c><c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I</c>
+[9:25] future. So what I'm going to do is I
+[9:25] future. So what I'm going to do is I give<c> this</c><c> cookie</c><c> to</c><c> this</c><c> child</c><c> and</c><c> now</c>
+[9:27] give this cookie to this child and now
+[9:27] give this cookie to this child and now this<c> child</c><c> is</c><c> happy.</c><c> Notice</c><c> that</c><c> I</c><c> am</c>
+[9:30] this child is happy. Notice that I am
+[9:30] this child is happy. Notice that I am done<c> with</c><c> this</c><c> cookie.</c><c> I</c><c> cannot</c><c> take</c><c> the</c>
+[9:33] done with this cookie. I cannot take the
+[9:33] done with this cookie. I cannot take the remaining<c> cookie</c><c> and</c><c> give</c><c> it</c><c> to</c><c> the</c>
+[9:34] remaining cookie and give it to the
+[9:34] remaining cookie and give it to the another<c> child.</c><c> For</c><c> the</c><c> next</c><c> child</c><c> he</c><c> has</c>
+[9:37] another child. For the next child he has
+[9:37] another child. For the next child he has a<c> hunger</c><c> of</c><c> five</c><c> and</c><c> I</c><c> have</c><c> a</c><c> cookie</c>
+[9:39] a hunger of five and I have a cookie
+[9:39] a hunger of five and I have a cookie size<c> available</c><c> of</c><c> five.</c><c> So</c><c> I</c><c> can</c><c> give</c><c> it</c>
+[9:41] size available of five. So I can give it
+[9:41] size available of five. So I can give it to<c> the</c><c> child.</c><c> This</c><c> cookie</c><c> is</c><c> gone</c><c> and</c>
+[9:43] to the child. This cookie is gone and
+[9:44] to the child. This cookie is gone and this<c> child</c><c> is</c><c> happy.</c><c> So</c><c> with</c><c> a</c><c> greedy</c>
+[9:46] this child is happy. So with a greedy
+[9:46] this child is happy. So with a greedy approach,<c> I</c><c> was</c><c> able</c><c> to</c><c> satisfy</c><c> five</c>
+[9:49] approach, I was able to satisfy five
+[9:49] approach, I was able to satisfy five children<c> and</c><c> I</c><c> gave</c><c> them</c><c> the</c><c> cookies</c>
+[9:51] children and I gave them the cookies
+[9:51] children and I gave them the cookies that<c> they</c><c> needed.</c><c> So</c><c> this</c><c> is</c><c> how</c><c> you</c><c> can</c>
+[9:54] that they needed. So this is how you can
+[9:54] that they needed. So this is how you can come<c> to</c><c> the</c><c> solution.</c><c> But</c><c> the</c><c> important</c>
+[9:56] come to the solution. But the important
+[9:56] come to the solution. But the important thing<c> over</c><c> here</c><c> is</c><c> how</c><c> can</c><c> you</c><c> guarantee</c>
+[9:59] thing over here is how can you guarantee
+[9:59] thing over here is how can you guarantee that<c> your</c><c> chosen</c><c> greed</c><c> criteria</c><c> will</c>
+[10:01] that your chosen greed criteria will
+[10:01] that your chosen greed criteria will lead<c> you</c><c> to</c><c> the</c><c> global</c><c> optimum</c><c> solution?</c>
+[10:04] lead you to the global optimum solution?
+[10:04] lead you to the global optimum solution? How<c> can</c><c> you</c><c> be</c><c> sure</c><c> that</c><c> there</c><c> is</c><c> no</c>
+[10:06] How can you be sure that there is no
+[10:06] How can you be sure that there is no other<c> way</c><c> to</c><c> make</c><c> more</c><c> children</c><c> happy?</c>
+[10:09] other way to make more children happy?
+[10:09] other way to make more children happy? The<c> idea</c><c> over</c><c> here</c><c> is</c><c> you</c><c> need</c><c> to</c><c> think</c>
+[10:11] The idea over here is you need to think
+[10:11] The idea over here is you need to think counterintuitively.
+[10:13] counterintuitively.
+[10:13] counterintuitively. What<c> if</c><c> you</c><c> weren't</c><c> sorting</c><c> cookies?</c><c> Or</c>
+[10:15] What if you weren't sorting cookies? Or
+[10:15] What if you weren't sorting cookies? Or what<c> if</c><c> you</c><c> weren't</c><c> giving</c><c> the</c><c> first</c>
+[10:18] what if you weren't giving the first
+[10:18] what if you weren't giving the first cookie<c> to</c><c> the</c><c> smallest</c><c> child</c><c> available</c>
+[10:20] cookie to the smallest child available
+[10:20] cookie to the smallest child available or<c> the</c><c> smallest</c><c> cookie</c><c> to</c><c> the</c><c> child</c><c> with</c>
+[10:22] or the smallest cookie to the child with
+[10:22] or the smallest cookie to the child with the<c> smallest</c><c> hunger?</c><c> Think</c>
+[10:24] the smallest hunger? Think
+[10:24] the smallest hunger? Think counterintuitively.
+[10:26] counterintuitively.
+[10:26] counterintuitively. If<c> you</c><c> give</c><c> a</c><c> bigger</c><c> cookie</c><c> to</c><c> a</c><c> child</c>
+[10:28] If you give a bigger cookie to a child
+[10:28] If you give a bigger cookie to a child who<c> has</c><c> a</c><c> smaller</c><c> hunger,</c><c> then</c>
+[10:31] who has a smaller hunger, then
+[10:31] who has a smaller hunger, then potentially<c> you</c><c> are</c><c> avoiding</c><c> the</c><c> other</c>
+[10:34] potentially you are avoiding the other
+[10:34] potentially you are avoiding the other children<c> to</c><c> be</c><c> happy.</c><c> So</c><c> this</c><c> is</c><c> kind</c><c> of</c>
+[10:37] children to be happy. So this is kind of
+[10:37] children to be happy. So this is kind of paradoxical.<c> That</c><c> is</c><c> why</c><c> I</c><c> can</c><c> guarantee</c>
+[10:40] paradoxical. That is why I can guarantee
+[10:40] paradoxical. That is why I can guarantee that<c> if</c><c> I</c><c> go</c><c> ahead</c><c> with</c><c> this</c><c> greed</c>
+[10:43] that if I go ahead with this greed
+[10:43] that if I go ahead with this greed criteria,<c> I</c><c> will</c><c> be</c><c> able</c><c> to</c><c> achieve</c><c> a</c>
+[10:45] criteria, I will be able to achieve a
+[10:45] criteria, I will be able to achieve a global<c> maximum</c><c> solution</c><c> or</c><c> a</c><c> global</c>
+[10:48] global maximum solution or a global
+[10:48] global maximum solution or a global optimum<c> solution.</c><c> Don't</c><c> worry</c><c> if</c><c> this</c><c> is</c>
+[10:51] optimum solution. Don't worry if this is
+[10:51] optimum solution. Don't worry if this is not<c> clear</c><c> to</c><c> you</c><c> in</c><c> the</c><c> first</c><c> time.</c><c> More</c>
+[10:53] not clear to you in the first time. More
+[10:53] not clear to you in the first time. More the<c> number</c><c> of</c><c> problems</c><c> you</c><c> solve,</c><c> the</c>
+[10:55] the number of problems you solve, the
+[10:55] the number of problems you solve, the better<c> you</c><c> will</c><c> get</c><c> and</c><c> you</c><c> will</c><c> get</c><c> an</c>
+[10:57] better you will get and you will get an
+[10:57] better you will get and you will get an even<c> better</c><c> intuition.</c><c> Let</c><c> us</c><c> look</c><c> at</c>
+[10:59] even better intuition. Let us look at
+[10:59] even better intuition. Let us look at another<c> problem</c><c> which</c><c> obviously</c><c> involves</c>
+[11:01] another problem which obviously involves
+[11:01] another problem which obviously involves the<c> greedy</c><c> pattern.</c><c> Over</c><c> here</c><c> I</c><c> am</c><c> given</c>
+[11:03] the greedy pattern. Over here I am given
+[11:03] the greedy pattern. Over here I am given a<c> particular</c><c> string</c><c> and</c><c> I</c><c> have</c><c> to</c><c> find</c>
+[11:06] a particular string and I have to find
+[11:06] a particular string and I have to find out<c> the</c><c> partition</c><c> labels.</c><c> The</c><c> idea</c><c> over</c>
+[11:09] out the partition labels. The idea over
+[11:09] out the partition labels. The idea over here<c> is</c><c> that</c><c> you</c><c> have</c><c> to</c><c> return</c><c> me</c><c> the</c>
+[11:12] here is that you have to return me the
+[11:12] here is that you have to return me the maximum<c> number</c><c> of</c><c> partitions</c><c> possible</c>
+[11:15] maximum number of partitions possible
+[11:15] maximum number of partitions possible such<c> that</c><c> no</c><c> two</c><c> partitions</c><c> have</c><c> the</c>
+[11:18] such that no two partitions have the
+[11:18] such that no two partitions have the same<c> character.</c><c> So</c><c> what</c><c> you</c><c> have</c><c> to</c><c> do</c>
+[11:20] same character. So what you have to do
+[11:20] same character. So what you have to do over<c> here</c><c> is</c><c> you</c><c> have</c><c> to</c><c> separate</c><c> this</c>
+[11:23] over here is you have to separate this
+[11:23] over here is you have to separate this string<c> in</c><c> a</c><c> certain</c><c> way</c><c> such</c><c> that</c><c> no</c><c> two</c>
+[11:26] string in a certain way such that no two
+[11:26] string in a certain way such that no two partitions<c> have</c><c> the</c><c> same</c><c> character.</c><c> If</c>
+[11:29] partitions have the same character. If
+[11:29] partitions have the same character. If you<c> notice</c><c> both</c><c> of</c><c> these</c><c> partitions,</c>
+[11:31] you notice both of these partitions,
+[11:31] you notice both of these partitions, they<c> have</c><c> independent</c><c> characters.</c><c> If</c><c> a</c>
+[11:34] they have independent characters. If a
+[11:34] they have independent characters. If a character<c> occurs</c><c> in</c><c> this,</c><c> you</c><c> won't</c><c> find</c>
+[11:36] character occurs in this, you won't find
+[11:36] character occurs in this, you won't find it<c> in</c><c> here.</c><c> Correct?</c><c> Had</c><c> the</c><c> question</c>
+[11:39] it in here. Correct? Had the question
+[11:39] it in here. Correct? Had the question been<c> about</c><c> the</c><c> minimum</c><c> number</c><c> of</c>
+[11:40] been about the minimum number of
+[11:40] been about the minimum number of partitions.<c> What</c><c> you</c><c> will</c><c> do?</c><c> You</c><c> will</c>
+[11:42] partitions. What you will do? You will
+[11:42] partitions. What you will do? You will simply<c> take</c><c> up</c><c> just</c><c> one</c><c> partition</c><c> and</c><c> it</c>
+[11:45] simply take up just one partition and it
+[11:45] simply take up just one partition and it can<c> have</c><c> all</c><c> of</c><c> the</c><c> characters.</c><c> Now</c>
+[11:47] can have all of the characters. Now
+[11:47] can have all of the characters. Now there<c> is</c><c> no</c><c> other</c><c> partition</c><c> which</c><c> has</c><c> a</c>
+[11:50] there is no other partition which has a
+[11:50] there is no other partition which has a different<c> string.</c><c> But</c><c> the</c><c> problem</c><c> is</c><c> not</c>
+[11:52] different string. But the problem is not
+[11:52] different string. But the problem is not asking<c> you</c><c> for</c><c> the</c><c> minimum</c><c> number</c><c> of</c>
+[11:54] asking you for the minimum number of
+[11:54] asking you for the minimum number of partitions.<c> I</c><c> want</c><c> to</c><c> separate</c><c> it</c><c> in</c>
+[11:57] partitions. I want to separate it in
+[11:57] partitions. I want to separate it in such<c> a</c><c> way</c><c> that</c><c> I</c><c> can</c><c> have</c><c> the</c><c> maximum</c>
+[12:00] such a way that I can have the maximum
+[12:00] such a way that I can have the maximum number<c> of</c><c> partitions</c><c> possible.</c><c> So</c><c> how</c><c> do</c>
+[12:02] number of partitions possible. So how do
+[12:02] number of partitions possible. So how do you<c> go</c><c> about</c><c> it?</c><c> Where</c><c> do</c><c> you</c><c> start?</c><c> Try</c>
+[12:05] you go about it? Where do you start? Try
+[12:05] you go about it? Where do you start? Try to<c> think</c><c> like</c><c> this.</c><c> If</c><c> I</c><c> pick</c><c> up</c><c> my</c>
+[12:07] to think like this. If I pick up my
+[12:07] to think like this. If I pick up my first<c> character,</c><c> then</c><c> no</c><c> matter</c><c> what</c>
+[12:10] first character, then no matter what
+[12:10] first character, then no matter what happens,<c> my</c><c> first</c><c> partition</c><c> will</c><c> have</c>
+[12:14] happens, my first partition will have
+[12:14] happens, my first partition will have the<c> last</c><c> occurrence</c><c> of</c><c> this</c><c> character,</c>
+[12:17] the last occurrence of this character,
+[12:17] the last occurrence of this character, right?<c> And</c><c> I'm</c><c> going</c><c> to</c><c> use</c><c> this</c><c> as</c><c> my</c>
+[12:20] right? And I'm going to use this as my
+[12:20] right? And I'm going to use this as my greed<c> criteria.</c><c> So</c><c> what</c><c> I</c><c> do</c><c> over</c><c> here</c>
+[12:22] greed criteria. So what I do over here
+[12:22] greed criteria. So what I do over here is<c> I</c><c> iterate</c><c> over</c><c> my</c><c> entire</c><c> string</c><c> and</c>
+[12:25] is I iterate over my entire string and
+[12:25] is I iterate over my entire string and capture<c> the</c><c> last</c><c> occurrence</c><c> of</c><c> each</c><c> of</c>
+[12:28] capture the last occurrence of each of
+[12:28] capture the last occurrence of each of the<c> character</c><c> that</c><c> is</c><c> available</c><c> in</c><c> my</c>
+[12:30] the character that is available in my
+[12:30] the character that is available in my string.<c> If</c><c> you</c><c> think</c><c> about</c><c> the</c><c> first</c>
+[12:32] string. If you think about the first
+[12:32] string. If you think about the first character<c> that</c><c> is</c><c> a,</c><c> what</c><c> is</c><c> the</c><c> last</c>
+[12:34] character that is a, what is the last
+[12:34] character that is a, what is the last occurrence?<c> This</c><c> is</c><c> the</c><c> last</c><c> occurrence</c>
+[12:36] occurrence? This is the last occurrence
+[12:36] occurrence? This is the last occurrence and<c> it</c><c> is</c><c> at</c><c> the</c><c> position</c><c> 8.</c><c> So</c><c> what</c><c> I</c>
+[12:39] and it is at the position 8. So what I
+[12:40] and it is at the position 8. So what I do<c> is</c><c> I</c><c> store</c><c> this</c><c> in</c><c> some</c><c> kind</c><c> of</c><c> a</c>
+[12:42] do is I store this in some kind of a
+[12:42] do is I store this in some kind of a map.<c> I</c><c> know</c><c> that</c><c> the</c><c> last</c><c> occurrence</c><c> of</c>
+[12:44] map. I know that the last occurrence of
+[12:44] map. I know that the last occurrence of character<c> A</c><c> is</c><c> eight.</c><c> Now</c><c> what</c><c> about</c><c> B?</c>
+[12:47] character A is eight. Now what about B?
+[12:47] character A is eight. Now what about B? I<c> keep</c><c> on</c><c> scanning</c><c> my</c><c> string</c><c> and</c><c> try</c><c> to</c>
+[12:50] I keep on scanning my string and try to
+[12:50] I keep on scanning my string and try to find<c> out</c><c> wherever</c><c> is</c><c> the</c><c> last</c>
+[12:51] find out wherever is the last
+[12:51] find out wherever is the last occurrence.<c> The</c><c> last</c><c> occurrence</c><c> is</c><c> at</c>
+[12:53] occurrence. The last occurrence is at
+[12:53] occurrence. The last occurrence is at the<c> number</c><c> five.</c><c> Now</c><c> go</c><c> ahead</c><c> check</c><c> for</c>
+[12:56] the number five. Now go ahead check for
+[12:56] the number five. Now go ahead check for character<c> C.</c><c> The</c><c> last</c><c> occurrence</c><c> of</c>
+[12:59] character C. The last occurrence of
+[12:59] character C. The last occurrence of character<c> C</c><c> is</c><c> at</c><c> the</c><c> number</c><c> seven.</c>
+[13:01] character C is at the number seven.
+[13:01] character C is at the number seven. Similarly<c> you</c><c> keep</c><c> doing</c><c> it</c><c> for</c><c> each</c><c> of</c>
+[13:04] Similarly you keep doing it for each of
+[13:04] Similarly you keep doing it for each of the<c> character</c><c> that</c><c> is</c><c> available.</c><c> And</c>
+[13:06] the character that is available. And
+[13:06] the character that is available. And notice<c> you</c><c> can</c><c> just</c><c> do</c><c> it</c><c> in</c><c> one</c>
+[13:08] notice you can just do it in one
+[13:08] notice you can just do it in one iteration.<c> You</c><c> can</c><c> start</c><c> going</c><c> from</c><c> the</c>
+[13:10] iteration. You can start going from the
+[13:10] iteration. You can start going from the back<c> and</c><c> then</c><c> keep</c><c> on</c><c> updating</c><c> the</c><c> last</c>
+[13:13] back and then keep on updating the last
+[13:13] back and then keep on updating the last occurrence<c> of</c><c> each</c><c> of</c><c> the</c><c> character.</c>
+[13:15] occurrence of each of the character.
+[13:15] occurrence of each of the character. Right?<c> So</c><c> once</c><c> you</c><c> have</c><c> built</c><c> this</c>
+[13:17] Right? So once you have built this
+[13:17] Right? So once you have built this entire<c> map,</c><c> how</c><c> can</c><c> you</c><c> go</c><c> about</c><c> solving</c>
+[13:20] entire map, how can you go about solving
+[13:20] entire map, how can you go about solving this<c> problem?</c><c> What</c><c> I</c><c> do</c><c> is</c><c> I</c><c> start</c><c> off</c>
+[13:23] this problem? What I do is I start off
+[13:23] this problem? What I do is I start off with<c> my</c><c> first</c><c> character</c><c> that</c><c> is</c>
+[13:24] with my first character that is
+[13:24] with my first character that is available.<c> I</c><c> start</c><c> off</c><c> with</c><c> the</c>
+[13:26] available. I start off with the
+[13:26] available. I start off with the character<c> A.</c><c> I</c><c> can</c><c> check</c><c> my</c><c> map.</c><c> I</c><c> know</c>
+[13:29] character A. I can check my map. I know
+[13:29] character A. I can check my map. I know that<c> the</c><c> last</c><c> occurrence</c><c> of</c><c> A</c><c> is</c><c> 8.</c><c> So</c>
+[13:33] that the last occurrence of A is 8. So
+[13:33] that the last occurrence of A is 8. So no<c> matter</c><c> what</c><c> happens,</c><c> my</c><c> first</c>
+[13:35] no matter what happens, my first
+[13:35] no matter what happens, my first partition<c> has</c><c> to</c><c> be</c><c> up</c><c> to</c><c> the</c><c> length</c><c> of</c>
+[13:38] partition has to be up to the length of
+[13:38] partition has to be up to the length of 8<c> at</c><c> least.</c><c> Correct?</c><c> This</c><c> is</c><c> my</c><c> minimum</c>
+[13:41] 8 at least. Correct? This is my minimum
+[13:41] 8 at least. Correct? This is my minimum length<c> of</c><c> the</c><c> first</c><c> partition.</c><c> It</c><c> can</c><c> be</c>
+[13:44] length of the first partition. It can be
+[13:44] length of the first partition. It can be even<c> longer</c><c> also.</c><c> But</c><c> to</c><c> verify</c><c> it,</c><c> what</c>
+[13:47] even longer also. But to verify it, what
+[13:47] even longer also. But to verify it, what you<c> will</c><c> do</c><c> is</c><c> you</c><c> will</c><c> look</c><c> at</c><c> each</c><c> of</c>
+[13:49] you will do is you will look at each of
+[13:49] you will do is you will look at each of the<c> character</c><c> in</c><c> the</c><c> partition</c><c> that</c><c> you</c>
+[13:51] the character in the partition that you
+[13:51] the character in the partition that you have<c> selected.</c><c> For</c><c> each</c><c> character,</c><c> check</c>
+[13:54] have selected. For each character, check
+[13:54] have selected. For each character, check the<c> last</c><c> occurrence.</c><c> If</c><c> the</c><c> last</c>
+[13:57] the last occurrence. If the last
+[13:57] the last occurrence. If the last occurrence<c> is</c><c> greater</c><c> than</c><c> 8,</c><c> then</c><c> I</c><c> am</c>
+[14:00] occurrence is greater than 8, then I am
+[14:00] occurrence is greater than 8, then I am going<c> to</c><c> extend</c><c> this</c><c> window.</c><c> Otherwise,</c>
+[14:03] going to extend this window. Otherwise,
+[14:03] going to extend this window. Otherwise, I<c> don't</c><c> need</c><c> to</c><c> do</c><c> anything</c><c> and</c><c> I</c><c> can</c>
+[14:05] I don't need to do anything and I can
+[14:05] I don't need to do anything and I can stop<c> right</c><c> over</c><c> here.</c><c> I</c><c> have</c><c> found</c><c> my</c>
+[14:07] stop right over here. I have found my
+[14:07] stop right over here. I have found my first<c> partition.</c><c> Now,</c><c> how</c><c> do</c><c> you</c><c> go</c>
+[14:10] first partition. Now, how do you go
+[14:10] first partition. Now, how do you go about<c> your</c><c> second</c><c> partition?</c><c> I</c><c> will</c>
+[14:12] about your second partition? I will
+[14:12] about your second partition? I will start<c> off</c><c> with</c><c> the</c><c> first</c><c> character</c><c> that</c>
+[14:13] start off with the first character that
+[14:13] start off with the first character that is<c> D.</c><c> What</c><c> is</c><c> the</c><c> last</c><c> occurrence</c><c> of</c><c> D?</c>
+[14:16] is D. What is the last occurrence of D?
+[14:16] is D. What is the last occurrence of D? It<c> is</c><c> 14.</c><c> So</c><c> it</c><c> is</c><c> for</c><c> sure</c><c> that</c><c> my</c>
+[14:21] It is 14. So it is for sure that my
+[14:21] It is 14. So it is for sure that my second<c> partition</c><c> will</c><c> be</c><c> at</c><c> least</c><c> up</c><c> to</c>
+[14:23] second partition will be at least up to
+[14:24] second partition will be at least up to the<c> length</c><c> of</c><c> 14.</c><c> Correct?</c><c> It</c><c> could</c><c> be</c>
+[14:26] the length of 14. Correct? It could be
+[14:26] the length of 14. Correct? It could be longer<c> and</c><c> we</c><c> have</c><c> to</c><c> verify</c><c> it.</c><c> So</c><c> in</c>
+[14:29] longer and we have to verify it. So in
+[14:29] longer and we have to verify it. So in this<c> particular</c><c> window</c><c> I</c><c> will</c><c> start</c>
+[14:31] this particular window I will start
+[14:31] this particular window I will start looking<c> check</c><c> the</c><c> last</c><c> occurrence</c><c> of</c><c> E.</c>
+[14:34] looking check the last occurrence of E.
+[14:34] looking check the last occurrence of E. The<c> last</c><c> occurrence</c><c> of</c><c> E</c><c> is</c><c> 15.</c><c> And</c><c> it</c>
+[14:37] The last occurrence of E is 15. And it
+[14:37] The last occurrence of E is 15. And it means<c> that</c><c> I</c><c> need</c><c> to</c><c> extend</c><c> my</c><c> window.</c>
+[14:40] means that I need to extend my window.
+[14:40] means that I need to extend my window. My<c> window</c><c> size</c><c> has</c><c> now</c><c> increased</c><c> but</c><c> my</c>
+[14:42] My window size has now increased but my
+[14:42] My window size has now increased but my logic<c> will</c><c> still</c><c> remain</c><c> the</c><c> same.</c><c> Now</c><c> I</c>
+[14:44] logic will still remain the same. Now I
+[14:44] logic will still remain the same. Now I will<c> check</c><c> for</c><c> F.</c><c> F</c><c> is</c><c> 11</c><c> so</c><c> I'm</c><c> good.</c><c> E</c>
+[14:48] will check for F. F is 11 so I'm good. E
+[14:48] will check for F. F is 11 so I'm good. E then<c> G.</c><c> G</c><c> is</c><c> 13</c><c> so</c><c> I'm</c><c> still</c><c> good.</c><c> D</c><c> is</c>
+[14:51] then G. G is 13 so I'm still good. D is
+[14:52] then G. G is 13 so I'm still good. D is 14<c> so</c><c> I'm</c><c> good.</c><c> E</c><c> is</c><c> 15</c><c> so</c><c> I'm</c><c> good.</c><c> My</c>
+[14:55] 14 so I'm good. E is 15 so I'm good. My
+[14:55] 14 so I'm good. E is 15 so I'm good. My window<c> ended.</c><c> So</c><c> I</c><c> got</c><c> my</c><c> second</c>
+[14:58] window ended. So I got my second
+[14:58] window ended. So I got my second partition<c> also.</c><c> Similarly</c><c> what</c><c> you're</c>
+[15:00] partition also. Similarly what you're
+[15:00] partition also. Similarly what you're going<c> to</c><c> do</c><c> is</c><c> you</c><c> will</c><c> start</c><c> off</c><c> with</c>
+[15:02] going to do is you will start off with
+[15:02] going to do is you will start off with your<c> third</c><c> partition</c><c> and</c><c> try</c><c> to</c><c> include</c>
+[15:04] your third partition and try to include
+[15:04] your third partition and try to include the<c> characters</c><c> while</c><c> looking</c><c> from</c><c> this</c>
+[15:06] the characters while looking from this
+[15:06] the characters while looking from this map.<c> I</c><c> have</c><c> left</c><c> this</c><c> last</c><c> partition</c><c> as</c>
+[15:09] map. I have left this last partition as
+[15:09] map. I have left this last partition as an<c> exercise</c><c> for</c><c> you.</c><c> But</c><c> what</c><c> did</c><c> we</c><c> do?</c>
+[15:12] an exercise for you. But what did we do?
+[15:12] an exercise for you. But what did we do? Just<c> by</c><c> applying</c><c> the</c><c> greed</c><c> criteria</c><c> that</c>
+[15:15] Just by applying the greed criteria that
+[15:15] Just by applying the greed criteria that I<c> want</c><c> to</c><c> include</c><c> the</c><c> last</c><c> occurrence</c><c> of</c>
+[15:17] I want to include the last occurrence of
+[15:17] I want to include the last occurrence of the<c> first</c><c> character,</c><c> I</c><c> was</c><c> able</c><c> to</c>
+[15:19] the first character, I was able to
+[15:19] the first character, I was able to construct<c> this</c><c> map</c><c> and</c><c> then</c><c> in</c><c> just</c><c> a</c>
+[15:22] construct this map and then in just a
+[15:22] construct this map and then in just a single<c> iteration</c><c> I</c><c> got</c><c> my</c><c> solution.</c><c> So</c>
+[15:25] single iteration I got my solution. So
+[15:25] single iteration I got my solution. So in<c> the</c><c> end</c><c> I</c><c> have</c><c> three</c><c> partitions</c><c> and</c>
+[15:27] in the end I have three partitions and
+[15:27] in the end I have three partitions and this<c> will</c><c> be</c><c> my</c><c> answer.</c>
+[15:29] this will be my answer.
+[15:29] this will be my answer. From<c> all</c><c> these</c><c> examples,</c><c> what</c><c> are</c><c> we</c>
+[15:31] From all these examples, what are we
+[15:31] From all these examples, what are we learning<c> over</c><c> here?</c><c> We</c><c> are</c><c> understanding</c>
+[15:33] learning over here? We are understanding
+[15:33] learning over here? We are understanding that<c> greedy</c><c> algorithms</c><c> have</c><c> some</c><c> pros</c>
+[15:36] that greedy algorithms have some pros
+[15:36] that greedy algorithms have some pros and<c> cons</c><c> of</c><c> their</c><c> own.</c><c> First</c><c> of</c><c> all,</c>
+[15:38] and cons of their own. First of all,
+[15:38] and cons of their own. First of all, they<c> are</c><c> intuitive</c><c> and</c><c> simple</c><c> if</c><c> you</c>
+[15:40] they are intuitive and simple if you
+[15:40] they are intuitive and simple if you have<c> understood</c><c> the</c><c> greed</c><c> criteria</c><c> and</c>
+[15:43] have understood the greed criteria and
+[15:43] have understood the greed criteria and they<c> can</c><c> be</c><c> efficient</c><c> and</c><c> usually</c><c> work</c>
+[15:45] they can be efficient and usually work
+[15:45] they can be efficient and usually work in<c> a</c><c> linear</c><c> time.</c><c> But</c><c> you</c><c> must</c><c> try</c><c> to</c>
+[15:49] in a linear time. But you must try to
+[15:49] in a linear time. But you must try to understand<c> that</c><c> your</c><c> algorithm</c><c> may</c><c> not</c>
+[15:52] understand that your algorithm may not
+[15:52] understand that your algorithm may not always<c> be</c><c> optimal</c><c> if</c><c> you</c><c> haven't</c>
+[15:54] always be optimal if you haven't
+[15:54] always be optimal if you haven't determined<c> that</c><c> your</c><c> local</c><c> optimal</c>
+[15:56] determined that your local optimal
+[15:56] determined that your local optimal solution<c> will</c><c> lead</c><c> to</c><c> the</c><c> global</c><c> optimum</c>
+[15:58] solution will lead to the global optimum
+[15:58] solution will lead to the global optimum solution<c> as</c><c> well.</c><c> Also,</c><c> you</c><c> need</c><c> to</c><c> be</c><c> a</c>
+[16:01] solution as well. Also, you need to be a
+[16:01] solution as well. Also, you need to be a little<c> careful</c><c> with</c><c> it.</c><c> If</c><c> you</c><c> haven't</c>
+[16:02] little careful with it. If you haven't
+[16:02] little careful with it. If you haven't looked<c> up</c><c> at</c><c> all</c><c> of</c><c> the</c><c> different</c>
+[16:04] looked up at all of the different
+[16:04] looked up at all of the different options,<c> just</c><c> a</c><c> local</c><c> optimal</c><c> solution</c>
+[16:07] options, just a local optimal solution
+[16:07] options, just a local optimal solution might<c> lead</c><c> you</c><c> to</c><c> missing</c><c> out</c><c> some</c><c> of</c>
+[16:09] might lead you to missing out some of
+[16:09] might lead you to missing out some of the<c> better</c><c> solutions</c><c> available.</c><c> And</c><c> all</c>
+[16:12] the better solutions available. And all
+[16:12] the better solutions available. And all of<c> this</c><c> was</c><c> just</c><c> to</c><c> get</c><c> you</c><c> warmed</c><c> up.</c>
+[16:14] of this was just to get you warmed up.
+[16:14] of this was just to get you warmed up. Now<c> let</c><c> us</c><c> start</c><c> looking</c><c> at</c><c> more</c>
+[16:16] Now let us start looking at more
+[16:16] Now let us start looking at more problems<c> where</c><c> the</c><c> greedy</c><c> solution</c><c> might</c>
+[16:18] problems where the greedy solution might
+[16:18] problems where the greedy solution might not<c> be</c><c> obvious</c><c> at</c><c> the</c><c> very</c><c> first</c>
+[16:20] not be obvious at the very first
+[16:20] not be obvious at the very first instance.<c> For</c><c> example,</c><c> check</c><c> out</c><c> this</c>
+[16:23] instance. For example, check out this
+[16:23] instance. For example, check out this particular<c> problem</c><c> gas</c><c> station.</c><c> Over</c>
+[16:26] particular problem gas station. Over
+[16:26] particular problem gas station. Over here<c> you</c><c> are</c><c> given</c><c> let</c><c> us</c><c> say</c><c> n</c><c> number</c>
+[16:28] here you are given let us say n number
+[16:28] here you are given let us say n number of<c> positions.</c><c> Each</c><c> position</c><c> is</c><c> a</c><c> gas</c>
+[16:31] of positions. Each position is a gas
+[16:31] of positions. Each position is a gas station<c> and</c><c> this</c><c> is</c><c> the</c><c> available</c><c> gas</c><c> at</c>
+[16:35] station and this is the available gas at
+[16:35] station and this is the available gas at each<c> of</c><c> the</c><c> stations.</c><c> You</c><c> are</c><c> given</c><c> one</c>
+[16:37] each of the stations. You are given one
+[16:37] each of the stations. You are given one more<c> array.</c><c> This</c><c> array</c><c> tells</c><c> you</c><c> the</c>
+[16:41] more array. This array tells you the
+[16:41] more array. This array tells you the cost<c> required</c><c> to</c><c> travel</c><c> from</c><c> one</c><c> gas</c>
+[16:43] cost required to travel from one gas
+[16:43] cost required to travel from one gas station<c> to</c><c> the</c><c> other.</c><c> So</c><c> for</c><c> example,</c><c> if</c>
+[16:46] station to the other. So for example, if
+[16:46] station to the other. So for example, if you<c> are</c><c> at</c><c> this</c><c> particular</c><c> gas</c><c> station,</c>
+[16:49] you are at this particular gas station,
+[16:49] you are at this particular gas station, you<c> can</c><c> only</c><c> fill</c><c> gas</c><c> up</c><c> to</c><c> one</c><c> unit</c><c> and</c>
+[16:52] you can only fill gas up to one unit and
+[16:52] you can only fill gas up to one unit and to<c> go</c><c> to</c><c> the</c><c> next</c><c> station,</c><c> you</c><c> will</c>
+[16:54] to go to the next station, you will
+[16:54] to go to the next station, you will require<c> gas</c><c> of</c><c> three</c><c> units.</c><c> So</c><c> basically</c>
+[16:58] require gas of three units. So basically
+[16:58] require gas of three units. So basically if<c> you</c><c> are</c><c> starting</c><c> from</c><c> this</c><c> particular</c>
+[17:00] if you are starting from this particular
+[17:00] if you are starting from this particular point<c> you</c><c> will</c><c> only</c><c> get</c><c> a</c><c> gas</c><c> of</c><c> one</c>
+[17:03] point you will only get a gas of one
+[17:03] point you will only get a gas of one unit<c> but</c><c> to</c><c> go</c><c> up</c><c> till</c><c> two</c><c> you</c><c> need</c>
+[17:06] unit but to go up till two you need
+[17:06] unit but to go up till two you need three<c> units</c><c> of</c><c> gas.</c><c> So</c><c> you</c><c> cannot</c><c> even</c>
+[17:08] three units of gas. So you cannot even
+[17:08] three units of gas. So you cannot even travel<c> over</c><c> there.</c><c> You</c><c> will</c><c> run</c><c> out</c><c> of</c>
+[17:10] travel over there. You will run out of
+[17:10] travel over there. You will run out of gas<c> in</c><c> the</c><c> middle.</c><c> The</c><c> idea</c><c> over</c><c> here</c><c> is</c>
+[17:13] gas in the middle. The idea over here is
+[17:13] gas in the middle. The idea over here is that<c> all</c><c> of</c><c> these</c><c> stations</c><c> they</c><c> are</c>
+[17:16] that all of these stations they are
+[17:16] that all of these stations they are connected<c> in</c><c> a</c><c> circular</c><c> loop.</c><c> So</c><c> you</c>
+[17:18] connected in a circular loop. So you
+[17:18] connected in a circular loop. So you have<c> to</c><c> tell</c><c> me</c><c> first</c><c> of</c><c> all</c><c> hey</c><c> is</c><c> this</c>
+[17:21] have to tell me first of all hey is this
+[17:21] have to tell me first of all hey is this trip<c> even</c><c> possible?</c><c> And</c><c> if</c><c> yes,</c><c> you</c><c> have</c>
+[17:25] trip even possible? And if yes, you have
+[17:25] trip even possible? And if yes, you have to<c> tell</c><c> me</c><c> the</c><c> starting</c><c> station.</c><c> If</c><c> you</c>
+[17:27] to tell me the starting station. If you
+[17:27] to tell me the starting station. If you think<c> about</c><c> it,</c><c> you</c><c> cannot</c><c> start</c><c> from</c>
+[17:29] think about it, you cannot start from
+[17:29] think about it, you cannot start from this<c> station.</c><c> You</c><c> will</c><c> run</c><c> out</c><c> of</c><c> gas</c>
+[17:31] this station. You will run out of gas
+[17:31] this station. You will run out of gas immediately.<c> Can</c><c> you</c><c> start</c><c> from</c><c> this</c>
+[17:33] immediately. Can you start from this
+[17:33] immediately. Can you start from this station?<c> No.</c><c> Because</c><c> you</c><c> can</c><c> fill</c><c> up</c><c> the</c>
+[17:36] station? No. Because you can fill up the
+[17:36] station? No. Because you can fill up the gas<c> of</c><c> two</c><c> units.</c><c> But</c><c> to</c><c> go</c><c> from</c><c> here,</c>
+[17:38] gas of two units. But to go from here,
+[17:38] gas of two units. But to go from here, you<c> need</c><c> a</c><c> gas</c><c> of</c><c> four</c><c> units.</c><c> So</c><c> once</c>
+[17:40] you need a gas of four units. So once
+[17:40] you need a gas of four units. So once again,<c> your</c><c> gas</c><c> will</c><c> be</c><c> emptied</c><c> half</c><c> the</c>
+[17:42] again, your gas will be emptied half the
+[17:42] again, your gas will be emptied half the way<c> and</c><c> you</c><c> cannot</c><c> begin</c><c> from</c><c> here.</c><c> What</c>
+[17:45] way and you cannot begin from here. What
+[17:45] way and you cannot begin from here. What about<c> the</c><c> next</c><c> station?</c><c> Even</c><c> for</c><c> this,</c>
+[17:47] about the next station? Even for this,
+[17:47] about the next station? Even for this, the<c> gas</c><c> is</c><c> three</c><c> and</c><c> the</c><c> cost</c><c> is</c><c> five.</c>
+[17:49] the gas is three and the cost is five.
+[17:49] the gas is three and the cost is five. So<c> you</c><c> cannot</c><c> go</c><c> ahead.</c><c> What</c><c> about</c><c> the</c>
+[17:51] So you cannot go ahead. What about the
+[17:51] So you cannot go ahead. What about the next<c> one?</c><c> Maybe</c><c> yes</c><c> because</c><c> you</c><c> have</c>
+[17:53] next one? Maybe yes because you have
+[17:53] next one? Maybe yes because you have five<c> units</c><c> of</c><c> gas</c><c> that</c><c> you</c><c> can</c><c> fill</c><c> up</c>
+[17:55] five units of gas that you can fill up
+[17:55] five units of gas that you can fill up and<c> it</c><c> will</c><c> only</c><c> consume</c><c> one</c><c> unit</c><c> of</c><c> gas</c>
+[17:58] and it will only consume one unit of gas
+[17:58] and it will only consume one unit of gas to<c> go</c><c> to</c><c> the</c><c> next</c><c> station.</c><c> So</c><c> this</c><c> might</c>
+[18:01] to go to the next station. So this might
+[18:01] to go to the next station. So this might be<c> a</c><c> solution</c><c> and</c><c> if</c><c> you</c><c> go</c><c> iteratively</c>
+[18:03] be a solution and if you go iteratively
+[18:04] be a solution and if you go iteratively you<c> will</c><c> be</c><c> able</c><c> to</c><c> determine</c><c> if</c><c> a</c><c> trip</c>
+[18:06] you will be able to determine if a trip
+[18:06] you will be able to determine if a trip is<c> possible</c><c> or</c><c> not.</c><c> But</c><c> how</c><c> can</c><c> you</c>
+[18:08] is possible or not. But how can you
+[18:08] is possible or not. But how can you apply<c> the</c><c> greedy</c><c> approach?</c><c> First</c><c> of</c><c> all</c>
+[18:10] apply the greedy approach? First of all
+[18:10] apply the greedy approach? First of all to<c> determine</c><c> that</c><c> is</c><c> a</c><c> trip</c><c> even</c>
+[18:13] to determine that is a trip even
+[18:13] to determine that is a trip even possible<c> or</c><c> not.</c><c> What</c><c> do</c><c> you</c><c> think?</c><c> The</c>
+[18:16] possible or not. What do you think? The
+[18:16] possible or not. What do you think? The most<c> naive</c><c> solution</c><c> is</c><c> that</c><c> okay</c><c> to</c>
+[18:19] most naive solution is that okay to
+[18:19] most naive solution is that okay to travel<c> this</c><c> particular</c><c> distance</c><c> I</c><c> should</c>
+[18:22] travel this particular distance I should
+[18:22] travel this particular distance I should have<c> at</c><c> least</c><c> this</c><c> gas.</c><c> Correct?</c><c> Think</c>
+[18:25] have at least this gas. Correct? Think
+[18:25] have at least this gas. Correct? Think about<c> it.</c><c> If</c><c> I</c><c> have</c><c> to</c><c> travel</c><c> a</c><c> distance</c>
+[18:27] about it. If I have to travel a distance
+[18:28] about it. If I have to travel a distance that<c> requires</c><c> 10</c><c> units</c><c> of</c><c> gas,</c><c> I</c><c> should</c>
+[18:30] that requires 10 units of gas, I should
+[18:30] that requires 10 units of gas, I should have<c> at</c><c> least</c><c> 10</c><c> units</c><c> of</c><c> gas</c><c> to</c><c> fill</c>
+[18:32] have at least 10 units of gas to fill
+[18:32] have at least 10 units of gas to fill up,<c> right?</c><c> If</c><c> the</c><c> total</c><c> gas</c><c> available</c><c> is</c>
+[18:36] up, right? If the total gas available is
+[18:36] up, right? If the total gas available is less<c> than</c><c> 10,</c><c> then</c><c> this</c><c> trip</c><c> is</c><c> not</c><c> even</c>
+[18:38] less than 10, then this trip is not even
+[18:38] less than 10, then this trip is not even possible.<c> You</c><c> can</c><c> simply</c><c> return</c><c> a</c><c> false.</c>
+[18:41] possible. You can simply return a false.
+[18:41] possible. You can simply return a false. So<c> the</c><c> first</c><c> step</c><c> is</c><c> to</c><c> add</c><c> up</c><c> all</c><c> of</c>
+[18:44] So the first step is to add up all of
+[18:44] So the first step is to add up all of these<c> numbers</c><c> and</c><c> check</c><c> out</c><c> the</c><c> total</c>
+[18:47] these numbers and check out the total
+[18:47] these numbers and check out the total gas<c> required.</c><c> This</c><c> sum</c><c> turns</c><c> out</c><c> to</c><c> be</c>
+[18:50] gas required. This sum turns out to be
+[18:50] gas required. This sum turns out to be 15.<c> And</c><c> you</c><c> need</c><c> to</c><c> check</c><c> are</c><c> 15</c><c> units</c>
+[18:53] 15. And you need to check are 15 units
+[18:53] 15. And you need to check are 15 units of<c> gas</c><c> available.</c><c> So</c><c> you</c><c> add</c><c> up</c><c> the</c>
+[18:55] of gas available. So you add up the
+[18:55] of gas available. So you add up the total<c> gas</c><c> also.</c><c> And</c><c> this</c><c> number</c><c> also</c>
+[18:58] total gas also. And this number also
+[18:58] total gas also. And this number also turns<c> out</c><c> to</c><c> be</c><c> 15.</c><c> So</c><c> one</c><c> thing</c><c> is</c><c> for</c>
+[19:01] turns out to be 15. So one thing is for
+[19:01] turns out to be 15. So one thing is for sure<c> this</c><c> trip</c><c> is</c><c> possible.</c><c> But</c><c> where</c><c> do</c>
+[19:04] sure this trip is possible. But where do
+[19:04] sure this trip is possible. But where do you<c> start?</c><c> To</c><c> determine</c><c> it,</c><c> all</c><c> you</c><c> need</c>
+[19:07] you start? To determine it, all you need
+[19:07] you start? To determine it, all you need to<c> do</c><c> is</c><c> just</c><c> iterate</c><c> over</c><c> each</c><c> of</c><c> these</c>
+[19:10] to do is just iterate over each of these
+[19:10] to do is just iterate over each of these gas<c> stations</c><c> one</c><c> by</c><c> one.</c><c> You</c><c> know</c><c> that</c>
+[19:12] gas stations one by one. You know that
+[19:12] gas stations one by one. You know that you<c> cannot</c><c> start</c><c> from</c><c> here.</c><c> Can</c><c> you</c>
+[19:15] you cannot start from here. Can you
+[19:15] you cannot start from here. Can you start<c> from</c><c> here?</c><c> No,</c><c> because</c><c> only</c><c> two</c><c> is</c>
+[19:18] start from here? No, because only two is
+[19:18] start from here? No, because only two is available<c> and</c><c> it</c><c> takes</c><c> up</c><c> four</c><c> gas.</c><c> Can</c>
+[19:21] available and it takes up four gas. Can
+[19:21] available and it takes up four gas. Can you<c> start</c><c> from</c><c> here?</c><c> No,</c><c> because</c><c> three</c>
+[19:23] you start from here? No, because three
+[19:23] you start from here? No, because three is<c> available</c><c> and</c><c> it</c><c> takes</c><c> up</c><c> five</c><c> gas.</c>
+[19:26] is available and it takes up five gas.
+[19:26] is available and it takes up five gas. Can<c> you</c><c> start</c><c> from</c><c> the</c><c> next</c><c> station?</c>
+[19:28] Can you start from the next station?
+[19:28] Can you start from the next station? Yes.<c> So</c><c> if</c><c> you</c><c> can</c><c> start</c><c> from</c><c> the</c><c> next</c>
+[19:30] Yes. So if you can start from the next
+[19:30] Yes. So if you can start from the next station,<c> what</c><c> you</c><c> need</c><c> to</c><c> do</c><c> is</c><c> you</c><c> need</c>
+[19:33] station, what you need to do is you need
+[19:33] station, what you need to do is you need to<c> check</c><c> if</c><c> you</c><c> can</c><c> reach</c><c> the</c><c> very</c><c> end</c>
+[19:36] to check if you can reach the very end
+[19:36] to check if you can reach the very end of<c> the</c><c> array.</c><c> If</c><c> you</c><c> can</c><c> reach</c><c> the</c><c> very</c>
+[19:38] of the array. If you can reach the very
+[19:38] of the array. If you can reach the very end<c> of</c><c> the</c><c> array,</c><c> it</c><c> means</c><c> that</c><c> you</c><c> will</c>
+[19:41] end of the array, it means that you will
+[19:41] end of the array, it means that you will be<c> able</c><c> to</c><c> complete</c><c> your</c><c> trip</c><c> because</c><c> we</c>
+[19:44] be able to complete your trip because we
+[19:44] be able to complete your trip because we have<c> already</c><c> determined</c><c> that</c><c> this</c><c> trip</c>
+[19:46] have already determined that this trip
+[19:46] have already determined that this trip is<c> possible</c><c> because</c><c> that</c><c> is</c><c> the</c><c> number</c>
+[19:49] is possible because that is the number
+[19:49] is possible because that is the number of<c> gas</c><c> available.</c><c> So</c><c> no</c><c> matter</c><c> what</c><c> is</c>
+[19:52] of gas available. So no matter what is
+[19:52] of gas available. So no matter what is the<c> distribution</c><c> of</c><c> gas</c><c> in</c><c> all</c><c> of</c><c> these</c>
+[19:54] the distribution of gas in all of these
+[19:54] the distribution of gas in all of these stations,<c> I</c><c> will</c><c> still</c><c> be</c><c> able</c><c> to</c>
+[19:57] stations, I will still be able to
+[19:57] stations, I will still be able to complete<c> my</c><c> trip,</c><c> if</c><c> I</c><c> can</c><c> start</c><c> from</c>
+[19:59] complete my trip, if I can start from
+[20:00] complete my trip, if I can start from any<c> of</c><c> this</c><c> particular</c><c> index</c><c> and</c><c> reach</c>
+[20:02] any of this particular index and reach
+[20:02] any of this particular index and reach the<c> very</c><c> end.</c><c> So</c><c> once</c><c> again</c><c> the</c><c> greedy</c>
+[20:05] the very end. So once again the greedy
+[20:05] the very end. So once again the greedy criteria<c> came</c><c> to</c><c> my</c><c> rescue.</c><c> The</c><c> next</c>
+[20:08] criteria came to my rescue. The next
+[20:08] criteria came to my rescue. The next problem<c> I</c><c> want</c><c> to</c><c> talk</c><c> about</c><c> is</c><c> the</c><c> jump</c>
+[20:09] problem I want to talk about is the jump
+[20:10] problem I want to talk about is the jump game<c> problem.</c><c> You</c><c> are</c><c> given</c><c> a</c><c> certain</c>
+[20:12] game problem. You are given a certain
+[20:12] game problem. You are given a certain array<c> and</c><c> I</c><c> am</c><c> standing</c><c> over</c><c> here</c><c> at</c><c> the</c>
+[20:15] array and I am standing over here at the
+[20:15] array and I am standing over here at the first<c> position.</c><c> Each</c><c> of</c><c> these</c><c> numbers</c>
+[20:18] first position. Each of these numbers
+[20:18] first position. Each of these numbers they<c> represent</c><c> the</c><c> maximum</c><c> number</c><c> of</c>
+[20:21] they represent the maximum number of
+[20:21] they represent the maximum number of jump<c> I</c><c> can</c><c> take</c><c> from</c><c> this</c><c> particular</c>
+[20:23] jump I can take from this particular
+[20:23] jump I can take from this particular position.<c> It</c><c> means</c><c> that</c><c> if</c><c> I'm</c><c> standing</c>
+[20:25] position. It means that if I'm standing
+[20:26] position. It means that if I'm standing here<c> I</c><c> can</c><c> just</c><c> take</c><c> a</c><c> maximum</c><c> of</c><c> one</c>
+[20:28] here I can just take a maximum of one
+[20:28] here I can just take a maximum of one jump.<c> If</c><c> I'm</c><c> standing</c><c> over</c><c> here</c><c> I</c><c> can</c>
+[20:30] jump. If I'm standing over here I can
+[20:30] jump. If I'm standing over here I can take<c> a</c><c> maximum</c><c> of</c><c> two</c><c> jump.</c><c> I</c><c> can</c><c> either</c>
+[20:33] take a maximum of two jump. I can either
+[20:33] take a maximum of two jump. I can either take<c> a</c><c> one</c><c> jump</c><c> or</c><c> I</c><c> can</c><c> take</c><c> a</c><c> jump</c><c> of</c>
+[20:35] take a one jump or I can take a jump of
+[20:35] take a one jump or I can take a jump of two.<c> If</c><c> I'm</c><c> standing</c><c> here</c><c> then</c><c> I</c><c> can</c>
+[20:38] two. If I'm standing here then I can
+[20:38] two. If I'm standing here then I can take<c> a</c><c> maximum</c><c> of</c><c> five</c><c> jumps.</c><c> And</c><c> it</c><c> is</c>
+[20:41] take a maximum of five jumps. And it is
+[20:41] take a maximum of five jumps. And it is up<c> to</c><c> me</c><c> where</c><c> do</c><c> I</c><c> want</c><c> to</c><c> go.</c><c> It</c><c> is</c><c> up</c>
+[20:45] up to me where do I want to go. It is up
+[20:45] up to me where do I want to go. It is up to<c> me</c><c> how</c><c> many</c><c> jumps</c><c> do</c><c> I</c><c> want</c><c> to</c><c> make.</c>
+[20:47] to me how many jumps do I want to make.
+[20:48] to me how many jumps do I want to make. Now<c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> if</c><c> I</c><c> can</c><c> reach</c>
+[20:51] Now you have to tell me if I can reach
+[20:51] Now you have to tell me if I can reach the<c> last</c><c> possible</c><c> position</c><c> or</c><c> not.</c><c> So</c>
+[20:54] the last possible position or not. So
+[20:54] the last possible position or not. So how<c> do</c><c> you</c><c> go</c><c> about</c><c> it?</c><c> How</c><c> do</c><c> you</c><c> find</c>
+[20:56] how do you go about it? How do you find
+[20:56] how do you go about it? How do you find out<c> if</c><c> it</c><c> is</c><c> even</c><c> possible?</c><c> To</c><c> simplify</c>
+[20:59] out if it is even possible? To simplify
+[20:59] out if it is even possible? To simplify this<c> problem,</c><c> we</c><c> are</c><c> going</c><c> to</c><c> look</c><c> at</c><c> an</c>
+[21:01] this problem, we are going to look at an
+[21:01] this problem, we are going to look at an even<c> simpler</c><c> test</c><c> case.</c><c> This</c><c> array</c><c> is</c>
+[21:03] even simpler test case. This array is
+[21:03] even simpler test case. This array is very<c> small.</c><c> And</c><c> if</c><c> you</c><c> notice,</c><c> there</c><c> are</c>
+[21:06] very small. And if you notice, there are
+[21:06] very small. And if you notice, there are no<c> zeros</c><c> in</c><c> the</c><c> array.</c><c> So</c><c> what</c><c> does</c><c> this</c>
+[21:08] no zeros in the array. So what does this
+[21:08] no zeros in the array. So what does this tell<c> you?</c><c> It</c><c> simply</c><c> means</c><c> that</c><c> if</c><c> I'm</c>
+[21:11] tell you? It simply means that if I'm
+[21:11] tell you? It simply means that if I'm allowed<c> to</c><c> take</c><c> any</c><c> number</c><c> of</c><c> jumps</c><c> and</c>
+[21:14] allowed to take any number of jumps and
+[21:14] allowed to take any number of jumps and none<c> of</c><c> the</c><c> element</c><c> is</c><c> zero</c><c> from</c><c> each</c><c> of</c>
+[21:17] none of the element is zero from each of
+[21:17] none of the element is zero from each of the<c> place</c><c> I</c><c> will</c><c> be</c><c> able</c><c> to</c><c> take</c><c> a</c><c> jump</c>
+[21:19] the place I will be able to take a jump
+[21:19] the place I will be able to take a jump of<c> at</c><c> least</c><c> one</c><c> correct</c><c> and</c><c> no</c><c> matter</c>
+[21:22] of at least one correct and no matter
+[21:22] of at least one correct and no matter whatever<c> these</c><c> numbers</c><c> are</c><c> I</c><c> will</c><c> always</c>
+[21:24] whatever these numbers are I will always
+[21:24] whatever these numbers are I will always be<c> able</c><c> to</c><c> reach</c><c> the</c><c> end.</c><c> So</c><c> you</c><c> can</c>
+[21:27] be able to reach the end. So you can
+[21:27] be able to reach the end. So you can straight<c> away</c><c> dismiss</c><c> one</c><c> of</c><c> the</c><c> cases</c>
+[21:30] straight away dismiss one of the cases
+[21:30] straight away dismiss one of the cases if<c> none</c><c> of</c><c> the</c><c> numbers</c><c> are</c><c> zero</c><c> then</c><c> you</c>
+[21:32] if none of the numbers are zero then you
+[21:32] if none of the numbers are zero then you can<c> always</c><c> reach</c><c> the</c><c> very</c><c> end.</c><c> So</c><c> one</c>
+[21:35] can always reach the very end. So one
+[21:35] can always reach the very end. So one thing<c> is</c><c> completely</c><c> sorted.</c><c> Now</c><c> what</c>
+[21:37] thing is completely sorted. Now what
+[21:38] thing is completely sorted. Now what about<c> this</c><c> particular</c><c> specific</c><c> case?</c>
+[21:40] about this particular specific case?
+[21:40] about this particular specific case? What<c> do</c><c> you</c><c> do</c><c> over</c><c> here?</c><c> What</c><c> I</c><c> can</c><c> do</c>
+[21:42] What do you do over here? What I can do
+[21:42] What do you do over here? What I can do is<c> I</c><c> can</c><c> start</c><c> to</c><c> look</c><c> from</c><c> the</c><c> very</c>
+[21:44] is I can start to look from the very
+[21:44] is I can start to look from the very end.<c> I</c><c> have</c><c> to</c><c> reach</c><c> over</c><c> here.</c><c> Correct?</c>
+[21:48] end. I have to reach over here. Correct?
+[21:48] end. I have to reach over here. Correct? Now<c> try</c><c> to</c><c> start</c><c> going</c><c> back.</c><c> If</c><c> I</c><c> was</c>
+[21:51] Now try to start going back. If I was
+[21:51] Now try to start going back. If I was standing<c> at</c><c> this</c><c> particular</c><c> position,</c>
+[21:53] standing at this particular position,
+[21:53] standing at this particular position, then<c> can</c><c> you</c><c> reach</c><c> at</c><c> the</c><c> very</c><c> end?</c><c> Yes.</c>
+[21:56] then can you reach at the very end? Yes.
+[21:56] then can you reach at the very end? Yes. Because<c> after</c><c> this</c><c> none</c><c> of</c><c> the</c><c> numbers</c>
+[21:57] Because after this none of the numbers
+[21:57] Because after this none of the numbers are<c> zero.</c><c> So</c><c> will</c><c> it</c><c> be</c><c> safe</c><c> to</c><c> narrow</c>
+[22:01] are zero. So will it be safe to narrow
+[22:01] are zero. So will it be safe to narrow down<c> the</c><c> problem</c><c> to</c><c> this</c><c> criteria</c><c> that</c>
+[22:04] down the problem to this criteria that
+[22:04] down the problem to this criteria that if<c> I'm</c><c> able</c><c> to</c><c> reach</c><c> this</c><c> particular</c>
+[22:07] if I'm able to reach this particular
+[22:07] if I'm able to reach this particular number<c> then</c><c> I</c><c> will</c><c> be</c><c> able</c><c> to</c><c> reach</c><c> at</c>
+[22:09] number then I will be able to reach at
+[22:09] number then I will be able to reach at the<c> end</c><c> correct</c><c> so</c><c> I</c><c> have</c><c> already</c>
+[22:11] the end correct so I have already
+[22:11] the end correct so I have already shortened<c> out</c><c> my</c><c> problem</c><c> correct</c><c> now</c><c> let</c>
+[22:14] shortened out my problem correct now let
+[22:14] shortened out my problem correct now let us<c> try</c><c> to</c><c> apply</c><c> the</c><c> same</c><c> logic</c><c> can</c><c> I</c>
+[22:17] us try to apply the same logic can I
+[22:17] us try to apply the same logic can I reach<c> from</c><c> here</c><c> if</c><c> I'm</c><c> starting</c><c> at</c><c> this</c>
+[22:20] reach from here if I'm starting at this
+[22:20] reach from here if I'm starting at this particular<c> number</c><c> zero</c><c> no</c><c> because</c><c> I</c>
+[22:22] particular number zero no because I
+[22:22] particular number zero no because I cannot<c> jump</c><c> so</c><c> definitely</c><c> this</c><c> is</c><c> not</c>
+[22:26] cannot jump so definitely this is not
+[22:26] cannot jump so definitely this is not viable<c> can</c><c> you</c><c> go</c><c> to</c><c> the</c><c> last</c><c> position</c>
+[22:28] viable can you go to the last position
+[22:28] viable can you go to the last position if<c> You're</c><c> here</c><c> once</c><c> again.</c><c> No.</c><c> Can</c><c> you</c>
+[22:31] if You're here once again. No. Can you
+[22:31] if You're here once again. No. Can you go<c> to</c><c> the</c><c> last</c><c> position</c><c> if</c><c> you</c><c> are</c><c> at</c>
+[22:33] go to the last position if you are at
+[22:33] go to the last position if you are at one?<c> No,</c><c> because</c><c> from</c><c> here</c><c> you</c><c> can</c><c> only</c>
+[22:36] one? No, because from here you can only
+[22:36] one? No, because from here you can only take<c> a</c><c> maximum</c><c> jump</c><c> of</c><c> one.</c><c> So,</c><c> keep</c>
+[22:38] take a maximum jump of one. So, keep
+[22:38] take a maximum jump of one. So, keep going<c> back.</c><c> Can</c><c> you</c><c> reach</c><c> from</c><c> here</c><c> once</c>
+[22:41] going back. Can you reach from here once
+[22:41] going back. Can you reach from here once again?<c> No,</c><c> because</c><c> from</c><c> here</c><c> you</c><c> can</c>
+[22:43] again? No, because from here you can
+[22:43] again? No, because from here you can only<c> take</c><c> a</c><c> maximum</c><c> jump</c><c> of</c><c> two.</c><c> Keep</c>
+[22:46] only take a maximum jump of two. Keep
+[22:46] only take a maximum jump of two. Keep going<c> back.</c><c> Can</c><c> you</c><c> reach</c><c> the</c><c> end</c><c> from</c>
+[22:48] going back. Can you reach the end from
+[22:48] going back. Can you reach the end from here?<c> Yes,</c><c> because</c><c> you</c><c> can</c><c> take</c><c> a</c><c> jump</c>
+[22:51] here? Yes, because you can take a jump
+[22:51] here? Yes, because you can take a jump of<c> five.</c><c> So,</c><c> one</c><c> won't</c><c> work.</c><c> Two</c><c> won't</c>
+[22:53] of five. So, one won't work. Two won't
+[22:54] of five. So, one won't work. Two won't work.<c> Three?</c><c> No.</c><c> Four?</c><c> No.</c><c> How</c><c> about</c>
+[22:57] work. Three? No. Four? No. How about
+[22:57] work. Three? No. Four? No. How about five?<c> Yes.</c><c> So</c><c> if</c><c> I</c><c> can</c><c> somehow</c><c> reach</c>
+[23:00] five? Yes. So if I can somehow reach
+[23:00] five? Yes. So if I can somehow reach this<c> particular</c><c> position,</c><c> I</c><c> will</c><c> be</c><c> able</c>
+[23:03] this particular position, I will be able
+[23:03] this particular position, I will be able to<c> reach</c><c> my</c><c> very</c><c> end.</c><c> And</c><c> if</c><c> I</c><c> am</c><c> here,</c>
+[23:06] to reach my very end. And if I am here,
+[23:06] to reach my very end. And if I am here, I<c> can</c><c> reach</c><c> the</c><c> very</c><c> end</c><c> of</c><c> the</c><c> array</c>
+[23:07] I can reach the very end of the array
+[23:07] I can reach the very end of the array also.<c> Right?</c><c> So</c><c> what</c><c> I</c><c> just</c><c> did,</c><c> I</c>
+[23:11] also. Right? So what I just did, I
+[23:11] also. Right? So what I just did, I narrowed<c> down</c><c> my</c><c> problem</c><c> once</c><c> again.</c><c> If</c>
+[23:13] narrowed down my problem once again. If
+[23:14] narrowed down my problem once again. If I<c> can</c><c> reach</c><c> this</c><c> particular</c><c> position,</c>
+[23:16] I can reach this particular position,
+[23:16] I can reach this particular position, then<c> I</c><c> can</c><c> straight</c><c> away</c><c> reach</c><c> the</c><c> last</c>
+[23:17] then I can straight away reach the last
+[23:18] then I can straight away reach the last position<c> also.</c><c> So</c><c> what</c><c> I'm</c><c> doing</c><c> for</c>
+[23:21] position also. So what I'm doing for
+[23:21] position also. So what I'm doing for every<c> iteration</c><c> I</c><c> am</c><c> trying</c><c> to</c><c> narrow</c>
+[23:24] every iteration I am trying to narrow
+[23:24] every iteration I am trying to narrow down<c> my</c><c> search</c><c> space</c><c> and</c><c> I</c><c> am</c><c> applying</c>
+[23:26] down my search space and I am applying
+[23:26] down my search space and I am applying the<c> same</c><c> greed</c><c> criteria.</c><c> If</c><c> I</c><c> can</c><c> reach</c>
+[23:29] the same greed criteria. If I can reach
+[23:30] the same greed criteria. If I can reach here<c> then</c><c> I</c><c> can</c><c> reach</c><c> here</c><c> and</c><c> then</c><c> I</c>
+[23:31] here then I can reach here and then I
+[23:32] here then I can reach here and then I can<c> reach</c><c> here</c><c> also.</c><c> So</c><c> as</c><c> I</c><c> don't</c><c> have</c>
+[23:35] can reach here also. So as I don't have
+[23:35] can reach here also. So as I don't have any<c> zeros</c><c> available</c><c> I</c><c> know</c><c> that</c><c> I</c><c> can</c>
+[23:38] any zeros available I know that I can
+[23:38] any zeros available I know that I can reach<c> this</c><c> particular</c><c> number</c><c> and</c><c> then</c><c> I</c>
+[23:40] reach this particular number and then I
+[23:40] reach this particular number and then I can<c> reach</c><c> here</c><c> and</c><c> then</c><c> I</c><c> can</c><c> reach</c>
+[23:41] can reach here and then I can reach
+[23:42] can reach here and then I can reach here.<c> So</c><c> once</c><c> again</c><c> I</c><c> can</c><c> say</c><c> that</c><c> yes</c><c> I</c>
+[23:45] here. So once again I can say that yes I
+[23:45] here. So once again I can say that yes I am<c> able</c><c> to</c><c> reach</c><c> the</c><c> last</c><c> position</c><c> and</c>
+[23:48] am able to reach the last position and
+[23:48] am able to reach the last position and once<c> again</c><c> I</c><c> use</c><c> the</c><c> greedy</c><c> criteria.</c>
+[23:51] once again I use the greedy criteria.
+[23:51] once again I use the greedy criteria. Over<c> here</c><c> you</c><c> just</c><c> had</c><c> to</c><c> find</c><c> out</c><c> if</c><c> a</c>
+[23:54] Over here you just had to find out if a
+[23:54] Over here you just had to find out if a jump<c> to</c><c> the</c><c> last</c><c> position</c><c> was</c><c> possible</c>
+[23:55] jump to the last position was possible
+[23:55] jump to the last position was possible or<c> not.</c><c> There</c><c> is</c><c> one</c><c> more</c><c> variation</c>
+[23:57] or not. There is one more variation
+[23:57] or not. There is one more variation available<c> of</c><c> the</c><c> problem</c><c> where</c><c> you</c><c> have</c>
+[24:00] available of the problem where you have
+[24:00] available of the problem where you have to<c> tell</c><c> me</c><c> the</c><c> minimum</c><c> number</c><c> of</c><c> jumps</c>
+[24:02] to tell me the minimum number of jumps
+[24:02] to tell me the minimum number of jumps required<c> to</c><c> reach</c><c> the</c><c> very</c><c> end.</c><c> And</c><c> once</c>
+[24:05] required to reach the very end. And once
+[24:05] required to reach the very end. And once again<c> greedy</c><c> approach</c><c> is</c><c> your</c><c> friend</c>
+[24:06] again greedy approach is your friend
+[24:06] again greedy approach is your friend over<c> there.</c><c> What</c><c> you</c><c> basically</c><c> do</c><c> is</c>
+[24:09] over there. What you basically do is
+[24:09] over there. What you basically do is your<c> greed</c><c> criteria</c><c> will</c><c> be</c><c> what</c><c> is</c><c> the</c>
+[24:12] your greed criteria will be what is the
+[24:12] your greed criteria will be what is the maximum<c> jump</c><c> or</c><c> what</c><c> is</c><c> the</c><c> maximum</c>
+[24:15] maximum jump or what is the maximum
+[24:15] maximum jump or what is the maximum window<c> available</c><c> where</c><c> you</c><c> can</c><c> land</c><c> from</c>
+[24:18] window available where you can land from
+[24:18] window available where you can land from your<c> current</c><c> sample</c><c> space.</c><c> So</c><c> that's</c><c> how</c>
+[24:20] your current sample space. So that's how
+[24:20] your current sample space. So that's how I<c> will</c><c> start.</c><c> For</c><c> example,</c><c> this</c><c> is</c><c> my</c>
+[24:23] I will start. For example, this is my
+[24:23] I will start. For example, this is my current<c> sample</c><c> space.</c><c> I</c><c> can</c><c> only</c><c> advance</c>
+[24:25] current sample space. I can only advance
+[24:26] current sample space. I can only advance one<c> other</c><c> position.</c><c> So</c><c> this</c><c> will</c><c> give</c><c> me</c>
+[24:28] one other position. So this will give me
+[24:28] one other position. So this will give me one<c> more</c><c> sample</c><c> window.</c><c> In</c><c> this</c><c> sample</c>
+[24:31] one more sample window. In this sample
+[24:31] one more sample window. In this sample window,<c> how</c><c> far</c><c> can</c><c> I</c><c> go?</c><c> Once</c><c> again,</c><c> I</c>
+[24:33] window, how far can I go? Once again, I
+[24:34] window, how far can I go? Once again, I can<c> only</c><c> jump</c><c> one</c><c> more</c><c> position.</c><c> So</c>
+[24:36] can only jump one more position. So
+[24:36] can only jump one more position. So that's<c> it.</c><c> Now</c><c> what</c><c> about</c><c> this</c><c> window?</c>
+[24:40] that's it. Now what about this window?
+[24:40] that's it. Now what about this window? From<c> this</c><c> particular</c><c> window,</c><c> how</c><c> far</c><c> can</c>
+[24:42] From this particular window, how far can
+[24:42] From this particular window, how far can I<c> jump?</c><c> I</c><c> can</c><c> jump</c><c> a</c><c> maximum</c><c> of</c><c> two</c>
+[24:45] I jump? I can jump a maximum of two
+[24:45] I jump? I can jump a maximum of two spaces.
+[24:47] spaces.
+[24:47] spaces. So<c> this</c><c> is</c><c> my</c><c> new</c><c> sample</c><c> space.</c><c> What</c><c> are</c>
+[24:50] So this is my new sample space. What are
+[24:50] So this is my new sample space. What are we<c> doing</c><c> over</c><c> here?</c><c> We</c><c> are</c><c> doing</c><c> the</c>
+[24:52] we doing over here? We are doing the
+[24:52] we doing over here? We are doing the jumps<c> required.</c><c> So</c><c> up</c><c> till</c><c> now</c><c> I</c><c> started</c>
+[24:55] jumps required. So up till now I started
+[24:55] jumps required. So up till now I started from<c> here.</c><c> So</c><c> one</c><c> jump</c><c> then</c><c> two</c><c> jump</c><c> and</c>
+[24:57] from here. So one jump then two jump and
+[24:57] from here. So one jump then two jump and this<c> is</c><c> the</c><c> third</c><c> jump.</c><c> In</c><c> my</c><c> next</c><c> jump</c>
+[24:59] this is the third jump. In my next jump
+[24:59] this is the third jump. In my next jump I<c> will</c><c> have</c><c> to</c><c> choose</c><c> from</c><c> this</c>
+[25:01] I will have to choose from this
+[25:01] I will have to choose from this particular<c> sample</c><c> space.</c><c> So</c><c> if</c><c> I</c><c> can</c>
+[25:03] particular sample space. So if I can
+[25:03] particular sample space. So if I can take<c> five</c><c> jumps,</c><c> this</c><c> is</c><c> the</c><c> maximum</c>
+[25:05] take five jumps, this is the maximum
+[25:05] take five jumps, this is the maximum that<c> I</c><c> go.</c><c> If</c><c> I</c><c> take</c><c> two</c><c> jumps,</c><c> this</c><c> is</c>
+[25:07] that I go. If I take two jumps, this is
+[25:07] that I go. If I take two jumps, this is the<c> maximum</c><c> that</c><c> I</c><c> can</c><c> get.</c><c> What</c><c> is</c><c> this</c>
+[25:10] the maximum that I can get. What is this
+[25:10] the maximum that I can get. What is this telling<c> me?</c><c> It</c><c> is</c><c> giving</c><c> me</c><c> the</c><c> next</c>
+[25:12] telling me? It is giving me the next
+[25:12] telling me? It is giving me the next possible<c> window.</c><c> So</c><c> in</c><c> the</c><c> next</c><c> possible</c>
+[25:15] possible window. So in the next possible
+[25:15] possible window. So in the next possible window,<c> I</c><c> will</c><c> have</c><c> all</c><c> of</c><c> these</c><c> numbers</c>
+[25:17] window, I will have all of these numbers
+[25:17] window, I will have all of these numbers available.<c> And</c><c> now</c><c> once</c><c> again</c><c> repeat</c><c> the</c>
+[25:20] available. And now once again repeat the
+[25:20] available. And now once again repeat the same<c> process</c><c> for</c><c> this</c><c> window.</c><c> Now</c>
+[25:22] same process for this window. Now
+[25:22] same process for this window. Now determine<c> how</c><c> far</c><c> can</c><c> you</c><c> go.</c><c> This</c><c> will</c>
+[25:25] determine how far can you go. This will
+[25:25] determine how far can you go. This will only<c> land</c><c> you</c><c> here.</c><c> These</c><c> two</c><c> numbers</c>
+[25:26] only land you here. These two numbers
+[25:26] only land you here. These two numbers won't<c> land</c><c> you</c><c> anywhere.</c><c> This</c><c> number</c>
+[25:28] won't land you anywhere. This number
+[25:28] won't land you anywhere. This number will<c> land</c><c> you</c><c> over</c><c> here.</c><c> So</c><c> this</c><c> is</c>
+[25:30] will land you over here. So this is
+[25:30] will land you over here. So this is giving<c> me</c><c> my</c><c> last</c><c> jump</c><c> that</c><c> I</c><c> will</c><c> have</c>
+[25:32] giving me my last jump that I will have
+[25:32] giving me my last jump that I will have to<c> take</c><c> and</c><c> that</c><c> is</c><c> how</c><c> you</c><c> will</c><c> reach</c>
+[25:34] to take and that is how you will reach
+[25:34] to take and that is how you will reach your<c> end.</c><c> So</c><c> how</c><c> many</c><c> jumps</c><c> did</c><c> you</c>
+[25:36] your end. So how many jumps did you
+[25:36] your end. So how many jumps did you take?<c> You</c><c> took</c><c> a</c><c> total</c><c> of</c><c> 1</c><c> 2</c><c> 3</c><c> 4</c><c> and</c>
+[25:40] take? You took a total of 1 2 3 4 and
+[25:40] take? You took a total of 1 2 3 4 and then<c> a</c><c> five.</c><c> The</c><c> minimum</c><c> required</c><c> jumps</c>
+[25:42] then a five. The minimum required jumps
+[25:42] then a five. The minimum required jumps are<c> five.</c><c> So</c><c> once</c><c> again</c><c> your</c><c> greet</c>
+[25:45] are five. So once again your greet
+[25:45] are five. So once again your greet criteria<c> defines</c><c> how</c><c> will</c><c> you</c><c> approach</c>
+[25:48] criteria defines how will you approach
+[25:48] criteria defines how will you approach the<c> problem</c><c> and</c><c> how</c><c> can</c><c> you</c><c> arrive</c><c> at</c>
+[25:50] the problem and how can you arrive at
+[25:50] the problem and how can you arrive at the<c> most</c><c> efficient</c><c> solution.</c><c> You</c><c> might</c>
+[25:52] the most efficient solution. You might
+[25:52] the most efficient solution. You might have<c> to</c><c> think</c><c> why</c><c> is</c><c> this</c><c> local</c><c> optimum</c>
+[25:55] have to think why is this local optimum
+[25:55] have to think why is this local optimum solution<c> the</c><c> global</c><c> optimum</c><c> solution</c>
+[25:57] solution the global optimum solution
+[25:57] solution the global optimum solution because<c> when</c><c> you</c><c> are</c><c> starting</c><c> from</c><c> a</c>
+[25:59] because when you are starting from a
+[25:59] because when you are starting from a particular<c> space</c><c> you</c><c> want</c><c> to</c><c> maximize</c>
+[26:01] particular space you want to maximize
+[26:02] particular space you want to maximize how<c> far</c><c> you</c><c> can</c><c> reach.</c><c> So</c><c> this</c><c> is</c><c> the</c>
+[26:04] how far you can reach. So this is the
+[26:04] how far you can reach. So this is the thought<c> if</c><c> you</c><c> are</c><c> finding</c><c> a</c><c> solution</c>
+[26:07] thought if you are finding a solution
+[26:07] thought if you are finding a solution other<c> than</c><c> this</c><c> thought</c><c> then</c><c> you</c><c> are</c><c> not</c>
+[26:10] other than this thought then you are not
+[26:10] other than this thought then you are not finding<c> the</c><c> minimum</c><c> jumps</c><c> because</c><c> if</c><c> you</c>
+[26:12] finding the minimum jumps because if you
+[26:12] finding the minimum jumps because if you want<c> to</c><c> go</c><c> farest</c><c> in</c><c> the</c><c> minimum</c><c> number</c>
+[26:14] want to go farest in the minimum number
+[26:14] want to go farest in the minimum number of<c> jumps</c><c> you</c><c> will</c><c> have</c><c> to</c><c> look</c><c> at</c><c> the</c>
+[26:17] of jumps you will have to look at the
+[26:17] of jumps you will have to look at the maximum<c> range</c><c> you</c><c> can</c><c> cover.</c><c> So</c><c> this</c>
+[26:19] maximum range you can cover. So this
+[26:20] maximum range you can cover. So this thought<c> aligns</c><c> with</c><c> the</c><c> global</c><c> optimum</c>
+[26:22] thought aligns with the global optimum
+[26:22] thought aligns with the global optimum solution<c> and</c><c> hence</c><c> it</c><c> is</c><c> valid.</c><c> One</c><c> last</c>
+[26:25] solution and hence it is valid. One last
+[26:25] solution and hence it is valid. One last problem<c> that</c><c> I</c><c> want</c><c> to</c><c> cover</c><c> is</c><c> non-over</c>
+[26:27] problem that I want to cover is non-over
+[26:27] problem that I want to cover is non-over overlapping<c> intervals</c><c> and</c><c> no</c><c> greedy</c>
+[26:29] overlapping intervals and no greedy
+[26:29] overlapping intervals and no greedy approach<c> will</c><c> be</c><c> complete</c><c> without</c><c> this.</c>
+[26:32] approach will be complete without this.
+[26:32] approach will be complete without this. Probably<c> this</c><c> is</c><c> one</c><c> of</c><c> the</c><c> first</c>
+[26:34] Probably this is one of the first
+[26:34] Probably this is one of the first problems<c> that</c><c> start</c><c> to</c><c> get</c><c> tricky</c><c> and</c>
+[26:36] problems that start to get tricky and
+[26:36] problems that start to get tricky and you<c> realize</c><c> okay</c><c> greedy</c><c> approach</c><c> is</c>
+[26:38] you realize okay greedy approach is
+[26:38] you realize okay greedy approach is actually<c> something.</c><c> What</c><c> you</c><c> are</c><c> given</c>
+[26:40] actually something. What you are given
+[26:40] actually something. What you are given over<c> here</c><c> is</c><c> you</c><c> are</c><c> given</c><c> certain</c>
+[26:43] over here is you are given certain
+[26:43] over here is you are given certain amount<c> of</c><c> course</c><c> schedules</c><c> or</c><c> rather</c>
+[26:45] amount of course schedules or rather
+[26:45] amount of course schedules or rather some<c> intervals.</c><c> So</c><c> this</c><c> is</c><c> a</c><c> problem</c>
+[26:48] some intervals. So this is a problem
+[26:48] some intervals. So this is a problem written<c> in</c><c> a</c><c> lot</c><c> of</c><c> different</c><c> words</c><c> like</c>
+[26:50] written in a lot of different words like
+[26:50] written in a lot of different words like these<c> are</c><c> activities,</c><c> these</c><c> are</c>
+[26:52] these are activities, these are
+[26:52] these are activities, these are syllabus,<c> these</c><c> are</c><c> your</c><c> courses,</c><c> these</c>
+[26:53] syllabus, these are your courses, these
+[26:53] syllabus, these are your courses, these are<c> your</c><c> day</c><c> schedules.</c><c> It</c><c> could</c><c> be</c>
+[26:55] are your day schedules. It could be
+[26:55] are your day schedules. It could be anything.<c> The</c><c> idea</c><c> is</c><c> that</c><c> you</c><c> are</c><c> given</c>
+[26:58] anything. The idea is that you are given
+[26:58] anything. The idea is that you are given this<c> particular</c><c> time</c><c> range</c><c> and</c><c> each</c>
+[27:00] this particular time range and each
+[27:00] this particular time range and each activity<c> has</c><c> a</c><c> certain</c><c> span</c><c> available.</c>
+[27:03] activity has a certain span available.
+[27:03] activity has a certain span available. For<c> example,</c><c> this</c><c> activity</c><c> will</c><c> take</c><c> 2</c>
+[27:05] For example, this activity will take 2
+[27:05] For example, this activity will take 2 hours.<c> This</c><c> will</c><c> take</c><c> 1</c><c> hour.</c><c> This</c>
+[27:07] hours. This will take 1 hour. This
+[27:07] hours. This will take 1 hour. This activity<c> is</c><c> going</c><c> to</c><c> take</c><c> 4</c><c> hours.</c><c> So</c>
+[27:10] activity is going to take 4 hours. So
+[27:10] activity is going to take 4 hours. So you<c> have</c><c> to</c><c> tell</c><c> me</c><c> the</c><c> maximum</c><c> number</c>
+[27:12] you have to tell me the maximum number
+[27:12] you have to tell me the maximum number of<c> activities</c><c> or</c><c> the</c><c> maximum</c><c> number</c><c> of</c>
+[27:15] of activities or the maximum number of
+[27:15] of activities or the maximum number of intervals<c> that</c><c> you</c><c> can</c><c> choose</c><c> such</c><c> that</c>
+[27:18] intervals that you can choose such that
+[27:18] intervals that you can choose such that none<c> of</c><c> the</c><c> intervals</c><c> are</c><c> overlapping.</c>
+[27:21] none of the intervals are overlapping.
+[27:21] none of the intervals are overlapping. Because<c> if</c><c> you</c><c> think</c><c> about</c><c> it,</c><c> if</c><c> you're</c>
+[27:23] Because if you think about it, if you're
+[27:23] Because if you think about it, if you're doing<c> this</c><c> particular</c><c> activity,</c><c> this</c>
+[27:25] doing this particular activity, this
+[27:25] doing this particular activity, this activity<c> starts</c><c> in</c><c> the</c><c> middle.</c><c> So</c><c> you</c>
+[27:28] activity starts in the middle. So you
+[27:28] activity starts in the middle. So you cannot<c> take</c><c> two</c><c> activities</c><c> at</c><c> once.</c><c> So</c>
+[27:31] cannot take two activities at once. So
+[27:31] cannot take two activities at once. So either<c> you</c><c> will</c><c> have</c><c> to</c><c> choose</c><c> this</c><c> or</c>
+[27:32] either you will have to choose this or
+[27:32] either you will have to choose this or you<c> will</c><c> have</c><c> to</c><c> choose</c><c> this.</c><c> The</c>
+[27:34] you will have to choose this. The
+[27:34] you will have to choose this. The problem<c> says</c><c> that</c><c> I</c><c> have</c><c> to</c><c> find</c><c> the</c>
+[27:37] problem says that I have to find the
+[27:37] problem says that I have to find the maximum<c> number</c><c> of</c><c> activities</c><c> that</c><c> I</c><c> can</c>
+[27:39] maximum number of activities that I can
+[27:39] maximum number of activities that I can finish.<c> Once</c><c> again,</c><c> you</c><c> have</c><c> to</c><c> apply</c>
+[27:42] finish. Once again, you have to apply
+[27:42] finish. Once again, you have to apply the<c> greedy</c><c> criteria.</c><c> But</c><c> what</c><c> is</c><c> your</c>
+[27:45] the greedy criteria. But what is your
+[27:45] the greedy criteria. But what is your greedy<c> criteria?</c><c> One</c><c> thought</c><c> immediately</c>
+[27:47] greedy criteria? One thought immediately
+[27:47] greedy criteria? One thought immediately comes<c> to</c><c> your</c><c> mind</c><c> is</c><c> okay,</c><c> I</c><c> will</c><c> want</c>
+[27:49] comes to your mind is okay, I will want
+[27:50] comes to your mind is okay, I will want to<c> start</c><c> my</c><c> activity</c><c> as</c><c> soon</c><c> as</c><c> possible</c>
+[27:52] to start my activity as soon as possible
+[27:52] to start my activity as soon as possible because<c> I</c><c> don't</c><c> want</c><c> to</c><c> waste</c><c> any</c><c> time</c>
+[27:54] because I don't want to waste any time
+[27:54] because I don't want to waste any time of<c> the</c><c> day.</c><c> Correct?</c><c> But</c><c> this</c><c> approach</c>
+[27:57] of the day. Correct? But this approach
+[27:57] of the day. Correct? But this approach won't<c> give</c><c> you</c><c> the</c><c> optimal</c><c> solution</c>
+[27:59] won't give you the optimal solution
+[27:59] won't give you the optimal solution because<c> you</c><c> are</c><c> right.</c><c> You</c><c> don't</c><c> want</c><c> to</c>
+[28:02] because you are right. You don't want to
+[28:02] because you are right. You don't want to waste<c> any</c><c> time</c><c> in</c><c> the</c><c> start</c><c> of</c><c> the</c><c> day.</c>
+[28:04] waste any time in the start of the day.
+[28:04] waste any time in the start of the day. You<c> want</c><c> to</c><c> start</c><c> an</c><c> activity</c><c> as</c><c> early</c>
+[28:06] You want to start an activity as early
+[28:06] You want to start an activity as early as<c> possible.</c><c> But</c><c> your</c><c> objective</c><c> over</c>
+[28:09] as possible. But your objective over
+[28:09] as possible. But your objective over here<c> is</c><c> not</c><c> to</c><c> waste</c><c> time</c><c> in</c><c> the</c>
+[28:11] here is not to waste time in the
+[28:12] here is not to waste time in the beginning.<c> Your</c><c> objective</c><c> over</c><c> here</c><c> is</c>
+[28:14] beginning. Your objective over here is
+[28:14] beginning. Your objective over here is to<c> complete</c><c> as</c><c> many</c><c> number</c><c> of</c><c> activities</c>
+[28:16] to complete as many number of activities
+[28:16] to complete as many number of activities as<c> possible.</c><c> So</c><c> your</c><c> greed</c><c> criteria</c>
+[28:19] as possible. So your greed criteria
+[28:19] as possible. So your greed criteria should<c> be</c><c> different.</c><c> You</c><c> should</c><c> be</c>
+[28:21] should be different. You should be
+[28:21] should be different. You should be looking<c> for</c><c> activities</c><c> that</c><c> immediately</c>
+[28:23] looking for activities that immediately
+[28:23] looking for activities that immediately end.<c> You</c><c> should</c><c> be</c><c> looking</c><c> for</c>
+[28:25] end. You should be looking for
+[28:25] end. You should be looking for activities<c> that</c><c> end</c><c> the</c><c> soonest.</c><c> So</c><c> it</c>
+[28:28] activities that end the soonest. So it
+[28:28] activities that end the soonest. So it gives<c> you</c><c> more</c><c> room</c><c> in</c><c> the</c><c> future</c><c> to</c>
+[28:30] gives you more room in the future to
+[28:30] gives you more room in the future to take<c> on</c><c> more</c><c> activities.</c><c> Think</c><c> like</c>
+[28:32] take on more activities. Think like
+[28:32] take on more activities. Think like this.<c> If</c><c> I</c><c> am</c><c> able</c><c> to</c><c> complete</c><c> any</c>
+[28:35] this. If I am able to complete any
+[28:35] this. If I am able to complete any activity<c> pretty</c><c> soon,</c><c> let</c><c> us</c><c> say</c><c> I</c><c> have</c>
+[28:37] activity pretty soon, let us say I have
+[28:37] activity pretty soon, let us say I have 24<c> hours</c><c> in</c><c> a</c><c> day.</c><c> If</c><c> I</c><c> complete</c><c> the</c><c> one</c>
+[28:39] 24 hours in a day. If I complete the one
+[28:39] 24 hours in a day. If I complete the one activity<c> by</c><c> 2:00,</c><c> then</c><c> I</c><c> have</c><c> the</c><c> whole</c>
+[28:42] activity by 2:00, then I have the whole
+[28:42] activity by 2:00, then I have the whole day<c> remaining</c><c> to</c><c> cover</c><c> more</c><c> activities.</c>
+[28:45] day remaining to cover more activities.
+[28:45] day remaining to cover more activities. However,<c> if</c><c> I</c><c> look</c><c> for</c><c> the</c><c> very</c><c> first</c>
+[28:47] However, if I look for the very first
+[28:47] However, if I look for the very first activity<c> that</c><c> is</c><c> available,</c><c> it</c><c> could</c><c> be</c>
+[28:49] activity that is available, it could be
+[28:49] activity that is available, it could be possible<c> that</c><c> this</c><c> activity</c><c> is</c><c> for</c><c> 6</c>
+[28:51] possible that this activity is for 6
+[28:51] possible that this activity is for 6 hours.<c> So</c><c> I</c><c> have</c><c> very</c><c> less</c><c> room</c>
+[28:53] hours. So I have very less room
+[28:53] hours. So I have very less room available.<c> That</c><c> is</c><c> your</c><c> criteria.</c><c> So</c>
+[28:56] available. That is your criteria. So
+[28:56] available. That is your criteria. So what<c> do</c><c> we</c><c> do?</c><c> I</c><c> have</c><c> all</c><c> of</c><c> these</c>
+[28:58] what do we do? I have all of these
+[28:58] what do we do? I have all of these activities<c> and</c><c> I</c><c> have</c><c> the</c><c> ending</c><c> time</c><c> of</c>
+[29:01] activities and I have the ending time of
+[29:02] activities and I have the ending time of all<c> of</c><c> these</c><c> activities.</c><c> This</c><c> ends</c><c> at</c>
+[29:04] all of these activities. This ends at
+[29:04] all of these activities. This ends at four,<c> this</c><c> six,</c><c> this</c><c> 8,</c><c> this</c><c> 8,</c><c> this</c>
+[29:06] four, this six, this 8, this 8, this
+[29:06] four, this six, this 8, this 8, this five,<c> and</c><c> then</c><c> seven.</c><c> Again,</c><c> what</c><c> you</c>
+[29:09] five, and then seven. Again, what you
+[29:09] five, and then seven. Again, what you want<c> to</c><c> do</c><c> is</c><c> you</c><c> want</c><c> to</c><c> sort</c><c> using</c><c> the</c>
+[29:12] want to do is you want to sort using the
+[29:12] want to do is you want to sort using the end<c> time</c><c> of</c><c> each</c><c> of</c><c> the</c><c> activities.</c><c> When</c>
+[29:15] end time of each of the activities. When
+[29:15] end time of each of the activities. When you<c> sort</c><c> this,</c><c> your</c><c> activities</c><c> or</c><c> your</c>
+[29:17] you sort this, your activities or your
+[29:17] you sort this, your activities or your intervals<c> start</c><c> to</c><c> look</c><c> like</c><c> this.</c><c> This</c>
+[29:19] intervals start to look like this. This
+[29:19] intervals start to look like this. This activity<c> ends</c><c> at</c><c> four,</c><c> then</c><c> five,</c><c> then</c>
+[29:21] activity ends at four, then five, then
+[29:21] activity ends at four, then five, then six,<c> and</c><c> then</c><c> seven,</c><c> and</c><c> then</c><c> eight.</c><c> So</c>
+[29:24] six, and then seven, and then eight. So
+[29:24] six, and then seven, and then eight. So this<c> is</c><c> the</c><c> idea</c><c> that</c><c> I'm</c><c> going</c><c> to</c><c> use.</c>
+[29:27] this is the idea that I'm going to use.
+[29:27] this is the idea that I'm going to use. I<c> will</c><c> take</c><c> up</c><c> whatever</c><c> activity</c><c> comes</c>
+[29:29] I will take up whatever activity comes
+[29:29] I will take up whatever activity comes to<c> me</c><c> or</c><c> whatever</c><c> activity</c><c> ends</c><c> the</c>
+[29:32] to me or whatever activity ends the
+[29:32] to me or whatever activity ends the earliest<c> out</c><c> of</c><c> all</c><c> of</c><c> these</c><c> activities.</c>
+[29:35] earliest out of all of these activities.
+[29:35] earliest out of all of these activities. This<c> activity</c><c> ends</c><c> the</c><c> earliest.</c><c> So</c><c> I</c>
+[29:37] This activity ends the earliest. So I
+[29:37] This activity ends the earliest. So I will<c> pick</c><c> this.</c><c> As</c><c> soon</c><c> as</c><c> you</c><c> pick</c><c> this</c>
+[29:41] will pick this. As soon as you pick this
+[29:41] will pick this. As soon as you pick this immediately<c> you</c><c> will</c><c> be</c><c> able</c><c> to</c><c> negate</c>
+[29:43] immediately you will be able to negate
+[29:43] immediately you will be able to negate some<c> of</c><c> the</c><c> activities</c><c> because</c><c> think</c>
+[29:45] some of the activities because think
+[29:45] some of the activities because think about<c> it</c><c> this</c><c> activity</c><c> overlaps</c><c> so</c><c> you</c>
+[29:48] about it this activity overlaps so you
+[29:48] about it this activity overlaps so you cannot<c> do</c><c> it.</c><c> This</c><c> activity</c><c> overlaps</c><c> so</c>
+[29:50] cannot do it. This activity overlaps so
+[29:50] cannot do it. This activity overlaps so you<c> cannot</c><c> do</c><c> it.</c><c> So</c><c> eventually</c><c> what</c>
+[29:53] you cannot do it. So eventually what
+[29:53] you cannot do it. So eventually what will<c> happen</c><c> is</c><c> these</c><c> activities</c><c> will</c><c> go</c>
+[29:55] will happen is these activities will go
+[29:55] will happen is these activities will go out<c> of</c><c> your</c><c> schedule.</c><c> I</c><c> am</c><c> at</c><c> 4</c><c> p.m.</c><c> and</c>
+[29:58] out of your schedule. I am at 4 p.m. and
+[29:58] out of your schedule. I am at 4 p.m. and I<c> completed</c><c> my</c><c> activity.</c><c> What</c><c> next?</c><c> You</c>
+[30:01] I completed my activity. What next? You
+[30:01] I completed my activity. What next? You have<c> to</c><c> choose</c><c> again.</c><c> So</c><c> once</c><c> again</c><c> go</c>
+[30:04] have to choose again. So once again go
+[30:04] have to choose again. So once again go for<c> the</c><c> activity</c><c> that</c><c> ends</c><c> the</c><c> earliest</c>
+[30:07] for the activity that ends the earliest
+[30:07] for the activity that ends the earliest because<c> that</c><c> was</c><c> my</c><c> grade</c><c> criteria</c><c> and</c>
+[30:09] because that was my grade criteria and
+[30:09] because that was my grade criteria and it<c> has</c><c> to</c><c> be</c><c> applied</c><c> at</c><c> every</c><c> iteration.</c>
+[30:12] it has to be applied at every iteration.
+[30:12] it has to be applied at every iteration. This<c> time</c><c> no</c><c> activity</c><c> ends</c><c> at</c><c> 5,</c><c> no</c>
+[30:15] This time no activity ends at 5, no
+[30:15] This time no activity ends at 5, no activity<c> ends</c><c> at</c><c> 6,</c><c> but</c><c> I</c><c> have</c><c> an</c>
+[30:17] activity ends at 6, but I have an
+[30:17] activity ends at 6, but I have an activity<c> that</c><c> is</c><c> ending</c><c> at</c><c> 7.</c><c> So</c><c> I</c><c> will</c>
+[30:19] activity that is ending at 7. So I will
+[30:19] activity that is ending at 7. So I will keep<c> this</c><c> activity</c><c> and</c><c> this</c><c> activity</c><c> is</c>
+[30:22] keep this activity and this activity is
+[30:22] keep this activity and this activity is negated<c> because</c><c> it</c><c> is</c><c> overlapping.</c><c> So</c>
+[30:24] negated because it is overlapping. So
+[30:24] negated because it is overlapping. So I'm<c> going</c><c> to</c><c> remove</c><c> it</c><c> from</c><c> my</c><c> schedule.</c>
+[30:27] I'm going to remove it from my schedule.
+[30:27] I'm going to remove it from my schedule. This<c> activity</c><c> ends</c><c> here.</c><c> And</c><c> now</c><c> what</c><c> I</c>
+[30:29] This activity ends here. And now what I
+[30:29] This activity ends here. And now what I have<c> once</c><c> again</c><c> check</c><c> do</c><c> you</c><c> have</c><c> any</c>
+[30:32] have once again check do you have any
+[30:32] have once again check do you have any activity<c> that</c><c> is</c><c> ending</c><c> soon?</c><c> This</c>
+[30:35] activity that is ending soon? This
+[30:35] activity that is ending soon? This particular<c> activity</c><c> ends</c><c> at</c><c> 8.</c><c> So</c><c> I</c><c> will</c>
+[30:37] particular activity ends at 8. So I will
+[30:37] particular activity ends at 8. So I will take<c> this</c><c> activity</c><c> in</c><c> my</c><c> schedule</c><c> and</c>
+[30:40] take this activity in my schedule and
+[30:40] take this activity in my schedule and this<c> is</c><c> my</c><c> final</c><c> schedule</c><c> for</c><c> the</c><c> day.</c>
+[30:43] this is my final schedule for the day.
+[30:43] this is my final schedule for the day. This<c> is</c><c> the</c><c> maximum</c><c> number</c><c> of</c><c> intervals</c>
+[30:45] This is the maximum number of intervals
+[30:45] This is the maximum number of intervals that<c> I</c><c> will</c><c> have</c><c> such</c><c> that</c><c> they</c><c> are</c><c> not</c>
+[30:47] that I will have such that they are not
+[30:47] that I will have such that they are not overlapping.<c> No</c><c> other</c><c> approach</c><c> is</c><c> going</c>
+[30:50] overlapping. No other approach is going
+[30:50] overlapping. No other approach is going to<c> give</c><c> you</c><c> more</c><c> intervals</c><c> than</c><c> this.</c>
+[30:52] to give you more intervals than this.
+[30:52] to give you more intervals than this. And<c> try</c><c> to</c><c> think</c><c> why</c><c> was</c><c> the</c><c> greedy</c>
+[30:54] And try to think why was the greedy
+[30:54] And try to think why was the greedy approach<c> optimal</c><c> over</c><c> here?</c><c> Because</c><c> we</c>
+[30:56] approach optimal over here? Because we
+[30:56] approach optimal over here? Because we are<c> trying</c><c> to</c><c> free</c><c> up</c><c> our</c><c> time</c><c> in</c><c> the</c>
+[30:58] are trying to free up our time in the
+[30:58] are trying to free up our time in the day.<c> So</c><c> this</c><c> is</c><c> just</c><c> a</c><c> kind</c><c> of</c><c> scenario</c>
+[31:01] day. So this is just a kind of scenario
+[31:02] day. So this is just a kind of scenario that<c> you</c><c> learn</c><c> when</c><c> you</c><c> solve</c><c> more</c><c> and</c>
+[31:03] that you learn when you solve more and
+[31:03] that you learn when you solve more and more<c> problems.</c><c> So</c><c> if</c><c> I</c><c> have</c><c> to</c><c> summarize</c>
+[31:06] more problems. So if I have to summarize
+[31:06] more problems. So if I have to summarize everything,<c> this</c><c> is</c><c> how</c><c> I</c><c> would</c><c> look</c><c> at</c>
+[31:08] everything, this is how I would look at
+[31:08] everything, this is how I would look at greedy<c> patterns.</c><c> First</c><c> of</c><c> all,</c><c> identify</c>
+[31:11] greedy patterns. First of all, identify
+[31:11] greedy patterns. First of all, identify your<c> optimization</c><c> goal.</c><c> You</c><c> have</c><c> to</c>
+[31:13] your optimization goal. You have to
+[31:13] your optimization goal. You have to maximize<c> something</c><c> or</c><c> you</c><c> have</c><c> to</c>
+[31:15] maximize something or you have to
+[31:15] maximize something or you have to minimize<c> something.</c><c> Next,</c><c> you</c><c> need</c><c> to</c>
+[31:18] minimize something. Next, you need to
+[31:18] minimize something. Next, you need to make<c> sure</c><c> that</c><c> whatever</c><c> local</c><c> optimus</c>
+[31:21] make sure that whatever local optimus
+[31:21] make sure that whatever local optimus solution<c> you're</c><c> picking</c><c> up,</c><c> it</c><c> should</c>
+[31:23] solution you're picking up, it should
+[31:23] solution you're picking up, it should not<c> affect</c><c> the</c><c> global</c><c> optimus</c><c> solution.</c>
+[31:25] not affect the global optimus solution.
+[31:25] not affect the global optimus solution. This<c> is</c><c> really</c><c> essential</c><c> and</c><c> once</c><c> you</c>
+[31:28] This is really essential and once you
+[31:28] This is really essential and once you have<c> determined</c><c> it,</c><c> once</c><c> you</c><c> have</c><c> proved</c>
+[31:30] have determined it, once you have proved
+[31:30] have determined it, once you have proved it,<c> then</c><c> you</c><c> can</c><c> start</c><c> to</c><c> think</c><c> about</c><c> a</c>
+[31:32] it, then you can start to think about a
+[31:32] it, then you can start to think about a greedy<c> approach.</c><c> What</c><c> you</c><c> next</c><c> do</c><c> is</c>
+[31:35] greedy approach. What you next do is
+[31:35] greedy approach. What you next do is mostly<c> sorting</c><c> will</c><c> help</c><c> because</c><c> once</c>
+[31:38] mostly sorting will help because once
+[31:38] mostly sorting will help because once you<c> have</c><c> sorted</c><c> things</c><c> you</c><c> get</c><c> some</c><c> kind</c>
+[31:41] you have sorted things you get some kind
+[31:41] you have sorted things you get some kind of<c> an</c><c> indication</c><c> how</c><c> to</c><c> proceed.</c><c> You</c>
+[31:43] of an indication how to proceed. You
+[31:43] of an indication how to proceed. You know<c> that</c><c> greedy</c><c> approaches</c><c> usually</c><c> work</c>
+[31:45] know that greedy approaches usually work
+[31:46] know that greedy approaches usually work in<c> a</c><c> linear</c><c> time.</c><c> So</c><c> you</c><c> have</c><c> to</c><c> start</c>
+[31:48] in a linear time. So you have to start
+[31:48] in a linear time. So you have to start somewhere<c> and</c><c> then</c><c> go</c><c> all</c><c> the</c><c> way</c><c> up</c><c> to</c>
+[31:50] somewhere and then go all the way up to
+[31:50] somewhere and then go all the way up to end.<c> And</c><c> sorting</c><c> usually</c><c> categorizes</c><c> and</c>
+[31:53] end. And sorting usually categorizes and
+[31:53] end. And sorting usually categorizes and groups<c> all</c><c> of</c><c> the</c><c> data</c><c> together.</c><c> So</c><c> that</c>
+[31:55] groups all of the data together. So that
+[31:55] groups all of the data together. So that comes<c> in</c><c> really</c><c> handy.</c><c> And</c><c> I</c><c> would</c><c> say</c>
+[31:57] comes in really handy. And I would say
+[31:57] comes in really handy. And I would say that<c> this</c><c> middle</c><c> step</c><c> might</c><c> be</c><c> optional.</c>
+[32:01] that this middle step might be optional.
+[32:01] that this middle step might be optional. It<c> is</c><c> based</c><c> upon</c><c> the</c><c> greed</c><c> strategy</c><c> that</c>
+[32:03] It is based upon the greed strategy that
+[32:03] It is based upon the greed strategy that you're<c> choosing.</c><c> This</c><c> is</c><c> also</c><c> very</c>
+[32:06] you're choosing. This is also very
+[32:06] you're choosing. This is also very essential.<c> Your</c><c> greed</c><c> criteria</c><c> should</c>
+[32:09] essential. Your greed criteria should
+[32:09] essential. Your greed criteria should ensure<c> that</c><c> you</c><c> are</c><c> reaching</c><c> the</c><c> global</c>
+[32:11] ensure that you are reaching the global
+[32:11] ensure that you are reaching the global optimum<c> solution.</c><c> It</c><c> should</c><c> not</c><c> be</c><c> that</c>
+[32:13] optimum solution. It should not be that
+[32:13] optimum solution. It should not be that okay<c> I</c><c> will</c><c> pick</c><c> this</c><c> criteria</c><c> because</c>
+[32:15] okay I will pick this criteria because
+[32:16] okay I will pick this criteria because it<c> seems</c><c> suitable</c><c> to</c><c> me.</c><c> You</c><c> have</c><c> to</c><c> try</c>
+[32:18] it seems suitable to me. You have to try
+[32:18] it seems suitable to me. You have to try and<c> prove</c><c> its</c><c> mathematical</c><c> correctness.</c>
+[32:21] and prove its mathematical correctness.
+[32:21] and prove its mathematical correctness. You<c> have</c><c> to</c><c> try</c><c> other</c><c> greed</c><c> criterias</c>
+[32:23] You have to try other greed criterias
+[32:23] You have to try other greed criterias also<c> because</c><c> it</c><c> is</c><c> not</c><c> necessary</c><c> that</c>
+[32:26] also because it is not necessary that
+[32:26] also because it is not necessary that the<c> first</c><c> thought</c><c> that</c><c> comes</c><c> to</c><c> your</c>
+[32:27] the first thought that comes to your
+[32:27] the first thought that comes to your mind<c> is</c><c> the</c><c> efficient</c><c> one.</c><c> Once</c><c> you</c><c> have</c>
+[32:29] mind is the efficient one. Once you have
+[32:29] mind is the efficient one. Once you have done<c> all</c><c> of</c><c> it,</c><c> just</c><c> keep</c><c> on</c><c> iterating</c>
+[32:32] done all of it, just keep on iterating
+[32:32] done all of it, just keep on iterating and<c> you</c><c> will</c><c> be</c><c> able</c><c> to</c><c> prove</c><c> the</c>
+[32:34] and you will be able to prove the
+[32:34] and you will be able to prove the correctness.<c> Try</c><c> counterintuitive</c><c> ideas.</c>
+[32:37] correctness. Try counterintuitive ideas.
+[32:37] correctness. Try counterintuitive ideas. Try<c> to</c><c> find</c><c> a</c><c> thought</c><c> that</c><c> is</c><c> going</c><c> to</c>
+[32:39] Try to find a thought that is going to
+[32:40] Try to find a thought that is going to contradict<c> your</c><c> actual</c><c> hypothesis</c><c> and</c>
+[32:42] contradict your actual hypothesis and
+[32:42] contradict your actual hypothesis and you<c> will</c><c> be</c><c> able</c><c> to</c><c> prove</c><c> by</c><c> fallacy</c>
+[32:45] you will be able to prove by fallacy
+[32:45] you will be able to prove by fallacy that<c> the</c><c> solution</c><c> that</c><c> you're</c><c> discussing</c>
+[32:47] that the solution that you're discussing
+[32:47] that the solution that you're discussing or<c> that</c><c> the</c><c> solution</c><c> that</c><c> you</c><c> are</c>
+[32:48] or that the solution that you are
+[32:48] or that the solution that you are thinking<c> of</c><c> is</c><c> in</c><c> fact</c><c> the</c><c> correct</c>
+[32:50] thinking of is in fact the correct
+[32:50] thinking of is in fact the correct solution.<c> I</c><c> know</c><c> that</c><c> a</c><c> greedy</c><c> algorithm</c>
+[32:53] solution. I know that a greedy algorithm
+[32:53] solution. I know that a greedy algorithm doesn't<c> come</c><c> straight</c><c> to</c><c> your</c><c> mind.</c><c> It</c>
+[32:55] doesn't come straight to your mind. It
+[32:55] doesn't come straight to your mind. It is<c> not</c><c> something</c><c> that</c><c> you</c><c> can</c><c> learn.</c><c> It</c>
+[32:58] is not something that you can learn. It
+[32:58] is not something that you can learn. It just<c> comes</c><c> with</c><c> more</c><c> and</c><c> more</c><c> practice</c>
+[33:00] just comes with more and more practice
+[33:00] just comes with more and more practice and<c> with</c><c> more</c><c> and</c><c> more</c><c> problems</c><c> that</c><c> you</c>
+[33:02] and with more and more problems that you
+[33:02] and with more and more problems that you see.<c> Sometimes</c><c> a</c><c> solution</c><c> that</c><c> may</c>
+[33:05] see. Sometimes a solution that may
+[33:05] see. Sometimes a solution that may appear<c> brute</c><c> force</c><c> or</c><c> a</c><c> solution</c><c> that</c>
+[33:07] appear brute force or a solution that
+[33:07] appear brute force or a solution that comes<c> to</c><c> your</c><c> mind</c><c> in</c><c> the</c><c> first</c><c> glance</c>
+[33:09] comes to your mind in the first glance
+[33:09] comes to your mind in the first glance that<c> is</c><c> in</c><c> fact</c><c> the</c><c> most</c><c> optimal</c>
+[33:11] that is in fact the most optimal
+[33:11] that is in fact the most optimal solution<c> and</c><c> that</c><c> is</c><c> what</c><c> makes</c><c> greedy</c>
+[33:14] solution and that is what makes greedy
+[33:14] solution and that is what makes greedy patterns<c> so</c><c> interesting</c><c> and</c><c> they're</c>
+[33:15] patterns so interesting and they're
+[33:15] patterns so interesting and they're always<c> fun</c><c> to</c><c> solve.</c><c> Interviewers</c><c> love</c>
+[33:18] always fun to solve. Interviewers love
+[33:18] always fun to solve. Interviewers love it<c> because</c><c> the</c><c> code</c><c> written</c><c> for</c><c> them</c><c> is</c>
+[33:20] it because the code written for them is
+[33:20] it because the code written for them is pretty<c> small</c><c> and</c><c> they</c><c> will</c><c> be</c><c> able</c><c> to</c>
+[33:22] pretty small and they will be able to
+[33:22] pretty small and they will be able to negotiate<c> on</c><c> it</c><c> and</c><c> they</c><c> will</c><c> be</c><c> able</c><c> to</c>
+[33:24] negotiate on it and they will be able to
+[33:24] negotiate on it and they will be able to ask<c> a</c><c> lot</c><c> of</c><c> questions</c><c> to</c><c> you</c><c> on</c><c> it</c>
+[33:27] ask a lot of questions to you on it
+[33:27] ask a lot of questions to you on it because<c> the</c><c> code</c><c> is</c><c> small.</c><c> It</c><c> gives</c><c> you</c>
+[33:29] because the code is small. It gives you
+[33:29] because the code is small. It gives you time<c> over</c><c> telephonic</c><c> interviews.</c><c> It</c>
+[33:30] time over telephonic interviews. It
+[33:30] time over telephonic interviews. It gives<c> you</c><c> time</c><c> in</c><c> inerson</c><c> interviews</c><c> as</c>
+[33:32] gives you time in inerson interviews as
+[33:32] gives you time in inerson interviews as well<c> because</c><c> nobody</c><c> likes</c><c> to</c><c> debug</c><c> or</c>
+[33:35] well because nobody likes to debug or
+[33:35] well because nobody likes to debug or read<c> a</c><c> code</c><c> written</c><c> for</c><c> graphs</c><c> and</c>
+[33:36] read a code written for graphs and
+[33:36] read a code written for graphs and trees,<c> right?</c><c> So</c><c> tell</c><c> me</c><c> all</c><c> of</c><c> your</c>
+[33:39] trees, right? So tell me all of your
+[33:39] trees, right? So tell me all of your thoughts.<c> What</c><c> do</c><c> you</c><c> feel</c><c> about</c><c> the</c>
+[33:40] thoughts. What do you feel about the
+[33:40] thoughts. What do you feel about the video?<c> What</c><c> problems</c><c> did</c><c> you</c><c> have?</c><c> Tell</c>
+[33:43] video? What problems did you have? Tell
+[33:43] video? What problems did you have? Tell me<c> all</c><c> of</c><c> the</c><c> greedy</c><c> pattern</c><c> problems</c>
+[33:44] me all of the greedy pattern problems
+[33:44] me all of the greedy pattern problems that<c> you</c><c> have</c><c> seen</c><c> and</c><c> the</c><c> comment</c>
+[33:46] that you have seen and the comment
+[33:46] that you have seen and the comment section<c> will</c><c> actually</c><c> become</c><c> a</c><c> very</c><c> good</c>
+[33:48] section will actually become a very good
+[33:48] section will actually become a very good collection<c> of</c><c> all</c><c> of</c><c> the</c><c> different</c><c> types</c>
+[33:50] collection of all of the different types
+[33:50] collection of all of the different types of<c> problems.</c><c> Let</c><c> me</c><c> know</c><c> what</c><c> other</c>
+[33:53] of problems. Let me know what other
+[33:53] of problems. Let me know what other patterns<c> have</c><c> you</c><c> seen</c><c> and</c><c> how</c><c> do</c><c> you</c>
+[33:55] patterns have you seen and how do you
+[33:55] patterns have you seen and how do you approach<c> the</c><c> problem.</c><c> I</c><c> would</c><c> be</c><c> happy</c>
+[33:56] approach the problem. I would be happy
+[33:56] approach the problem. I would be happy to<c> discuss</c><c> all</c><c> of</c><c> it</c><c> with</c><c> you.</c><c> As</c><c> a</c>
+[33:58] to discuss all of it with you. As a
+[33:58] to discuss all of it with you. As a reminder,<c> if</c><c> you</c><c> found</c><c> this</c><c> video</c>
+[33:59] reminder, if you found this video
+[34:00] reminder, if you found this video helpful,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[34:01] helpful, please do consider subscribing
+[34:01] helpful, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[34:02] to my channel and share this video with
+[34:02] to my channel and share this video with your<c> friends.</c><c> This</c><c> really</c><c> keeps</c><c> me</c>
+[34:04] your friends. This really keeps me
+[34:04] your friends. This really keeps me motivated<c> and</c><c> I</c><c> can</c><c> make</c><c> more</c><c> such</c>
+[34:05] motivated and I can make more such
+[34:05] motivated and I can make more such videos.<c> Also,</c><c> a</c><c> huge</c><c> shout</c><c> out</c><c> to</c><c> all</c><c> of</c>
+[34:08] videos. Also, a huge shout out to all of
+[34:08] videos. Also, a huge shout out to all of the<c> members</c><c> who</c><c> support</c><c> my</c><c> channel.</c><c> You</c>
+[34:09] the members who support my channel. You
+[34:09] the members who support my channel. You guys<c> really</c><c> keep</c><c> me</c><c> going</c><c> and</c><c> as</c><c> a</c>
+[34:11] guys really keep me going and as a
+[34:11] guys really keep me going and as a member<c> you</c><c> do</c><c> get</c><c> prior</c><c> to</c><c> reply</c><c> to</c><c> your</c>
+[34:12] member you do get prior to reply to your
+[34:12] member you do get prior to reply to your comments<c> and</c><c> early</c><c> access</c><c> to</c><c> new</c><c> videos</c>
+[34:14] comments and early access to new videos
+[34:14] comments and early access to new videos as<c> well.</c><c> Also</c><c> remember</c><c> you</c><c> can</c><c> now</c>
+[34:16] as well. Also remember you can now
+[34:16] as well. Also remember you can now schedule<c> a</c><c> onetoone</c><c> session</c><c> with</c><c> me</c><c> and</c>
+[34:18] schedule a onetoone session with me and
+[34:18] schedule a onetoone session with me and we<c> can</c><c> discuss</c><c> about</c><c> almost</c><c> anything.</c>
+[34:20] we can discuss about almost anything.
+[34:20] we can discuss about almost anything. Stay<c> tuned</c><c> for</c><c> my</c><c> upcoming</c><c> video.</c><c> Until</c>
+[34:22] Stay tuned for my upcoming video. Until
+[34:22] Stay tuned for my upcoming video. Until then<c> see</c><c> you.</c>

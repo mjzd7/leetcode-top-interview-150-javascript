@@ -1,0 +1,1622 @@
+[0:02] A prefix sum pattern is one of those
+[0:02] A prefix sum pattern is one of those which<c> feels</c><c> really</c><c> easy</c><c> in</c><c> the</c>
+[0:03] which feels really easy in the
+[0:03] which feels really easy in the beginning.<c> How</c><c> hard</c><c> can</c><c> it</c><c> be?</c><c> You</c><c> just</c>
+[0:06] beginning. How hard can it be? You just
+[0:06] beginning. How hard can it be? You just need<c> to</c><c> calculate</c><c> a</c><c> running</c><c> total</c><c> of</c><c> all</c>
+[0:08] need to calculate a running total of all
+[0:08] need to calculate a running total of all of<c> the</c><c> elements.</c>
+[0:09] of the elements.
+[0:09] of the elements. But,<c> as</c><c> you</c><c> start</c><c> to</c><c> solve</c><c> these</c>
+[0:11] But, as you start to solve these
+[0:11] But, as you start to solve these problems,<c> you</c><c> will</c><c> soon</c><c> realize</c><c> that</c><c> it</c>
+[0:13] problems, you will soon realize that it
+[0:13] problems, you will soon realize that it can<c> get</c><c> very</c><c> tricky.</c>
+[0:15] can get very tricky.
+[0:15] can get very tricky. The<c> most</c><c> difficult</c><c> part</c><c> is</c><c> how</c><c> do</c><c> you</c>
+[0:17] The most difficult part is how do you
+[0:17] The most difficult part is how do you take<c> advantage</c><c> of</c><c> the</c><c> prefix</c><c> sum</c><c> that</c>
+[0:19] take advantage of the prefix sum that
+[0:19] take advantage of the prefix sum that you're<c> calculating?</c><c> How</c><c> do</c><c> you</c><c> store</c><c> it?</c>
+[0:21] you're calculating? How do you store it?
+[0:21] you're calculating? How do you store it? And<c> how</c><c> do</c><c> you</c><c> map</c><c> it</c><c> effectively</c><c> so</c><c> you</c>
+[0:24] And how do you map it effectively so you
+[0:24] And how do you map it effectively so you can<c> make</c><c> faster</c><c> queries?</c>
+[0:26] can make faster queries?
+[0:26] can make faster queries? That<c> is</c><c> where</c><c> the</c><c> trick</c><c> lies.</c>
+[0:27] That is where the trick lies.
+[0:27] That is where the trick lies. So,<c> what</c><c> we're</c><c> going</c><c> to</c><c> do</c><c> is</c><c> we</c><c> are</c>
+[0:29] So, what we're going to do is we are
+[0:29] So, what we're going to do is we are going<c> to</c><c> explore</c><c> a</c><c> variety</c><c> of</c><c> problems.</c>
+[0:32] going to explore a variety of problems.
+[0:32] going to explore a variety of problems. The<c> underlying</c><c> idea</c><c> will</c><c> always</c><c> remain</c>
+[0:33] The underlying idea will always remain
+[0:33] The underlying idea will always remain the<c> same.</c><c> You</c><c> have</c><c> to</c><c> maintain</c><c> a</c><c> prefix</c>
+[0:36] the same. You have to maintain a prefix
+[0:36] the same. You have to maintain a prefix sum.<c> But,</c><c> how</c><c> do</c><c> you</c><c> use</c><c> it?</c><c> That</c><c> is</c>
+[0:38] sum. But, how do you use it? That is
+[0:38] sum. But, how do you use it? That is where<c> the</c><c> magic</c><c> is.</c><c> So,</c><c> without</c><c> further</c>
+[0:40] where the magic is. So, without further
+[0:40] where the magic is. So, without further ado,<c> let's</c><c> get</c><c> started.</c>
+[0:46] First things first, what do you even
+[0:46] First things first, what do you even mean<c> by</c><c> a</c><c> prefix</c><c> sum?</c><c> Well,</c><c> the</c><c> concept</c>
+[0:49] mean by a prefix sum? Well, the concept
+[0:49] mean by a prefix sum? Well, the concept is<c> very,</c><c> very</c><c> simple.</c><c> Let</c><c> us</c><c> say</c><c> you</c><c> are</c>
+[0:51] is very, very simple. Let us say you are
+[0:51] is very, very simple. Let us say you are given<c> this</c><c> particular</c><c> array.</c><c> And</c><c> to</c>
+[0:54] given this particular array. And to
+[0:54] given this particular array. And to calculate<c> the</c><c> prefix</c><c> sum,</c><c> what</c><c> do</c><c> you</c><c> do</c>
+[0:56] calculate the prefix sum, what do you do
+[0:56] calculate the prefix sum, what do you do is<c> you</c><c> start</c><c> from</c><c> the</c><c> very</c><c> beginning</c><c> and</c>
+[0:58] is you start from the very beginning and
+[0:59] is you start from the very beginning and add<c> up</c><c> all</c><c> of</c><c> the</c><c> elements</c><c> one</c><c> by</c><c> one.</c>
+[1:01] add up all of the elements one by one.
+[1:01] add up all of the elements one by one. And<c> you</c><c> maintain</c><c> this</c><c> cumulative</c><c> sum</c><c> in</c>
+[1:04] And you maintain this cumulative sum in
+[1:04] And you maintain this cumulative sum in each<c> of</c><c> the</c><c> indices.</c>
+[1:06] each of the indices.
+[1:06] each of the indices. So,<c> what</c><c> is</c><c> going</c><c> to</c><c> happen</c><c> is</c><c> you</c><c> are</c>
+[1:08] So, what is going to happen is you are
+[1:08] So, what is going to happen is you are going<c> to</c><c> maintain</c><c> another</c><c> array</c><c> which</c>
+[1:10] going to maintain another array which
+[1:10] going to maintain another array which will<c> have</c><c> the</c><c> exact</c><c> same</c><c> size.</c>
+[1:12] will have the exact same size.
+[1:12] will have the exact same size. Both<c> of</c><c> the</c><c> arrays</c><c> have</c><c> seven</c><c> elements.</c>
+[1:15] Both of the arrays have seven elements.
+[1:15] Both of the arrays have seven elements. And<c> to</c><c> find</c><c> the</c><c> prefix</c><c> sum,</c><c> you</c><c> start</c>
+[1:17] And to find the prefix sum, you start
+[1:17] And to find the prefix sum, you start from<c> the</c><c> very</c><c> beginning.</c><c> What</c><c> is</c><c> the</c><c> sum</c>
+[1:19] from the very beginning. What is the sum
+[1:19] from the very beginning. What is the sum currently?<c> It</c><c> is</c><c> zero.</c><c> The</c><c> first</c><c> element</c>
+[1:21] currently? It is zero. The first element
+[1:21] currently? It is zero. The first element is<c> two.</c>
+[1:22] is two.
+[1:22] is two. So,<c> you</c><c> will</c><c> write</c><c> down</c><c> a</c><c> two</c><c> here.</c>
+[1:24] So, you will write down a two here.
+[1:24] So, you will write down a two here. Then,<c> 2</c><c> +</c><c> 3</c><c> is</c><c> 5.</c><c> So,</c><c> you</c><c> write</c><c> down</c><c> a</c>
+[1:27] Then, 2 + 3 is 5. So, you write down a
+[1:27] Then, 2 + 3 is 5. So, you write down a five<c> here.</c>
+[1:28] five here.
+[1:28] five here. Then<c> you</c><c> add</c><c> the</c><c> next</c><c> element</c><c> which</c><c> is</c>
+[1:30] Then you add the next element which is
+[1:30] Then you add the next element which is five<c> again,</c><c> so</c><c> you</c><c> get</c><c> a</c><c> 10,</c><c> then</c><c> a</c><c> 12,</c>
+[1:33] five again, so you get a 10, then a 12,
+[1:33] five again, so you get a 10, then a 12, then<c> a</c><c> seven,</c><c> then</c><c> a</c><c> eight,</c><c> and</c><c> then</c><c> a</c>
+[1:35] then a seven, then a eight, and then a
+[1:35] then a seven, then a eight, and then a 12.
+[1:36] 12.
+[1:36] 12. This<c> is</c><c> how</c><c> you</c><c> maintain</c><c> your</c><c> prefix</c>
+[1:38] This is how you maintain your prefix
+[1:38] This is how you maintain your prefix sum.<c> And</c><c> this</c><c> array</c><c> is</c><c> often</c><c> known</c><c> as</c>
+[1:41] sum. And this array is often known as
+[1:41] sum. And this array is often known as the<c> prefix</c><c> sum</c><c> array.</c><c> This</c><c> is</c><c> used</c><c> in</c><c> a</c>
+[1:43] the prefix sum array. This is used in a
+[1:43] the prefix sum array. This is used in a lot<c> of</c><c> different</c><c> places.</c>
+[1:45] lot of different places.
+[1:45] lot of different places. And<c> that</c><c> is</c><c> it.</c><c> This</c><c> is</c><c> all</c><c> you</c><c> need</c><c> to</c>
+[1:47] And that is it. This is all you need to
+[1:47] And that is it. This is all you need to know<c> how</c><c> to</c><c> build</c><c> your</c><c> prefix</c><c> sum</c><c> array.</c>
+[1:50] know how to build your prefix sum array.
+[1:50] know how to build your prefix sum array. This<c> feels</c><c> so</c><c> simple,</c><c> right?</c><c> But,</c><c> why</c>
+[1:53] This feels so simple, right? But, why
+[1:53] This feels so simple, right? But, why are<c> its</c><c> applications</c><c> so</c><c> very</c><c> difficult?</c>
+[1:55] are its applications so very difficult?
+[1:55] are its applications so very difficult? Because<c> you</c><c> must</c><c> need</c><c> to</c><c> understand</c><c> how</c>
+[1:58] Because you must need to understand how
+[1:58] Because you must need to understand how can<c> you</c><c> apply</c><c> them.</c>
+[1:59] can you apply them.
+[1:59] can you apply them. So,<c> to</c><c> get</c><c> you</c><c> warmed</c><c> up,</c><c> let</c><c> us</c><c> start</c>
+[2:02] So, to get you warmed up, let us start
+[2:02] So, to get you warmed up, let us start with<c> the</c><c> most</c><c> basic</c><c> problems</c><c> that</c><c> you</c>
+[2:03] with the most basic problems that you
+[2:03] with the most basic problems that you will<c> find</c><c> on</c><c> the</c><c> prefix</c><c> sum</c><c> concept.</c>
+[2:06] will find on the prefix sum concept.
+[2:06] will find on the prefix sum concept. This<c> problem</c><c> is</c><c> often</c><c> known</c><c> as</c><c> the</c><c> range</c>
+[2:08] This problem is often known as the range
+[2:08] This problem is often known as the range sum<c> query.</c><c> Basically,</c><c> you</c><c> are</c><c> given</c><c> a</c>
+[2:10] sum query. Basically, you are given a
+[2:10] sum query. Basically, you are given a certain<c> array</c><c> and</c><c> now</c><c> you</c><c> are</c><c> given</c><c> a</c>
+[2:13] certain array and now you are given a
+[2:13] certain array and now you are given a lot<c> of</c><c> different</c><c> queries.</c><c> You</c><c> will</c><c> be</c>
+[2:15] lot of different queries. You will be
+[2:15] lot of different queries. You will be given<c> two</c><c> indexes</c><c> and</c><c> you</c><c> have</c><c> to</c><c> tell</c>
+[2:17] given two indexes and you have to tell
+[2:17] given two indexes and you have to tell me<c> the</c><c> sum</c><c> of</c><c> elements</c><c> between</c><c> these</c><c> two</c>
+[2:20] me the sum of elements between these two
+[2:20] me the sum of elements between these two indexes.<c> So,</c><c> for</c><c> example,</c><c> I</c><c> give</c><c> you</c>
+[2:22] indexes. So, for example, I give you
+[2:22] indexes. So, for example, I give you this<c> particular</c><c> index</c><c> and</c><c> this</c>
+[2:23] this particular index and this
+[2:23] this particular index and this particular<c> index.</c>
+[2:25] particular index.
+[2:25] particular index. You<c> have</c><c> to</c><c> tell</c><c> me</c><c> the</c><c> total</c><c> sum.</c>
+[2:27] You have to tell me the total sum.
+[2:27] You have to tell me the total sum. It<c> is</c><c> fairly</c><c> simple,</c><c> right?</c><c> You</c><c> start</c>
+[2:29] It is fairly simple, right? You start
+[2:29] It is fairly simple, right? You start from<c> five</c><c> and</c><c> then</c><c> you</c><c> add</c><c> up</c><c> all</c><c> of</c><c> the</c>
+[2:31] from five and then you add up all of the
+[2:31] from five and then you add up all of the elements<c> until</c><c> minus</c><c> five.</c>
+[2:33] elements until minus five.
+[2:33] elements until minus five. So,<c> what</c><c> is</c><c> the</c><c> fuss?</c>
+[2:35] So, what is the fuss?
+[2:35] So, what is the fuss? Well,<c> this</c><c> array</c><c> is</c><c> very</c><c> small.</c>
+[2:37] Well, this array is very small.
+[2:37] Well, this array is very small. You<c> need</c><c> to</c><c> think</c><c> that</c><c> this</c><c> array</c><c> can</c><c> be</c>
+[2:39] You need to think that this array can be
+[2:39] You need to think that this array can be huge<c> and</c><c> it</c><c> can</c><c> have</c><c> 10,000</c><c> and</c><c> lots</c><c> of</c>
+[2:43] huge and it can have 10,000 and lots of
+[2:43] huge and it can have 10,000 and lots of elements.
+[2:44] elements.
+[2:44] elements. Now,
+[2:45] Now,
+[2:45] Now, I<c> will</c><c> give</c><c> you</c><c> a</c><c> lot</c><c> of</c><c> queries</c><c> one</c><c> by</c>
+[2:47] I will give you a lot of queries one by
+[2:47] I will give you a lot of queries one by one.<c> I</c><c> will</c><c> tell</c><c> you,</c><c> "Okay,</c><c> tell</c><c> me</c><c> the</c>
+[2:49] one. I will tell you, "Okay, tell me the
+[2:49] one. I will tell you, "Okay, tell me the sum<c> between</c><c> first</c><c> and</c><c> the</c><c> last</c><c> element.</c>
+[2:51] sum between first and the last element.
+[2:51] sum between first and the last element. Tell<c> me</c><c> the</c><c> sum</c><c> between</c><c> the</c><c> middle</c>
+[2:52] Tell me the sum between the middle
+[2:52] Tell me the sum between the middle elements.<c> Tell</c><c> me</c><c> the</c><c> sum</c><c> between</c><c> the</c>
+[2:54] elements. Tell me the sum between the
+[2:54] elements. Tell me the sum between the third<c> and</c><c> the</c><c> 10th</c><c> element."</c><c> It</c><c> can</c><c> be</c>
+[2:56] third and the 10th element." It can be
+[2:56] third and the 10th element." It can be any<c> random</c><c> query.</c>
+[2:57] any random query.
+[2:57] any random query. Now,<c> if</c><c> you</c><c> iterate</c><c> your</c><c> array</c><c> again</c><c> and</c>
+[3:00] Now, if you iterate your array again and
+[3:00] Now, if you iterate your array again and again,
+[3:01] again,
+[3:01] again, these<c> queries</c><c> will</c><c> take</c><c> up</c><c> a</c><c> lot</c><c> of</c>
+[3:02] these queries will take up a lot of
+[3:02] these queries will take up a lot of time.
+[3:03] time.
+[3:03] time. It<c> is</c><c> expected</c><c> that</c><c> you</c><c> return</c><c> me</c><c> the</c>
+[3:05] It is expected that you return me the
+[3:05] It is expected that you return me the answer<c> immediately.</c><c> As</c><c> soon</c><c> as</c><c> I</c><c> ask</c>
+[3:07] answer immediately. As soon as I ask
+[3:07] answer immediately. As soon as I ask you,<c> "Okay,</c><c> tell</c><c> me</c><c> the</c><c> answer</c><c> in</c><c> a</c>
+[3:09] you, "Okay, tell me the answer in a
+[3:09] you, "Okay, tell me the answer in a constant<c> time."</c><c> How</c><c> do</c><c> you</c><c> do</c><c> that?</c><c> This</c>
+[3:12] constant time." How do you do that? This
+[3:12] constant time." How do you do that? This is<c> where</c><c> your</c><c> prefix</c><c> sum</c><c> comes</c><c> in</c><c> handy.</c>
+[3:14] is where your prefix sum comes in handy.
+[3:14] is where your prefix sum comes in handy. So,<c> first</c><c> of</c><c> all,</c><c> what</c><c> we</c><c> do</c><c> is</c><c> we</c>
+[3:16] So, first of all, what we do is we
+[3:16] So, first of all, what we do is we maintain<c> our</c><c> prefix</c><c> sum</c><c> array.</c>
+[3:19] maintain our prefix sum array.
+[3:19] maintain our prefix sum array. Now,<c> how</c><c> is</c><c> this</c><c> helping</c><c> me?</c>
+[3:21] Now, how is this helping me?
+[3:21] Now, how is this helping me? Try<c> to</c><c> think</c><c> about</c><c> it.</c><c> Let</c><c> us</c><c> say</c><c> I</c><c> want</c>
+[3:23] Try to think about it. Let us say I want
+[3:23] Try to think about it. Let us say I want to<c> find</c><c> out</c><c> the</c><c> sum</c><c> between</c><c> this</c><c> index</c>
+[3:27] to find out the sum between this index
+[3:27] to find out the sum between this index and<c> this</c><c> particular</c><c> index.</c>
+[3:29] and this particular index.
+[3:29] and this particular index. I<c> want</c><c> to</c><c> look</c><c> the</c><c> sum</c><c> of</c><c> these</c><c> three</c>
+[3:31] I want to look the sum of these three
+[3:31] I want to look the sum of these three elements.<c> Theoretically,</c><c> what</c><c> can</c><c> I</c><c> do</c>
+[3:33] elements. Theoretically, what can I do
+[3:33] elements. Theoretically, what can I do about<c> it?</c>
+[3:35] about it?
+[3:35] about it? What<c> if</c><c> I</c><c> take</c><c> the</c><c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c>
+[3:37] What if I take the sum of all of these
+[3:37] What if I take the sum of all of these elements
+[3:38] elements
+[3:38] elements and<c> then</c><c> if</c><c> I</c><c> subtract</c>
+[3:41] and then if I subtract
+[3:41] and then if I subtract the<c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c><c> elements,</c>
+[3:44] the sum of all of these elements,
+[3:44] the sum of all of these elements, what<c> am</c><c> I</c><c> remaining</c><c> with?</c>
+[3:46] what am I remaining with?
+[3:46] what am I remaining with? I<c> will</c><c> be</c><c> remaining</c><c> with</c><c> the</c><c> sum</c><c> of</c><c> all</c>
+[3:48] I will be remaining with the sum of all
+[3:48] I will be remaining with the sum of all of<c> these</c><c> elements,</c><c> correct?</c>
+[3:50] of these elements, correct?
+[3:51] of these elements, correct? So,<c> do</c><c> you</c><c> see</c><c> the</c><c> concept</c><c> of</c><c> prefix</c><c> sum</c>
+[3:53] So, do you see the concept of prefix sum
+[3:53] So, do you see the concept of prefix sum coming<c> over</c><c> here?</c>
+[3:55] coming over here?
+[3:55] coming over here? I<c> am</c><c> already</c><c> maintaining</c><c> a</c><c> sum</c><c> of</c><c> all</c><c> of</c>
+[3:57] I am already maintaining a sum of all of
+[3:58] I am already maintaining a sum of all of these<c> elements.</c><c> What</c><c> is</c><c> the</c><c> sum?</c><c> This</c>
+[4:00] these elements. What is the sum? This
+[4:00] these elements. What is the sum? This sum<c> is</c><c> eight.</c>
+[4:01] sum is eight.
+[4:01] sum is eight. And<c> I</c><c> am</c><c> also</c><c> maintaining</c><c> a</c><c> sum</c><c> of</c><c> all</c>
+[4:04] And I am also maintaining a sum of all
+[4:04] And I am also maintaining a sum of all of<c> these</c><c> elements.</c><c> It</c><c> is</c><c> 10.</c>
+[4:06] of these elements. It is 10.
+[4:06] of these elements. It is 10. So,<c> now</c><c> if</c><c> I</c><c> have</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum</c><c> of</c>
+[4:10] So, now if I have to find out the sum of
+[4:10] So, now if I have to find out the sum of this<c> middle</c><c> sub</c><c> array,</c><c> what</c><c> can</c><c> I</c><c> do?</c>
+[4:13] this middle sub array, what can I do?
+[4:13] this middle sub array, what can I do? I<c> can</c><c> take</c><c> up</c><c> eight</c>
+[4:15] I can take up eight
+[4:15] I can take up eight and<c> then</c><c> I</c><c> can</c><c> subtract</c><c> 10</c><c> from</c><c> it.</c>
+[4:18] and then I can subtract 10 from it.
+[4:18] and then I can subtract 10 from it. So,<c> 8</c><c> -</c><c> 10</c><c> will</c><c> immediately</c><c> give</c><c> me</c><c> -2.</c>
+[4:21] So, 8 - 10 will immediately give me -2.
+[4:21] So, 8 - 10 will immediately give me -2. Is<c> -2</c><c> the</c><c> answer?</c><c> Yes,</c><c> check</c><c> it</c><c> out.</c><c> If</c>
+[4:24] Is -2 the answer? Yes, check it out. If
+[4:24] Is -2 the answer? Yes, check it out. If you<c> add</c><c> up</c><c> all</c><c> of</c><c> these</c><c> elements,</c><c> 3</c><c> -</c><c> 5</c>
+[4:27] you add up all of these elements, 3 - 5
+[4:27] you add up all of these elements, 3 - 5 and<c> that</c><c> is</c><c> -2.</c>
+[4:29] and that is -2.
+[4:29] and that is -2. So,<c> what</c><c> did</c><c> you</c><c> get?</c><c> You</c><c> were</c><c> able</c><c> to</c>
+[4:31] So, what did you get? You were able to
+[4:31] So, what did you get? You were able to perform<c> your</c><c> query</c><c> in</c><c> order</c><c> of</c><c> one</c><c> time.</c>
+[4:33] perform your query in order of one time.
+[4:34] perform your query in order of one time. And<c> notice,</c><c> this</c><c> particular</c><c> concept</c><c> can</c>
+[4:36] And notice, this particular concept can
+[4:36] And notice, this particular concept can work<c> for</c><c> any</c><c> of</c><c> the</c><c> indices.</c>
+[4:38] work for any of the indices.
+[4:38] work for any of the indices. For<c> example,</c><c> if</c><c> I</c><c> want</c><c> to</c><c> find</c><c> out</c><c> the</c>
+[4:40] For example, if I want to find out the
+[4:40] For example, if I want to find out the sum<c> between</c><c> these</c><c> two</c><c> particular</c>
+[4:41] sum between these two particular
+[4:41] sum between these two particular indexes,
+[4:43] indexes,
+[4:43] indexes, what<c> do</c><c> I</c><c> need</c><c> to</c><c> do</c><c> mathematically?</c><c> I</c>
+[4:45] what do I need to do mathematically? I
+[4:45] what do I need to do mathematically? I will<c> find</c><c> out</c><c> the</c><c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c>
+[4:47] will find out the sum of all of these
+[4:47] will find out the sum of all of these numbers.<c> I</c><c> have</c><c> seven</c><c> over</c><c> here.</c>
+[4:50] numbers. I have seven over here.
+[4:50] numbers. I have seven over here. And<c> then</c><c> I</c><c> have</c><c> to</c><c> subtract</c><c> the</c><c> sum</c><c> of</c>
+[4:53] And then I have to subtract the sum of
+[4:53] And then I have to subtract the sum of all<c> of</c><c> these</c><c> numbers,</c><c> which</c><c> I</c><c> have</c><c> two</c>
+[4:55] all of these numbers, which I have two
+[4:55] all of these numbers, which I have two over<c> here.</c><c> So,</c><c> I</c><c> can</c><c> do</c><c> 7</c><c> -</c><c> 2</c><c> and</c><c> that</c>
+[4:58] over here. So, I can do 7 - 2 and that
+[4:58] over here. So, I can do 7 - 2 and that gives<c> me</c><c> a</c><c> five.</c>
+[5:00] gives me a five.
+[5:00] gives me a five. Is<c> five</c><c> the</c><c> answer?</c><c> Check</c><c> it</c><c> out.</c><c> If</c><c> you</c>
+[5:02] Is five the answer? Check it out. If you
+[5:02] Is five the answer? Check it out. If you add<c> up</c><c> all</c><c> of</c><c> these</c><c> elements,</c><c> you</c><c> will</c>
+[5:04] add up all of these elements, you will
+[5:04] add up all of these elements, you will get<c> five.</c>
+[5:05] get five.
+[5:06] get five. So,<c> our</c><c> concept</c><c> works.</c><c> And</c><c> this</c><c> is</c><c> the</c>
+[5:08] So, our concept works. And this is the
+[5:08] So, our concept works. And this is the main<c> idea</c><c> how</c><c> the</c><c> concept</c><c> of</c><c> a</c><c> prefix</c>
+[5:11] main idea how the concept of a prefix
+[5:11] main idea how the concept of a prefix sum<c> works.</c>
+[5:12] sum works.
+[5:13] sum works. You<c> find</c><c> out</c><c> all</c><c> of</c><c> the</c><c> sum</c><c> and</c><c> then</c><c> you</c>
+[5:16] You find out all of the sum and then you
+[5:16] You find out all of the sum and then you remove<c> what</c><c> was</c><c> not</c><c> needed.</c>
+[5:18] remove what was not needed.
+[5:18] remove what was not needed. This<c> way,</c><c> you</c><c> will</c><c> get</c><c> something</c><c> that</c>
+[5:19] This way, you will get something that
+[5:19] This way, you will get something that you<c> need.</c><c> This</c><c> is</c><c> the</c><c> most</c><c> basic</c><c> problem</c>
+[5:23] you need. This is the most basic problem
+[5:23] you need. This is the most basic problem that<c> involves</c><c> the</c><c> concept</c><c> of</c><c> a</c><c> prefix</c>
+[5:25] that involves the concept of a prefix
+[5:25] that involves the concept of a prefix sum.
+[5:25] sum.
+[5:26] sum. This<c> was</c><c> a</c><c> one-dimensional</c><c> array</c><c> and</c><c> you</c>
+[5:28] This was a one-dimensional array and you
+[5:28] This was a one-dimensional array and you were<c> making</c><c> all</c><c> of</c><c> those</c><c> queries.</c>
+[5:30] were making all of those queries.
+[5:30] were making all of those queries. Now,<c> there</c><c> is</c><c> a</c><c> slight</c><c> extension</c><c> to</c><c> this</c>
+[5:32] Now, there is a slight extension to this
+[5:32] Now, there is a slight extension to this problem<c> and</c><c> the</c><c> problem</c><c> is</c><c> called</c><c> range</c>
+[5:35] problem and the problem is called range
+[5:35] problem and the problem is called range sum<c> query</c><c> in</c><c> two</c><c> dimensions.</c>
+[5:37] sum query in two dimensions.
+[5:37] sum query in two dimensions. When<c> you</c><c> look</c><c> at</c><c> it</c><c> for</c><c> the</c><c> first</c><c> time,</c>
+[5:39] When you look at it for the first time,
+[5:39] When you look at it for the first time, it<c> feels</c><c> very</c><c> very</c><c> familiar.</c><c> Instead</c><c> of</c>
+[5:41] it feels very very familiar. Instead of
+[5:41] it feels very very familiar. Instead of a<c> one-dimensional</c><c> array,</c><c> this</c><c> time</c><c> you</c>
+[5:43] a one-dimensional array, this time you
+[5:44] a one-dimensional array, this time you are<c> given</c><c> a</c><c> two-dimensional</c><c> array.</c>
+[5:45] are given a two-dimensional array.
+[5:45] are given a two-dimensional array. And<c> remember,</c><c> you</c><c> were</c><c> given</c><c> two</c>
+[5:48] And remember, you were given two
+[5:48] And remember, you were given two indexes.
+[5:49] indexes.
+[5:49] indexes. This<c> time,</c><c> you</c><c> will</c><c> be</c><c> given</c><c> two</c>
+[5:51] This time, you will be given two
+[5:51] This time, you will be given two particular<c> points</c><c> in</c><c> your</c><c> matrix.</c>
+[5:54] particular points in your matrix.
+[5:54] particular points in your matrix. And<c> you</c><c> have</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum</c><c> of</c><c> all</c>
+[5:57] And you have to find out the sum of all
+[5:57] And you have to find out the sum of all of<c> these</c><c> numbers</c><c> within</c><c> this</c><c> matrix.</c>
+[6:00] of these numbers within this matrix.
+[6:00] of these numbers within this matrix. So,<c> the</c><c> idea</c><c> is</c><c> same.</c><c> You</c><c> are</c><c> given</c>
+[6:03] So, the idea is same. You are given
+[6:03] So, the idea is same. You are given certain<c> numbers,</c><c> and</c><c> then</c><c> you</c><c> have</c><c> to</c>
+[6:05] certain numbers, and then you have to
+[6:05] certain numbers, and then you have to find<c> out</c><c> the</c><c> sum</c><c> of</c><c> a</c><c> subsection.</c>
+[6:08] find out the sum of a subsection.
+[6:08] find out the sum of a subsection. But,<c> how</c><c> do</c><c> you</c><c> go</c><c> about</c><c> doing</c><c> it?</c><c> Where</c>
+[6:10] But, how do you go about doing it? Where
+[6:10] But, how do you go about doing it? Where do<c> you</c><c> even</c><c> start?</c><c> How</c><c> do</c><c> you</c><c> start</c>
+[6:12] do you even start? How do you start
+[6:12] do you even start? How do you start forming<c> your</c><c> prefix</c><c> sum</c><c> over</c><c> here?</c>
+[6:14] forming your prefix sum over here?
+[6:15] forming your prefix sum over here? Well,<c> one</c><c> thing</c><c> is</c><c> very,</c><c> very</c><c> sure.</c><c> You</c>
+[6:17] Well, one thing is very, very sure. You
+[6:17] Well, one thing is very, very sure. You have<c> to</c><c> maintain</c><c> some</c><c> kind</c><c> of</c><c> an</c><c> array</c>
+[6:19] have to maintain some kind of an array
+[6:19] have to maintain some kind of an array that<c> stores</c><c> your</c><c> prefix</c><c> sum.</c>
+[6:22] that stores your prefix sum.
+[6:22] that stores your prefix sum. And<c> that</c><c> is</c><c> where</c><c> you</c><c> will</c><c> start</c>
+[6:24] And that is where you will start
+[6:24] And that is where you will start building<c> your</c><c> prefix</c><c> matrix.</c>
+[6:26] building your prefix matrix.
+[6:26] building your prefix matrix. This<c> matrix</c><c> is</c><c> nothing</c><c> but</c><c> a</c><c> equivalent</c>
+[6:28] This matrix is nothing but a equivalent
+[6:28] This matrix is nothing but a equivalent version<c> of</c><c> your</c><c> prefix</c><c> sum</c><c> array.</c>
+[6:31] version of your prefix sum array.
+[6:31] version of your prefix sum array. So,<c> this</c><c> is</c><c> a</c><c> two-dimensional</c><c> array.</c>
+[6:33] So, this is a two-dimensional array.
+[6:33] So, this is a two-dimensional array. But,<c> how</c><c> do</c><c> you</c><c> fill</c><c> up</c><c> all</c><c> of</c><c> the</c>
+[6:34] But, how do you fill up all of the
+[6:34] But, how do you fill up all of the values?<c> Well,</c><c> the</c><c> first</c><c> row</c><c> and</c><c> the</c>
+[6:37] values? Well, the first row and the
+[6:37] values? Well, the first row and the first<c> column,</c><c> they</c><c> are</c><c> very</c><c> simple.</c><c> You</c>
+[6:39] first column, they are very simple. You
+[6:39] first column, they are very simple. You can<c> follow</c><c> the</c><c> same</c><c> concept</c><c> to</c><c> populate</c>
+[6:42] can follow the same concept to populate
+[6:42] can follow the same concept to populate the<c> first</c><c> row,</c><c> where</c><c> you're</c><c> adding</c><c> all</c>
+[6:44] the first row, where you're adding all
+[6:44] the first row, where you're adding all of<c> the</c><c> numbers.</c><c> So,</c><c> three,</c><c> then</c><c> 3</c><c> +</c><c> 0</c><c> is</c>
+[6:46] of the numbers. So, three, then 3 + 0 is
+[6:46] of the numbers. So, three, then 3 + 0 is 3.
+[6:47] 3.
+[6:47] 3. 3<c> +</c><c> 0</c><c> +</c><c> 1</c><c> is</c><c> 4.</c>
+[6:49] 3 + 0 + 1 is 4.
+[6:49] 3 + 0 + 1 is 4. 3<c> +</c><c> 0</c><c> +</c><c> 1</c><c> +</c><c> 4</c><c> is</c><c> 8.</c><c> And</c><c> similarly,</c><c> when</c>
+[6:53] 3 + 0 + 1 + 4 is 8. And similarly, when
+[6:53] 3 + 0 + 1 + 4 is 8. And similarly, when you<c> add</c><c> up</c><c> all</c><c> of</c><c> these</c><c> numbers,</c><c> you</c><c> get</c>
+[6:54] you add up all of these numbers, you get
+[6:54] you add up all of these numbers, you get a<c> 10.</c>
+[6:55] a 10.
+[6:55] a 10. This<c> way,</c><c> you</c><c> populated</c><c> your</c><c> first</c><c> row.</c>
+[6:58] This way, you populated your first row.
+[6:58] This way, you populated your first row. What<c> is</c><c> this</c><c> number</c><c> telling</c><c> you?</c><c> This</c>
+[7:00] What is this number telling you? This
+[7:00] What is this number telling you? This number<c> is</c><c> telling</c><c> you</c><c> the</c><c> sum</c><c> of</c><c> all</c><c> of</c>
+[7:02] number is telling you the sum of all of
+[7:02] number is telling you the sum of all of these<c> elements.</c>
+[7:03] these elements.
+[7:03] these elements. This<c> number</c><c> is</c><c> telling</c><c> you</c><c> the</c><c> sum</c><c> of</c>
+[7:05] This number is telling you the sum of
+[7:05] This number is telling you the sum of all<c> of</c><c> these</c><c> elements.</c>
+[7:06] all of these elements.
+[7:06] all of these elements. Similarly,<c> you</c><c> can</c><c> populate</c><c> your</c><c> first</c>
+[7:08] Similarly, you can populate your first
+[7:08] Similarly, you can populate your first column,<c> also.</c><c> Just</c><c> start</c><c> adding</c><c> all</c><c> of</c>
+[7:11] column, also. Just start adding all of
+[7:11] column, also. Just start adding all of these<c> numbers</c><c> one</c><c> by</c><c> one.</c><c> You</c><c> get</c><c> a</c>
+[7:12] these numbers one by one. You get a
+[7:13] these numbers one by one. You get a three.
+[7:14] three.
+[7:14] three. 3<c> +</c><c> 5,</c><c> you</c><c> get</c><c> an</c><c> eight.</c>
+[7:16] 3 + 5, you get an eight.
+[7:16] 3 + 5, you get an eight. 3<c> +</c><c> 5</c><c> +</c><c> 1,</c><c> you</c><c> get</c><c> a</c><c> nine.</c><c> Then</c><c> 9</c><c> +</c><c> 4,</c>
+[7:19] 3 + 5 + 1, you get a nine. Then 9 + 4,
+[7:19] 3 + 5 + 1, you get a nine. Then 9 + 4, you<c> get</c><c> a</c><c> 13.</c>
+[7:21] you get a 13.
+[7:21] you get a 13. And<c> then,</c><c> if</c><c> you</c><c> add</c><c> up</c><c> all</c><c> of</c><c> these</c>
+[7:22] And then, if you add up all of these
+[7:23] And then, if you add up all of these numbers,<c> you</c><c> will</c><c> get</c><c> a</c><c> 14.</c>
+[7:24] numbers, you will get a 14.
+[7:24] numbers, you will get a 14. So,<c> make</c><c> sure</c><c> what</c><c> I'm</c><c> doing</c><c> over</c><c> here.</c>
+[7:27] So, make sure what I'm doing over here.
+[7:27] So, make sure what I'm doing over here. Each<c> of</c><c> this</c><c> number</c><c> is</c><c> telling</c><c> me</c><c> the</c>
+[7:30] Each of this number is telling me the
+[7:30] Each of this number is telling me the sum<c> of</c><c> all</c><c> of</c><c> these</c><c> elements,</c><c> right?</c>
+[7:33] sum of all of these elements, right?
+[7:33] sum of all of these elements, right? And<c> this</c><c> is</c><c> what</c><c> is</c><c> very,</c><c> very</c>
+[7:36] And this is what is very, very
+[7:36] And this is what is very, very important.<c> You</c><c> were</c><c> able</c><c> to</c><c> populate</c>
+[7:38] important. You were able to populate
+[7:38] important. You were able to populate your<c> first</c><c> row</c><c> and</c><c> first</c><c> column.</c>
+[7:40] your first row and first column.
+[7:40] your first row and first column. Now,<c> think</c><c> about</c><c> it.</c>
+[7:42] Now, think about it.
+[7:42] Now, think about it. What<c> should</c><c> this</c><c> number</c><c> represent?</c><c> We</c>
+[7:45] What should this number represent? We
+[7:45] What should this number represent? We are<c> going</c><c> to</c><c> fill</c><c> it</c><c> in</c><c> a</c><c> while.</c>
+[7:46] are going to fill it in a while.
+[7:46] are going to fill it in a while. But,<c> what</c><c> it</c><c> should</c><c> represent?</c>
+[7:48] But, what it should represent?
+[7:49] But, what it should represent? It<c> should</c><c> represent</c><c> the</c><c> sum</c><c> of</c><c> all</c><c> of</c>
+[7:51] It should represent the sum of all of
+[7:51] It should represent the sum of all of these<c> elements.</c><c> Correct?</c>
+[7:53] these elements. Correct?
+[7:53] these elements. Correct? Similarly,<c> what</c><c> should</c><c> this</c><c> number</c>
+[7:55] Similarly, what should this number
+[7:55] Similarly, what should this number represent?<c> This</c><c> number</c><c> should</c><c> represent</c>
+[7:57] represent? This number should represent
+[7:57] represent? This number should represent the<c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c><c> elements.</c>
+[8:00] the sum of all of these elements.
+[8:00] the sum of all of these elements. This<c> is</c><c> how</c><c> we</c><c> are</c><c> maintaining</c><c> our</c><c> 2D</c>
+[8:02] This is how we are maintaining our 2D
+[8:02] This is how we are maintaining our 2D prefix<c> array.</c><c> Correct?</c>
+[8:04] prefix array. Correct?
+[8:04] prefix array. Correct? Now,<c> you</c><c> have</c><c> to</c><c> actually</c><c> fill</c><c> it.</c>
+[8:07] Now, you have to actually fill it.
+[8:07] Now, you have to actually fill it. This<c> particular</c><c> number</c><c> should</c><c> have</c><c> the</c>
+[8:09] This particular number should have the
+[8:09] This particular number should have the sum<c> of</c><c> all</c><c> of</c><c> these</c><c> elements.</c><c> Correct?</c>
+[8:12] sum of all of these elements. Correct?
+[8:12] sum of all of these elements. Correct? So,<c> first</c><c> of</c><c> all,</c><c> what</c><c> numbers</c><c> are</c><c> we</c>
+[8:15] So, first of all, what numbers are we
+[8:15] So, first of all, what numbers are we adding?<c> I</c><c> know</c><c> that</c><c> six</c><c> will</c><c> be</c><c> there</c>
+[8:18] adding? I know that six will be there
+[8:18] adding? I know that six will be there for<c> sure.</c><c> Correct?</c>
+[8:19] for sure. Correct?
+[8:19] for sure. Correct? And<c> what</c><c> other</c><c> numbers?</c><c> I</c><c> will</c><c> need</c><c> to</c>
+[8:22] And what other numbers? I will need to
+[8:22] And what other numbers? I will need to have<c> all</c><c> of</c><c> these</c><c> three</c><c> numbers</c><c> also.</c>
+[8:24] have all of these three numbers also.
+[8:24] have all of these three numbers also. But,<c> here</c><c> is</c><c> the</c><c> fun</c><c> part.</c><c> Somehow,</c><c> we</c>
+[8:27] But, here is the fun part. Somehow, we
+[8:27] But, here is the fun part. Somehow, we have<c> already</c><c> found</c><c> out</c><c> that</c><c> sum.</c>
+[8:29] have already found out that sum.
+[8:29] have already found out that sum. What<c> is</c><c> the</c><c> sum</c><c> of</c><c> these</c><c> two</c><c> numbers?</c><c> It</c>
+[8:32] What is the sum of these two numbers? It
+[8:32] What is the sum of these two numbers? It is<c> three.</c>
+[8:33] is three.
+[8:33] is three. And<c> what</c><c> is</c><c> eight</c><c> telling</c><c> you?</c><c> Eight</c><c> is</c>
+[8:35] And what is eight telling you? Eight is
+[8:35] And what is eight telling you? Eight is telling<c> you</c><c> the</c><c> sum</c><c> of</c><c> these</c><c> two</c>
+[8:37] telling you the sum of these two
+[8:37] telling you the sum of these two numbers.
+[8:38] numbers.
+[8:38] numbers. So,<c> what</c><c> do</c><c> I</c><c> have?</c><c> I</c><c> have</c><c> the</c><c> sum</c><c> of</c>
+[8:40] So, what do I have? I have the sum of
+[8:40] So, what do I have? I have the sum of these<c> two</c><c> numbers.</c>
+[8:41] these two numbers.
+[8:41] these two numbers. I<c> have</c><c> the</c><c> sum</c><c> of</c><c> these</c><c> two</c><c> numbers.</c><c> And</c>
+[8:44] I have the sum of these two numbers. And
+[8:44] I have the sum of these two numbers. And I<c> know</c><c> about</c><c> the</c><c> number</c><c> six.</c>
+[8:46] I know about the number six.
+[8:46] I know about the number six. But,<c> notice.</c><c> While</c><c> calculating</c><c> these</c><c> two</c>
+[8:48] But, notice. While calculating these two
+[8:48] But, notice. While calculating these two sums,<c> I</c><c> counted</c><c> this</c><c> element</c><c> twice.</c>
+[8:52] sums, I counted this element twice.
+[8:52] sums, I counted this element twice. So,<c> I</c><c> need</c><c> to</c><c> remove</c><c> it</c><c> in</c><c> the</c><c> first</c>
+[8:54] So, I need to remove it in the first
+[8:54] So, I need to remove it in the first time.
+[8:55] time.
+[8:55] time. So,<c> I</c><c> will</c><c> get</c><c> a</c><c> formula.</c>
+[8:56] So, I will get a formula.
+[8:56] So, I will get a formula. Prefix<c> at</c><c> I</c><c> {comma}</c><c> J</c><c> equals</c><c> to</c><c> matrix</c>
+[9:00] Prefix at I {comma} J equals to matrix
+[9:00] Prefix at I {comma} J equals to matrix at<c> I</c><c> {comma}</c><c> J</c>
+[9:01] at I {comma} J
+[9:01] at I {comma} J plus<c> whatever</c><c> is</c><c> the</c><c> top</c><c> element</c><c> because</c>
+[9:03] plus whatever is the top element because
+[9:03] plus whatever is the top element because I'm<c> adding</c><c> all</c><c> of</c><c> these</c><c> two</c><c> numbers</c><c> plus</c>
+[9:05] I'm adding all of these two numbers plus
+[9:05] I'm adding all of these two numbers plus whatever<c> is</c><c> the</c><c> left</c><c> element</c><c> because</c><c> I'm</c>
+[9:07] whatever is the left element because I'm
+[9:07] whatever is the left element because I'm adding<c> these</c><c> two</c><c> numbers.</c><c> And</c><c> then,</c>
+[9:09] adding these two numbers. And then,
+[9:09] adding these two numbers. And then, minus<c> the</c><c> top</c><c> left</c><c> because</c><c> I</c><c> added</c><c> this</c>
+[9:11] minus the top left because I added this
+[9:11] minus the top left because I added this number<c> twice.</c><c> So,</c><c> I</c><c> remove</c><c> three.</c>
+[9:14] number twice. So, I remove three.
+[9:14] number twice. So, I remove three. So,<c> doing</c><c> it</c><c> all,</c><c> I</c><c> say</c><c> six</c><c> plus</c><c> three</c>
+[9:17] So, doing it all, I say six plus three
+[9:17] So, doing it all, I say six plus three plus<c> eight</c><c> and</c><c> minus</c><c> three.</c>
+[9:20] plus eight and minus three.
+[9:20] plus eight and minus three. And<c> that</c><c> gives</c><c> me</c><c> 14.</c>
+[9:22] And that gives me 14.
+[9:22] And that gives me 14. So,<c> I</c><c> can</c><c> safely</c><c> write</c><c> down</c><c> 14</c><c> over</c>
+[9:24] So, I can safely write down 14 over
+[9:24] So, I can safely write down 14 over here.
+[9:25] here.
+[9:25] here. What<c> about</c><c> the</c><c> next</c><c> number</c><c> now?</c>
+[9:27] What about the next number now?
+[9:27] What about the next number now? For<c> this</c><c> particular</c><c> number,</c><c> it</c><c> has</c><c> to</c><c> be</c>
+[9:29] For this particular number, it has to be
+[9:29] For this particular number, it has to be the<c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c><c> elements.</c>
+[9:31] the sum of all of these elements.
+[9:31] the sum of all of these elements. Correct?<c> So,</c><c> first</c><c> of</c><c> all,</c><c> I</c><c> will</c><c> take</c>
+[9:34] Correct? So, first of all, I will take
+[9:34] Correct? So, first of all, I will take the<c> number</c><c> that</c><c> I</c><c> already</c><c> have,</c><c> that</c><c> is</c>
+[9:36] the number that I already have, that is
+[9:36] the number that I already have, that is three.
+[9:37] three.
+[9:37] three. And<c> then,</c><c> what</c><c> do</c><c> I</c><c> add?</c><c> I</c><c> add</c><c> the</c><c> top</c>
+[9:39] And then, what do I add? I add the top
+[9:39] And then, what do I add? I add the top number.<c> So,</c><c> top</c><c> have</c><c> all</c><c> of</c><c> these</c>
+[9:41] number. So, top have all of these
+[9:42] number. So, top have all of these elements.<c> So,</c><c> I</c><c> get</c><c> four.</c>
+[9:44] elements. So, I get four.
+[9:44] elements. So, I get four. Then<c> I</c><c> add</c><c> the</c><c> left</c><c> number.</c>
+[9:46] Then I add the left number.
+[9:46] Then I add the left number. What<c> is</c><c> 14</c><c> calculating?</c><c> 14</c><c> is</c>
+[9:48] What is 14 calculating? 14 is
+[9:48] What is 14 calculating? 14 is calculating<c> all</c><c> of</c><c> these</c><c> numbers.</c>
+[9:51] calculating all of these numbers.
+[9:51] calculating all of these numbers. And<c> then</c><c> notice,</c><c> while</c><c> adding</c><c> all</c><c> of</c>
+[9:53] And then notice, while adding all of
+[9:54] And then notice, while adding all of this,<c> I</c><c> calculated</c><c> 3,</c><c> 0</c><c> twice.</c>
+[9:57] this, I calculated 3, 0 twice.
+[9:57] this, I calculated 3, 0 twice. And<c> what</c><c> is</c><c> the</c><c> sum</c><c> of</c><c> 3,</c><c> 0?</c><c> It</c><c> is</c><c> this</c>
+[10:00] And what is the sum of 3, 0? It is this
+[10:00] And what is the sum of 3, 0? It is this particular<c> number,</c><c> that</c><c> is</c><c> top</c><c> left.</c><c> So,</c>
+[10:02] particular number, that is top left. So,
+[10:02] particular number, that is top left. So, I<c> minus</c><c> three.</c>
+[10:04] I minus three.
+[10:04] I minus three. Once<c> you</c><c> add</c><c> up</c><c> all</c><c> of</c><c> these,</c><c> you</c><c> will</c>
+[10:06] Once you add up all of these, you will
+[10:06] Once you add up all of these, you will get<c> 14</c><c> +</c><c> 4.</c>
+[10:08] get 14 + 4.
+[10:08] get 14 + 4. And<c> that</c><c> gives</c><c> you</c><c> a</c><c> 18.</c>
+[10:10] And that gives you a 18.
+[10:10] And that gives you a 18. So,<c> using</c><c> this</c><c> particular</c><c> formula,</c><c> you</c>
+[10:12] So, using this particular formula, you
+[10:12] So, using this particular formula, you can<c> populate</c><c> each</c><c> member</c><c> of</c><c> this</c>
+[10:14] can populate each member of this
+[10:14] can populate each member of this particular<c> matrix.</c>
+[10:16] particular matrix.
+[10:16] particular matrix. Once<c> you</c><c> have</c><c> populated</c><c> this</c><c> entire</c>
+[10:18] Once you have populated this entire
+[10:18] Once you have populated this entire matrix,<c> notice</c><c> each</c><c> element</c><c> is</c><c> telling</c>
+[10:21] matrix, notice each element is telling
+[10:21] matrix, notice each element is telling you<c> the</c><c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c><c> elements.</c>
+[10:24] you the sum of all of these elements.
+[10:24] you the sum of all of these elements. For<c> example,</c><c> 36.</c><c> 36</c><c> means</c><c> this</c><c> is</c><c> the</c>
+[10:27] For example, 36. 36 means this is the
+[10:27] For example, 36. 36 means this is the sum<c> of</c><c> all</c><c> of</c><c> these</c><c> elements.</c>
+[10:30] sum of all of these elements.
+[10:30] sum of all of these elements. What<c> is</c><c> the</c><c> sum</c><c> of</c><c> the</c><c> entire</c><c> matrix?</c><c> It</c>
+[10:32] What is the sum of the entire matrix? It
+[10:32] What is the sum of the entire matrix? It will<c> be</c><c> 58.</c>
+[10:34] will be 58.
+[10:34] will be 58. So,<c> I</c><c> have</c><c> solved</c><c> at</c><c> least</c><c> one</c><c> part.</c><c> If</c>
+[10:36] So, I have solved at least one part. If
+[10:36] So, I have solved at least one part. If I'm<c> given</c><c> this</c><c> particular</c><c> point</c><c> and</c><c> any</c>
+[10:39] I'm given this particular point and any
+[10:39] I'm given this particular point and any other<c> point</c><c> in</c><c> my</c><c> matrix,</c><c> I</c><c> am</c><c> able</c><c> to</c>
+[10:41] other point in my matrix, I am able to
+[10:41] other point in my matrix, I am able to find<c> out</c><c> the</c><c> sum.</c>
+[10:43] find out the sum.
+[10:43] find out the sum. Correct?
+[10:44] Correct?
+[10:44] Correct? Now<c> we</c><c> need</c><c> to</c><c> solve</c><c> for</c><c> the</c><c> part</c><c> that</c>
+[10:46] Now we need to solve for the part that
+[10:46] Now we need to solve for the part that instead<c> of</c><c> the</c><c> top</c><c> left</c><c> point,</c><c> it</c><c> could</c>
+[10:49] instead of the top left point, it could
+[10:49] instead of the top left point, it could be<c> any</c><c> other</c><c> random</c><c> point</c><c> in</c><c> my</c><c> matrix.</c>
+[10:51] be any other random point in my matrix.
+[10:51] be any other random point in my matrix. I<c> need</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum</c><c> of</c><c> this</c>
+[10:54] I need to find out the sum of this
+[10:54] I need to find out the sum of this submatrix.
+[10:55] submatrix.
+[10:55] submatrix. And<c> this</c><c> is</c><c> the</c><c> time</c><c> we</c><c> are</c><c> going</c><c> to</c><c> use</c>
+[10:57] And this is the time we are going to use
+[10:57] And this is the time we are going to use our<c> prefix</c><c> array.</c>
+[10:59] our prefix array.
+[10:59] our prefix array. I<c> would</c><c> advise</c><c> you</c><c> here</c><c> that</c><c> you</c><c> don't</c>
+[11:01] I would advise you here that you don't
+[11:01] I would advise you here that you don't complicate<c> the</c><c> concept.</c><c> Just</c><c> remember</c>
+[11:03] complicate the concept. Just remember
+[11:03] complicate the concept. Just remember the<c> basics.</c><c> What</c><c> were</c><c> we</c><c> doing</c><c> in</c><c> one</c>
+[11:05] the basics. What were we doing in one
+[11:05] the basics. What were we doing in one dimension?
+[11:06] dimension?
+[11:06] dimension? We<c> calculated</c><c> the</c><c> sum</c><c> up</c><c> to</c><c> the</c><c> very</c>
+[11:08] We calculated the sum up to the very
+[11:08] We calculated the sum up to the very end.
+[11:09] end.
+[11:09] end. And<c> then</c><c> removed</c><c> what</c><c> we</c><c> did</c><c> not</c><c> need.</c>
+[11:12] And then removed what we did not need.
+[11:12] And then removed what we did not need. So,<c> can</c><c> we</c><c> apply</c><c> the</c><c> same</c><c> concept</c><c> over</c>
+[11:14] So, can we apply the same concept over
+[11:14] So, can we apply the same concept over here?
+[11:15] here?
+[11:15] here? I<c> know</c><c> that</c><c> I</c><c> want</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum</c>
+[11:18] I know that I want to find out the sum
+[11:18] I know that I want to find out the sum of<c> this</c><c> particular</c><c> matrix,</c><c> right?</c>
+[11:20] of this particular matrix, right?
+[11:20] of this particular matrix, right? Where<c> do</c><c> I</c><c> start?</c><c> I</c><c> can</c><c> start</c><c> at</c><c> this</c>
+[11:23] Where do I start? I can start at this
+[11:23] Where do I start? I can start at this particular<c> point,</c><c> right?</c>
+[11:24] particular point, right?
+[11:25] particular point, right? So,<c> if</c><c> I</c><c> look</c><c> at</c><c> 49,</c>
+[11:27] So, if I look at 49,
+[11:27] So, if I look at 49, 49<c> is</c><c> the</c><c> sum</c><c> of</c><c> all</c><c> of</c><c> these</c><c> elements,</c>
+[11:29] 49 is the sum of all of these elements,
+[11:29] 49 is the sum of all of these elements, correct?
+[11:31] correct?
+[11:31] correct? And<c> notice,</c><c> I</c><c> want</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum</c>
+[11:34] And notice, I want to find out the sum
+[11:34] And notice, I want to find out the sum of<c> a</c><c> sub</c><c> matrix</c><c> within</c><c> this.</c>
+[11:36] of a sub matrix within this.
+[11:36] of a sub matrix within this. So,<c> whatever</c><c> is</c><c> the</c><c> sum,</c>
+[11:38] So, whatever is the sum,
+[11:38] So, whatever is the sum, it<c> will</c><c> be</c><c> 49</c><c> minus</c><c> something.</c><c> Correct?</c>
+[11:41] it will be 49 minus something. Correct?
+[11:41] it will be 49 minus something. Correct? Now,<c> we</c><c> need</c><c> to</c><c> figure</c><c> out</c><c> what</c><c> we</c><c> need</c>
+[11:43] Now, we need to figure out what we need
+[11:43] Now, we need to figure out what we need to<c> subtract.</c>
+[11:44] to subtract.
+[11:44] to subtract. Check<c> out</c><c> this</c><c> particular</c><c> element.</c>
+[11:47] Check out this particular element.
+[11:47] Check out this particular element. This<c> particular</c><c> element</c><c> calculates</c><c> the</c>
+[11:49] This particular element calculates the
+[11:49] This particular element calculates the sum<c> of</c><c> this</c><c> entire</c><c> matrix.</c>
+[11:52] sum of this entire matrix.
+[11:52] sum of this entire matrix. And<c> this</c><c> is</c><c> something</c><c> that</c><c> we</c><c> do</c><c> not</c>
+[11:54] And this is something that we do not
+[11:54] And this is something that we do not need.
+[11:55] need.
+[11:55] need. So,<c> I</c><c> can</c><c> say</c><c> that</c><c> I</c><c> will</c><c> remove</c><c> 27</c><c> from</c>
+[11:58] So, I can say that I will remove 27 from
+[11:58] So, I can say that I will remove 27 from here.
+[11:59] here.
+[11:59] here. What<c> else</c><c> can</c><c> we</c><c> remove?</c>
+[12:00] What else can we remove?
+[12:00] What else can we remove? Check<c> out</c><c> this</c><c> particular</c><c> element.</c><c> This</c>
+[12:03] Check out this particular element. This
+[12:03] Check out this particular element. This particular<c> element</c><c> has</c><c> the</c><c> sum</c><c> of</c><c> this</c>
+[12:05] particular element has the sum of this
+[12:05] particular element has the sum of this entire<c> matrix.</c><c> Correct?</c>
+[12:08] entire matrix. Correct?
+[12:08] entire matrix. Correct? It<c> means</c><c> I</c><c> need</c><c> to</c><c> remove</c><c> 22</c><c> also.</c>
+[12:11] It means I need to remove 22 also.
+[12:11] It means I need to remove 22 also. But,<c> is</c><c> this</c><c> the</c><c> answer?</c><c> No.</c><c> Because</c>
+[12:14] But, is this the answer? No. Because
+[12:14] But, is this the answer? No. Because when<c> we</c><c> were</c><c> removing</c><c> this</c><c> and</c><c> when</c><c> we</c>
+[12:16] when we were removing this and when we
+[12:16] when we were removing this and when we were<c> removing</c><c> this,</c>
+[12:17] were removing this,
+[12:17] were removing this, what<c> just</c><c> happened?</c><c> We</c><c> removed</c><c> this</c>
+[12:20] what just happened? We removed this
+[12:20] what just happened? We removed this particular<c> matrix</c><c> twice.</c>
+[12:22] particular matrix twice.
+[12:22] particular matrix twice. It<c> means</c><c> I</c><c> need</c><c> to</c><c> add</c><c> it</c><c> back</c><c> again.</c>
+[12:25] It means I need to add it back again.
+[12:25] It means I need to add it back again. And<c> what</c><c> is</c><c> the</c><c> sum</c><c> of</c><c> this</c><c> matrix?</c><c> It</c>
+[12:28] And what is the sum of this matrix? It
+[12:28] And what is the sum of this matrix? It is<c> given</c><c> by</c><c> this</c><c> particular</c><c> number,</c>
+[12:30] is given by this particular number,
+[12:30] is given by this particular number, right?
+[12:31] right?
+[12:31] right? So,<c> what</c><c> I</c><c> will</c><c> need</c><c> to</c><c> do</c><c> is</c><c> I</c><c> will</c>
+[12:33] So, what I will need to do is I will
+[12:33] So, what I will need to do is I will need<c> to</c><c> add</c><c> back</c><c> this</c><c> particular</c><c> matrix</c>
+[12:36] need to add back this particular matrix
+[12:36] need to add back this particular matrix only<c> once.</c>
+[12:37] only once.
+[12:37] only once. So,<c> I</c><c> add</c><c> this</c><c> value.</c>
+[12:39] So, I add this value.
+[12:39] So, I add this value. And<c> when</c><c> I</c><c> find</c><c> out</c><c> the</c><c> sum,</c><c> it</c><c> will</c>
+[12:41] And when I find out the sum, it will
+[12:41] And when I find out the sum, it will give<c> me</c><c> a</c><c> 14.</c>
+[12:43] give me a 14.
+[12:43] give me a 14. So,<c> the</c><c> sum</c><c> of</c><c> this</c><c> particular</c><c> sub</c>
+[12:45] So, the sum of this particular sub
+[12:45] So, the sum of this particular sub matrix,
+[12:47] matrix,
+[12:47] matrix, it<c> turns</c><c> out</c><c> to</c><c> be</c><c> 14.</c><c> And</c><c> this</c><c> is</c><c> your</c>
+[12:49] it turns out to be 14. And this is your
+[12:49] it turns out to be 14. And this is your answer.
+[12:50] answer.
+[12:50] answer. So,<c> once</c><c> again,</c><c> we</c><c> took</c><c> the</c><c> concept</c><c> of</c><c> a</c>
+[12:53] So, once again, we took the concept of a
+[12:53] So, once again, we took the concept of a prefix<c> sum</c><c> array.</c>
+[12:55] prefix sum array.
+[12:55] prefix sum array. We<c> applied</c><c> the</c><c> same</c><c> base</c><c> principle.</c><c> Find</c>
+[12:58] We applied the same base principle. Find
+[12:58] We applied the same base principle. Find out<c> the</c><c> entire</c><c> sum</c><c> that</c><c> you</c><c> need</c><c> and</c>
+[12:59] out the entire sum that you need and
+[13:00] out the entire sum that you need and then<c> remove</c><c> what</c><c> is</c><c> not</c><c> needed.</c>
+[13:02] then remove what is not needed.
+[13:02] then remove what is not needed. Now,<c> coming</c><c> back</c><c> to</c><c> the</c><c> basic</c><c> question</c>
+[13:04] Now, coming back to the basic question
+[13:04] Now, coming back to the basic question of<c> a</c><c> one-dimensional</c><c> array,</c><c> you</c><c> were</c>
+[13:06] of a one-dimensional array, you were
+[13:06] of a one-dimensional array, you were maintaining<c> your</c><c> prefix</c><c> sum.</c>
+[13:08] maintaining your prefix sum.
+[13:08] maintaining your prefix sum. This<c> problem</c><c> can</c><c> be</c><c> asked</c><c> in</c><c> other</c>
+[13:10] This problem can be asked in other
+[13:10] This problem can be asked in other different<c> ways</c><c> also.</c><c> For</c><c> example,</c><c> you</c>
+[13:13] different ways also. For example, you
+[13:13] different ways also. For example, you can<c> be</c><c> asked</c><c> to</c><c> find</c><c> out</c><c> the</c><c> pivot</c>
+[13:14] can be asked to find out the pivot
+[13:14] can be asked to find out the pivot index.
+[13:15] index.
+[13:16] index. Basically,<c> a</c><c> pivot</c><c> index</c><c> is</c><c> a</c><c> made-up</c>
+[13:18] Basically, a pivot index is a made-up
+[13:18] Basically, a pivot index is a made-up definition<c> where</c><c> the</c><c> sum</c><c> of</c><c> elements</c><c> on</c>
+[13:20] definition where the sum of elements on
+[13:20] definition where the sum of elements on the<c> left</c><c> is</c><c> equal</c><c> to</c><c> the</c><c> sum</c><c> of</c><c> elements</c>
+[13:23] the left is equal to the sum of elements
+[13:23] the left is equal to the sum of elements on<c> the</c><c> right.</c>
+[13:24] on the right.
+[13:24] on the right. Do<c> you</c><c> really</c><c> feel</c><c> it</c><c> is</c><c> a</c><c> very</c>
+[13:25] Do you really feel it is a very
+[13:25] Do you really feel it is a very different<c> problem?</c>
+[13:27] different problem?
+[13:27] different problem? All<c> you</c><c> need</c><c> to</c><c> do</c><c> is</c><c> find</c><c> out</c><c> the</c>
+[13:29] All you need to do is find out the
+[13:29] All you need to do is find out the cumulative<c> sum</c><c> from</c><c> the</c><c> left</c><c> direction</c>
+[13:31] cumulative sum from the left direction
+[13:31] cumulative sum from the left direction and<c> then</c><c> find</c><c> out</c><c> the</c><c> cumulative</c><c> sum</c>
+[13:32] and then find out the cumulative sum
+[13:33] and then find out the cumulative sum from<c> the</c><c> right</c><c> direction.</c>
+[13:34] from the right direction.
+[13:34] from the right direction. For<c> any</c><c> index,</c><c> if</c><c> the</c><c> cumulative</c><c> sum</c><c> on</c>
+[13:37] For any index, if the cumulative sum on
+[13:37] For any index, if the cumulative sum on the<c> left</c><c> is</c><c> equal</c><c> to</c><c> the</c><c> cumulative</c><c> sum</c>
+[13:39] the left is equal to the cumulative sum
+[13:39] the left is equal to the cumulative sum on<c> the</c><c> right,</c><c> that's</c><c> it.</c><c> That</c><c> is</c><c> your</c>
+[13:41] on the right, that's it. That is your
+[13:41] on the right, that's it. That is your pivot<c> index.</c>
+[13:42] pivot index.
+[13:42] pivot index. So,<c> this</c><c> is</c><c> the</c><c> starting</c><c> point</c><c> where</c><c> a</c>
+[13:45] So, this is the starting point where a
+[13:45] So, this is the starting point where a prefix<c> sum</c><c> array</c><c> starts</c><c> to</c><c> make</c><c> sense</c>
+[13:48] prefix sum array starts to make sense
+[13:48] prefix sum array starts to make sense and<c> you</c><c> are</c><c> able</c><c> to</c><c> take</c><c> advantage</c><c> out</c>
+[13:50] and you are able to take advantage out
+[13:50] and you are able to take advantage out of<c> it.</c>
+[13:51] of it.
+[13:51] of it. Now,<c> we</c><c> can</c><c> start</c><c> to</c><c> dive</c><c> into</c><c> the</c>
+[13:52] Now, we can start to dive into the
+[13:52] Now, we can start to dive into the tricky<c> category</c><c> and</c><c> let</c><c> us</c><c> start</c><c> with</c>
+[13:54] tricky category and let us start with
+[13:55] tricky category and let us start with the<c> problem</c><c> sub</c><c> equals</c><c> K.</c>
+[13:57] the problem sub equals K.
+[13:57] the problem sub equals K. Basically,<c> you</c><c> are</c><c> given</c><c> an</c><c> array</c><c> of</c>
+[13:59] Basically, you are given an array of
+[13:59] Basically, you are given an array of integers<c> and</c><c> a</c><c> value</c><c> K.</c>
+[14:01] integers and a value K.
+[14:01] integers and a value K. You<c> have</c><c> to</c><c> tell</c><c> me</c><c> the</c><c> total</c><c> number</c><c> of</c>
+[14:03] You have to tell me the total number of
+[14:03] You have to tell me the total number of sub<c> arrays</c>
+[14:05] sub arrays
+[14:05] sub arrays whose<c> sum</c><c> equals</c><c> K.</c>
+[14:07] whose sum equals K.
+[14:07] whose sum equals K. So,<c> you</c><c> can</c><c> already</c><c> see</c><c> how</c><c> tricky</c><c> it</c>
+[14:09] So, you can already see how tricky it
+[14:09] So, you can already see how tricky it is.
+[14:10] is.
+[14:10] is. And<c> you</c><c> have</c><c> no</c><c> idea</c><c> that</c><c> prefix</c><c> sum</c><c> can</c>
+[14:12] And you have no idea that prefix sum can
+[14:13] And you have no idea that prefix sum can even<c> apply</c><c> over</c><c> here.</c>
+[14:14] even apply over here.
+[14:14] even apply over here. Look<c> at</c><c> the</c><c> problem.</c>
+[14:16] Look at the problem.
+[14:16] Look at the problem. You<c> have</c><c> this</c><c> particular</c><c> array</c><c> and</c><c> you</c>
+[14:18] You have this particular array and you
+[14:18] You have this particular array and you are<c> given</c><c> the</c><c> value</c><c> of</c><c> K</c><c> equals</c><c> to</c><c> five.</c>
+[14:20] are given the value of K equals to five.
+[14:20] are given the value of K equals to five. You<c> have</c><c> to</c><c> tell</c><c> me</c><c> all</c><c> of</c><c> the</c><c> different</c>
+[14:22] You have to tell me all of the different
+[14:22] You have to tell me all of the different sub<c> arrays,</c><c> the</c><c> count</c><c> of</c><c> all</c><c> of</c><c> these</c>
+[14:24] sub arrays, the count of all of these
+[14:24] sub arrays, the count of all of these sub<c> arrays,</c><c> such</c><c> that</c><c> the</c><c> sum</c><c> is</c><c> five.</c>
+[14:27] sub arrays, such that the sum is five.
+[14:27] sub arrays, such that the sum is five. You<c> can</c><c> already</c><c> see</c><c> that,</c><c> okay,</c><c> 2</c><c> +</c><c> 3,</c>
+[14:30] You can already see that, okay, 2 + 3,
+[14:30] You can already see that, okay, 2 + 3, this<c> is</c><c> five.</c>
+[14:31] this is five.
+[14:31] this is five. And<c> then,</c><c> if</c><c> you</c><c> add</c><c> up</c><c> all</c><c> of</c><c> these</c>
+[14:34] And then, if you add up all of these
+[14:34] And then, if you add up all of these elements,
+[14:35] elements,
+[14:35] elements, once<c> again,</c><c> you</c><c> will</c><c> get</c><c> the</c><c> sum</c><c> as</c>
+[14:36] once again, you will get the sum as
+[14:36] once again, you will get the sum as five.
+[14:38] five.
+[14:38] five. If<c> you</c><c> add</c><c> up</c><c> all</c><c> of</c><c> these</c><c> elements,</c>
+[14:40] If you add up all of these elements,
+[14:40] If you add up all of these elements, once<c> again,</c><c> the</c><c> sum</c><c> is</c><c> five.</c>
+[14:42] once again, the sum is five.
+[14:42] once again, the sum is five. So,<c> what</c><c> is</c><c> happening</c><c> over</c><c> here?</c><c> How</c><c> do</c>
+[14:44] So, what is happening over here? How do
+[14:44] So, what is happening over here? How do you<c> even</c><c> start?</c><c> Certainly,</c><c> a</c><c> brute</c><c> force</c>
+[14:46] you even start? Certainly, a brute force
+[14:47] you even start? Certainly, a brute force approach<c> isn't</c><c> the</c><c> right</c><c> solution</c><c> over</c>
+[14:48] approach isn't the right solution over
+[14:48] approach isn't the right solution over here,<c> correct?</c>
+[14:50] here, correct?
+[14:50] here, correct? Your<c> very</c><c> first</c><c> hint</c><c> that</c><c> this</c><c> problem</c>
+[14:52] Your very first hint that this problem
+[14:52] Your very first hint that this problem can<c> involve</c><c> a</c><c> prefix</c><c> sum</c><c> is</c><c> the</c><c> fact</c>
+[14:55] can involve a prefix sum is the fact
+[14:55] can involve a prefix sum is the fact that<c> you</c><c> are</c><c> interested</c><c> in</c><c> a</c><c> sub</c><c> array</c>
+[14:57] that you are interested in a sub array
+[14:57] that you are interested in a sub array with<c> a</c><c> certain</c><c> sum.</c>
+[14:59] with a certain sum.
+[14:59] with a certain sum. And<c> go</c><c> back</c><c> to</c><c> your</c><c> basics.</c>
+[15:01] And go back to your basics.
+[15:01] And go back to your basics. Why<c> is</c><c> a</c><c> prefix</c><c> sum</c><c> helpful?</c>
+[15:03] Why is a prefix sum helpful?
+[15:03] Why is a prefix sum helpful? You<c> want</c><c> to</c><c> find</c><c> out</c><c> the</c><c> sum</c><c> of</c><c> a</c>
+[15:05] You want to find out the sum of a
+[15:05] You want to find out the sum of a certain<c> sub</c><c> array.</c><c> What</c><c> were</c><c> you</c><c> doing?</c>
+[15:08] certain sub array. What were you doing?
+[15:08] certain sub array. What were you doing? You<c> found</c><c> out</c><c> the</c><c> total</c><c> sum</c><c> and</c><c> then</c><c> you</c>
+[15:10] You found out the total sum and then you
+[15:10] You found out the total sum and then you removed<c> what</c><c> was</c><c> not</c><c> needed.</c>
+[15:12] removed what was not needed.
+[15:12] removed what was not needed. So,<c> for</c><c> example,</c><c> I</c><c> have</c><c> this</c><c> particular</c>
+[15:14] So, for example, I have this particular
+[15:14] So, for example, I have this particular array<c> over</c><c> here.</c>
+[15:16] array over here.
+[15:16] array over here. Now,<c> notice.</c><c> Let</c><c> us</c><c> say</c><c> I</c><c> have</c><c> two</c>
+[15:18] Now, notice. Let us say I have two
+[15:18] Now, notice. Let us say I have two different<c> indexes</c><c> I</c><c> and</c><c> J.</c>
+[15:20] different indexes I and J.
+[15:20] different indexes I and J. Correct?<c> I</c><c> have</c><c> maintained</c><c> my</c><c> prefix</c><c> sum</c>
+[15:23] Correct? I have maintained my prefix sum
+[15:23] Correct? I have maintained my prefix sum array<c> also.</c>
+[15:24] array also.
+[15:24] array also. So,<c> what</c><c> is</c><c> the</c><c> sum</c><c> of</c><c> this</c><c> sub</c><c> array?</c>
+[15:28] So, what is the sum of this sub array?
+[15:28] So, what is the sum of this sub array? If<c> I</c><c> look</c><c> at</c><c> this</c><c> sub</c><c> array,</c><c> what</c><c> is</c><c> the</c>
+[15:30] If I look at this sub array, what is the
+[15:30] If I look at this sub array, what is the sum?
+[15:31] sum?
+[15:31] sum? Can<c> I</c><c> say</c><c> that</c><c> the</c><c> sum</c><c> of</c><c> this</c>
+[15:34] Can I say that the sum of this
+[15:34] Can I say that the sum of this particular<c> sub</c><c> array</c><c> will</c><c> be</c><c> prefix</c><c> sum</c>
+[15:36] particular sub array will be prefix sum
+[15:37] particular sub array will be prefix sum at<c> J</c>
+[15:38] at J
+[15:38] at J so<c> all</c><c> of</c><c> these</c><c> elements</c><c> minus</c><c> prefix</c>
+[15:41] so all of these elements minus prefix
+[15:41] so all of these elements minus prefix sum<c> at</c><c> I</c><c> minus</c><c> 1.</c>
+[15:43] sum at I minus 1.
+[15:43] sum at I minus 1. So,<c> I'm</c><c> removing</c><c> this</c><c> particular</c><c> section</c>
+[15:46] So, I'm removing this particular section
+[15:46] So, I'm removing this particular section from<c> this</c><c> entire</c><c> section.</c>
+[15:48] from this entire section.
+[15:48] from this entire section. What<c> I'm</c><c> getting</c><c> over</c><c> here?</c><c> This</c><c> is</c><c> the</c>
+[15:50] What I'm getting over here? This is the
+[15:50] What I'm getting over here? This is the sum<c> of</c><c> this</c><c> particular</c><c> sub</c><c> array.</c>
+[15:52] sum of this particular sub array.
+[15:52] sum of this particular sub array. Correct?
+[15:53] Correct?
+[15:53] Correct? This<c> is</c><c> the</c><c> formula</c><c> that</c><c> I'm</c><c> working</c>
+[15:55] This is the formula that I'm working
+[15:55] This is the formula that I'm working with.
+[15:56] with.
+[15:56] with. And<c> my</c><c> value</c><c> of</c><c> K</c><c> is</c><c> 5.</c>
+[15:59] And my value of K is 5.
+[15:59] And my value of K is 5. So,<c> is</c><c> it</c><c> safe</c><c> to</c><c> say</c><c> that</c><c> if</c><c> this</c>
+[16:01] So, is it safe to say that if this
+[16:01] So, is it safe to say that if this particular<c> difference</c><c> is</c><c> equal</c><c> to</c><c> K</c>
+[16:04] particular difference is equal to K
+[16:04] particular difference is equal to K then<c> I</c><c> have</c><c> found</c><c> out</c><c> a</c><c> valid</c><c> sub</c><c> array.</c>
+[16:07] then I have found out a valid sub array.
+[16:07] then I have found out a valid sub array. Right?
+[16:08] Right?
+[16:08] Right? Because<c> if</c><c> this</c><c> difference</c><c> or</c><c> if</c><c> this</c>
+[16:11] Because if this difference or if this
+[16:11] Because if this difference or if this particular<c> sum</c><c> equals</c><c> K,</c><c> this</c><c> is</c><c> my</c><c> sub</c>
+[16:14] particular sum equals K, this is my sub
+[16:14] particular sum equals K, this is my sub array.<c> Correct?</c>
+[16:15] array. Correct?
+[16:15] array. Correct? All<c> I</c><c> am</c><c> now</c><c> remaining</c><c> with</c><c> is</c><c> finding</c>
+[16:17] All I am now remaining with is finding
+[16:18] All I am now remaining with is finding out<c> all</c><c> of</c><c> these</c><c> different</c><c> I</c><c> and</c><c> J</c>
+[16:19] out all of these different I and J
+[16:20] out all of these different I and J positions.
+[16:21] positions.
+[16:21] positions. But<c> even</c><c> before</c><c> that,</c><c> we</c><c> get</c><c> a</c><c> very</c>
+[16:23] But even before that, we get a very
+[16:23] But even before that, we get a very important<c> formula</c><c> that</c><c> we</c><c> can</c><c> work</c><c> with.</c>
+[16:25] important formula that we can work with.
+[16:25] important formula that we can work with. If<c> I</c><c> move</c><c> around</c><c> things</c><c> a</c><c> little</c><c> bit</c><c> I</c>
+[16:28] If I move around things a little bit I
+[16:28] If I move around things a little bit I can<c> say</c><c> that</c><c> prefix</c><c> sum</c><c> at</c><c> J</c><c> minus</c><c> K</c>
+[16:32] can say that prefix sum at J minus K
+[16:32] can say that prefix sum at J minus K equals<c> to</c><c> prefix</c><c> sum</c><c> at</c><c> I</c><c> minus</c><c> 1.</c>
+[16:35] equals to prefix sum at I minus 1.
+[16:35] equals to prefix sum at I minus 1. What<c> does</c><c> that</c><c> mean?</c><c> It</c><c> means</c><c> that</c><c> when</c>
+[16:38] What does that mean? It means that when
+[16:38] What does that mean? It means that when I<c> am</c><c> iterating</c><c> through</c><c> my</c><c> array</c><c> I'm</c>
+[16:40] I am iterating through my array I'm
+[16:40] I am iterating through my array I'm calculating<c> the</c><c> prefix</c><c> sum.</c><c> Correct?</c>
+[16:42] calculating the prefix sum. Correct?
+[16:42] calculating the prefix sum. Correct? And<c> if</c><c> I</c><c> subtract</c><c> this</c><c> particular</c><c> value</c>
+[16:44] And if I subtract this particular value
+[16:44] And if I subtract this particular value K
+[16:45] K
+[16:45] K and<c> then</c><c> if</c><c> I</c><c> am</c><c> able</c><c> to</c><c> find</c><c> out</c><c> a</c>
+[16:48] and then if I am able to find out a
+[16:48] and then if I am able to find out a value<c> that</c><c> I</c><c> have</c><c> already</c><c> encountered</c>
+[16:52] value that I have already encountered
+[16:52] value that I have already encountered that<c> means</c><c> I</c><c> have</c><c> found</c><c> out</c><c> a</c><c> valid</c><c> sub</c>
+[16:53] that means I have found out a valid sub
+[16:53] that means I have found out a valid sub array.
+[16:54] array.
+[16:54] array. So,<c> what</c><c> is</c><c> this</c><c> telling</c><c> you?</c><c> I</c><c> can</c><c> use</c>
+[16:57] So, what is this telling you? I can use
+[16:57] So, what is this telling you? I can use a<c> hash</c><c> map</c><c> to</c><c> store</c><c> all</c><c> of</c><c> the</c><c> prefix</c>
+[16:59] a hash map to store all of the prefix
+[16:59] a hash map to store all of the prefix sum<c> that</c><c> I</c><c> have</c><c> encountered</c><c> so</c><c> far.</c><c> So,</c>
+[17:02] sum that I have encountered so far. So,
+[17:02] sum that I have encountered so far. So, while<c> going</c><c> ahead,</c><c> I</c><c> can</c><c> look</c><c> back</c><c> and</c>
+[17:04] while going ahead, I can look back and
+[17:04] while going ahead, I can look back and check,<c> "Hey,</c><c> have</c><c> I</c><c> found</c><c> out</c><c> this</c><c> sum</c>
+[17:07] check, "Hey, have I found out this sum
+[17:07] check, "Hey, have I found out this sum earlier?"
+[17:08] earlier?"
+[17:08] earlier?" And<c> at</c><c> every</c><c> iteration,</c><c> I</c><c> need</c><c> to</c>
+[17:10] And at every iteration, I need to
+[17:10] And at every iteration, I need to subtract<c> this</c><c> value</c><c> of</c><c> K.</c>
+[17:12] subtract this value of K.
+[17:12] subtract this value of K. So,<c> what</c><c> are</c><c> we</c><c> doing</c><c> here?</c><c> I</c><c> have</c><c> my</c>
+[17:14] So, what are we doing here? I have my
+[17:14] So, what are we doing here? I have my array<c> and</c><c> I</c><c> am</c><c> maintaining</c><c> a</c><c> map</c><c> of</c><c> all</c>
+[17:18] array and I am maintaining a map of all
+[17:18] array and I am maintaining a map of all of<c> the</c><c> sums</c><c> that</c><c> I</c><c> have</c><c> seen</c><c> so</c><c> far.</c>
+[17:20] of the sums that I have seen so far.
+[17:20] of the sums that I have seen so far. We<c> need</c><c> to</c><c> first</c><c> initialize</c><c> it.</c>
+[17:22] We need to first initialize it.
+[17:22] We need to first initialize it. I<c> have</c><c> seen</c><c> a</c><c> sum</c><c> of</c><c> zero</c><c> once.</c>
+[17:25] I have seen a sum of zero once.
+[17:25] I have seen a sum of zero once. Because<c> when</c><c> I</c><c> am</c><c> not</c><c> picking</c><c> any</c>
+[17:27] Because when I am not picking any
+[17:27] Because when I am not picking any element,<c> when</c><c> I'm</c><c> at</c><c> the</c><c> very</c><c> first</c>
+[17:29] element, when I'm at the very first
+[17:29] element, when I'm at the very first location.
+[17:30] location.
+[17:30] location. The<c> sum</c><c> is</c><c> zero</c><c> and</c><c> I</c><c> have</c><c> seen</c><c> it</c><c> once,</c>
+[17:33] The sum is zero and I have seen it once,
+[17:33] The sum is zero and I have seen it once, correct?
+[17:34] correct?
+[17:34] correct? This<c> is</c><c> your</c><c> initial</c><c> point</c><c> where</c><c> you</c>
+[17:36] This is your initial point where you
+[17:36] This is your initial point where you want<c> to</c><c> begin</c><c> with.</c>
+[17:37] want to begin with.
+[17:37] want to begin with. Now<c> you</c><c> will</c><c> try</c><c> to</c><c> iterate</c><c> over</c><c> your</c>
+[17:40] Now you will try to iterate over your
+[17:40] Now you will try to iterate over your array<c> one</c><c> by</c><c> one.</c>
+[17:41] array one by one.
+[17:41] array one by one. You<c> get</c><c> the</c><c> first</c><c> element</c><c> and</c><c> that</c><c> is</c>
+[17:43] You get the first element and that is
+[17:43] You get the first element and that is two.
+[17:44] two.
+[17:44] two. So,<c> the</c><c> current</c><c> sum</c><c> is</c><c> two.</c>
+[17:47] So, the current sum is two.
+[17:47] So, the current sum is two. And<c> then</c><c> what</c><c> do</c><c> you</c><c> do?</c><c> You</c><c> try</c><c> to</c><c> see</c>
+[17:49] And then what do you do? You try to see
+[17:49] And then what do you do? You try to see two<c> minus</c><c> five,</c><c> that</c><c> is</c><c> K.</c>
+[17:52] two minus five, that is K.
+[17:52] two minus five, that is K. Have<c> you</c><c> seen</c><c> a</c><c> minus</c><c> three</c><c> before?</c>
+[17:54] Have you seen a minus three before?
+[17:54] Have you seen a minus three before? No.
+[17:55] No.
+[17:55] No. It<c> means</c><c> that</c><c> this</c><c> particular</c><c> number</c>
+[17:58] It means that this particular number
+[17:58] It means that this particular number cannot<c> form</c><c> a</c><c> valid</c><c> sub</c><c> array.</c>
+[18:00] cannot form a valid sub array.
+[18:00] cannot form a valid sub array. So,<c> we</c><c> can</c><c> safely</c><c> ignore</c><c> it.</c><c> But</c><c> at</c><c> the</c>
+[18:03] So, we can safely ignore it. But at the
+[18:03] So, we can safely ignore it. But at the same<c> time,</c><c> we</c><c> need</c><c> to</c><c> update</c><c> our</c><c> map.</c>
+[18:06] same time, we need to update our map.
+[18:06] same time, we need to update our map. Basically,<c> I</c><c> found</c><c> the</c><c> sum</c><c> of</c><c> two</c><c> and</c><c> I</c>
+[18:09] Basically, I found the sum of two and I
+[18:09] Basically, I found the sum of two and I found<c> it</c><c> once,</c><c> correct?</c>
+[18:11] found it once, correct?
+[18:11] found it once, correct? I<c> move</c><c> my</c><c> pointer</c><c> to</c><c> the</c><c> next</c><c> location.</c>
+[18:13] I move my pointer to the next location.
+[18:13] I move my pointer to the next location. And<c> then</c><c> current</c><c> sum</c><c> is</c><c> two</c><c> plus</c><c> three</c>
+[18:15] And then current sum is two plus three
+[18:15] And then current sum is two plus three and<c> that</c><c> is</c><c> five.</c>
+[18:17] and that is five.
+[18:17] and that is five. And<c> then</c><c> I</c><c> will</c><c> check</c><c> five</c><c> minus</c><c> K.</c>
+[18:20] And then I will check five minus K.
+[18:20] And then I will check five minus K. That<c> is</c><c> equal</c><c> to</c><c> zero.</c>
+[18:22] That is equal to zero.
+[18:22] That is equal to zero. Have<c> I</c><c> seen</c><c> a</c><c> zero</c><c> before?</c>
+[18:24] Have I seen a zero before?
+[18:24] Have I seen a zero before? Check<c> your</c><c> map.</c><c> Yes,</c><c> and</c><c> you</c><c> saw</c><c> a</c><c> zero</c>
+[18:27] Check your map. Yes, and you saw a zero
+[18:27] Check your map. Yes, and you saw a zero once.
+[18:28] once.
+[18:28] once. So,<c> I</c><c> can</c><c> say</c><c> that</c><c> okay,</c><c> I</c><c> have</c><c> found</c>
+[18:31] So, I can say that okay, I have found
+[18:31] So, I can say that okay, I have found out<c> at</c><c> least</c><c> one</c><c> sub</c><c> array.</c>
+[18:33] out at least one sub array.
+[18:33] out at least one sub array. That<c> is</c><c> why</c><c> I'm</c><c> keeping</c><c> a</c><c> count.</c>
+[18:35] That is why I'm keeping a count.
+[18:35] That is why I'm keeping a count. And<c> that</c><c> is</c><c> why</c><c> you</c><c> had</c><c> to</c><c> have</c><c> a</c>
+[18:37] And that is why you had to have a
+[18:37] And that is why you had to have a starting<c> point.</c>
+[18:38] starting point.
+[18:38] starting point. You<c> had</c><c> the</c><c> prefix</c><c> sum</c><c> as</c><c> zero</c><c> over</c>
+[18:41] You had the prefix sum as zero over
+[18:41] You had the prefix sum as zero over here.<c> And</c><c> when</c><c> you</c><c> found</c><c> a</c><c> two</c><c> elements,</c>
+[18:44] here. And when you found a two elements,
+[18:44] here. And when you found a two elements, you<c> had</c><c> the</c><c> prefix</c><c> sum</c><c> as</c><c> five.</c><c> So,</c><c> five</c>
+[18:46] you had the prefix sum as five. So, five
+[18:46] you had the prefix sum as five. So, five minus<c> K</c><c> and</c><c> that</c><c> is</c><c> equal</c><c> to</c><c> zero.</c>
+[18:49] minus K and that is equal to zero.
+[18:49] minus K and that is equal to zero. That<c> means</c><c> you</c><c> found</c><c> your</c><c> valid</c><c> sub</c>
+[18:51] That means you found your valid sub
+[18:51] That means you found your valid sub array.
+[18:52] array.
+[18:52] array. I<c> update</c><c> my</c><c> total</c><c> count</c><c> to</c><c> be</c><c> one.</c>
+[18:54] I update my total count to be one.
+[18:54] I update my total count to be one. And<c> then</c><c> I</c><c> also</c><c> update</c><c> my</c><c> map</c><c> saying</c>
+[18:56] And then I also update my map saying
+[18:56] And then I also update my map saying that<c> I</c><c> found</c><c> a</c><c> sum</c><c> of</c><c> five</c><c> once.</c>
+[18:59] that I found a sum of five once.
+[18:59] that I found a sum of five once. I<c> move</c><c> on</c><c> to</c><c> my</c><c> next</c><c> element,</c><c> that</c><c> is</c>
+[19:01] I move on to my next element, that is
+[19:01] I move on to my next element, that is minus<c> five.</c><c> So,</c><c> current</c><c> sum</c><c> is</c><c> five</c><c> my</c>
+[19:02] minus five. So, current sum is five my
+[19:02] minus five. So, current sum is five my plus<c> of</c><c> minus</c><c> five</c><c> and</c><c> that</c><c> is</c><c> zero.</c>
+[19:05] plus of minus five and that is zero.
+[19:05] plus of minus five and that is zero. Zero<c> minus</c><c> five</c><c> is</c><c> equal</c><c> to</c><c> minus</c><c> five.</c>
+[19:08] Zero minus five is equal to minus five.
+[19:08] Zero minus five is equal to minus five. Have<c> I</c><c> seen</c><c> a</c><c> minus</c><c> five</c><c> before?</c><c> No,</c><c> it</c>
+[19:10] Have I seen a minus five before? No, it
+[19:10] Have I seen a minus five before? No, it means<c> no</c><c> valid</c><c> sub-arrays</c><c> appear</c><c> over</c>
+[19:13] means no valid sub-arrays appear over
+[19:13] means no valid sub-arrays appear over here.
+[19:14] here.
+[19:14] here. But,<c> I</c><c> found</c><c> a</c><c> zero</c><c> and</c><c> I</c><c> need</c><c> to</c><c> update</c>
+[19:17] But, I found a zero and I need to update
+[19:17] But, I found a zero and I need to update my<c> map.</c><c> Zero</c><c> already</c><c> exists</c><c> in</c><c> my</c><c> map.</c>
+[19:20] my map. Zero already exists in my map.
+[19:20] my map. Zero already exists in my map. So,<c> I</c><c> will</c><c> need</c><c> to</c><c> increment</c><c> its</c><c> count.</c>
+[19:23] So, I will need to increment its count.
+[19:23] So, I will need to increment its count. Why<c> did</c><c> we</c><c> increment</c><c> this?</c><c> Because</c>
+[19:25] Why did we increment this? Because
+[19:25] Why did we increment this? Because notice,<c> I</c><c> found</c><c> a</c><c> sum</c><c> of</c><c> zero</c><c> two</c><c> times.</c>
+[19:28] notice, I found a sum of zero two times.
+[19:28] notice, I found a sum of zero two times. I<c> found</c><c> a</c><c> sum</c><c> of</c><c> zero</c><c> over</c><c> here</c><c> when</c><c> I</c>
+[19:30] I found a sum of zero over here when I
+[19:30] I found a sum of zero over here when I did<c> not</c><c> have</c><c> any</c><c> numbers</c><c> and</c><c> I</c><c> also</c>
+[19:33] did not have any numbers and I also
+[19:33] did not have any numbers and I also found<c> a</c><c> sum</c><c> of</c><c> zero</c><c> over</c><c> here</c><c> when</c><c> I</c><c> had</c>
+[19:36] found a sum of zero over here when I had
+[19:36] found a sum of zero over here when I had all<c> of</c><c> these</c><c> numbers.</c>
+[19:38] all of these numbers.
+[19:38] all of these numbers. And<c> why</c><c> is</c><c> this</c><c> important?</c>
+[19:40] And why is this important?
+[19:40] And why is this important? Because<c> you</c><c> are</c><c> interested</c><c> in</c><c> finding</c>
+[19:42] Because you are interested in finding
+[19:42] Because you are interested in finding out<c> all</c><c> of</c><c> the</c><c> different</c><c> sub-arrays.</c><c> You</c>
+[19:44] out all of the different sub-arrays. You
+[19:44] out all of the different sub-arrays. You want<c> the</c><c> complete</c><c> count.</c><c> So,</c><c> if</c><c> I</c><c> find</c>
+[19:47] want the complete count. So, if I find
+[19:47] want the complete count. So, if I find another<c> number</c><c> in</c><c> the</c><c> future</c><c> that</c><c> needs</c>
+[19:50] another number in the future that needs
+[19:50] another number in the future that needs a<c> zero</c><c> to</c><c> complete</c><c> the</c><c> equation,</c><c> then</c>
+[19:53] a zero to complete the equation, then
+[19:53] a zero to complete the equation, then you<c> have</c><c> found</c><c> out</c><c> two</c><c> different</c>
+[19:55] you have found out two different
+[19:55] you have found out two different occurrences.<c> That</c><c> means</c><c> you</c><c> found</c><c> out</c>
+[19:57] occurrences. That means you found out
+[19:57] occurrences. That means you found out two<c> arrays.</c><c> One</c><c> will</c><c> be</c><c> the</c><c> shorter</c>
+[19:59] two arrays. One will be the shorter
+[19:59] two arrays. One will be the shorter array<c> and</c><c> one</c><c> will</c><c> be</c><c> the</c><c> longer</c><c> array.</c>
+[20:01] array and one will be the longer array.
+[20:01] array and one will be the longer array. That<c> is</c><c> why</c><c> I'm</c><c> maintaining</c><c> a</c><c> count.</c>
+[20:03] That is why I'm maintaining a count.
+[20:03] That is why I'm maintaining a count. So,<c> up</c><c> till</c><c> now,</c><c> my</c><c> map</c><c> has</c><c> updated</c><c> and</c>
+[20:06] So, up till now, my map has updated and
+[20:06] So, up till now, my map has updated and this<c> is</c><c> my</c><c> current</c><c> scenario.</c>
+[20:08] this is my current scenario.
+[20:08] this is my current scenario. Similarly,<c> what</c><c> you're</c><c> going</c><c> to</c><c> do</c>
+[20:10] Similarly, what you're going to do
+[20:10] Similarly, what you're going to do you<c> keep</c><c> moving</c><c> ahead</c><c> and</c><c> then</c><c> you</c>
+[20:12] you keep moving ahead and then you
+[20:12] you keep moving ahead and then you encounter<c> the</c><c> next</c><c> number.</c><c> 0</c><c> +</c><c> 5</c><c> =</c><c> 5</c>
+[20:15] encounter the next number. 0 + 5 = 5
+[20:15] encounter the next number. 0 + 5 = 5 and<c> then</c><c> 5</c><c> minus</c><c> of</c><c> K,</c><c> that</c><c> is</c><c> 5,</c><c> and</c>
+[20:18] and then 5 minus of K, that is 5, and
+[20:18] and then 5 minus of K, that is 5, and that<c> is</c><c> zero.</c>
+[20:19] that is zero.
+[20:19] that is zero. Have<c> you</c><c> found</c><c> out</c><c> a</c><c> zero</c><c> earlier?</c><c> Yes,</c>
+[20:21] Have you found out a zero earlier? Yes,
+[20:21] Have you found out a zero earlier? Yes, and<c> you</c><c> found</c><c> it</c><c> two</c><c> times.</c>
+[20:24] and you found it two times.
+[20:24] and you found it two times. So,<c> I</c><c> will</c><c> take</c><c> this</c><c> two</c><c> and</c><c> I</c><c> will</c><c> add</c>
+[20:26] So, I will take this two and I will add
+[20:26] So, I will take this two and I will add it<c> to</c><c> my</c><c> total</c><c> count.</c>
+[20:28] it to my total count.
+[20:28] it to my total count. My<c> total</c><c> count</c><c> has</c><c> updated.</c><c> It</c><c> means</c><c> up</c>
+[20:30] My total count has updated. It means up
+[20:30] My total count has updated. It means up till<c> this</c><c> point,</c><c> I</c><c> have</c><c> found</c><c> out</c><c> three</c>
+[20:33] till this point, I have found out three
+[20:33] till this point, I have found out three different<c> sub-arrays.</c>
+[20:34] different sub-arrays.
+[20:34] different sub-arrays. And<c> does</c><c> that</c><c> check</c><c> out?</c>
+[20:36] And does that check out?
+[20:36] And does that check out? This<c> particular</c><c> sub-array</c><c> has</c><c> a</c><c> sum</c><c> of</c>
+[20:38] This particular sub-array has a sum of
+[20:38] This particular sub-array has a sum of five.<c> This</c><c> particular</c><c> sub-array,</c>
+[20:41] five. This particular sub-array,
+[20:41] five. This particular sub-array, although<c> has</c><c> a</c><c> length</c><c> of</c><c> one,</c><c> but</c><c> has</c><c> a</c>
+[20:42] although has a length of one, but has a
+[20:42] although has a length of one, but has a sum<c> of</c><c> five.</c><c> And</c><c> this</c><c> entire</c><c> particular</c>
+[20:45] sum of five. And this entire particular
+[20:45] sum of five. And this entire particular sub-array<c> also</c><c> has</c><c> a</c><c> sum</c><c> of</c><c> five.</c>
+[20:48] sub-array also has a sum of five.
+[20:48] sub-array also has a sum of five. So,<c> up</c><c> till</c><c> this</c><c> point,</c><c> my</c><c> conclusion</c><c> is</c>
+[20:51] So, up till this point, my conclusion is
+[20:51] So, up till this point, my conclusion is valid<c> and</c><c> my</c><c> method</c><c> works</c><c> correctly.</c>
+[20:54] valid and my method works correctly.
+[20:54] valid and my method works correctly. What<c> I'm</c><c> going</c><c> to</c><c> do</c><c> next,</c><c> I</c><c> take</c><c> up</c>
+[20:56] What I'm going to do next, I take up
+[20:56] What I'm going to do next, I take up this<c> five</c><c> and</c><c> I</c><c> increment</c><c> the</c><c> value</c><c> in</c>
+[20:58] this five and I increment the value in
+[20:58] this five and I increment the value in my<c> map.</c>
+[20:59] my map.
+[20:59] my map. This<c> way,</c><c> you</c><c> will</c><c> keep</c><c> on</c><c> proceeding</c>
+[21:01] This way, you will keep on proceeding
+[21:01] This way, you will keep on proceeding ahead<c> for</c><c> each</c><c> of</c><c> the</c><c> element.</c><c> You</c><c> got</c><c> a</c>
+[21:03] ahead for each of the element. You got a
+[21:03] ahead for each of the element. You got a minus<c> five,</c><c> so</c><c> you</c><c> will</c><c> try</c><c> to</c><c> add</c><c> it.</c>
+[21:05] minus five, so you will try to add it.
+[21:05] minus five, so you will try to add it. You<c> got</c><c> a</c><c> zero</c><c> and</c><c> then</c><c> you</c><c> do</c><c> a</c><c> zero</c>
+[21:07] You got a zero and then you do a zero
+[21:07] You got a zero and then you do a zero minus<c> five,</c><c> and</c><c> that</c><c> gives</c><c> you</c><c> a</c><c> minus</c>
+[21:09] minus five, and that gives you a minus
+[21:09] minus five, and that gives you a minus five.<c> You</c><c> don't</c><c> have</c><c> seen</c><c> a</c><c> minus</c><c> five</c>
+[21:11] five. You don't have seen a minus five
+[21:11] five. You don't have seen a minus five earlier,<c> so</c><c> you</c><c> will</c><c> ignore</c><c> it,</c><c> but</c><c> you</c>
+[21:14] earlier, so you will ignore it, but you
+[21:14] earlier, so you will ignore it, but you are<c> going</c><c> to</c><c> update</c><c> this</c><c> value.</c>
+[21:16] are going to update this value.
+[21:16] are going to update this value. This<c> way,</c><c> you</c><c> will</c><c> keep</c><c> on</c><c> iterating</c><c> up</c>
+[21:18] This way, you will keep on iterating up
+[21:18] This way, you will keep on iterating up to<c> the</c><c> very</c><c> end,</c><c> and</c><c> this</c><c> total</c><c> count</c><c> is</c>
+[21:21] to the very end, and this total count is
+[21:21] to the very end, and this total count is going<c> to</c><c> store</c><c> that,</c><c> okay,</c><c> this</c><c> is</c><c> the</c>
+[21:23] going to store that, okay, this is the
+[21:23] going to store that, okay, this is the number<c> of</c><c> sub</c><c> arrays</c><c> that</c><c> you</c><c> have</c><c> found</c>
+[21:25] number of sub arrays that you have found
+[21:25] number of sub arrays that you have found up<c> till</c><c> now.</c>
+[21:27] up till now.
+[21:27] up till now. Do<c> you</c><c> see</c><c> how</c><c> we</c><c> are</c><c> able</c><c> to</c><c> use</c><c> the</c>
+[21:29] Do you see how we are able to use the
+[21:29] Do you see how we are able to use the prefix<c> sum</c><c> pattern?</c><c> It</c><c> is</c><c> not</c><c> intuitive</c>
+[21:31] prefix sum pattern? It is not intuitive
+[21:31] prefix sum pattern? It is not intuitive at<c> first,</c><c> but</c><c> the</c><c> dead</c><c> giveaway</c><c> is</c><c> find</c>
+[21:34] at first, but the dead giveaway is find
+[21:34] at first, but the dead giveaway is find out<c> a</c><c> sub</c><c> array</c><c> with</c><c> a</c><c> particular</c><c> sum.</c>
+[21:37] out a sub array with a particular sum.
+[21:37] out a sub array with a particular sum. And<c> notice,</c><c> this</c><c> just</c><c> works</c><c> in</c><c> a</c><c> single</c>
+[21:39] And notice, this just works in a single
+[21:39] And notice, this just works in a single iteration.<c> It</c><c> does</c><c> require</c><c> a</c><c> map</c><c> to</c>
+[21:42] iteration. It does require a map to
+[21:42] iteration. It does require a map to store<c> your</c><c> prefix</c><c> sum,</c><c> but</c><c> it</c><c> is</c><c> so</c>
+[21:44] store your prefix sum, but it is so
+[21:44] store your prefix sum, but it is so efficient.
+[21:45] efficient.
+[21:45] efficient. And<c> this</c><c> particular</c><c> problem</c><c> is</c>
+[21:47] And this particular problem is
+[21:47] And this particular problem is notoriously<c> famous</c><c> for</c><c> being</c><c> asked</c><c> in</c><c> a</c>
+[21:49] notoriously famous for being asked in a
+[21:49] notoriously famous for being asked in a lot<c> of</c><c> different</c><c> ways.</c>
+[21:51] lot of different ways.
+[21:51] lot of different ways. For<c> example,</c><c> over</c><c> here,</c><c> you</c><c> were</c><c> said</c>
+[21:53] For example, over here, you were said
+[21:53] For example, over here, you were said that,<c> okay,</c><c> the</c><c> sum</c><c> should</c><c> be</c><c> equal</c><c> to</c>
+[21:54] that, okay, the sum should be equal to
+[21:54] that, okay, the sum should be equal to K.
+[21:55] K.
+[21:55] K. It<c> can</c><c> be</c><c> asked</c><c> in</c><c> so</c><c> many</c><c> different</c>
+[21:57] It can be asked in so many different
+[21:57] It can be asked in so many different ways.
+[21:58] ways.
+[21:58] ways. It<c> can</c><c> ask</c><c> you,</c><c> okay,</c><c> find</c><c> out</c><c> the</c><c> sub</c>
+[22:00] It can ask you, okay, find out the sub
+[22:00] It can ask you, okay, find out the sub arrays<c> with</c><c> the</c><c> sum</c><c> of</c><c> zero.</c>
+[22:02] arrays with the sum of zero.
+[22:02] arrays with the sum of zero. Do<c> you</c><c> think</c><c> it</c><c> is</c><c> a</c><c> different</c><c> problem?</c>
+[22:04] Do you think it is a different problem?
+[22:04] Do you think it is a different problem? You<c> just</c><c> need</c><c> to</c><c> substitute</c><c> K</c><c> with</c><c> zero,</c>
+[22:06] You just need to substitute K with zero,
+[22:06] You just need to substitute K with zero, and<c> that</c><c> is</c><c> it.</c>
+[22:07] and that is it.
+[22:07] and that is it. Similarly,<c> you</c><c> can</c><c> be</c><c> asked,</c><c> okay,</c><c> find</c>
+[22:10] Similarly, you can be asked, okay, find
+[22:10] Similarly, you can be asked, okay, find out<c> the</c><c> sub</c><c> arrays</c><c> with</c><c> equal</c><c> number</c><c> of</c>
+[22:12] out the sub arrays with equal number of
+[22:12] out the sub arrays with equal number of ones<c> and</c><c> zeros.</c>
+[22:14] ones and zeros.
+[22:14] ones and zeros. What<c> is</c><c> happening</c><c> over</c><c> here?</c>
+[22:15] What is happening over here?
+[22:15] What is happening over here? All<c> you</c><c> can</c><c> do</c><c> is</c><c> substitute</c><c> all</c><c> of</c><c> the</c>
+[22:18] All you can do is substitute all of the
+[22:18] All you can do is substitute all of the zeros<c> with</c><c> minus</c><c> ones.</c>
+[22:19] zeros with minus ones.
+[22:19] zeros with minus ones. And<c> then,</c><c> once</c><c> again,</c><c> what</c><c> do</c><c> equal</c>
+[22:22] And then, once again, what do equal
+[22:22] And then, once again, what do equal number<c> of</c><c> zeros</c><c> and</c><c> ones</c><c> mean?</c><c> It</c><c> means</c>
+[22:25] number of zeros and ones mean? It means
+[22:25] number of zeros and ones mean? It means that<c> the</c><c> sum</c><c> of</c><c> the</c><c> sub</c><c> array</c><c> should</c><c> be</c>
+[22:27] that the sum of the sub array should be
+[22:27] that the sum of the sub array should be equal<c> to</c><c> zero.</c>
+[22:29] equal to zero.
+[22:29] equal to zero. So,<c> all</c><c> of</c><c> these</c><c> are</c><c> literally</c><c> the</c><c> same</c>
+[22:31] So, all of these are literally the same
+[22:31] So, all of these are literally the same problems.<c> I</c><c> have</c><c> seen</c><c> other</c><c> variations</c>
+[22:33] problems. I have seen other variations
+[22:33] problems. I have seen other variations also,<c> where</c><c> you</c><c> are</c><c> said</c><c> that,</c><c> okay,</c><c> the</c>
+[22:36] also, where you are said that, okay, the
+[22:36] also, where you are said that, okay, the sum<c> should</c><c> be</c><c> the</c><c> modulo</c><c> of</c><c> a</c><c> particular</c>
+[22:38] sum should be the modulo of a particular
+[22:38] sum should be the modulo of a particular number.
+[22:39] number.
+[22:39] number. Now,<c> all</c><c> of</c><c> these</c><c> things,</c><c> they</c><c> are</c>
+[22:41] Now, all of these things, they are
+[22:41] Now, all of these things, they are designed<c> to</c><c> confuse</c><c> you.</c>
+[22:43] designed to confuse you.
+[22:43] designed to confuse you. But<c> the</c><c> underlying</c><c> concept,</c><c> it</c><c> should</c>
+[22:45] But the underlying concept, it should
+[22:45] But the underlying concept, it should remain<c> the</c><c> same.</c><c> So,</c><c> make</c><c> sure</c><c> you</c><c> burn</c>
+[22:48] remain the same. So, make sure you burn
+[22:48] remain the same. So, make sure you burn that<c> concept</c><c> in</c><c> your</c><c> mind.</c>
+[22:49] that concept in your mind.
+[22:49] that concept in your mind. If<c> you</c><c> are</c><c> asked</c><c> about</c><c> a</c><c> sub</c><c> array</c><c> sum</c>
+[22:52] If you are asked about a sub array sum
+[22:52] If you are asked about a sub array sum equaling<c> K,</c>
+[22:53] equaling K,
+[22:53] equaling K, there<c> is</c><c> a</c><c> very</c><c> high</c><c> chance</c><c> that</c><c> you</c>
+[22:55] there is a very high chance that you
+[22:55] there is a very high chance that you need<c> to</c><c> take</c><c> the</c><c> help</c><c> of</c><c> a</c><c> prefix</c><c> sum</c>
+[22:57] need to take the help of a prefix sum
+[22:57] need to take the help of a prefix sum array.
+[22:58] array.
+[22:58] array. The<c> trick</c><c> lies</c><c> in</c><c> the</c><c> part,</c><c> how</c><c> do</c><c> you</c>
+[23:00] The trick lies in the part, how do you
+[23:00] The trick lies in the part, how do you recall<c> the</c><c> values</c><c> that</c><c> you</c><c> have</c><c> already</c>
+[23:02] recall the values that you have already
+[23:02] recall the values that you have already encountered?
+[23:03] encountered?
+[23:03] encountered? Based<c> upon</c><c> a</c><c> very</c><c> similar</c><c> concept,</c><c> let</c>
+[23:05] Based upon a very similar concept, let
+[23:05] Based upon a very similar concept, let us<c> look</c><c> at</c><c> one</c><c> more</c><c> problem</c><c> that</c>
+[23:07] us look at one more problem that
+[23:07] us look at one more problem that involves<c> the</c><c> prefix</c><c> sum</c><c> pattern.</c>
+[23:09] involves the prefix sum pattern.
+[23:09] involves the prefix sum pattern. This<c> is</c><c> known</c><c> as</c><c> the</c><c> longest</c><c> subarray</c>
+[23:11] This is known as the longest subarray
+[23:11] This is known as the longest subarray sum<c> equals</c><c> K.</c>
+[23:13] sum equals K.
+[23:13] sum equals K. So,<c> up</c><c> till</c><c> now,</c><c> we</c><c> were</c><c> just</c><c> counting</c>
+[23:15] So, up till now, we were just counting
+[23:15] So, up till now, we were just counting the<c> number</c><c> of</c><c> subarrays.</c>
+[23:17] the number of subarrays.
+[23:17] the number of subarrays. This<c> time,</c><c> I</c><c> want</c><c> to</c><c> find</c><c> out</c><c> the</c>
+[23:19] This time, I want to find out the
+[23:19] This time, I want to find out the longest<c> subarray</c><c> out</c><c> of</c><c> all</c><c> of</c><c> those</c>
+[23:21] longest subarray out of all of those
+[23:21] longest subarray out of all of those subarrays<c> such</c><c> that</c><c> the</c><c> sum</c><c> equals</c><c> K.</c>
+[23:24] subarrays such that the sum equals K.
+[23:24] subarrays such that the sum equals K. So,<c> once</c><c> again,</c><c> you</c><c> are</c><c> given</c><c> an</c><c> array</c>
+[23:26] So, once again, you are given an array
+[23:26] So, once again, you are given an array of<c> integers</c>
+[23:27] of integers
+[23:27] of integers and<c> you</c><c> are</c><c> given</c><c> a</c><c> value</c><c> K.</c>
+[23:29] and you are given a value K.
+[23:29] and you are given a value K. Now,<c> you</c><c> have</c><c> to</c><c> tell</c><c> me</c><c> what</c><c> is</c><c> the</c>
+[23:31] Now, you have to tell me what is the
+[23:31] Now, you have to tell me what is the longest<c> subarray</c><c> that</c><c> the</c><c> sum</c><c> is</c><c> K.</c>
+[23:34] longest subarray that the sum is K.
+[23:34] longest subarray that the sum is K. For<c> example,</c><c> if</c><c> you</c><c> notice,</c><c> this</c><c> is</c><c> a</c>
+[23:36] For example, if you notice, this is a
+[23:36] For example, if you notice, this is a subarray<c> with</c><c> just</c><c> a</c><c> single</c><c> element.</c><c> Its</c>
+[23:39] subarray with just a single element. Its
+[23:39] subarray with just a single element. Its sum<c> is</c><c> four.</c>
+[23:40] sum is four.
+[23:40] sum is four. This<c> is</c><c> a</c><c> even</c><c> bigger</c><c> subarray.</c><c> Its</c>
+[23:43] This is a even bigger subarray. Its
+[23:43] This is a even bigger subarray. Its length<c> is</c><c> four</c><c> and</c><c> its</c><c> sum</c><c> is</c><c> also</c><c> four.</c>
+[23:45] length is four and its sum is also four.
+[23:45] length is four and its sum is also four. This<c> is</c><c> a</c><c> shorter</c><c> subarray</c><c> with</c><c> a</c><c> sum</c><c> of</c>
+[23:48] This is a shorter subarray with a sum of
+[23:48] This is a shorter subarray with a sum of four<c> but</c><c> length</c><c> of</c><c> two.</c>
+[23:50] four but length of two.
+[23:50] four but length of two. So,<c> in</c><c> this</c><c> case,</c><c> what</c><c> will</c><c> be</c><c> your</c>
+[23:51] So, in this case, what will be your
+[23:51] So, in this case, what will be your answer?
+[23:52] answer?
+[23:52] answer? This<c> array</c><c> will</c><c> be</c><c> your</c><c> answer.</c>
+[23:55] This array will be your answer.
+[23:55] This array will be your answer. You<c> can</c><c> easily</c><c> see</c><c> that</c><c> how</c><c> this</c><c> problem</c>
+[23:57] You can easily see that how this problem
+[23:57] You can easily see that how this problem can<c> be</c><c> tricky.</c>
+[23:58] can be tricky.
+[23:58] can be tricky. If<c> you</c><c> start</c><c> adding</c><c> negative</c><c> numbers</c><c> to</c>
+[24:00] If you start adding negative numbers to
+[24:00] If you start adding negative numbers to it,<c> once</c><c> again,</c><c> the</c><c> opportunities</c><c> and</c>
+[24:03] it, once again, the opportunities and
+[24:03] it, once again, the opportunities and the<c> boundaries</c><c> can</c><c> increase.</c>
+[24:05] the boundaries can increase.
+[24:05] the boundaries can increase. You<c> can</c><c> have</c><c> a</c><c> even</c><c> bigger</c><c> subarray.</c>
+[24:08] You can have a even bigger subarray.
+[24:08] You can have a even bigger subarray. So,<c> how</c><c> do</c><c> you</c><c> go</c><c> about</c><c> it?</c>
+[24:11] So, how do you go about it?
+[24:11] So, how do you go about it? Let<c> us</c><c> recall</c><c> the</c><c> idea</c><c> of</c><c> the</c><c> prefix</c><c> sum</c>
+[24:13] Let us recall the idea of the prefix sum
+[24:13] Let us recall the idea of the prefix sum that<c> we</c><c> had.</c>
+[24:14] that we had.
+[24:14] that we had. For<c> example,</c><c> if</c><c> I</c><c> have</c><c> this</c><c> particular</c>
+[24:16] For example, if I have this particular
+[24:16] For example, if I have this particular array<c> and</c><c> I</c><c> have</c><c> two</c><c> positions</c><c> I</c><c> and</c><c> J.</c>
+[24:19] array and I have two positions I and J.
+[24:19] array and I have two positions I and J. The<c> value</c><c> of</c><c> K</c><c> is</c><c> four,</c><c> correct?</c>
+[24:21] The value of K is four, correct?
+[24:21] The value of K is four, correct? So,<c> what</c><c> is</c><c> the</c><c> prefix</c><c> sum</c><c> until</c><c> this</c>
+[24:24] So, what is the prefix sum until this
+[24:24] So, what is the prefix sum until this particular<c> position?</c>
+[24:26] particular position?
+[24:26] particular position? Until<c> the</c><c> position</c><c> I,</c><c> the</c><c> prefix</c><c> sum</c><c> is</c>
+[24:28] Until the position I, the prefix sum is
+[24:28] Until the position I, the prefix sum is 14,<c> correct?</c>
+[24:29] 14, correct?
+[24:30] 14, correct? And<c> what</c><c> is</c><c> the</c><c> prefix</c><c> sum</c><c> until</c>
+[24:31] And what is the prefix sum until
+[24:31] And what is the prefix sum until position<c> J?</c><c> If</c><c> you</c><c> add</c><c> up</c><c> all</c><c> of</c><c> these</c>
+[24:34] position J? If you add up all of these
+[24:34] position J? If you add up all of these elements,<c> you</c><c> get</c><c> the</c><c> sum</c><c> of</c><c> 18.</c>
+[24:36] elements, you get the sum of 18.
+[24:36] elements, you get the sum of 18. How<c> do</c><c> you</c><c> find</c><c> out</c><c> this</c><c> particular</c><c> sum?</c>
+[24:39] How do you find out this particular sum?
+[24:39] How do you find out this particular sum? What<c> we</c><c> did</c><c> is</c><c> we</c><c> subtracted</c><c> this</c>
+[24:42] What we did is we subtracted this
+[24:42] What we did is we subtracted this difference.<c> Prefix</c><c> sum</c><c> at</c><c> J</c><c> minus</c><c> prefix</c>
+[24:45] difference. Prefix sum at J minus prefix
+[24:45] difference. Prefix sum at J minus prefix sum<c> at</c><c> I.</c>
+[24:46] sum at I.
+[24:46] sum at I. You<c> are</c><c> remaining</c><c> with</c><c> a</c><c> certain</c>
+[24:48] You are remaining with a certain
+[24:48] You are remaining with a certain subarray.
+[24:49] subarray.
+[24:49] subarray. And<c> if</c><c> this</c><c> value</c><c> is</c><c> equal</c><c> to</c><c> K,</c>
+[24:52] And if this value is equal to K,
+[24:52] And if this value is equal to K, then<c> this</c><c> is</c><c> a</c><c> valid</c><c> subarray,</c><c> correct?</c>
+[24:54] then this is a valid subarray, correct?
+[24:55] then this is a valid subarray, correct? So,<c> let</c><c> us</c><c> establish</c><c> some</c><c> of</c><c> the</c><c> similar</c>
+[24:56] So, let us establish some of the similar
+[24:56] So, let us establish some of the similar groundwork.<c> We</c><c> have</c><c> an</c><c> array</c><c> and</c><c> I</c><c> have</c>
+[24:59] groundwork. We have an array and I have
+[24:59] groundwork. We have an array and I have maintained<c> a</c><c> map.</c><c> Earlier,</c><c> I</c><c> was</c><c> keeping</c>
+[25:02] maintained a map. Earlier, I was keeping
+[25:02] maintained a map. Earlier, I was keeping a<c> map</c><c> of</c><c> the</c><c> sum</c><c> and</c><c> the</c><c> count.</c>
+[25:04] a map of the sum and the count.
+[25:04] a map of the sum and the count. This<c> time,</c><c> I'm</c><c> interested</c><c> in</c><c> a</c><c> longest</c>
+[25:07] This time, I'm interested in a longest
+[25:07] This time, I'm interested in a longest subarray.
+[25:08] subarray.
+[25:08] subarray. So<c> instead</c><c> of</c><c> the</c><c> count,</c><c> I'm</c><c> going</c><c> to</c>
+[25:10] So instead of the count, I'm going to
+[25:10] So instead of the count, I'm going to maintain<c> that,</c><c> okay,</c><c> what</c><c> is</c><c> the</c><c> first</c>
+[25:13] maintain that, okay, what is the first
+[25:13] maintain that, okay, what is the first occurrence<c> of</c><c> the</c><c> sum</c><c> that</c><c> I</c>
+[25:15] occurrence of the sum that I
+[25:15] occurrence of the sum that I particularly<c> saw?</c>
+[25:16] particularly saw?
+[25:16] particularly saw? Notice<c> that</c><c> if</c><c> I</c><c> see</c><c> zero</c><c> multiple</c>
+[25:19] Notice that if I see zero multiple
+[25:19] Notice that if I see zero multiple times,
+[25:20] times,
+[25:20] times, then<c> I</c><c> want</c><c> the</c><c> longest</c><c> subarray.</c>
+[25:23] then I want the longest subarray.
+[25:23] then I want the longest subarray. We<c> were</c><c> counting</c><c> it</c><c> twice,</c><c> but</c><c> this</c>
+[25:25] We were counting it twice, but this
+[25:25] We were counting it twice, but this time,<c> I'm</c><c> interested</c><c> in</c><c> the</c><c> first</c>
+[25:27] time, I'm interested in the first
+[25:27] time, I'm interested in the first position<c> where</c><c> I</c><c> found</c><c> the</c><c> sum</c><c> zero.</c><c> So</c>
+[25:29] position where I found the sum zero. So
+[25:29] position where I found the sum zero. So I<c> will</c><c> be</c><c> looking</c><c> at</c><c> a</c><c> longer</c><c> array.</c>
+[25:32] I will be looking at a longer array.
+[25:32] I will be looking at a longer array. And<c> now,</c><c> what</c><c> we're</c><c> going</c><c> to</c><c> do</c><c> is</c><c> we</c>
+[25:34] And now, what we're going to do is we
+[25:34] And now, what we're going to do is we are<c> going</c><c> to</c><c> apply</c><c> exactly</c><c> the</c><c> same</c>
+[25:35] are going to apply exactly the same
+[25:35] are going to apply exactly the same concept.<c> You</c><c> start</c><c> from</c><c> the</c><c> very</c><c> first</c>
+[25:38] concept. You start from the very first
+[25:38] concept. You start from the very first position.
+[25:39] position.
+[25:39] position. You<c> have</c><c> the</c><c> sum</c><c> as</c><c> five.</c>
+[25:41] You have the sum as five.
+[25:41] You have the sum as five. So<c> 5</c><c> -</c><c> 4</c>
+[25:43] So 5 - 4
+[25:43] So 5 - 4 is<c> one.</c>
+[25:44] is one.
+[25:44] is one. And<c> have</c><c> you</c><c> seen</c><c> one</c><c> in</c><c> your</c><c> array?</c><c> No.</c>
+[25:48] And have you seen one in your array? No.
+[25:48] And have you seen one in your array? No. So<c> what</c><c> I'm</c><c> going</c><c> to</c><c> do</c><c> is</c><c> I</c><c> will</c><c> take</c>
+[25:49] So what I'm going to do is I will take
+[25:49] So what I'm going to do is I will take up<c> this</c><c> five</c><c> and</c><c> I</c><c> will</c><c> add</c><c> it</c><c> in</c><c> my</c>
+[25:52] up this five and I will add it in my
+[25:52] up this five and I will add it in my array.
+[25:53] array.
+[25:53] array. I<c> add</c><c> the</c><c> sum</c><c> as</c><c> five</c><c> and</c><c> what</c><c> position</c>
+[25:55] I add the sum as five and what position
+[25:55] I add the sum as five and what position did<c> I</c><c> see</c><c> it</c><c> at?</c><c> I</c><c> saw</c><c> it</c><c> at</c><c> the</c>
+[25:58] did I see it at? I saw it at the
+[25:58] did I see it at? I saw it at the position<c> zero.</c>
+[25:59] position zero.
+[25:59] position zero. And<c> now</c><c> what</c><c> do</c><c> you</c><c> do?</c><c> Simply</c><c> take</c><c> your</c>
+[26:01] And now what do you do? Simply take your
+[26:01] And now what do you do? Simply take your pointer<c> and</c><c> move</c><c> it</c><c> to</c><c> the</c><c> next</c>
+[26:02] pointer and move it to the next
+[26:02] pointer and move it to the next location.
+[26:04] location.
+[26:04] location. You<c> add</c><c> up</c><c> the</c><c> number.</c><c> Prefix</c><c> sum</c><c> is</c><c> 5</c><c> +</c>
+[26:06] You add up the number. Prefix sum is 5 +
+[26:06] You add up the number. Prefix sum is 5 + 2<c> and</c><c> that</c><c> is</c><c> seven.</c>
+[26:07] 2 and that is seven.
+[26:07] 2 and that is seven. 7<c> -</c><c> 4</c><c> is</c><c> three.</c>
+[26:10] 7 - 4 is three.
+[26:10] 7 - 4 is three. Have<c> you</c><c> seen</c><c> a</c><c> three</c><c> earlier?</c><c> No.</c><c> So</c><c> I</c>
+[26:12] Have you seen a three earlier? No. So I
+[26:12] Have you seen a three earlier? No. So I will<c> add</c><c> seven</c><c> and</c><c> I</c><c> will</c><c> say</c><c> one.</c>
+[26:15] will add seven and I will say one.
+[26:15] will add seven and I will say one. It<c> means</c><c> that</c><c> I</c><c> saw</c><c> a</c><c> sum</c><c> of</c><c> seven</c><c> at</c>
+[26:17] It means that I saw a sum of seven at
+[26:17] It means that I saw a sum of seven at the<c> position</c><c> one.</c>
+[26:18] the position one.
+[26:18] the position one. Move<c> to</c><c> the</c><c> next</c><c> location.</c>
+[26:20] Move to the next location.
+[26:21] Move to the next location. The<c> next</c><c> number</c><c> is</c><c> two.</c>
+[26:22] The next number is two.
+[26:22] The next number is two. So<c> I</c><c> get</c><c> a</c><c> nine.</c><c> 9</c><c> -</c><c> 4</c>
+[26:25] So I get a nine. 9 - 4
+[26:25] So I get a nine. 9 - 4 that<c> is</c><c> five.</c>
+[26:27] that is five.
+[26:27] that is five. Now<c> you</c><c> check,</c><c> have</c><c> you</c><c> seen</c><c> a</c><c> five</c>
+[26:29] Now you check, have you seen a five
+[26:29] Now you check, have you seen a five earlier?<c> You</c><c> saw</c><c> a</c><c> five</c><c> at</c><c> the</c><c> zeroth</c>
+[26:32] earlier? You saw a five at the zeroth
+[26:32] earlier? You saw a five at the zeroth index.
+[26:33] index.
+[26:33] index. It<c> means</c><c> that</c><c> you</c><c> have</c><c> found</c><c> out</c><c> a</c><c> valid</c>
+[26:35] It means that you have found out a valid
+[26:35] It means that you have found out a valid subarray.
+[26:36] subarray.
+[26:37] subarray. And<c> what</c><c> is</c><c> its</c><c> length?</c><c> Its</c><c> length</c><c> will</c>
+[26:39] And what is its length? Its length will
+[26:39] And what is its length? Its length will be<c> the</c><c> current</c><c> index</c><c> minus</c><c> when</c><c> you</c>
+[26:41] be the current index minus when you
+[26:41] be the current index minus when you first<c> saw</c><c> it.</c>
+[26:42] first saw it.
+[26:42] first saw it. So<c> 2</c><c> -</c><c> 0</c><c> and</c><c> that</c><c> is</c><c> a</c><c> two.</c>
+[26:45] So 2 - 0 and that is a two.
+[26:45] So 2 - 0 and that is a two. So<c> I'm</c><c> maintaining</c><c> a</c><c> variable</c><c> result</c>
+[26:47] So I'm maintaining a variable result
+[26:48] So I'm maintaining a variable result max.<c> It</c><c> means</c><c> the</c><c> maximum</c><c> subarray</c><c> I</c>
+[26:50] max. It means the maximum subarray I
+[26:50] max. It means the maximum subarray I have<c> seen</c><c> so</c><c> far.</c>
+[26:52] have seen so far.
+[26:52] have seen so far. So,<c> I</c><c> store</c><c> a</c><c> two</c><c> in</c><c> here.</c>
+[26:54] So, I store a two in here.
+[26:54] So, I store a two in here. Now<c> you're</c><c> getting</c><c> the</c><c> idea,</c><c> right?</c>
+[26:56] Now you're getting the idea, right?
+[26:56] Now you're getting the idea, right? Similarly,<c> what</c><c> you</c><c> can</c><c> do</c><c> is</c><c> you</c><c> can</c>
+[26:58] Similarly, what you can do is you can
+[26:58] Similarly, what you can do is you can move<c> on</c><c> to</c><c> the</c><c> next</c><c> element.</c>
+[27:00] move on to the next element.
+[27:00] move on to the next element. 9<c> +</c><c> 5</c><c> is</c><c> 14.</c>
+[27:03] 9 + 5 is 14.
+[27:03] 9 + 5 is 14. 14<c> -</c><c> 4</c><c> is</c><c> 10.</c>
+[27:05] 14 - 4 is 10.
+[27:05] 14 - 4 is 10. Have<c> you</c><c> seen</c><c> a</c><c> 10</c><c> earlier?</c><c> No,</c><c> but</c><c> you</c>
+[27:07] Have you seen a 10 earlier? No, but you
+[27:07] Have you seen a 10 earlier? No, but you need<c> to</c><c> add</c><c> 14</c><c> to</c><c> your</c><c> sum.</c>
+[27:10] need to add 14 to your sum.
+[27:10] need to add 14 to your sum. This<c> way,</c><c> you</c><c> will</c><c> continue</c><c> on</c><c> for</c><c> every</c>
+[27:12] This way, you will continue on for every
+[27:12] This way, you will continue on for every index,<c> and</c><c> you</c><c> will</c><c> notice</c><c> that</c><c> when</c>
+[27:15] index, and you will notice that when
+[27:15] index, and you will notice that when your<c> pointer</c><c> moves</c><c> over</c><c> here,</c>
+[27:17] your pointer moves over here,
+[27:17] your pointer moves over here, you<c> will</c><c> find</c><c> the</c><c> sum</c><c> to</c><c> be</c><c> 18,</c><c> and</c><c> you</c>
+[27:19] you will find the sum to be 18, and you
+[27:19] you will find the sum to be 18, and you will<c> find</c><c> the</c><c> sum</c><c> to</c><c> be</c><c> 14</c><c> over</c><c> here.</c>
+[27:22] will find the sum to be 14 over here.
+[27:22] will find the sum to be 14 over here. 18<c> -</c><c> 14</c><c> gives</c><c> you</c><c> a</c><c> four,</c>
+[27:24] 18 - 14 gives you a four,
+[27:24] 18 - 14 gives you a four, and<c> you</c><c> will</c><c> compare.</c><c> Have</c><c> you</c><c> found</c><c> out</c>
+[27:26] and you will compare. Have you found out
+[27:26] and you will compare. Have you found out a<c> bigger</c><c> sub</c><c> array?</c><c> Yes.</c><c> So,</c><c> you're</c>
+[27:29] a bigger sub array? Yes. So, you're
+[27:29] a bigger sub array? Yes. So, you're going<c> to</c><c> update</c><c> this</c><c> two</c><c> to</c><c> four</c>
+[27:31] going to update this two to four
+[27:31] going to update this two to four because<c> that</c><c> is</c><c> what</c><c> you</c><c> want.</c><c> You</c><c> want</c>
+[27:33] because that is what you want. You want
+[27:33] because that is what you want. You want to<c> find</c><c> out</c><c> all</c><c> of</c><c> the</c><c> different</c><c> sub</c>
+[27:35] to find out all of the different sub
+[27:35] to find out all of the different sub arrays<c> and</c><c> keep</c><c> a</c><c> track</c><c> of</c><c> the</c><c> longest</c>
+[27:37] arrays and keep a track of the longest
+[27:37] arrays and keep a track of the longest that<c> you</c><c> have</c><c> found</c><c> till</c><c> now.</c>
+[27:39] that you have found till now.
+[27:39] that you have found till now. And<c> once</c><c> again,</c><c> this</c><c> is</c><c> how</c><c> prefix</c><c> sum</c>
+[27:41] And once again, this is how prefix sum
+[27:41] And once again, this is how prefix sum comes<c> to</c><c> your</c><c> rescue.</c><c> We</c><c> just</c><c> did</c><c> a</c>
+[27:43] comes to your rescue. We just did a
+[27:43] comes to your rescue. We just did a single<c> iteration</c><c> of</c><c> the</c><c> array,</c><c> and</c><c> we</c>
+[27:45] single iteration of the array, and we
+[27:45] single iteration of the array, and we have<c> a</c><c> very</c><c> efficient</c><c> solution.</c>
+[27:48] have a very efficient solution.
+[27:48] have a very efficient solution. Now,<c> these</c><c> are</c><c> some</c><c> of</c><c> the</c><c> problems</c>
+[27:50] Now, these are some of the problems
+[27:50] Now, these are some of the problems where<c> a</c><c> prefix</c><c> sum</c><c> pattern</c><c> actually</c>
+[27:52] where a prefix sum pattern actually
+[27:52] where a prefix sum pattern actually comes<c> in</c><c> very,</c><c> very</c><c> handy.</c>
+[27:54] comes in very, very handy.
+[27:54] comes in very, very handy. I<c> hope</c><c> this</c><c> is</c><c> now</c><c> giving</c><c> you</c><c> a</c><c> very</c>
+[27:56] I hope this is now giving you a very
+[27:56] I hope this is now giving you a very good<c> idea</c><c> where</c><c> you</c><c> can</c><c> start</c><c> to</c><c> apply</c>
+[27:58] good idea where you can start to apply
+[27:58] good idea where you can start to apply the<c> prefix</c><c> sum.</c>
+[27:59] the prefix sum.
+[27:59] the prefix sum. As<c> soon</c><c> as</c><c> you</c><c> see</c><c> that,</c><c> okay,</c><c> I</c><c> need</c><c> a</c>
+[28:02] As soon as you see that, okay, I need a
+[28:02] As soon as you see that, okay, I need a sub<c> array</c><c> with</c><c> a</c><c> particular</c><c> sum.</c>
+[28:04] sub array with a particular sum.
+[28:04] sub array with a particular sum. Especially<c> if</c><c> it's</c><c> an</c><c> integer</c><c> array.</c>
+[28:06] Especially if it's an integer array.
+[28:06] Especially if it's an integer array. This<c> is</c><c> where</c><c> a</c><c> prefix</c><c> sum</c><c> concept</c><c> can</c>
+[28:08] This is where a prefix sum concept can
+[28:08] This is where a prefix sum concept can come<c> very,</c><c> very</c><c> handy.</c>
+[28:10] come very, very handy.
+[28:10] come very, very handy. So,<c> when</c><c> going</c><c> through</c><c> all</c><c> the</c><c> video,</c>
+[28:11] So, when going through all the video,
+[28:11] So, when going through all the video, did<c> you</c><c> face</c><c> any</c><c> problems?</c><c> And</c><c> what</c>
+[28:14] did you face any problems? And what
+[28:14] did you face any problems? And what other<c> problems</c><c> have</c><c> you</c><c> found</c><c> out</c><c> that</c>
+[28:16] other problems have you found out that
+[28:16] other problems have you found out that involves<c> the</c><c> prefix</c><c> sum</c><c> pattern?</c>
+[28:18] involves the prefix sum pattern?
+[28:18] involves the prefix sum pattern? Tell<c> me</c><c> everything</c><c> in</c><c> the</c><c> comment</c>
+[28:19] Tell me everything in the comment
+[28:19] Tell me everything in the comment section<c> below,</c><c> and</c><c> it</c><c> will</c><c> become</c><c> a</c><c> very</c>
+[28:21] section below, and it will become a very
+[28:21] section below, and it will become a very good<c> place</c><c> for</c><c> all</c><c> of</c><c> the</c><c> discussion.</c><c> I</c>
+[28:23] good place for all of the discussion. I
+[28:23] good place for all of the discussion. I will<c> be</c><c> happy</c><c> to</c><c> understand</c><c> all</c><c> of</c><c> these</c>
+[28:25] will be happy to understand all of these
+[28:25] will be happy to understand all of these problems,<c> and</c><c> I</c><c> can</c><c> solve</c><c> all</c><c> of</c><c> these</c>
+[28:27] problems, and I can solve all of these
+[28:27] problems, and I can solve all of these doubts<c> as</c><c> well.</c>
+[28:28] doubts as well.
+[28:28] doubts as well. And<c> if</c><c> you're</c><c> liking</c><c> all</c><c> of</c><c> this</c><c> type</c><c> of</c>
+[28:30] And if you're liking all of this type of
+[28:30] And if you're liking all of this type of content,<c> please</c><c> do</c><c> consider</c><c> subscribing</c>
+[28:32] content, please do consider subscribing
+[28:32] content, please do consider subscribing to<c> my</c><c> channel</c><c> and</c><c> share</c><c> this</c><c> video</c><c> with</c>
+[28:33] to my channel and share this video with
+[28:33] to my channel and share this video with your<c> friends.</c><c> This</c><c> really</c><c> keeps</c><c> me</c>
+[28:35] your friends. This really keeps me
+[28:35] your friends. This really keeps me motivated,<c> and</c><c> I</c><c> can</c><c> make</c><c> more</c><c> such</c>
+[28:36] motivated, and I can make more such
+[28:36] motivated, and I can make more such videos.
+[28:37] videos.
+[28:37] videos. Also,<c> a</c><c> huge</c><c> shout-out</c><c> to</c><c> all</c><c> of</c><c> the</c>
+[28:39] Also, a huge shout-out to all of the
+[28:39] Also, a huge shout-out to all of the members<c> who</c><c> support</c><c> my</c><c> channel.</c><c> You</c><c> guys</c>
+[28:40] members who support my channel. You guys
+[28:40] members who support my channel. You guys really<c> keep</c><c> me</c><c> going.</c><c> And</c><c> as</c><c> a</c><c> member,</c>
+[28:42] really keep me going. And as a member,
+[28:43] really keep me going. And as a member, you<c> do</c><c> get</c><c> priority</c><c> reply</c><c> to</c><c> your</c>
+[28:44] you do get priority reply to your
+[28:44] you do get priority reply to your comments<c> and</c><c> early</c><c> access</c><c> to</c><c> new</c><c> videos</c>
+[28:45] comments and early access to new videos
+[28:45] comments and early access to new videos as<c> well.</c>
+[28:46] as well.
+[28:46] as well. Also,<c> remember</c><c> that</c><c> now</c><c> you</c><c> can</c><c> schedule</c>
+[28:48] Also, remember that now you can schedule
+[28:48] Also, remember that now you can schedule one-to-one<c> sessions</c><c> with</c><c> me</c><c> and</c><c> we</c><c> can</c>
+[28:50] one-to-one sessions with me and we can
+[28:50] one-to-one sessions with me and we can discuss<c> about</c><c> almost</c><c> anything.</c>
+[28:52] discuss about almost anything.
+[28:52] discuss about almost anything. Stay<c> tuned</c><c> for</c><c> my</c><c> upcoming</c><c> video.</c><c> Until</c>
+[28:54] Stay tuned for my upcoming video. Until
+[28:54] Stay tuned for my upcoming video. Until then,<c> see</c><c> ya.</c>

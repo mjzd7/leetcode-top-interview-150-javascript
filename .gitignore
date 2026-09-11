@@ -1,0 +1,16 @@
+# Raw video downloads (regenerable via yt-dlp; exceed GitHub's 100MB/file limit)
+00-foundations/video-transcripts/*/download/
+
+# Agent working state (session continuations, not curriculum content)
+.omo/
+
+# Dependencies
+node_modules/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Generated web bundle (rebuilt by CI via `npm run build` and locally as needed)
+docs/curriculum-data.js
