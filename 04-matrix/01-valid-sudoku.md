@@ -175,9 +175,9 @@ function isValidSudokuBruteForce(board) {
 
 ### Intuition & Visual Bottleneck Elimination
 Instead of scanning the grid three times, we can inspect each cell $(r, c)$ exactly once. If the cell contains a digit $v$, we construct three unique descriptor keys:
-- Row presence: `r-${r}-${v}`
-- Col presence: `c-${c}-${v}`
-- Box presence: `b-${boxIdx}-${v}` where `boxIdx = Math.floor(r / 3) * 3 + Math.floor(c / 3)`.
+- Row presence: `r${r}:${val}`
+- Col presence: `c${c}:${val}`
+- Box presence: `b${boxIdx}:${val}` where `boxIdx = Math.floor(r / 3) * 3 + Math.floor(c / 3)`.
 
 If any of these three keys is already in our `Set`, the board violates Sudoku rules and we immediately return `false`.
 

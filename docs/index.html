@@ -34,6 +34,9 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
@@ -70,10 +73,11 @@
       font-size: 0.82rem;
       line-height: 1.6;
     }
-    .prose pre code { font-family: "JetBrains Mono", ui-monospace, monospace; }
-    .prose table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.85rem; display: block; overflow-x: auto; }
-    .prose thead, .prose tbody { display: table; width: 100%; }
-    .prose th, .prose td { border: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; }
+    .prose pre code { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+    .prose .table-scroll { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--line); border-radius: 0.75rem; }
+    .prose .table-scroll table { margin: 0; min-width: 640px; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.85rem; }
+    .prose th, .prose td { border: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
     .prose th { background: rgba(200, 250, 75, 0.06); font-weight: 600; color: var(--accent); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
     .prose h1 { font-family: "Space Grotesk", sans-serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem; }
     .prose h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.8rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
@@ -85,13 +89,20 @@
     .prose code:not(pre code) {
       background: rgba(200, 250, 75, 0.09); color: var(--accent);
       padding: 0.15rem 0.42rem; border-radius: 0.375rem;
-      font-size: 0.85em; font-family: "JetBrains Mono", monospace; white-space: nowrap;
+      font-size: 0.85em; font-family: "JetBrains Mono", monospace; white-space: normal;
+      overflow-wrap: anywhere; word-break: break-word;
     }
+    .prose code.primer-path { background: rgba(139,148,167,.12); color: #AEB8CC; cursor: help; }
+    .katex { font-size: 1.02em; }
+    .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
     .prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
     .mermaid {
       background: #0A0D13; border: 1px solid var(--line); border-radius: 0.75rem;
       padding: 1.25rem; margin: 1.4rem 0; display: flex; justify-content: center; overflow-x: auto;
+      align-items: flex-start;
     }
+    .mermaid svg { max-width: 620px !important; width: 100%; height: auto; }
+    .mermaid .edgeLabel { background-color: #1A2130 !important; color: #E9EDF4 !important; }
     .nav-item { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
     .mod-bar { height: 3px; border-radius: 999px; background: #1C2333; overflow: hidden; }
     .mod-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s ease; }
@@ -313,6 +324,7 @@
             '<span class="shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
             '<span class="truncate flex-1 ' + (done && !active ? 'line-through opacity-60' : '') + '">' + esc(item.title) + '</span>' +
             badge(item.difficulty);
+          btn.title = item.title;
           btn.onclick = () => openArticle(item.id);
           list.appendChild(btn);
         });
@@ -328,7 +340,7 @@
       const done = doneSet.has(item.id);
       crumbRow.classList.remove('hidden');
       crumbRow.classList.add('flex');
-      crumbRow.innerHTML = '<span>' + esc(category) + '</span><span>/</span><span class="text-slate-300">' + esc(item.difficulty) + '</span>';
+      crumbRow.innerHTML = '<span>' + esc(category) + '</span><span>/</span><span class="text-slate-300">' + esc((item.pattern || '').split('/')[0].trim() || item.difficulty) + '</span>';
       articleHead.innerHTML =
         '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
         '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
@@ -370,6 +382,7 @@
         const a = document.createElement('a');
         a.href = '#' + h.id;
         a.textContent = h.textContent;
+        a.title = h.textContent;
         a.className = 'toc-link block text-[13px] text-slate-400 hover:text-slate-200 pl-3 py-1 border-l-2 border-transparent truncate';
         a.onclick = (e) => {
           e.preventDefault();
@@ -382,6 +395,22 @@
     }
 
     function enhanceCodeBlocks() {
+      // Wrap tables for safe mobile horizontal scroll (global fix)
+      contentArea.querySelectorAll('table').forEach(tbl => {
+        if (tbl.parentElement && tbl.parentElement.classList.contains('table-scroll')) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'table-scroll';
+        tbl.replaceWith(wrap);
+        wrap.appendChild(tbl);
+      });
+      // Tag raw primer file-paths so they show a tooltip instead of looking broken
+      contentArea.querySelectorAll('code').forEach(c => {
+        if (c.closest('pre')) return;
+        if (/\.md$/.test(c.textContent.trim())) {
+          c.classList.add('primer-path');
+          c.title = c.textContent.trim();
+        }
+      });
       contentArea.querySelectorAll('pre code').forEach(block => {
         if (block.classList.contains('language-mermaid')) {
           const div = document.createElement('div');
@@ -436,8 +465,27 @@
       }
       if (window.mermaid) {
         try {
-          mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 40, rankSpacing: 50 },
+            themeVariables: { edgeLabelBackground: '#1A2130', primaryTextColor: '#E9EDF4' }
+          });
           await mermaid.run();
+        } catch (e) {}
+      }
+      // Global math fix: render $...$ / $$...$$ outside pre/code (skips JS template literals)
+      if (window.renderMathInElement) {
+        try {
+          renderMathInElement(contentArea, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            throwOnError: false
+          });
         } catch (e) {}
       }
       renderTOC();
