@@ -51,8 +51,9 @@
       --accent: #C8FA4B;
       --accent-ink: #101303;
     }
-    html { background: var(--bg); }
-    body { background:
+    html { background: var(--bg); overflow-x: hidden; overflow-x: clip; }
+    body { overflow-x: hidden; overflow-x: clip;
+      background:
       radial-gradient(1100px 420px at 85% -10%, rgba(200, 250, 75, 0.055), transparent 60%),
       radial-gradient(900px 500px at -10% 110%, rgba(139, 92, 246, 0.06), transparent 60%),
       var(--bg);
@@ -96,7 +97,7 @@
     .prose code.primer-link { cursor: pointer; }
     .prose code.primer-link:hover { background: rgba(200,250,75,.18); }
     .prose a > code { text-decoration: underline; text-underline-offset: 3px; }
-    .katex { font-size: 1.02em; }
+    .katex { font-size: 1.02em; position: relative; }
     .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
     .prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
     .mermaid {
@@ -115,7 +116,9 @@
     .pal-item[aria-selected="true"] { background: rgba(200, 250, 75, 0.1); }
     .copy-btn { opacity: 0; transition: opacity 0.15s ease, background-color 0.15s ease; }
     .code-wrap:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
-    @media (hover: none) { .copy-btn { opacity: 1; } }
+    /* Touch views: no dedicated button (it overlaps code) — double-tap the box to copy instead. */
+    .code-wrap { touch-action: manipulation; }
+    @media (hover: none) { .copy-btn { display: none; } }
     .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
     .toc-link.active { color: var(--accent); border-color: var(--accent); }
     kbd.k {
@@ -128,7 +131,7 @@
     }
   </style>
 </head>
-<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-screen">
+<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh">
 
   <!-- Reading progress hairline -->
   <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
@@ -147,6 +150,7 @@
       </a>
       <div class="flex-1"></div>
       <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0"></div>
+      <div id="authArea" class="shrink-0"></div>
       <button id="paletteBtn" class="flex items-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 py-2 text-sm text-slate-400 min-h-[40px]">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         <span class="hidden md:inline">Jump to…</span>
@@ -451,20 +455,59 @@
         btn.className = 'copy-btn absolute top-2 right-2 text-[11px] font-mono px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300';
         btn.textContent = 'Copy';
         btn.onclick = async () => {
-          try { await navigator.clipboard.writeText(block.textContent); }
-          catch (e) {
-            const ta = document.createElement('textarea');
-            ta.value = block.textContent;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            ta.remove();
-          }
-          btn.textContent = 'Copied ✓';
+          const ok = await copyText(block.textContent);
+          btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
           setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
         };
         wrap.appendChild(btn);
+        // Touch views: double-tap the code box to copy (no button there).
+        let lastTap = 0, lastX = 0, lastY = 0, multiTouch = false;
+        wrap.addEventListener('touchstart', (e) => {
+          if (e.touches.length > 1) multiTouch = true;
+        }, { passive: true });
+        wrap.addEventListener('touchend', async (e) => {
+          if (e.touches.length > 0) return; // still touching (pinch/scroll)
+          if (multiTouch) { multiTouch = false; lastTap = 0; return; }
+          const t = e.changedTouches[0];
+          const now = Date.now();
+          const moved = Math.hypot(t.clientX - lastX, t.clientY - lastY);
+          if (lastTap > 0 && now - lastTap < 350 && moved < 30) {
+            lastTap = 0;
+            flashCopied(wrap, await copyText(block.textContent));
+          } else {
+            lastTap = now; lastX = t.clientX; lastY = t.clientY;
+          }
+        }, { passive: true });
       });
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (e) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        } catch (e2) { return false; }
+      }
+    }
+
+    // Transient "Copied ✓" pill for touch views (no persistent button to update).
+    function flashCopied(wrap, ok) {
+      wrap.querySelectorAll('.copy-flash').forEach(n => n.remove());
+      const pill = document.createElement('span');
+      pill.className = 'copy-flash absolute top-2 right-2 text-[11px] font-mono px-2.5 py-1.5 rounded-md bg-white/5 border border-white/10 text-slate-300';
+      pill.textContent = ok ? 'Copied ✓' : 'Copy failed';
+      wrap.appendChild(pill);
+      setTimeout(() => pill.remove(), 1500);
     }
 
     function escapeHtml(s) {
@@ -511,6 +554,7 @@
           });
         } catch (e) {}
       }
+      renderJudgePanel(entry);
       renderTOC();
       renderPrevNext();
       scroller.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
@@ -571,6 +615,130 @@
       updateProgressBar();
       $('homeStart').onclick = () => { if (flatOrder.length) openArticle(flatOrder[0]); };
       $('homeSearch').onclick = () => openPalette();
+    }
+
+    /* ---------- judge pilot: auth + run panel ---------- */
+    const PILOT = {
+      '05-hashmap_06-two-sum': { slug: 'two-sum', fn: 'twoSum' },
+      '07-stack_01-valid-parentheses': { slug: 'valid-parentheses', fn: 'isValid' },
+      '12-binary-search_01-search-insert-position': { slug: 'search-insert-position', fn: 'searchInsert' },
+      '16-one-dp_01-climbing-stairs': { slug: 'climbing-stairs', fn: 'climbStairs' },
+      '09-binary-tree-general_03-invert-binary-tree': { slug: 'invert-binary-tree', fn: 'invertTree' },
+    };
+    let judgeUser = null; // { githubId, login, done[] } when logged in
+
+    async function refreshAuth() {
+      const area = $('authArea');
+      const paintLoggedOut = () => {
+        judgeUser = null;
+        area.innerHTML = '<a href="/api/auth/login" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-[13px] font-semibold border min-h-[40px] transition-colors whitespace-nowrap" style="border-color:rgba(148,163,184,.25);color:#8B94A7;"><span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span></a>';
+      };
+      let me = null;
+      try {
+        const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        if (r.ok) me = await r.json();
+      } catch (e) { /* API unreachable (local file preview): stay logged out */ }
+      if (!me || typeof me.githubId !== 'number') { paintLoggedOut(); return; }
+      judgeUser = me;
+      // Union server progress into the local set (server is source of truth going forward).
+      (me.done || []).forEach(id => {
+        const guideId = Object.keys(PILOT).find(g => PILOT[g].slug === id);
+        if (guideId) doneSet.add(guideId);
+      });
+      saveDone();
+      renderNav();
+      area.innerHTML =
+        '<div class="flex items-center gap-2">' +
+        '<span class="hidden sm:inline text-xs font-mono text-slate-400 max-w-[120px] truncate" title="' + esc(me.login || '') + '">' + esc(me.login || 'github') + '</span>' +
+        '<button id="logoutBtn" class="inline-flex items-center px-3 py-2 rounded-lg text-[13px] font-semibold border min-h-[40px]" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Logout</button></div>';
+      $('logoutBtn').onclick = async () => {
+        try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
+        paintLoggedOut();
+      };
+    }
+
+    function renderJudgePanel(entry) {
+      const pilot = PILOT[entry.item.id];
+      if (!pilot) return;
+      const draftKey = 'lt150-draft-' + pilot.slug;
+      let draft = null;
+      try { draft = localStorage.getItem(draftKey); } catch (e) {}
+      const stub = 'function ' + pilot.fn + '(...args) {\n  // TODO: implement\n  return null;\n}\n';
+      const sec = document.createElement('section');
+      sec.innerHTML =
+        '<h2 id="sec-try-live">Try it live <span class="text-[11px] font-mono font-normal text-slate-500 align-middle">pilot · runs on the server sandbox</span></h2>' +
+        '<p>Write <code>' + esc(pilot.fn) + '</code> below and run it against the pilot test set. A full pass marks this guide complete' + (judgeUser ? ' (synced to your account)' : ' (login to sync it to your account)') + '.</p>' +
+        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[#0A0D13] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[#C8FA4B]/60" style="font-family:\'JetBrains Mono\',monospace;"></textarea>' +
+        '<div class="flex flex-wrap items-center gap-3 mt-3">' +
+        '<button id="judgeRun" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Run tests</button>' +
+        '<span id="judgeStatus" class="text-[13px] font-mono text-slate-500"></span></div>' +
+        '<div id="judgeVerdict" class="mt-3"></div>';
+      contentArea.appendChild(sec);
+      const ta = $('judgeCode');
+      ta.value = draft || stub;
+      ta.oninput = () => { try { localStorage.setItem(draftKey, ta.value); } catch (e) {} };
+      const paintVerdict = (v) => {
+        const box = $('judgeVerdict');
+        if (!v) { box.innerHTML = ''; return; }
+        if (v.error && !v.tests?.length) {
+          box.innerHTML = '<div class="rounded-xl border border-[rgba(251,113,133,.35)] bg-[rgba(251,113,133,.07)] px-4 py-3 text-sm text-slate-200">Error: ' + esc(String(v.error)) + '</div>';
+          return;
+        }
+        const rows = (v.tests || []).map(t =>
+          '<tr><td>' + esc(t.name || '') + '</td><td class="font-mono">' + (t.ok ? '<span style="color:#34D399">pass</span>' : '<span style="color:#FB7185">fail</span>') + '</td>' +
+          '<td class="font-mono text-xs">' + esc(t.expected !== undefined ? JSON.stringify(t.expected) : '') + '</td>' +
+          '<td class="font-mono text-xs">' + esc(t.got !== undefined ? JSON.stringify(t.got) : '') + '</td></tr>').join('');
+        box.innerHTML =
+          '<div class="table-scroll"><table><thead><tr><th>Test</th><th>Result</th><th>Expected</th><th>Got</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+          '<p class="mt-2 text-sm font-semibold ' + (v.failed === 0 && !v.error ? '' : 'text-slate-400') + '" ' + (v.failed === 0 && !v.error ? 'style="color:#C8FA4B"' : '') + '>' +
+          esc(v.failed === 0 && !v.error ? 'All ' + v.passed + ' tests passed ✓' : v.passed + ' passed · ' + v.failed + ' failed') +
+          (v.error ? ' · ' + esc(String(v.error)) : '') + (v.truncated ? ' · output truncated' : '') + '</p>';
+      };
+      $('judgeRun').onclick = async () => {
+        if (!judgeUser) {
+          $('judgeStatus').textContent = 'Login with GitHub first to run code.';
+          return;
+        }
+        $('judgeRun').disabled = true;
+        $('judgeStatus').textContent = 'Running…';
+        paintVerdict(null);
+        try {
+          const r = await fetch('/api/judge/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ problemId: pilot.slug, code: ta.value }),
+          });
+          const v = await r.json();
+          $('judgeStatus').textContent = '';
+          paintVerdict(r.ok ? v : { error: (v && v.error) || ('HTTP ' + r.status) });
+          if (r.ok && v && !v.error && v.failed === 0 && v.passed > 0) {
+            doneSet.add(entry.item.id);
+            saveDone();
+            renderNav();
+            renderHead(entry);
+          }
+        } catch (e) {
+          $('judgeStatus').textContent = '';
+          paintVerdict({ error: 'Judge API unreachable. Deploy with /api support to run code.' });
+        }
+        $('judgeRun').disabled = false;
+      };
+    }
+
+    function checkLoginError() {
+      try {
+        const q = new URLSearchParams(location.search);
+        const err = q.get('login_error');
+        if (!err) return;
+        q.delete('login_error');
+        history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+        const bar = document.createElement('div');
+        bar.className = 'mx-auto max-w-3xl mt-3 px-4 py-2.5 rounded-xl text-sm border';
+        bar.style.cssText = 'border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.07);color:#E9EDF4;';
+        bar.textContent = 'GitHub login failed (' + err + '). Please try again.';
+        contentArea.prepend(bar);
+      } catch (e) {}
     }
 
     /* ---------- sidebar open/close (mobile) ---------- */
@@ -693,9 +861,11 @@
     /* ---------- init ---------- */
     paintFilterPills();
     renderNav();
+    refreshAuth();
     const startId = location.hash ? location.hash.slice(1) : null;
     if (startId && byId.has(startId)) openArticle(startId);
     else openHome();
+    checkLoginError();
     updateProgressBar();
   </script>
 </body>
