@@ -423,7 +423,7 @@
           return;
         }
         if (/\.md$/.test(t)) {
-          const id = t.replace(/\//g, '_');
+          const id = t.replace(/\.md$/, '').replace(/\//g, '_');
           if (byId.has(id)) {
             c.classList.add('primer-link');
             c.title = 'Open primer in portal: ' + t;
