@@ -76,6 +76,11 @@
     }
     .prose pre code { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
     .prose .table-scroll { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--line); border-radius: 0.75rem; }
+    /* Codeboxes carry their own rhythm (same 1.4rem as tables/diagrams) so gaps
+       never depend on the neighbour; the inner pre margin from the Prism theme
+       is neutralised so it can't leak through the wrap. */
+    .prose .code-wrap { margin: 1.4rem 0; }
+    .prose .code-wrap > pre { margin-top: 0; margin-bottom: 0; }
     .prose .table-scroll table { margin: 0; min-width: 640px; }
     .prose table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.85rem; }
     .prose th, .prose td { border: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
@@ -118,7 +123,13 @@
     .code-wrap:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
     /* Touch views: no dedicated button (it overlaps code) — double-tap the box to copy instead. */
     .code-wrap { touch-action: manipulation; }
-    @media (hover: none) { .copy-btn { display: none; } }
+    @media (hover: none) {
+      .copy-btn { display: none; }
+      /* Touch browsers: hide all scrollbars (code/table/panel) — touch scroll
+         still works. The reading-progress hairline at the very top stays. */
+      * { scrollbar-width: none; -ms-overflow-style: none; }
+      *::-webkit-scrollbar { display: none; }
+    }
     .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
     .toc-link.active { color: var(--accent); border-color: var(--accent); }
     kbd.k {
