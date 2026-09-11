@@ -93,6 +93,9 @@
       overflow-wrap: anywhere; word-break: break-word;
     }
     .prose code.primer-path { background: rgba(139,148,167,.12); color: #AEB8CC; cursor: help; }
+    .prose code.primer-link { cursor: pointer; }
+    .prose code.primer-link:hover { background: rgba(200,250,75,.18); }
+    .prose a > code { text-decoration: underline; text-underline-offset: 3px; }
     .katex { font-size: 1.02em; }
     .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
     .prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
@@ -404,11 +407,31 @@
         wrap.appendChild(tbl);
       });
       // Tag raw primer file-paths so they show a tooltip instead of looking broken
+      // Linkify: bare http(s) code pills (e.g. LeetCode Link) open in a new tab;
+      // primer file-paths open the primer inside the portal when it exists.
       contentArea.querySelectorAll('code').forEach(c => {
         if (c.closest('pre')) return;
-        if (/\.md$/.test(c.textContent.trim())) {
-          c.classList.add('primer-path');
-          c.title = c.textContent.trim();
+        const t = c.textContent.trim();
+        if (/^https?:\/\//.test(t)) {
+          const a = document.createElement('a');
+          a.href = t;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.title = 'Open in new tab: ' + t;
+          c.replaceWith(a);
+          a.appendChild(c);
+          return;
+        }
+        if (/\.md$/.test(t)) {
+          const id = t.replace(/\//g, '_');
+          if (byId.has(id)) {
+            c.classList.add('primer-link');
+            c.title = 'Open primer in portal: ' + t;
+            c.onclick = () => openArticle(id);
+          } else {
+            c.classList.add('primer-path');
+            c.title = t;
+          }
         }
       });
       contentArea.querySelectorAll('pre code').forEach(block => {
@@ -496,6 +519,60 @@
       updateProgressBar();
     }
 
+    /* ---------- home landing ---------- */
+    function openHome() {
+      currentItemId = null;
+      renderNav();
+      crumbRow.classList.add('hidden');
+      crumbRow.classList.remove('flex');
+      articleHead.innerHTML = '';
+      const totalGuides = flatOrder.length;
+      const primerCount = (byId.size - flatOrder.length);
+      const trackCount = DATA.filter(c => c.category !== 'FOUNDATIONS').length;
+      const feat = (t, d) => '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-4 py-3.5"><div class="text-sm font-semibold text-slate-100">' + t + '</div><div class="text-[13px] text-slate-400 mt-1 leading-relaxed">' + d + '</div></div>';
+      contentArea.innerHTML =
+        '<p class="text-xs font-mono uppercase tracking-widest mb-2" style="color:var(--accent)">Top Interview 150 · JavaScript</p>' +
+        '<h1>What is this manual?</h1>' +
+        '<p>A visual, interview-first study manual for the <strong class="text-slate-100">LeetCode Top Interview 150</strong>, written entirely in modern JavaScript. Every problem is a self-contained study session — intuition, diagrams, dry runs, runnable code, and the follow-up questions MAANG interviewers actually ask.</p>' +
+        '<div class="grid grid-cols-3 gap-2.5 my-5">' +
+          '<div class="rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + totalGuides + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">problem guides</div></div>' +
+          '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + trackCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">topic tracks</div></div>' +
+          '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + primerCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">primers</div></div>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-3 my-5">' +
+          '<button id="homeStart" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Start studying →</button>' +
+          '<button id="homeSearch" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Jump to a problem (⌘K)</button>' +
+        '</div>' +
+        '<h2 id="sec-guide">What each guide gives you</h2>' +
+        '<p>One problem, three depths — the same full treatment at every level so you can stop when the interview demands it:</p>' +
+        '<div class="grid sm:grid-cols-2 gap-2.5 my-4">' +
+          feat('Edge-case matrix first', 'Upfront table of empty / single / duplicate / overflow inputs and their failure modes — before any code.') +
+          feat('Level 1 · Brute force', 'Intuition, flowchart, pseudocode, dry-run trace, commented JS, Big-O. The baseline you can always fall back to.') +
+          feat('Level 2 · Optimized', 'Names the redundant work Level 1 does and kills it — same full treatment.') +
+          feat('Level 3 · Canonical', 'The interview-winning approach with invariant proof and V8-tuned code.') +
+          feat('V8 gotchas', 'GC pressure, charCodeAt vs parseInt, bitwise truncation, typed arrays — JS-specific traps.') +
+          feat('MAANG follow-ups', 'Streaming inputs, concurrency, scaling tradeoffs with strategies and code.') +
+        '</div>' +
+        '<h2 id="sec-portal">What this portal does</h2>' +
+        '<div class="grid sm:grid-cols-2 gap-2.5 my-4">' +
+          feat('Instant search', '⌘K fuzzy palette over all 150 titles, patterns, and tracks.') +
+          feat('Progress tracking', 'Mark problems complete; the ring, bars, and header chip persist in your browser.') +
+          feat('Readable math & diagrams', 'KaTeX formulas, dark-theme flowcharts, and copy buttons on every code block.') +
+          feat('Filters that stick', 'Easy / Med / Hard pills plus full-text sidebar filter per session.') +
+        '</div>' +
+        '<h2 id="sec-how">How to use it</h2>' +
+        '<ol><li><strong class="text-slate-100">Read the 4 foundation primers</strong> in the sidebar first — runtime quirks, polyfills, patterns, complexity.</li><li><strong class="text-slate-100">Pick a track</strong> (arrays → graphs) and work each guide L1 → L3, dry-running by hand.</li><li><strong class="text-slate-100">Say it out loud</strong> using the “How to Explain to Interviewer” script in each guide.</li></ol>';
+      enhanceCodeBlocks();
+      renderTOC();
+      renderPrevNext();
+      scroller.scrollTo({ top: 0 });
+      history.replaceState(null, '', location.pathname);
+      closeSidebar();
+      updateProgressBar();
+      $('homeStart').onclick = () => { if (flatOrder.length) openArticle(flatOrder[0]); };
+      $('homeSearch').onclick = () => openPalette();
+    }
+
     /* ---------- sidebar open/close (mobile) ---------- */
     function openSidebar() {
       sidebar.classList.remove('-translate-x-full');
@@ -510,8 +587,7 @@
     sideOverlay.onclick = closeSidebar;
     $('brandHome').onclick = (e) => {
       e.preventDefault();
-      if (flatOrder.length) openArticle(flatOrder[0]);
-      else { currentItemId = null; renderNav(); }
+      openHome();
     };
 
     /* ---------- filters ---------- */
@@ -619,7 +695,7 @@
     renderNav();
     const startId = location.hash ? location.hash.slice(1) : null;
     if (startId && byId.has(startId)) openArticle(startId);
-    else if (flatOrder.length) openArticle(flatOrder[0]);
+    else openHome();
     updateProgressBar();
   </script>
 </body>
