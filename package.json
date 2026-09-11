@@ -7,9 +7,20 @@
     "validate": "node scripts/validate-guide.mjs",
     "build": "node scripts/build-site.mjs",
     "test": "node scripts/test-runner.mjs",
-    "verify": "npm run validate && npm test && npm run build"
+    "test:judge": "node scripts/test-judge.mjs",
+    "verify": "npm run validate && npm test && npm run test:judge && npm run build"
   },
-  "keywords": ["leetcode", "javascript", "dsa", "algorithms", "maang", "interview-prep"],
+  "keywords": [
+    "leetcode",
+    "javascript",
+    "dsa",
+    "algorithms",
+    "maang",
+    "interview-prep"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "quickjs-emscripten": "^0.32.0"
+  }
 }

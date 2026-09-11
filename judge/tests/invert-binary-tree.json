@@ -1,0 +1,10 @@
+{
+  "slug": "invert-binary-tree",
+  "fnName": "invertTree",
+  "codec": "tree",
+  "tests": [
+    { "name": "full tree", "args": [[4, 2, 7, 1, 3, 6, 9]], "expected": [4, 7, 2, 9, 6, 3, 1] },
+    { "name": "small tree", "args": [[2, 1, 3]], "expected": [2, 3, 1] },
+    { "name": "empty tree", "args": [[]], "expected": [] }
+  ]
+}

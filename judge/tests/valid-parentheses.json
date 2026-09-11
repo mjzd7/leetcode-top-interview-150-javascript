@@ -1,0 +1,11 @@
+{
+  "slug": "valid-parentheses",
+  "fnName": "isValid",
+  "codec": "json",
+  "tests": [
+    { "name": "simple pair", "args": ["()"], "expected": true },
+    { "name": "mixed pairs", "args": ["()[]{}"], "expected": true },
+    { "name": "mismatched", "args": ["(]"], "expected": false },
+    { "name": "interleaved", "args": ["([)]"], "expected": false }
+  ]
+}

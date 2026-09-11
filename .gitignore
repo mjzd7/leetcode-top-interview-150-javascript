@@ -14,3 +14,5 @@ Thumbs.db
 
 # Generated web bundle (rebuilt by CI via `npm run build` and locally as needed)
 docs/curriculum-data.js
+.vercel
+.env*

@@ -35,6 +35,9 @@ jobs:
       - name: Run Executable Test Suite
         run: npm test
 
+      - name: Run Judge Subsystem Tests
+        run: npm run test:judge
+
       - name: Build Web Portal Data Bundle
         run: npm run build
 

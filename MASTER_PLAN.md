@@ -304,7 +304,7 @@ scripts/
 
 | # | Decision | Rationale |
 |---|---|---|
-| D1 | Execution on **our own judge** (Piston API, Node runtime) | LeetCode exposes no public execution API and no third-party login; the only unofficial path (internal GraphQL + user session cookies) is fragile, ToS-risky, and holds user credentials. Rejected. |
+| D1 | Execution in an **in-function QuickJS-WASM sandbox** (JS-only, zero-key, zero-cost) | Piston's public API went whitelist-only in Feb 2026 (manual auth-token request; explicitly NOT granted for individual/portfolio projects) — designing on it is building on a lottery ticket. Self-hosted Piston needs a Docker host (ops + cost). QuickJS runs untrusted JS in-process with interrupt-handler timeouts and memory caps: no signup, no key, no egress, and JS-only matches this manual exactly. |
 | D2 | Login via **GitHub OAuth only** | Only standards-supported login available. No LeetCode login exists; no cookie import, ever. |
 | D3 | Backend on **Vercel serverless**; GH Pages stays a static mirror | Secrets (`client_secret`, session keys) cannot live in browser JS. New `/api/*` routes deploy from repo root; `docs/` remains the static artifact. |
 | D4 | Pilot scope: **5 problems** (table below), JS only | Proves every integration shape (scalar, string, array, DP, tree I/O) before the 145-problem expansion. |
@@ -312,13 +312,13 @@ scripts/
 ### 6.2 Hyperplan amendments (adversarial review output — incorporated)
 
 1. **Server-side verdicts kept** (over client-side Web-Worker judge): mobile Safari throttles/kills background workers and `Worker.terminate` races make client TLE janky; server verdicts are authoritative. Worker judge stays a documented phase-2 cost play.
-2. **Timeout/TLE contract**: exactly one Piston call per Run request; Piston-side run cap (~3s); function-level cap with margin under Vercel's limit; timeouts map to a `TLE` verdict, never a hang.
+2. **Timeout/TLE contract**: exactly one sandbox execution per Run request; interrupt-handler cap (~3s of guest time); function-level cap with margin under Vercel's limit; timeouts map to a `TLE` verdict, never a hang.
 3. **Driver envelope**: harness returns `{passed, failed, tests[], error}`; user code wrapped in try/catch with error serialization; stdout capped (~100KB, truncated flag); stack overflow surfaces as an error verdict; `process.exit` cannot escape the driver.
 4. **Abuse controls**: judge route requires a valid session; per-user cap (~20 runs/min pilot); `problemId` allowlisted to the 5 pilot slugs (unknown → 400).
 5. **Auth spec**: `state` CSRF param mandatory (GitHub OAuth Apps lack PKCE); GitHub access token discarded after identity read — store only the github user id plus our own signed session JWT (`httpOnly`, `Secure`, `SameSite=Lax`, 30-day fixed expiry for pilot).
 6. **Explicit pilot non-goals**: no localStorage progress import (fresh server-side start), no multi-language support, no LeetCode verdicts. Decisions, not omissions.
 7. **Deploy procedure**: preview deployment first; GH Pages static mirror untouched as fallback; move from CLI-direct `docs/` deploys to root-based deploys (`vercel.json` with `outputDirectory: docs`).
-8. **Piston fallback trigger** (defined now, built only if triggered): repeated 429s/timeouts → self-host Piston (same interface).
+8. **Scale-out trigger** (defined now, built only if triggered): sandbox limits bite or multi-language demand appears → self-host Piston (Docker, same provider interface as `api/_lib/sandbox.mjs`). Owner MAY additionally request an emkc.org whitelist key (a free study manual plausibly qualifies as educational) — treated as a lottery ticket, never a dependency.
 9. **Pilot set affirmed**: Invert Binary Tree stays — tree serialization is the riskiest integration, and testing the riskiest thing is the point of a pilot.
 
 ### 6.3 Pilot problem set
@@ -338,7 +338,7 @@ flowchart LR
     Browser["Browser (docs/ static)"] --> Run["POST /api/judge/run"]
     Browser --> Me["GET /api/auth/me"]
     Browser --> Login["OAuth login + callback"]
-    Run --> Piston["Piston API (Node, 1 call/run)"]
+    Run --> Sandbox["QuickJS sandbox (in-function, 1 call/run)"]
     Run --> KV["Vercel KV: progress"]
     Me --> KV
     Login --> GH["GitHub OAuth (identity only)"]
@@ -356,7 +356,7 @@ flowchart LR
 
 - User submits a plain named JS function (e.g. `twoSum(nums, target)`).
 - Server concatenates: user code + authored driver from `judge/tests/<slug>.json` (sample + edge cases, expected outputs).
-- Single Piston execution of the bundle; driver prints the JSON envelope to stdout; server parses, records pass/fail per test, persists progress on full-pass.
+- Single sandbox execution of the bundle; driver prints the JSON envelope to stdout; server parses, records pass/fail per test, persists progress on full-pass.
 - Tree problems: driver deserializes input arrays to trees and serializes outputs back (level-order, `null`-trimmed) before comparing.
 
 ### 6.7 Progress store (Vercel KV)
@@ -370,7 +370,7 @@ flowchart LR
 ```
 api/
 ├── judge/
-│   └── run.mjs            # auth gate → allowlist → driver build → Piston → verdict
+│   └── run.mjs            # auth gate → allowlist → driver build → sandbox → verdict
 ├── auth/
 │   ├── login.mjs          # state + GitHub authorize redirect
 │   ├── callback.mjs       # code exchange → identity → session cookie
@@ -378,7 +378,7 @@ api/
 │   └── logout.mjs         # clear cookie
 └── _lib/
     ├── session.mjs        # JWT sign/verify (env secret), cookie helpers
-    ├── piston.mjs         # single-call executor with timeout + cap
+    ├── sandbox.mjs        # QuickJS executor: interrupt timeout + memory cap
     ├── kv.mjs             # progress read/write
     └── problems.mjs       # pilot registry: slugs, fn names, I/O codecs
 judge/
@@ -393,8 +393,8 @@ vercel.json                 # { "outputDirectory": "docs" } (functions auto-dete
 
 ### 6.9 Verification gates (must ALL pass before pilot ships)
 
-1. Route unit tests with mocked Piston/auth (all branches: pass, fail, TLE, 401, 400, bad problemId).
-2. Live Piston round-trip per pilot problem (correct + incorrect + infinite-loop submissions).
+1. Route unit tests with mocked sandbox/auth (all branches: pass, fail, TLE, 401, 400, bad problemId).
+2. Live sandbox round-trip per pilot problem (correct + incorrect + infinite-loop submissions).
 3. Real OAuth login against the owner's GitHub App (login → callback → me → logout).
 4. E2E checklist in a logged-in browser session across all 5 problems.
 5. Existing `npm run verify` still green (curriculum untouched).
