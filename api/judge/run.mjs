@@ -1,6 +1,7 @@
 import { PROBLEMS, isPilotProblem, buildBundle } from '../_lib/problems.mjs';
 import { executeUserCode, parseVerdictEnvelope } from '../_lib/sandbox.mjs';
 import { getSession } from '../_lib/session.mjs';
+import { recordPass } from '../_lib/kv.mjs';
 
 const MAX_CODE_BYTES = 100 * 1024;
 const EXEC_TIMEOUT_MS = 3000;
@@ -113,7 +114,18 @@ export default async function handler(req, res) {
     });
   }
 
-  return res.status(200).json({ ...envelope, truncated: exec.truncated || !!envelope.truncated });
+  const verdict = { ...envelope, truncated: exec.truncated || !!envelope.truncated };
+
+  // Progress is best-effort: a KV failure must never break a verdict.
+  if (!verdict.error && verdict.failed === 0 && verdict.passed > 0) {
+    try {
+      await recordPass(session.githubId, problemId);
+    } catch {
+      // ignored by design
+    }
+  }
+
+  return res.status(200).json(verdict);
 }
 
 export { PROBLEMS };

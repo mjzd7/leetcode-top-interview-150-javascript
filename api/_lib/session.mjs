@@ -66,6 +66,27 @@ function parseCookies(header) {
   return out;
 }
 
+export { parseCookies };
+
+/** CSPRNG token for OAuth `state` values. */
+export function randomToken(bytes = 32) {
+  return b64urlEncode(crypto.randomBytes(bytes));
+}
+
+/**
+ * Public base URL of the app from request headers (Vercel-aware).
+ * Defaults to https (GitHub requires https callbacks except localhost).
+ */
+export function appBaseUrl(req) {
+  const headers = req.headers || {};
+  const protoHeader = headers['x-forwarded-proto'];
+  const proto = typeof protoHeader === 'string' ? protoHeader.split(',')[0].trim() : '';
+  const host =
+    headers['x-forwarded-host'] || headers.host || headers[':authority'] || 'localhost:3000';
+  if (proto) return `${proto}://${host}`;
+  return host.startsWith('localhost') ? `http://${host}` : `https://${host}`;
+}
+
 /**
  * Extract + verify the session from an incoming request.
  * Returns the session payload or null. Null secret => always null
