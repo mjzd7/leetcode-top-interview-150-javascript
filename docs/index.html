@@ -2,277 +2,577 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LeetCode Top 150 JS — Master Visual Solutions Manual</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Top Interview 150 — Visual JS Manual</title>
+  <meta name="description" content="All 150 LeetCode Top Interview problems, each with 3 JavaScript solution levels, visual dry runs, and MAANG follow-ups.">
+  <meta name="theme-color" content="#08090D">
+  <meta property="og:title" content="Top Interview 150 — Visual JS Manual">
+  <meta property="og:description" content="150 problems. 3 solution levels each. Zero fluff.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8FA4B'/%3E%3Cpath d='M10 11l-4 5 4 5M22 11l4 5-4 5' stroke='%2308090D' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
           colors: {
-            brand: {
-              50: '#f0f9ff',
-              500: '#0284c7',
-              600: '#0369a1',
-              900: '#0c4a6e',
-            }
+            ink: { DEFAULT: '#08090D', surface: '#0D1017', raised: '#121724' },
+            signal: { DEFAULT: '#C8FA4B', dim: '#9DC22E' },
           }
         }
       }
-    }
+    };
   </script>
-  <!-- Marked Markdown Parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- Mermaid.js for Visual Flowcharts -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <!-- Prism.js Syntax Highlighting -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-
   <style>
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    :root {
+      --bg: #08090D;
+      --surface: #0D1017;
+      --raised: #121724;
+      --line: rgba(148, 163, 184, 0.13);
+      --ink: #E9EDF4;
+      --muted: #8B94A7;
+      --accent: #C8FA4B;
+      --accent-ink: #101303;
+    }
+    html { background: var(--bg); }
+    body { background:
+      radial-gradient(1100px 420px at 85% -10%, rgba(200, 250, 75, 0.055), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(139, 92, 246, 0.06), transparent 60%),
+      var(--bg);
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #232B3D; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2E3850; }
 
-    /* Markdown Styling */
+    .font-display { font-family: "Space Grotesk", Inter, system-ui, sans-serif; }
+    .prose { color: #C6CDDB; font-size: 0.95rem; line-height: 1.72; }
     .prose pre {
-      background-color: #0f172a !important;
-      border: 1px solid #1e293b;
-      border-radius: 0.5rem;
-      padding: 1rem;
-      position: relative;
+      background: #0A0D13 !important;
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+      padding: 1rem 1.1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
     }
-    .prose table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5rem 0;
-    }
-    .prose th, .prose td {
-      border: 1px solid #334155;
-      padding: 0.6rem 1rem;
-      text-align: left;
-    }
-    .prose th {
-      background-color: #1e293b;
-      font-weight: 600;
-      color: #38bdf8;
-    }
-    .prose tr:nth-child(even) {
-      background-color: #0f172a50;
-    }
-    .prose h1 { font-size: 2rem; font-weight: 800; color: #f8fafc; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
-    .prose h2 { font-size: 1.4rem; font-weight: 700; color: #38bdf8; margin-top: 2rem; margin-bottom: 0.8rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.4rem; }
-    .prose h3 { font-size: 1.15rem; font-weight: 600; color: #e2e8f0; margin-top: 1.2rem; margin-bottom: 0.5rem; }
-    .prose p { margin-bottom: 0.9rem; line-height: 1.65; color: #cbd5e1; }
-    .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; color: #cbd5e1; }
-    .prose li { margin-bottom: 0.4rem; }
+    .prose pre code { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.85rem; display: block; overflow-x: auto; }
+    .prose thead, .prose tbody { display: table; width: 100%; }
+    .prose th, .prose td { border: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; }
+    .prose th { background: rgba(200, 250, 75, 0.06); font-weight: 600; color: var(--accent); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .prose h1 { font-family: "Space Grotesk", sans-serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .prose h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.8rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
+    .prose h3 { font-size: 1.02rem; font-weight: 600; color: var(--accent); margin-top: 1.4rem; margin-bottom: 0.5rem; }
+    .prose p { margin-bottom: 0.95rem; }
+    .prose ul, .prose ol { margin-left: 1.4rem; margin-bottom: 1rem; }
+    .prose li { margin-bottom: 0.35rem; }
+    .prose li::marker { color: var(--accent); }
     .prose code:not(pre code) {
-      background-color: #1e293b;
-      color: #38bdf8;
-      padding: 0.2rem 0.4rem;
-      border-radius: 0.25rem;
-      font-size: 0.9em;
+      background: rgba(200, 250, 75, 0.09); color: var(--accent);
+      padding: 0.15rem 0.42rem; border-radius: 0.375rem;
+      font-size: 0.85em; font-family: "JetBrains Mono", monospace; white-space: nowrap;
     }
+    .prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
     .mermaid {
-      background-color: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin: 1.5rem 0;
-      display: flex;
-      justify-content: center;
+      background: #0A0D13; border: 1px solid var(--line); border-radius: 0.75rem;
+      padding: 1.25rem; margin: 1.4rem 0; display: flex; justify-content: center; overflow-x: auto;
+    }
+    .nav-item { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+    .mod-bar { height: 3px; border-radius: 999px; background: #1C2333; overflow: hidden; }
+    .mod-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s ease; }
+    #sidebar { transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+    #palette { transition: opacity 0.15s ease; }
+    #paletteCard { transition: transform 0.15s ease, opacity 0.15s ease; }
+    .pal-item[aria-selected="true"] { background: rgba(200, 250, 75, 0.1); }
+    .copy-btn { opacity: 0; transition: opacity 0.15s ease, background-color 0.15s ease; }
+    .code-wrap:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    @media (hover: none) { .copy-btn { opacity: 1; } }
+    .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
+    .toc-link.active { color: var(--accent); border-color: var(--accent); }
+    kbd.k {
+      font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
+      background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
+      border-radius: 0.375rem; padding: 0.1rem 0.4rem; color: #AEB8CC;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden font-sans antialiased selection:bg-sky-500 selection:text-white">
+<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-screen">
 
-  <!-- Top Navbar -->
-  <header class="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 flex items-center justify-between shrink-0 z-30">
-    <div class="flex items-center space-x-3">
-      <div class="h-9 w-9 rounded-lg bg-sky-500 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-sky-500/20">
-        JS
-      </div>
-      <div>
-        <h1 class="font-bold text-base md:text-lg text-white tracking-tight flex items-center gap-2">
-          LeetCode Top 150 <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30">MAANG JS Edition</span>
-        </h1>
-      </div>
-    </div>
+  <!-- Reading progress hairline -->
+  <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
+    <div id="progressBar" class="h-full w-0" style="background: var(--accent);"></div>
+  </div>
 
-    <!-- Search Bar -->
-    <div class="relative w-64 md:w-96">
-      <input id="searchInput" type="text" placeholder="Search questions, patterns, keywords..." 
-             class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3.5 py-1.5 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
-      <span class="absolute right-3 top-2 text-xs text-slate-400">⌘K</span>
+  <!-- Header -->
+  <header class="sticky top-0 z-30 border-b border-[rgba(148,163,184,0.13)] bg-[#08090D]/85 backdrop-blur-md">
+    <div class="h-14 px-3 md:px-6 flex items-center gap-2 md:gap-4">
+      <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <a href="#" id="brandHome" class="flex items-center gap-2.5 shrink-0 min-w-0">
+        <span class="h-8 w-8 rounded-lg flex items-center justify-center font-mono font-bold text-sm shrink-0" style="background: var(--accent); color: var(--accent-ink);">&lt;/&gt;</span>
+        <span class="font-display font-bold tracking-tight text-[15px] md:text-base truncate">Top Interview <span style="color: var(--accent);">150</span></span>
+      </a>
+      <div class="flex-1"></div>
+      <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0"></div>
+      <button id="paletteBtn" class="flex items-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 py-2 text-sm text-slate-400 min-h-[40px]">
+        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+        <span class="hidden md:inline">Jump to…</span>
+        <span class="hidden md:flex items-center gap-1"><kbd class="k">⌘</kbd><kbd class="k">K</kbd></span>
+      </button>
     </div>
   </header>
 
-  <!-- Main App Layout -->
-  <div class="flex flex-1 overflow-hidden">
-    
-    <!-- Sidebar Navigation -->
-    <aside class="w-80 border-r border-slate-800 bg-slate-900/50 flex flex-col shrink-0 overflow-y-auto">
-      <div class="p-4 border-b border-slate-800/60">
-        <div class="flex gap-1.5" id="difficultyFilters">
-          <button data-diff="ALL" class="filter-btn active text-xs px-2.5 py-1 rounded-md bg-sky-500 text-white font-medium">All</button>
-          <button data-diff="Easy" class="filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-emerald-400 font-medium">Easy</button>
-          <button data-diff="Medium" class="filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-400 font-medium">Medium</button>
-          <button data-diff="Hard" class="filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-rose-400 font-medium">Hard</button>
+  <div class="flex items-start">
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sideOverlay" class="hidden fixed inset-0 z-30 bg-black/60 md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[#0B0D12] md:bg-transparent flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
+        <div class="flex items-center gap-3">
+          <svg id="ringSvg" width="52" height="52" viewBox="0 0 64 64" class="shrink-0 -rotate-90" aria-hidden="true">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
+            <circle id="ringFg" cx="32" cy="32" r="26" fill="none" stroke="#C8FA4B" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="163.36"/>
+          </svg>
+          <div class="min-w-0">
+            <div id="ringPct" class="font-display font-bold text-xl leading-none">0%</div>
+            <div id="ringSub" class="text-xs text-slate-400 mt-1 font-mono">0 / 150 done</div>
+          </div>
+        </div>
+        <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
+               class="mt-3 w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[#C8FA4B]/60 min-h-[44px]">
+        <div class="flex gap-1.5 mt-2.5" id="difficultyFilters" role="group" aria-label="Difficulty filter">
+          <button data-diff="ALL" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">All</button>
+          <button data-diff="Easy" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Easy</button>
+          <button data-diff="Medium" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Med</button>
+          <button data-diff="Hard" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Hard</button>
         </div>
       </div>
-      <nav id="curriculumNav" class="p-3 space-y-6 flex-1"></nav>
+      <nav id="curriculumNav" class="p-3 space-y-5 flex-1 overflow-y-auto" aria-label="Curriculum"></nav>
     </aside>
 
-    <!-- Main Content Reader -->
-    <main id="contentContainer" class="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
-      <div id="articleContent" class="prose prose-invert max-w-none">
-        <div class="flex flex-col items-center justify-center py-20 text-slate-400">
-          <p class="text-lg">Select a problem or pattern primer from the sidebar to begin.</p>
-        </div>
+    <!-- Reader -->
+    <main id="contentContainer" class="flex-1 min-w-0 overflow-y-auto h-[calc(100dvh-3.5rem)] scroll-smooth">
+      <div class="flex items-start justify-center gap-8 px-4 md:px-10 py-6 md:py-10 max-w-6xl mx-auto w-full">
+        <article class="flex-1 min-w-0 max-w-3xl">
+          <div id="crumbRow" class="hidden mb-3 items-center gap-2 text-xs font-mono text-slate-500"></div>
+          <div id="articleHead" class="mb-6"></div>
+          <div id="articleContent" class="prose max-w-none"></div>
+          <div id="prevNext" class="mt-10 grid grid-cols-2 gap-3"></div>
+          <footer class="mt-10 pb-6 text-xs text-slate-600 font-mono">Top Interview 150 · Visual JS Manual · built from executable guides</footer>
+        </article>
+        <aside class="hidden xl:block w-56 shrink-0 sticky top-6">
+          <div class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">On this page</div>
+          <nav id="tocNav" class="space-y-1 border-l border-[rgba(148,163,184,0.13)]" aria-label="Table of contents"></nav>
+        </aside>
       </div>
     </main>
-
   </div>
 
-  <!-- Load Data Bundle -->
+  <!-- Command palette -->
+  <div id="palette" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm opacity-0" role="dialog" aria-modal="true" aria-label="Jump to problem">
+    <div class="flex items-start justify-center pt-[12dvh] px-4">
+      <div id="paletteCard" class="w-full md:max-w-xl rounded-2xl border border-[rgba(148,163,184,0.2)] bg-[#0D1017] shadow-2xl shadow-black/60 overflow-hidden opacity-0 scale-[0.98]">
+        <div class="flex items-center gap-2 px-4 border-b border-[rgba(148,163,184,0.13)]">
+          <svg class="h-4 w-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+          <input id="paletteInput" type="text" placeholder="Type a problem, pattern, or topic…" autocomplete="off"
+                 class="w-full bg-transparent py-4 text-[15px] placeholder-slate-500 focus:outline-none min-h-[52px]">
+          <kbd class="k shrink-0">esc</kbd>
+        </div>
+        <div id="paletteList" class="max-h-[50dvh] overflow-y-auto p-2" role="listbox"></div>
+        <div class="px-4 py-2.5 border-t border-[rgba(148,163,184,0.13)] flex items-center gap-4 text-[11px] text-slate-500 font-mono">
+          <span><kbd class="k">↑↓</kbd> navigate</span><span><kbd class="k">↵</kbd> open</span><span><kbd class="k">esc</kbd> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="curriculum-data.js"></script>
 
   <script>
-    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    'use strict';
+    /* ---------- data index ---------- */
+    const DATA = (window.CURRICULUM_DATA || []).filter(c => c && Array.isArray(c.items));
+    const byId = new Map();
+    const flatOrder = [];
+    DATA.forEach(cat => cat.items.forEach(item => {
+      byId.set(item.id, { item, category: cat.category });
+      if (cat.category !== 'FOUNDATIONS') flatOrder.push(item.id);
+    }));
 
+    /* ---------- persistent progress ---------- */
+    const LS_KEY = 'lt150-done-v1';
+    let doneSet = new Set();
+    try { doneSet = new Set(JSON.parse(localStorage.getItem(LS_KEY) || '[]')); } catch (e) { doneSet = new Set(); }
+    const saveDone = () => { try { localStorage.setItem(LS_KEY, JSON.stringify([...doneSet])); } catch (e) {} };
+
+    /* ---------- state ---------- */
     let activeFilter = 'ALL';
     let searchQuery = '';
     let currentItemId = null;
+    let palIndex = 0;
+    let palResults = [];
 
-    const nav = document.getElementById('curriculumNav');
-    const contentArea = document.getElementById('articleContent');
-    const searchInput = document.getElementById('searchInput');
+    /* ---------- element refs ---------- */
+    const $ = (id) => document.getElementById(id);
+    const nav = $('curriculumNav'), contentArea = $('articleContent'), articleHead = $('articleHead'),
+      crumbRow = $('crumbRow'), prevNext = $('prevNext'), tocNav = $('tocNav'),
+      searchInput = $('searchInput'), sidebar = $('sidebar'), sideOverlay = $('sideOverlay'),
+      palette = $('palette'), paletteCard = $('paletteCard'), paletteInput = $('paletteInput'),
+      paletteList = $('paletteList'), scroller = $('contentContainer'), progressBar = $('progressBar');
 
-    function renderNav() {
-      nav.innerHTML = '';
-      if (!window.CURRICULUM_DATA) return;
+    const DIFF_STYLE = {
+      Easy: 'background:rgba(52,211,153,.12);color:#34D399;border:1px solid rgba(52,211,153,.3)',
+      Medium: 'background:rgba(251,191,36,.12);color:#FBBF24;border:1px solid rgba(251,191,36,.3)',
+      Hard: 'background:rgba(251,113,133,.12);color:#FB7185;border:1px solid rgba(251,113,133,.3)',
+      Primer: 'background:rgba(200,250,75,.1);color:#C8FA4B;border:1px solid rgba(200,250,75,.3)',
+    };
+    const badge = (d) => `<span class="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="${DIFF_STYLE[d] || DIFF_STYLE.Primer}">${d}</span>`;
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-      window.CURRICULUM_DATA.forEach(category => {
-        const filteredItems = category.items.filter(item => {
-          const matchesDiff = (activeFilter === 'ALL' || item.difficulty.toLowerCase() === activeFilter.toLowerCase());
-          const matchesSearch = searchQuery === '' || 
-            item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-            item.content.toLowerCase().includes(searchQuery.toLowerCase());
-          return matchesDiff && matchesSearch;
-        });
-
-        if (filteredItems.length === 0) return;
-
-        const catDiv = document.createElement('div');
-        catDiv.className = 'space-y-1';
-        
-        const catHeader = document.createElement('div');
-        catHeader.className = 'text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1';
-        catHeader.textContent = category.category;
-        catDiv.appendChild(catHeader);
-
-        filteredItems.forEach(item => {
-          const btn = document.createElement('button');
-          btn.className = `w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between group ${
-            item.id === currentItemId ? 'bg-sky-500/15 text-sky-400 font-semibold border border-sky-500/30' : 'text-slate-300 hover:bg-slate-800/80'
-          }`;
-          
-          let badgeColor = 'bg-slate-800 text-slate-400';
-          if (item.difficulty === 'Easy') badgeColor = 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
-          if (item.difficulty === 'Medium') badgeColor = 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
-          if (item.difficulty === 'Hard') badgeColor = 'bg-rose-500/15 text-rose-400 border border-rose-500/30';
-          if (item.difficulty === 'Primer') badgeColor = 'bg-sky-500/15 text-sky-400 border border-sky-500/30';
-
-          btn.innerHTML = `
-            <span class="truncate pr-2">${item.title}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${badgeColor}">${item.difficulty}</span>
-          `;
-
-          btn.onclick = () => loadArticle(item);
-          catDiv.appendChild(btn);
-        });
-
-        nav.appendChild(catDiv);
+    /* ---------- sidebar ---------- */
+    function paintFilterPills() {
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        const on = b.dataset.diff === activeFilter;
+        b.style.cssText = on
+          ? 'background:#C8FA4B;color:#101303;'
+          : 'background:rgba(255,255,255,.04);color:#8B94A7;';
       });
     }
 
-    async function loadArticle(item) {
-      currentItemId = item.id;
-      renderNav();
-
-      // Build Top Header Bar
-      let headerHtml = '';
-      if (item.leetcodeLink) {
-        headerHtml = `
-          <div class="mb-8 p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-lg shadow-black/20">
-            <div class="flex items-center gap-3">
-              <span class="text-xs px-2.5 py-1 rounded-md font-semibold ${
-                item.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                item.difficulty === 'Medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-              }">${item.difficulty}</span>
-              <span class="text-xs text-slate-400 font-medium">${item.pattern || 'Pattern: General'}</span>
-            </div>
-            <a href="${item.leetcodeLink}" target="_blank" rel="noopener noreferrer" 
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition-all shadow-md shadow-sky-500/25 active:scale-95">
-              <span>Solve on LeetCode</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          </div>
-        `;
-      }
-
-      // Custom Markdown parsing
-      const rawHtml = marked.parse(item.content);
-      contentArea.innerHTML = headerHtml + rawHtml;
-
-      // Transform code blocks for Mermaid & Prism
-      const codeBlocks = contentArea.querySelectorAll('pre code');
-      for (const block of codeBlocks) {
-        if (block.classList.contains('language-mermaid')) {
-          const mermaidCode = block.textContent;
-          const pre = block.parentElement;
-          const div = document.createElement('div');
-          div.className = 'mermaid';
-          div.textContent = mermaidCode;
-          pre.replaceWith(div);
-        }
-      }
-
-      Prism.highlightAllUnder(contentArea);
-      await mermaid.run();
-      document.getElementById('contentContainer').scrollTo({ top: 0, behavior: 'smooth' });
+    function renderProgress() {
+      const total = flatOrder.length || 1;
+      const done = flatOrder.filter(id => doneSet.has(id)).length;
+      const pct = Math.round((done / total) * 100);
+      $('ringFg').style.strokeDashoffset = String(163.36 * (1 - done / total));
+      $('ringPct').textContent = pct + '%';
+      $('ringSub').textContent = done + ' / ' + flatOrder.length + ' done';
+      $('overallChip').innerHTML = '<span class="inline-block h-1.5 w-1.5 rounded-full" style="background:#C8FA4B"></span>' + pct + '% complete';
     }
 
-    // Filter Buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.className = 'filter-btn text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium';
+    function renderNav() {
+      nav.innerHTML = '';
+      if (!DATA.length) {
+        nav.innerHTML = '<p class="text-sm text-slate-500 px-2">No curriculum data found. Run <span class="font-mono">npm run build</span>.</p>';
+        return;
+      }
+      DATA.forEach(cat => {
+        const items = cat.items.filter(item => {
+          const diffOk = activeFilter === 'ALL' ? true : item.difficulty === activeFilter;
+          if (!diffOk) return false;
+          if (!searchQuery) return true;
+          const q = searchQuery.toLowerCase();
+          return item.title.toLowerCase().includes(q) || item.content.toLowerCase().includes(q);
         });
-        btn.className = 'filter-btn active text-xs px-2.5 py-1 rounded-md bg-sky-500 text-white font-medium';
-        activeFilter = btn.dataset.diff;
+        if (!items.length) return;
+        const isFound = cat.category === 'FOUNDATIONS';
+        const doneCount = isFound ? 0 : items.filter(i => doneSet.has(i.id)).length;
+        const wrap = document.createElement('div');
+        const head = document.createElement('div');
+        head.className = 'px-2 pt-1';
+        head.innerHTML = '<div class="flex items-baseline justify-between gap-2">' +
+          '<span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">' + esc(cat.category) + '</span>' +
+          (isFound
+            ? '<span class="text-[10px] font-mono text-slate-600">' + items.length + '</span>'
+            : '<span class="text-[10px] font-mono text-slate-500">' + doneCount + '/' + items.length + '</span>') +
+          '</div>' +
+          (isFound ? '' : '<div class="mod-bar mt-1.5"><span style="width:' + Math.round((doneCount / items.length) * 100) + '%"></span></div>');
+        wrap.appendChild(head);
+        const list = document.createElement('div');
+        list.className = 'space-y-0.5 mt-1';
+        items.forEach(item => {
+          const done = doneSet.has(item.id);
+          const active = item.id === currentItemId;
+          const btn = document.createElement('button');
+          btn.className = 'nav-item w-full text-left px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-2 border min-h-[44px] md:min-h-0';
+          btn.style.cssText = active
+            ? 'background:rgba(200,250,75,.1);color:#fff;border-color:rgba(200,250,75,.35);'
+            : 'color:#C2C9D8;border-color:transparent;';
+          btn.onmouseenter = () => { if (!active) btn.style.background = 'rgba(255,255,255,.05)'; };
+          btn.onmouseleave = () => { if (!active) btn.style.background = 'transparent'; };
+          btn.innerHTML =
+            '<span class="shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+            '<span class="truncate flex-1 ' + (done && !active ? 'line-through opacity-60' : '') + '">' + esc(item.title) + '</span>' +
+            badge(item.difficulty);
+          btn.onclick = () => openArticle(item.id);
+          list.appendChild(btn);
+        });
+        wrap.appendChild(list);
+        nav.appendChild(wrap);
+      });
+      renderProgress();
+    }
+
+    /* ---------- article ---------- */
+    function renderHead(entry) {
+      const { item, category } = entry;
+      const done = doneSet.has(item.id);
+      crumbRow.classList.remove('hidden');
+      crumbRow.classList.add('flex');
+      crumbRow.innerHTML = '<span>' + esc(category) + '</span><span>/</span><span class="text-slate-300">' + esc(item.difficulty) + '</span>';
+      articleHead.innerHTML =
+        '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
+        '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
+        '<div class="flex flex-wrap items-center gap-3">' +
+        (item.leetcodeLink
+          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Solve on LeetCode' +
+            '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>'
+          : '') +
+        '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
+            (done ? 'border-color:rgba(200,250,75,.4);color:#C8FA4B;background:rgba(200,250,75,.07);' : 'border-color:rgba(148,163,184,.25);color:#8B94A7;') + '">' +
+          '<span>' + (done ? '✓ Completed' : '○ Mark complete') + '</span></button>' +
+        '</div>';
+      $('doneToggle').onclick = () => {
+        if (doneSet.has(item.id)) doneSet.delete(item.id); else doneSet.add(item.id);
+        saveDone();
+        renderHead(entry);
         renderNav();
       };
-    });
+    }
 
-    // Search Input
-    searchInput.oninput = (e) => {
-      searchQuery = e.target.value;
+    function renderPrevNext() {
+      const idx = flatOrder.indexOf(currentItemId);
+      const at = (i) => (i >= 0 && i < flatOrder.length ? byId.get(flatOrder[i]).item : null);
+      const cell = (it, label, align) => {
+        if (!it) return '<span></span>';
+        return '<button data-nav="' + it.id + '" class="text-left rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/10 px-4 py-3 min-h-[56px] transition-colors ' + align + '">' +
+          '<span class="block text-[10px] font-mono uppercase tracking-widest text-slate-500">' + label + '</span>' +
+          '<span class="block text-sm font-medium text-slate-200 truncate mt-0.5">' + esc(it.title) + '</span></button>';
+      };
+      prevNext.innerHTML = cell(at(idx - 1), '← Prev', '') + cell(at(idx + 1), 'Next →', 'text-right');
+      prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
+    }
+
+    function renderTOC() {
+      tocNav.innerHTML = '';
+      const heads = contentArea.querySelectorAll('h2');
+      heads.forEach((h, i) => {
+        if (!h.id) h.id = 'sec-' + i;
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        a.className = 'toc-link block text-[13px] text-slate-400 hover:text-slate-200 pl-3 py-1 border-l-2 border-transparent truncate';
+        a.onclick = (e) => {
+          e.preventDefault();
+          h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.replaceState(null, '', '#' + h.id);
+        };
+        tocNav.appendChild(a);
+      });
+      if (!heads.length) tocNav.innerHTML = '<span class="text-xs text-slate-600 pl-3">No sections</span>';
+    }
+
+    function enhanceCodeBlocks() {
+      contentArea.querySelectorAll('pre code').forEach(block => {
+        if (block.classList.contains('language-mermaid')) {
+          const div = document.createElement('div');
+          div.className = 'mermaid';
+          div.textContent = block.textContent;
+          block.parentElement.replaceWith(div);
+          return;
+        }
+        const pre = block.parentElement;
+        const wrap = document.createElement('div');
+        wrap.className = 'code-wrap relative';
+        pre.replaceWith(wrap);
+        wrap.appendChild(pre);
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn absolute top-2 right-2 text-[11px] font-mono px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300';
+        btn.textContent = 'Copy';
+        btn.onclick = async () => {
+          try { await navigator.clipboard.writeText(block.textContent); }
+          catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = block.textContent;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          }
+          btn.textContent = 'Copied ✓';
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+        };
+        wrap.appendChild(btn);
+      });
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function openArticle(id) {
+      const entry = byId.get(id);
+      if (!entry) return;
+      currentItemId = id;
       renderNav();
+      renderHead(entry);
+      if (window.marked && marked.parse) {
+        contentArea.innerHTML = marked.parse(entry.item.content);
+      } else {
+        contentArea.innerHTML = '<pre>' + escapeHtml(entry.item.content) + '</pre>';
+      }
+      enhanceCodeBlocks();
+      if (window.Prism && Prism.highlightAllUnder) {
+        try { Prism.highlightAllUnder(contentArea); } catch (e) {}
+      }
+      if (window.mermaid) {
+        try {
+          mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+          await mermaid.run();
+        } catch (e) {}
+      }
+      renderTOC();
+      renderPrevNext();
+      scroller.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+      history.replaceState(null, '', '#' + id);
+      closeSidebar();
+      updateProgressBar();
+    }
+
+    /* ---------- sidebar open/close (mobile) ---------- */
+    function openSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      sideOverlay.classList.remove('hidden');
+    }
+    function closeSidebar() {
+      if (window.innerWidth >= 768) return;
+      sidebar.classList.add('-translate-x-full');
+      sideOverlay.classList.add('hidden');
+    }
+    $('menuBtn').onclick = openSidebar;
+    sideOverlay.onclick = closeSidebar;
+    $('brandHome').onclick = (e) => {
+      e.preventDefault();
+      if (flatOrder.length) openArticle(flatOrder[0]);
+      else { currentItemId = null; renderNav(); }
     };
 
-    // Auto-load first item
-    if (window.CURRICULUM_DATA && window.CURRICULUM_DATA[0]?.items[0]) {
-      loadArticle(window.CURRICULUM_DATA[0].items[0]);
+    /* ---------- filters ---------- */
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.onclick = () => { activeFilter = btn.dataset.diff; paintFilterPills(); renderNav(); };
+    });
+    searchInput.oninput = (e) => { searchQuery = e.target.value; renderNav(); };
+
+    /* ---------- command palette ---------- */
+    function fuzzyMatch(hay, needle) {
+      hay = hay.toLowerCase();
+      needle = needle.toLowerCase().replace(/\s+/g, '');
+      let hi = 0;
+      for (const ch of needle) {
+        hi = hay.indexOf(ch, hi);
+        if (hi === -1) return false;
+        hi++;
+      }
+      return true;
     }
+    function openPalette() {
+      palette.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        palette.classList.remove('opacity-0');
+        paletteCard.classList.remove('opacity-0', 'scale-[0.98]');
+      });
+      paletteInput.value = '';
+      updatePalette('');
+      setTimeout(() => paletteInput.focus(), 30);
+    }
+    function closePalette() {
+      palette.classList.add('opacity-0');
+      paletteCard.classList.add('opacity-0', 'scale-[0.98]');
+      setTimeout(() => palette.classList.add('hidden'), 150);
+      paletteInput.blur();
+    }
+    function updatePalette(q) {
+      const query = q.trim();
+      palResults = flatOrder
+        .map(id => byId.get(id))
+        .filter(e => !query || fuzzyMatch(e.item.title + ' ' + (e.item.pattern || '') + ' ' + e.category, query))
+        .slice(0, 12);
+      palIndex = 0;
+      paletteList.innerHTML = palResults.length ? '' : '<p class="text-sm text-slate-500 px-3 py-6 text-center">No matches. Try a pattern name like “sliding window”.</p>';
+      palResults.forEach((e, i) => {
+        const done = doneSet.has(e.item.id);
+        const div = document.createElement('div');
+        div.className = 'pal-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer';
+        div.setAttribute('role', 'option');
+        div.setAttribute('aria-selected', i === palIndex ? 'true' : 'false');
+        div.innerHTML =
+          '<span class="font-mono text-[11px] w-4 text-center shrink-0" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+          '<span class="flex-1 min-w-0"><span class="block text-sm text-slate-200 truncate">' + esc(e.item.title) + '</span>' +
+          '<span class="block text-[11px] text-slate-500 font-mono truncate">' + esc(e.category) + '</span></span>' +
+          badge(e.item.difficulty);
+        div.onclick = () => { closePalette(); openArticle(e.item.id); };
+        div.onmousemove = () => { palIndex = i; paintPalSelection(); };
+        paletteList.appendChild(div);
+      });
+    }
+    function paintPalSelection() {
+      paletteList.querySelectorAll('.pal-item').forEach((el, i) => el.setAttribute('aria-selected', i === palIndex ? 'true' : 'false'));
+    }
+    $('paletteBtn').onclick = openPalette;
+    paletteInput.oninput = (e) => updatePalette(e.target.value);
+    paletteInput.onkeydown = (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); palIndex = Math.min(palIndex + 1, palResults.length - 1); paintPalSelection(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); palIndex = Math.max(palIndex - 1, 0); paintPalSelection(); }
+      else if (e.key === 'Enter' && palResults[palIndex]) { closePalette(); openArticle(palResults[palIndex].item.id); }
+      else if (e.key === 'Escape') closePalette();
+    };
+    palette.addEventListener('click', (e) => { if (e.target === palette.firstElementChild || e.target === palette) closePalette(); });
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette.classList.contains('hidden') ? openPalette() : closePalette(); }
+      else if (e.key === 'Escape') { if (!palette.classList.contains('hidden')) closePalette(); else closeSidebar(); }
+    });
+
+    /* ---------- reading progress ---------- */
+    function updateProgressBar() {
+      const max = scroller.scrollHeight - scroller.clientHeight;
+      const pct = max > 0 ? (scroller.scrollTop / max) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    }
+    scroller.addEventListener('scroll', updateProgressBar, { passive: true });
+
+    /* ---------- scroll-spy for TOC ---------- */
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          tocNav.querySelectorAll('.toc-link').forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id);
+          });
+        }
+      });
+    }, { root: scroller, rootMargin: '-20% 0px -70% 0px' });
+    const origRenderTOC = renderTOC;
+    renderTOC = function () {
+      spy.disconnect();
+      origRenderTOC();
+      contentArea.querySelectorAll('h2[id]').forEach(h => spy.observe(h));
+    };
+
+    /* ---------- init ---------- */
+    paintFilterPills();
+    renderNav();
+    const startId = location.hash ? location.hash.slice(1) : null;
+    if (startId && byId.has(startId)) openArticle(startId);
+    else if (flatOrder.length) openArticle(flatOrder[0]);
+    updateProgressBar();
   </script>
 </body>
 </html>
