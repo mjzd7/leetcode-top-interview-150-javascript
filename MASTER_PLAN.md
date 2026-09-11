@@ -290,3 +290,121 @@ scripts/
 3. **Executable Code Integrity**: Extracts Level 1, Level 2, and Level 3 JavaScript blocks and runs them through `node --check` (syntax validator) and test assertions.
 4. **Dry Run Table Integrity**: Ensures markdown tables contain valid headers and non-empty trace steps.
 5. **Diagram Presence**: Verifies presence of at least 1 Mermaid flowchart or ASCII state diagram per solution tier.
+
+---
+
+## 6. Interactive Judge Platform — Pilot Plan (STATUS: PLANNED — build NOT started)
+
+> This section records the full working plan for user login + on-site code
+> execution + synced progress. No backend code has been written. Build order
+> (when approved): judge routes → auth → progress gating, each verified
+> before the next starts.
+
+### 6.1 Locked decisions (owner votes + feasibility verdicts)
+
+| # | Decision | Rationale |
+|---|---|---|
+| D1 | Execution on **our own judge** (Piston API, Node runtime) | LeetCode exposes no public execution API and no third-party login; the only unofficial path (internal GraphQL + user session cookies) is fragile, ToS-risky, and holds user credentials. Rejected. |
+| D2 | Login via **GitHub OAuth only** | Only standards-supported login available. No LeetCode login exists; no cookie import, ever. |
+| D3 | Backend on **Vercel serverless**; GH Pages stays a static mirror | Secrets (`client_secret`, session keys) cannot live in browser JS. New `/api/*` routes deploy from repo root; `docs/` remains the static artifact. |
+| D4 | Pilot scope: **5 problems** (table below), JS only | Proves every integration shape (scalar, string, array, DP, tree I/O) before the 145-problem expansion. |
+
+### 6.2 Hyperplan amendments (adversarial review output — incorporated)
+
+1. **Server-side verdicts kept** (over client-side Web-Worker judge): mobile Safari throttles/kills background workers and `Worker.terminate` races make client TLE janky; server verdicts are authoritative. Worker judge stays a documented phase-2 cost play.
+2. **Timeout/TLE contract**: exactly one Piston call per Run request; Piston-side run cap (~3s); function-level cap with margin under Vercel's limit; timeouts map to a `TLE` verdict, never a hang.
+3. **Driver envelope**: harness returns `{passed, failed, tests[], error}`; user code wrapped in try/catch with error serialization; stdout capped (~100KB, truncated flag); stack overflow surfaces as an error verdict; `process.exit` cannot escape the driver.
+4. **Abuse controls**: judge route requires a valid session; per-user cap (~20 runs/min pilot); `problemId` allowlisted to the 5 pilot slugs (unknown → 400).
+5. **Auth spec**: `state` CSRF param mandatory (GitHub OAuth Apps lack PKCE); GitHub access token discarded after identity read — store only the github user id plus our own signed session JWT (`httpOnly`, `Secure`, `SameSite=Lax`, 30-day fixed expiry for pilot).
+6. **Explicit pilot non-goals**: no localStorage progress import (fresh server-side start), no multi-language support, no LeetCode verdicts. Decisions, not omissions.
+7. **Deploy procedure**: preview deployment first; GH Pages static mirror untouched as fallback; move from CLI-direct `docs/` deploys to root-based deploys (`vercel.json` with `outputDirectory: docs`).
+8. **Piston fallback trigger** (defined now, built only if triggered): repeated 429s/timeouts → self-host Piston (same interface).
+9. **Pilot set affirmed**: Invert Binary Tree stays — tree serialization is the riskiest integration, and testing the riskiest thing is the point of a pilot.
+
+### 6.3 Pilot problem set
+
+| # | Problem | Why included | I/O shape | Harness note |
+|---|---|---|---|---|
+| 6 | Two Sum | Happy path (hash/array) | `(number[], number) → number[]` | Order-sensitive compare |
+| 20 | Valid Parentheses | String + stack | `(string) → boolean` | — |
+| 35 | Search Insert Position | Binary search, scalar out | `(number[], number) → number` | — |
+| 70 | Climbing Stairs | DP, scalar in/out | `(number) → number` | — |
+| 226 | Invert Binary Tree | **Tree I/O proof** | `(level-order array) → level-order array` | Driver converts via shared `arrayToTree`/`treeToArray` |
+
+### 6.4 Architecture
+
+```mermaid
+flowchart LR
+    Browser["Browser (docs/ static)"] --> Run["POST /api/judge/run"]
+    Browser --> Me["GET /api/auth/me"]
+    Browser --> Login["OAuth login + callback"]
+    Run --> Piston["Piston API (Node, 1 call/run)"]
+    Run --> KV["Vercel KV: progress"]
+    Me --> KV
+    Login --> GH["GitHub OAuth (identity only)"]
+```
+
+### 6.5 API contract
+
+- `POST /api/judge/run` — body `{problemId: string, code: string}`; requires session; `problemId` must be one of the 5 pilot slugs; returns `{passed: number, failed: number, tests: [{name, ok, expected, got}], error: string|null}`. Rate-limited per user. Timeout → `{error: "TLE"}` verdict shape.
+- `GET /api/auth/login` — creates `state`, redirects to GitHub authorize URL.
+- `GET /api/auth/callback?code=…&state=…` — validates `state`, exchanges code server-side, fetches github user id, discards GitHub token, sets session cookie, redirects to app.
+- `GET /api/auth/me` — returns `{githubId, done: [...]}` or `401`.
+- `POST /api/auth/logout` — clears the session cookie.
+
+### 6.6 Judge driver design (per problem)
+
+- User submits a plain named JS function (e.g. `twoSum(nums, target)`).
+- Server concatenates: user code + authored driver from `judge/tests/<slug>.json` (sample + edge cases, expected outputs).
+- Single Piston execution of the bundle; driver prints the JSON envelope to stdout; server parses, records pass/fail per test, persists progress on full-pass.
+- Tree problems: driver deserializes input arrays to trees and serializes outputs back (level-order, `null`-trimmed) before comparing.
+
+### 6.7 Progress store (Vercel KV)
+
+- Key `user:{githubId}` → `{done: string[], updatedAt: string}`.
+- Written on full-pass of a problem's test set; read by `/api/auth/me` and the sidebar progress UI.
+- No migration from `localStorage` in pilot (fresh start; see amendment 6).
+
+### 6.8 New files (planned, not created)
+
+```
+api/
+├── judge/
+│   └── run.mjs            # auth gate → allowlist → driver build → Piston → verdict
+├── auth/
+│   ├── login.mjs          # state + GitHub authorize redirect
+│   ├── callback.mjs       # code exchange → identity → session cookie
+│   ├── me.mjs             # session → { githubId, done }
+│   └── logout.mjs         # clear cookie
+└── _lib/
+    ├── session.mjs        # JWT sign/verify (env secret), cookie helpers
+    ├── piston.mjs         # single-call executor with timeout + cap
+    ├── kv.mjs             # progress read/write
+    └── problems.mjs       # pilot registry: slugs, fn names, I/O codecs
+judge/
+└── tests/
+    ├── two-sum.json
+    ├── valid-parentheses.json
+    ├── search-insert-position.json
+    ├── climbing-stairs.json
+    └── invert-binary-tree.json
+vercel.json                 # { "outputDirectory": "docs" } (functions auto-detected in /api)
+```
+
+### 6.9 Verification gates (must ALL pass before pilot ships)
+
+1. Route unit tests with mocked Piston/auth (all branches: pass, fail, TLE, 401, 400, bad problemId).
+2. Live Piston round-trip per pilot problem (correct + incorrect + infinite-loop submissions).
+3. Real OAuth login against the owner's GitHub App (login → callback → me → logout).
+4. E2E checklist in a logged-in browser session across all 5 problems.
+5. Existing `npm run verify` still green (curriculum untouched).
+
+### 6.10 Owner inputs required (build blockers)
+
+1. **Build approval** (this plan + the 9 amendments above).
+2. A GitHub OAuth App created by the owner (homepage = Vercel URL, callback = `https://<app>/api/auth/callback`): paste the **client ID** in chat; put the **client secret** directly into Vercel env vars yourself (never into chat or git).
+3. Confirm the 5 pilot problems (or swap any).
+
+### 6.11 Explicitly deferred to phase 2
+
+Remaining 145 problems · Piston self-host (trigger: §6.2.8) · client-side worker judge option · localStorage progress import · multi-language support · `firecrawl-fetcher.mjs` research CLI (guides already ship researched follow-ups; tooling only if editing resumes at scale).
