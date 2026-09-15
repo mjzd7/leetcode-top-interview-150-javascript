@@ -356,6 +356,65 @@
 
 ---
 
+## PART 5 — Deep Dive: Basics, Worked Solutions & What to Learn Next (v2 expansion)
+
+> Every claim below is backed by ≥2 sources: one official/primary (textbook or vendor docs) cross-checked against the interview-prep sources from v1. Resource table at the end lists verification status.
+
+### 5.1 OS — learn it properly
+
+**Basics path (OSTEP, free at ostep.org — primary source).** Read in this order, doing the chapter dialogues: Ch 4 The Process (process = running program; PCB contents; running/ready/blocked states) → Ch 7 CPU Scheduling (FCFS/SJF/RR tradeoffs) → Ch 18–19 Paging + TLBs (linear page table, VPN→PFN, valid/present/dirty/accessed bits; TLB speeds translation) → Ch 26 Threads (thread = PC + registers + stack sharing one address space; why threads: parallelism + overlapping I/O) → Ch 28 Locks (test-and-set spin locks, yield, park/unpark queues; priority inversion + inheritance fix) → Ch 32 Deadlock (4 Coffman conditions; prevention via total lock ordering — the most practical technique). Cross-check: GFG OS Q&A + LeetCode Top-17 OS thread agree on states/PCB/Coffman wording.
+
+**Worked solution 1 — deadlock code + fix.** Two threads grab L1,L2 in opposite order → circular wait. Fix (OSTEP §32, lock ordering): impose global order, always acquire L1 before L2; alternative: `pthread_mutex_trylock` on L2, release L1 and retry (no-preemption broken). Say both in interviews.
+
+**Worked solution 2 — EAT math.** TLB hit 98%, TLB 20ns, memory 100ns: EAT = 0.98×(20+100) + 0.02×(20+200) = 117.6+4.4 = 122ns. One line, always asked with different numbers.
+
+**Worked solution 3 — page replacement trace.** Reference string 1,2,3,4,1,2,5 with 3 frames: FIFO faults on 5 (evicts 1) then 1,2 → Belady demo; LRU keeps 1,2 (recently used) and evicts 3 or 4. Draw frames column per step.
+
+**Prerequisites:** C basics (pointers, malloc/free for heap vs stack), how a program becomes a process (load → stack/heap setup → jump to main, OSTEP Ch 4). Then write one pthreads producer-consumer yourself — mods never ask what you haven't built.
+
+### 5.2 DBMS — learn it properly
+
+**Basics path (PostgreSQL official docs Ch 13, current v18/v19 — primary source).** Read: 13.1 MVCC intro (each statement sees a snapshot; readers never block writers) → 13.2 Isolation (the 4-level anomaly table; PG specifics: Read Uncommitted behaves as Read Committed; Repeatable Read also blocks phantoms; Serializable = SSI with predicate locks, retry on serialization failure) → 13.7 Locking and Indexes (B-tree recommended for concurrent scalar data; page-level locks released per row). Cross-check: InterviewBit 75+ Q + GFG agree on definitions; PG docs correct the common textbook oversimplification that RR allows phantoms (true in standard, false in PG — say this, interviewers love it).
+
+**Worked solution 1 — 2nd highest salary, 3 ways.** (a) `SELECT MAX(salary) FROM emp WHERE salary < (SELECT MAX(salary) FROM emp)`; (b) `DENSE_RANK() OVER (ORDER BY salary DESC)` filter rn=2 (handles ties — say why RANK vs DENSE_RANK); (c) `LIMIT 1 OFFSET 1` (dialect caveat). Always mention NULL handling.
+
+**Worked solution 2 — anomaly demo.** Dirty read: T1 UPDATE balance, T2 SELECT sees uncommitted → fixed at Read Committed (PG default: statement snapshot). Non-repeatable: same SELECT twice differs → fixed at Repeatable Read (txn snapshot). Phantom: new row appears in range re-query → blocked by PG RR / standard Serializable.
+
+**Prerequisites:** install Postgres locally, run EXPLAIN on 5 queries, build one normalized schema (users/orders/items to BCNF) then denormalize one leaderboard table and justify it. Learn one window-function query per day for a week.
+
+### 5.3 CN — learn it properly
+
+**Basics path (MDN Web Docs — primary source).** Read: "How the web works" (DNS → TCP/IP → HTTP request → packets → 200 OK; URL anatomy) → "How browsers work" (DNS per unique hostname; TCP SYN/SYN-ACK/ACK handshake; TLS negotiation costs 5 more round trips — 8 total before first GET) → TCP handshake glossary (3-way setup, 4-way FIN teardown) → Evolution of HTTP (1.0 per-request connections → 1.1 keep-alive/pipelining → 2 multiplexed binary + header compression → 3 QUIC/UDP per-stream retransmission) → Overview of HTTP (methods, status codes, caching). Cross-check: InterviewBit 70+ Q + Unstop Top-100 agree on handshake steps and version differences; MDN adds the round-trip counts interviewers probe.
+
+**Worked solution — the 2-minute "type google.com" answer.** DNS recursive→root→TLD→authoritative (cached by TTL) → TCP handshake (SYN, SYN-ACK, ACK) → TLS handshake (cipher, cert chain verification) → HTTP GET → 200 + HTML → parse, fetch sub-resources (each unique hostname = new DNS), render. Drop the "8 round trips before first byte" fact for senior+ loops.
+
+**Prerequisites:** `curl -w` timing breakdowns, DevTools Network waterfall reading, one tiny TCP echo client/server in any language, memorize the 12 status codes + 8 ports cold.
+
+### 5.4 OOP — learn it properly
+
+**Basics path (Oracle Java Tutorials — primary source).** Read: OOP Concepts trail (object = state+behavior bundle; class = blueprint; encapsulation; inheritance; interface as contract) → Subclasses lesson (single inheritance; everything descends from Object; subclass inherits public/protected, never private; constructors not inherited) → Overriding vs Hiding (instance method same signature = override, covariant returns allowed, `@Override` annotation; static same signature = hide; access can widen never narrow) → Java OO whitepaper (4 minimum characteristics: encapsulation, polymorphism, inheritance, dynamic binding). Cross-check: GFG OOP Q&A + ByteByteGo agree on pillar definitions; Oracle corrects two common errors: (1) Java has no multiple inheritance of state (interfaces only), (2) static methods hide, never override.
+
+**Worked solution 1 — Liskov violation that always passes.** Square extends Rectangle with setWidth/setHeight breaks substitutability (setting width changes height expectation). Fix: separate Shape hierarchy or composition. Second example: Penguin extends Bird{fly()} → split Flyable interface (ISP too — two principles, one answer).
+
+**Worked solution 2 — Singleton DCL in Java (write it).** `private static volatile Singleton instance;` + double-checked `synchronized` block; state the Enum alternative (serialization-safe, Effective Java) and the testability cost (hidden global state — prefer DI).
+
+**Prerequisites:** one language's access modifiers cold (Java public/protected/package/private), implement Observer + Strategy + State from scratch, then the AlgoMaster LLD track (80 items) bridges straight into system-design.md PART B.
+
+### 5.5 Resource index (every source used, verification status)
+
+| # | Resource | Covers | Status |
+|---|---|---|---|
+| 1 | OSTEP, Arpaci-Dusseau, v1.10 (pages.cs.wisc.edu/~remzi/OSTEP) Ch 4,7,18–22,26,28,32 | OS basics + worked mechanisms | PRIMARY official textbook; cross-checked vs GFG OS Q&A + LeetCode Top-17 OS |
+| 2 | PostgreSQL Docs Ch 13 (v18/v19): MVCC intro, Transaction Isolation, Locking and Indexes | Isolation table, MVCC, SSI, B-tree guidance | PRIMARY vendor docs; cross-checked vs InterviewBit 75+ DBMS Q |
+| 3 | MDN: How the web works; How browsers work; TCP handshake glossary; Evolution of HTTP; Overview of HTTP | DNS/TCP/TLS/HTTP basics + round-trip counts | PRIMARY vendor docs; cross-checked vs InterviewBit 70+ networking Q |
+| 4 | Oracle Java Tutorials: OOP Concepts, Inheritance/Subclasses, Overriding and Hiding; Java OO whitepaper | Pillars, inheritance rules, override/hide, dynamic binding | PRIMARY vendor docs; cross-checked vs GFG OOP Q&A |
+| 5 | GFG OS/DBMS/OOP Q&A; InterviewBit DBMS + Networking banks; Unstop Top-100 networking | Interview phrasing + question banks | SECONDARY prep sources; claims verified against 1–4 above |
+| 6 | Prior Firecrawl sweep `.firecrawl/core-cs/` + `.firecrawl/maang-sde/` | Baseline Q&A in PARTs 1–4 | SECONDARY; anomalies corrected per official docs (e.g. PG RR phantoms) |
+
+**What to learn next (in order):** C + pthreads mini-project → local Postgres + EXPLAIN drills → curl/DevTools + TCP echo → Java access modifiers + 3 patterns from scratch → AlgoMaster LLD track → system-design.md.
+
+---
+
 ## Sources (Firecrawl)
 
 **OS**
@@ -381,5 +440,5 @@
 
 ## Rerun Inputs
 workflow: firecrawl-core-cs
-depth: 4 topics × top-50 (OS ok, DBMS ok, CN ok, OOP lite+scrape after 2 timeouts) + v2 format expansion (no content removed)
+depth: 4 topics × top-50 (OS ok, DBMS ok, CN ok, OOP lite+scrape after 2 timeouts) + v2 format expansion (no content removed) + v3 deep dive (OSTEP/PG/MDN/Oracle official sources, Exa fallback after Firecrawl timeout)
 output: core-cs-fundamentals.md
