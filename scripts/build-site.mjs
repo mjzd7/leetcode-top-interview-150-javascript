@@ -33,13 +33,14 @@ function scanDirectory(dir, categoryName) {
       const title = titleMatch ? titleMatch[1].trim() : entry.name.replace('.md', '');
       
       const difficultyMatch = rawContent.match(/- \*\*Difficulty\*\*:\s*(\w+)/i);
-      const difficulty = difficultyMatch ? difficultyMatch[1] : 'Primer';
+      const isInterviewGuide = dir.includes('24-maang-guides');
+      const difficulty = isInterviewGuide ? 'Guide' : (difficultyMatch ? difficultyMatch[1] : 'Primer');
 
       const leetcodeLinkMatch = rawContent.match(/- \*\*LeetCode Link\*\*:\s*`([^`]+)`/i) || rawContent.match(/- \*\*LeetCode Link\*\*:\s*(https?:\/\/[^\s\)]+)/i);
       const leetcodeLink = leetcodeLinkMatch ? leetcodeLinkMatch[1].trim() : null;
 
       const patternMatch = rawContent.match(/- \*\*Pattern Category\*\*:\s*([^\n]+)/i);
-      const pattern = patternMatch ? patternMatch[1].trim() : null;
+      const pattern = isInterviewGuide ? 'MAANG Guides' : (patternMatch ? patternMatch[1].trim() : null);
 
       const relPath = path.relative(ROOT_DIR, filePath);
       items.push({
@@ -73,6 +74,10 @@ for (const catDir of categoryDirs) {
   const prettyName = catDir.name.replace(/^\d+-/, '').replace(/-/g, ' ').toUpperCase();
   scanDirectory(path.join(ROOT_DIR, catDir.name), prettyName);
 }
+
+// Structured sidebar order: primers first, then MAANG interview guides, then problem tracks
+const orderKey = (name) => name === 'FOUNDATIONS' ? 0 : name === 'MAANG GUIDES' ? 1 : 2;
+curriculum.sort((a, b) => orderKey(a.category) - orderKey(b.category));
 
 // Write data bundle
 const bundleContent = `window.CURRICULUM_DATA = ${JSON.stringify(curriculum, null, 2)};`;
