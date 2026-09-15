@@ -88,6 +88,50 @@ Customer/impact (41–50): went beyond for user/dev-customer, pushed back on fea
 - Day 5: Googleyness/Meta reframing of same 8 stories.
 - Bar check: every story has metric + learning + conflict or tradeoff. No story without numbers ships.
 
+---
+
+## PART F — Deep Dive: Official Wording, Worked STAR Answers & What to Learn Next (v2 expansion)
+
+> Backed by ≥2 sources: Amazon official (amazon.jobs LP page + interview loop + About Amazon manager guides, 2024–2025) cross-checked against Exponent/interviewing.io/IGotAnOffer banks and the STAR-crack Reddit thread.
+
+### F1. Basics — the official wording that must appear in your answers
+
+Amazon's own LP page defines each principle with a testable sentence — mirror this language (interviewers score against it):
+- Customer Obsession: "start with the customer and work backwards… obsess over customers" (not competitors).
+- Ownership: "never say 'that's not my job'"; long-term value over short-term results.
+- Are Right, A Lot: "seek diverse perspectives and work to disconfirm their beliefs."
+- Bias for Action: "many decisions are reversible and do not need extensive study… calculated risk taking."
+- Frugality: "no extra points for growing headcount, budget, or fixed expense."
+- Earn Trust: "vocally self-critical… do not believe their team's body odor smells of perfume; benchmark against the best."
+- Dive Deep: "stay connected to the details… skeptical when metrics and anecdote differ."
+- Have Backbone: "respectfully challenge… do not compromise for social cohesion. Once decided, commit wholly."
+- Interview loop page (official): every loop member assesses different aspects; all behavioral answers expected in STAR; "we avoid brain teasers." SDE loops split ~50/50 system design vs LP (About Amazon SDE guide) — both halves reject.
+
+### F2. Worked STAR answers (official samples, annotated)
+
+**Customer Obsession (official sample, About Amazon):** S — beta users unhappy at launch; T — decide ship vs delay; A — personally called 20 customers, analyzed data, delayed 2 weeks for fixes; R — 95% satisfaction vs 70% beta. Why it scores: working backwards (calls before deciding), metric contrast, personal action ("I personally").
+**Ownership (official sample):** project behind → mapped bottlenecks → found missing cross-team input → started weekly syncs + shared dashboard → back on schedule in 3 weeks; framework became team standard. Why it scores: "never that's-not-my-job," mechanism that outlived the project (bar-raising signal).
+**Learn & Be Curious (official sample):** noticed outdated stack → self-learned modern framework off-hours → demoed benefits → pilot → 30% faster development. Template for any "outdated X at college/internship" story.
+**Formula to copy:** Situation (recent, specific) → Task (your responsibility, dilemma stated) → Action (3 concrete "I" steps, above-and-beyond flagged) → Result (2 metrics: before→after) → Learning (1 line). 2–3 minutes spoken. Data-driven per official guidance: "provide examples using metrics or data if applicable."
+
+### F3. What to learn next (in order)
+
+1. Read all 16 LPs on amazon.jobs aloud; write the one-line test per principle from F1 on flashcards.
+2. Convert your 8 PART-B stories into the F2 formula; record audio; cut every "we" without a named "I" action.
+3. Do 1 LP mock (peer or Exponent); fix the two official failure modes: no metric, no personal contribution.
+4. Reframe top 3 stories for Googleyness (collaboration-first verbs) and Meta (scope + metric in first 30 seconds).
+
+### F4. Resource index (every source used, verification status)
+
+| # | Resource | Covers | Status |
+|---|---|---|---|
+| 1 | amazon.jobs Leadership Principles + Interview Loop pages | Official 16 wordings, loop structure, STAR expectation, no-brainteaser policy | PRIMARY official; cross-checked vs Exponent/IGotAnOffer banks |
+| 2 | About Amazon manager guides (2024–2025): STAR tips, LP interview strategies, SDE process guide | Worked STAR samples with metrics, "I vs we," SDE 50/50 split | PRIMARY official; samples annotated in F2 |
+| 3 | Exponent/Interviewing.io/IGotAnOffer LP banks + STAR-crack Reddit thread | Question phrasing, follow-ups, candidate tactics | SECONDARY; tactics verified against 1–2 |
+| 4 | LeetCode Googlyness FAQ + Meta Exponent bank + ex-manager video | Google/Meta framings | SECONDARY; consistent with PARTs C–D |
+
+---
+
 ## Sources (Firecrawl)
 
 - https://www.tryexponent.com/blog/how-to-nail-amazons-behavioral-interview-questions (39k)

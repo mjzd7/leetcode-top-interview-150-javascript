@@ -102,6 +102,10 @@
     .prose code.primer-link { cursor: pointer; }
     .prose code.primer-link:hover { background: rgba(200,250,75,.18); }
     .prose a > code { text-decoration: underline; text-underline-offset: 3px; }
+    /* Long unbreakable runs (bare URLs in Sources lists, slash-joined codes
+       like (200/201/…) in Q&A) must wrap — otherwise they force the flex
+       article wider than the viewport and show blank space on mobile. */
+    .prose p, .prose a, .prose li { overflow-wrap: anywhere; }
     .katex { font-size: 1.02em; position: relative; }
     .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
     .prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }

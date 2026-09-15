@@ -149,6 +149,44 @@ Requirements → use cases → classes (nouns) → relationships (is-a/has-a) �
 - Availability: 99.9 = 8.8h/yr downtime; 99.99 = 53m
 - Back-of-envelope lines to speak aloud — interviewers grade reasoning, not arithmetic.
 
+---
+
+## PART C — Deep Dive: Basics, Worked Designs & What to Learn Next (v2 expansion)
+
+> Backed by ≥2 sources: Google SRE book/workbook (official, sre.google) cross-checked against DesignGurus/GFG/IGotAnOffer banks and AlgoMaster LLD track.
+
+### C1. Basics path (read in this order)
+
+1. **SRE Book Ch 19 (Frontend LB):** DNS LB (multiple A/AAAA, resolver caching + TTL limits, 512-byte reply cap) → VIP with consistent hashing (stable mapping when backends churn) → DSR/GRE encapsulation. Lesson for interviews: always name *two* LB layers (DNS/anycast + L4/L7) and one cache-invalidation caveat (TTL).
+2. **SRE Book Ch 20 (Datacenter LB):** simple Round Robin spreads CPU up to 2x; least-loaded sinkholes on fast-erroring tasks (fix: count errors as active requests); Weighted Round Robin with capability scores wins in practice. Interview line: "RR is my strawman; I'd weigh by reported utilization and guard with health checks."
+3. **SRE Workbook Ch 11 + SRE Book Ch 21 (Overload):** client-side adaptive throttling (reject locally when accepts lag requests by Kx), per-request retry budget (3 attempts), per-client retry ratio cap (10%), load shedding + autoscaling interplay (Pokémon GO case). Use when asked "design for 10x spike."
+4. **Your HLD framework from PART A stays** — SRE material plugs into the Scale/Bottlenecks step as cited evidence, not a replacement.
+
+### C2. Worked design 1 — URL shortener, with numbers spoken aloud
+
+Requirements: 100M URLs/month, 10:1 read/write, 5-yr retention. Writes: ~40/s avg (~100M/30/86400), peak 5x = 200/s. Reads: ~400/s avg, 2k peak. Storage: 100M×12×5yr ≈ 6B records × ~500B metadata ≈ 3TB (+replication 3x ≈ 9TB) — fits in one RDBMS cluster but shard by hash for growth. API: POST /shorten {url} → 201 {key}; GET /{key} → 301. Key gen: Base62 counter (7 chars ≈ 3.5T) vs MD5-collision handling — pick counter + ZooKeeper-range allocator, say why (no collisions, short keys). Cache: 20% hot keys in Redis (80/20), CDN for redirects. Rate limit: 100/min per API key (token bucket). Deep dive offered: analytics pipeline (Kafka → OLAP) kept async off the read path.
+
+### C3. Worked design 2 — Rate limiter (the senior filter)
+
+Algorithm table: token bucket (bursty, refill N/sec) vs leaky bucket (smooth outflow) vs fixed window (boundary bursts — thundering herd at window edge) vs sliding-window log/counter (precise, memory-heavy). Distributed: Redis + Lua atomic decrement per key, sticky vs centralized tradeoffs; per-user + per-IP two-tier; headers `X-RateLimit-Remaining`, `429 + Retry-After`. Failure mode answer: fail-open vs fail-closed choice with reasoning (payments: closed; feed reads: open + local cap, citing SRE client-side throttling).
+
+### C4. Worked LLD — Parking Lot in 15 minutes (say this structure)
+
+`Vehicle(size) → Slot(size, occupied) → Floor(slots) → Lot(floors, ticketCounter)`; `Ticket(entryTime, vehicle, slot)`; `PricingStrategy` interface (hourly, flat) + `SpotAssignmentStrategy` (nearest, random); `Gate` issues tickets; concurrency: `synchronized` spot claim or `ConcurrentHashMap` slot-state with CAS; extensibility question back: "add EV charging slots" → new Slot subtype, no existing code touched (OCP — name it).
+
+### C5. Resource index (every source used, verification status)
+
+| # | Resource | Covers | Status |
+|---|---|---|---|
+| 1 | Google SRE Book Ch 19/20/21 + Workbook Ch 11 (sre.google) | LB layers, RR pitfalls, throttling, retry budgets, shedding | PRIMARY official; cross-checked vs DesignGurus 50-Q bank |
+| 2 | DesignGurus 50 System Design Qs 2026 (38k) + AlgoMaster HLD types + rate-limiter checklist | Question bank + HLD taxonomy | SECONDARY; mechanisms verified against 1 |
+| 3 | GFG Top-10 HLD (94k) + IGotAnOffer 50+ Q (99k) + Gagan93 LLD guide | Worked examples, LLD process | SECONDARY; consistent with 1–2 |
+| 4 | AlgoMaster LLD track + Parking Lot walkthrough (64k) | LLD patterns/UML/practice order | SECONDARY prep; patterns match Oracle OOP docs |
+
+**What to learn next:** SRE Ch 19→20→21 in full → build URL shortener + rate limiter locally (Redis) → 10 HLD write-ups using the PART A framework → AlgoMaster LLD 80-item track → behavioral-leadership.md for the LP round that accompanies every onsite.
+
+---
+
 ## Sources (Firecrawl)
 
 **HLD**
