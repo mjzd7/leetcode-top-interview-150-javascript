@@ -4,6 +4,9 @@
 # Agent working state (session continuations, not curriculum content)
 .omo/
 
+# Firecrawl research cache (regenerable JSON/MD snapshots, not curriculum content)
+.firecrawl/
+
 # Dependencies
 node_modules/
 
