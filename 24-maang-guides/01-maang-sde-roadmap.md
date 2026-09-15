@@ -177,8 +177,42 @@ Every URL scraped via Firecrawl (40 total, 20+ with full markdown):
 - https://leetcode.com/discuss/interview-experience/1243797/amazon-sde-2-reject-google-l4-reject-facebook-e4-offer-my-journey/
 - https://www.reddit.com/r/leetcode/comments/1nv9h5k/amazon_india_sde1_new_grad_2025_off_campus/
 
+---
+
+## PART 8 — Deep Dive: Official Processes, Worked Prep & What to Learn Next (v2 expansion)
+
+> Backed by ≥2 sources: official hiring pages (Google Careers, Meta Careers, amazon.jobs SDE II/III prep) cross-checked against FinalRoundAI/4DayWeek guides and LeetCode experience posts.
+
+### 8.1 Basics — each company's official process, verbatim structure
+
+**Google (google.com/about/careers, primary):** apply → recruiter screen (30m, level + comp discussed upfront) → tech phone screen (45–60m, shared doc, no highlighting) → onsite 4–5 rounds (2–3 coding, 1 system design L4+, 1 Googleyness) → hiring committee (strangers to you vote hire/no-hire + level, 1–2 weeks) → team matching → comp. 6–12 weeks total. Levels L3 (0–2y) → L6 staff; system design starts at L4.
+**Meta (metacareers.com, primary):** recruiter call → technical screen (5 intro + 35 coding with a Meta engineer + 5 Q&A; 2 problems on fundamentals) → full loop: coding (harder, 45m) + design (systems OR product, matched to background, whiteboard, no coding) + behavioral (45m, motivations + impact). Timeline 2–3 months. 2025+ twist: authorized AI assistant inside CoderPad (Python/Java/TS/C++/Go…), Mermaid for design — practice WITH AI tools, debugging and building on existing code.
+**Amazon (amazon.jobs SDE II + SDE III prep, primary):** application → OA (SDE II: 90 min 2 questions + 20 min system-design scenarios + 8-min LP work-style survey) or phone screen (SDE III: 60 min, half LP + half coding/design with a senior leader) → loop of four (SDE II) to five (SDE III) 55-min interviews → outcome within 5 business days. Rules stated verbatim: syntactically correct code, no pseudocode; scalable/robust/well-tested + edge cases are the grading criteria; each interviewer asks 2–3 LP questions; "past behavior indicates future success; no brain teasers."
+
+### 8.2 Worked prep — a 16-week plan mapped to official gates
+
+Weeks 1–2: resume (1 page, metrics) + 20 referrals + recruiter outreach scripts; read all three official prep pages above and note level criteria.
+Weeks 3–8: NeetCode 150 by pattern (1/day) + weekly timed OA simulation (2 Qs/90 min, no IDE — Amazon rule).
+Weeks 9–10: Core CS sprint (core-cs-fundamentals.md PARTs 1–4) + SQL daily + 2 deployed projects polished for the 40-min project deep-dive.
+Weeks 11–13: System design (system-design.md PART A framework; URL shortener + rate limiter built locally) + LLD machines.
+Weeks 14–15: Behavioral bank (behavioral-leadership.md PARTs B/F; 8 stories recorded, metrics in each).
+Week 16: 3 full mocks (screen + onsite + LP), company-tagged revision, logistics (sleep, ID, environment per Meta CoderPad practice).
+
+### 8.3 What to learn next (in order)
+
+Official prep pages → this roadmap's Key Findings → 02-core-cs → 03-system-design → 04-behavioral → company-tagged LeetCode (last 3 months) → mocks. Re-read the official page of whichever company invites you the week before — loop formats drift yearly (see Meta AI-assistant change).
+
+### 8.4 Resource index (every source used, verification status)
+
+| # | Resource | Covers | Status |
+|---|---|---|---|
+| 1 | Google Careers How We Hire + Meta Careers SWE prep + hiring process + amazon.jobs SDE II/III prep | Official loops, timelines, grading rules | PRIMARY official; cross-checked vs FinalRoundAI + 4DayWeek + LeetCode experiences |
+| 2 | FinalRoundAI Google guide + 4DayWeek process + tryapt levels + levels.fyi | Stage details, 0.2% pass stat, level mapping | SECONDARY; consistent with 1 |
+| 3 | Medium 2026 strategy + OwnYourCareer fresher roadmap + NeetCode/Blind lists | Study volume (150 over 1000), mocks | SECONDARY prep; timelines verified against 1 |
+| 4 | Prior Firecrawl sweep `.firecrawl/maang-sde/` (8 searches, 40 sources) | Baseline PARTs 1–7 | SECONDARY; process claims corrected per 1 |
+
 ## Rerun Inputs
 workflow: firecrawl-deep-research
 topic: what is required to get into MAANG companies as SDE
-depth: thorough (8 searches, 40 sources, 20+ scraped)
+depth: thorough (8 searches, 40 sources, 20+ scraped) + v2 deep dive (Google/Meta/Amazon official hiring pages, Exa fallback)
 output: markdown report

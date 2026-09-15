@@ -2,7 +2,7 @@
 
 Crack MAANG JavaScript interviews with **150 problems, each solved 3 ways** — brute force → optimized → canonical — with diagrams, dry runs, V8 gotchas, and real interview follow-ups. Every solution is executable and CI-tested.
 
-**Live manual:** https://leetcode-top-interview-150-javascri.vercel.app · GitHub Pages mirror on `main` branch deployments.
+**Live manual:** https://leetcode-top-interview-150-javascri.vercel.app
 
 ![150 guides](https://img.shields.io/badge/guides-150-C8FA4B) ![JavaScript](https://img.shields.io/badge/language-JavaScript_ES2024-F7DF1E) ![tests](https://img.shields.io/badge/assertions-828-34D399) ![license](https://img.shields.io/badge/license-MIT-8B94A7)
 
@@ -16,13 +16,13 @@ Crack MAANG JavaScript interviews with **150 problems, each solved 3 ways** — 
 - **Executable test suite** (`scripts/test-runner.mjs`) — 828 assertions across all guides; solutions are code that runs, not text that rots.
 - **Judge subsystem tests** (`scripts/test-judge.mjs`) — 32 assertions over the QuickJS sandbox, verdict driver, session helpers, and `/api/judge/run` guards.
 - **Schema validator** (`scripts/validate-guide.mjs`) — rejects truncated or malformed guides in CI.
-- **Interactive web portal** (`docs/`) — dark-mode manual with fuzzy search (`⌘K`), difficulty filters, progress tracking, Mermaid diagrams, Prism highlighting, and KaTeX math. Built by `scripts/build-site.mjs`, deployed to Vercel + GitHub Pages.
+- **Interactive web portal** (`docs/`) — dark-mode manual with fuzzy search (`⌘K`), difficulty filters, progress tracking, Mermaid diagrams, Prism highlighting, and KaTeX math. Built by `scripts/build-site.mjs`, deployed to Vercel.
 
 ```mermaid
 flowchart LR
     PreReq["00-foundations: 4 primers"] --> Guides["150 guides: L1 brute → L2 optimized → L3 canonical"]
     Guides --> QA["validate + 828-assertion test suite"]
-    QA --> Web["Interactive portal (Vercel + Pages)"]
+    QA --> Web["Interactive portal (Vercel)"]
 ```
 
 Full blueprint: [`MASTER_PLAN.md`](MASTER_PLAN.md).
