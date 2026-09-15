@@ -2580,7 +2580,7 @@ function inBounds(matrix, r, c) {
 flowchart TD
     Start["Matrix problem"] --> Q1{"What must I produce?"}
     Q1 -->|"Visit cells in a special order<br/>(spiral, diagonal, wave)"| M1["Boundary / layer pointers<br/>§5.3 Move 1"]
-    Q1 -->|"Rotate / flip / transform<br/>in place"!= M2["Transpose + reverse,<br/>or 4-way layer rotation<br/>§5.3 Move 2"]
+    Q1 -->|"Rotate / flip / transform<br/>in place"| M2["Transpose + reverse,<br/>or 4-way layer rotation<br/>§5.3 Move 2"]
     Q1 -->|"Count regions / spread /<br/>shortest path on grid"| M3["DFS/BFS flood fill<br/>+ visited set<br/>§5.3 Move 3"]
     Q1 -->|"Search a sorted matrix"| M4["Staircase from top-right<br/>§5.3 Move 4"]
     Q1 -->|"Mark rows/cols, update<br/>neighbours simultaneously"| M5["In-place markers /<br/>two-pass + state encoding<br/>§5.3 Move 5"]
