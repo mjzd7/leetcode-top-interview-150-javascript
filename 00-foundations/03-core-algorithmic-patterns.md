@@ -2534,3 +2534,205 @@ All patterns taught in the YouTube playlist:
 | 6 | tk38CTSAYsg | Sliding Window | `v_tk38CTSAYsg/video.en.vtt` | `v_tk38CTSAYsg/frames/` |
 | 7 | ahGogUuCpuw | BFS | `v_ahGogUuCpuw/video.en.vtt` | `v_ahGogUuCpuw/frames/` |
 | 8 | N_AgTyMHgtw | Prefix Sum | `v_N_AgTyMHgtw/video.en.vtt` | `v_N_AgTyMHgtw/frames/` |
+
+---
+
+## 5. Matrix Basics — How to Work on Matrix Questions
+
+> Researched with Firecrawl (NeetCode spiral-matrix solution, AlgoMonster Rotate Image deep-dive, AlgoMaster rotate-image, CodePath Rotate-Image guide). Read this before the `04-matrix/` module (Sudoku, spiral, rotate, zeroes, Game of Life).
+
+### 5.1 The mental model — a grid is a graph
+
+Every matrix problem becomes easy once you stop seeing "rows and columns" and start seeing **nodes and neighbours**:
+
+```
+matrix[r][c]  =  value at row r, column c
+ROWS = matrix.length          (how many rows)
+COLS = matrix[0].length       (how many columns — may differ from ROWS!)
+
+4-directional neighbours of (r, c):
+              ┌─────────┐
+              │ (r-1,c) │   up
+   ┌──────────┼─────────┼──────────┐
+   │ (r,c-1)  │  (r,c)  │ (r,c+1)  │
+   │  left    │  YOU    │  right   │
+   └──────────┼─────────┼──────────┘
+              │ (r+1,c) │   down
+              └─────────┘
+```
+
+In code, neighbours are always expressed as a **directions array** — memorise this shape, it appears in islands, rotting oranges, word search, and every flood fill:
+
+```javascript
+const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];   // up, down, left, right
+// const DIRS8 = [...DIRS, [-1,-1], [-1,1], [1,-1], [1,1]];  // + diagonals, when asked
+
+function inBounds(matrix, r, c) {
+  return r >= 0 && r < matrix.length && c >= 0 && c < matrix[0].length;
+}
+```
+
+**The bounds check is the #1 matrix bug.** Say it out loud before coding: "rows are `matrix.length`, columns are `matrix[0].length`, and I check both on every neighbour." Empty-grid guard first: `if (!matrix.length || !matrix[0].length) return …`.
+
+### 5.2 Decision flowchart — which matrix move?
+
+```mermaid
+flowchart TD
+    Start["Matrix problem"] --> Q1{"What must I produce?"}
+    Q1 -->|"Visit cells in a special order<br/>(spiral, diagonal, wave)"| M1["Boundary / layer pointers<br/>§5.3 Move 1"]
+    Q1 -->|"Rotate / flip / transform<br/>in place"!= M2["Transpose + reverse,<br/>or 4-way layer rotation<br/>§5.3 Move 2"]
+    Q1 -->|"Count regions / spread /<br/>shortest path on grid"| M3["DFS/BFS flood fill<br/>+ visited set<br/>§5.3 Move 3"]
+    Q1 -->|"Search a sorted matrix"| M4["Staircase from top-right<br/>§5.3 Move 4"]
+    Q1 -->|"Mark rows/cols, update<br/>neighbours simultaneously"| M5["In-place markers /<br/>two-pass + state encoding<br/>§5.3 Move 5"]
+```
+
+### 5.3 The five core moves (with templates)
+
+#### Move 1 — Spiral / boundary traversal (LeetCode 54)
+
+Think in **layers**: each layer is four walls (top row → right column → bottom row → left column), and after finishing a layer the four pointers each step one cell inward (NeetCode's boundary method). Loop while `top <= bottom && left <= right`; the bottom-row and left-column passes each need a re-check so a single remaining row/column isn't walked twice.
+
+```javascript
+function spiralOrder(matrix) {
+  if (!matrix.length || !matrix[0].length) return [];
+  const out = [];
+  let top = 0, bottom = matrix.length - 1;
+  let left = 0, right = matrix[0].length - 1;
+
+  while (top <= bottom && left <= right) {
+    for (let c = left; c <= right; c++) out.push(matrix[top][c]);       // top wall →
+    top++;
+    for (let r = top; r <= bottom; r++) out.push(matrix[r][right]);     // right wall ↓
+    right--;
+    if (top <= bottom) {                                                // bottom wall ←
+      for (let c = right; c >= left; c--) out.push(matrix[bottom][c]);
+      bottom--;
+    }
+    if (left <= right) {                                                // left wall ↑
+      for (let r = bottom; r >= top; r--) out.push(matrix[r][left]);
+      left++;
+    }
+  }
+  return out;
+}
+// Time: O(m·n) — every cell visited once | Space: O(1) extra (ignoring output)
+```
+
+**Dry run** on `[[1,2,3],[4,5,6],[7,8,9]]`:
+
+```
+top=0,bottom=2,left=0,right=2
+  top wall →    1 2 3                 out = [1,2,3], top=1
+  right wall ↓  6 9                   out = [1,2,3,6,9], right=1
+  bottom wall ← 8 7                   out = […,8,7], bottom=1
+  left wall ↑   4                     out = […,4], left=1
+top=1,bottom=1,left=1,right=1
+  top wall →    5                     out = […,5], top=2
+  2 > 1 → loop ends                   ✅ [1,2,3,6,9,8,7,4,5]
+```
+
+#### Move 2 — Rotate 90° clockwise in place (LeetCode 48)
+
+Two equivalent ways (AlgoMonster / AlgoMaster / CodePath all teach both — know both, code one):
+- **Transpose + reverse each row.** Transpose swaps `matrix[r][c] ↔ matrix[c][r]` for `c > r` only (upper triangle — swapping everything twice undoes itself). Then reverse every row. Easiest to remember under pressure.
+- **4-way layer rotation.** For each layer, rotate groups of four cells `(top,left) → (top,right) → (bottom,right) → (bottom,left)` with one temp variable.
+
+```javascript
+function rotate(matrix) {
+  const n = matrix.length;   // square matrix — confirm with interviewer first
+  for (let r = 0; r < n; r++)            // 1. transpose (upper triangle only)
+    for (let c = r + 1; c < n; c++)
+      [matrix[r][c], matrix[c][r]] = [matrix[c][r], matrix[r][c]];
+  for (let r = 0; r < n; r++) matrix[r].reverse();   // 2. reverse each row
+}
+// Time: O(n²) | Space: O(1)
+```
+
+**Dry run** on `[[1,2,3],[4,5,6],[7,8,9]]`:
+
+```
+after transpose (mirror over main diagonal):
+  1 4 7
+  2 5 8
+  3 6 9
+after reversing each row:
+  7 4 1
+  8 5 2
+  9 6 3   ✅ rotated 90° clockwise
+```
+
+#### Move 3 — Flood fill DFS/BFS: islands, regions, spread (LeetCode 200)
+
+Count-the-regions = outer double loop + DFS that paints visited land as water. Shortest/unweighted spread on a grid = BFS level by level (rotting oranges). Template covers both — swap the stack for a queue for BFS:
+
+```javascript
+function numIslands(grid) {
+  if (!grid.length || !grid[0].length) return 0;
+  const ROWS = grid.length, COLS = grid[0].length;
+  const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+  let count = 0;
+
+  function dfs(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || grid[r][c] !== '1') return;
+    grid[r][c] = '0';                                  // mark visited in place
+    for (const [dr, dc] of DIRS) dfs(r + dr, c + dc);  // flood neighbours
+  }
+
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (grid[r][c] === '1') { count++; dfs(r, c); }  // new island found
+  return count;
+}
+// Time: O(m·n) — each cell flipped at most once | Space: O(m·n) worst-case recursion
+```
+
+**Dry run** on `[["1","1","0"],["1","0","0"],["0","0","1"]]`:
+
+```
+(0,0)='1' → island #1, flood paints (0,0),(0,1),(1,0) → '0'
+scan continues… (2,2)='1' → island #2, flood paints it
+✅ answer = 2
+```
+
+#### Move 4 — Staircase search in a sorted matrix (LeetCode 240)
+
+Rows and columns both sorted ascending? Start at the **top-right corner**: if the target is smaller, the whole column is too big → move left; if larger, the whole row is too small → move down. One O(m+n) walk, no binary search needed.
+
+```javascript
+function searchMatrix(matrix, target) {
+  if (!matrix.length || !matrix[0].length) return false;
+  let r = 0, c = matrix[0].length - 1;   // top-right corner
+  while (r < matrix.length && c >= 0) {
+    if (matrix[r][c] === target) return true;
+    else if (matrix[r][c] > target) c--; // entire column too big → go left
+    else r++;                            // entire row too small → go down
+  }
+  return false;
+}
+// Time: O(m + n) | Space: O(1)
+```
+
+#### Move 5 — In-place markers & simultaneous updates
+
+- **Set Matrix Zeroes (73):** first row/column double as marker storage (plus two booleans for whether they themselves must be zeroed) — one pass to mark, one pass to zero. Never zero while scanning: you'd cascade.
+- **Game of Life (289):** neighbours must be read from the *old* state while writing the *new* one → encode transitions in place (`2` = dead→alive, `3` = alive→dead, read via `Math.abs`/mod) then decode in a second pass. Same two-pass moral as zeroes.
+
+### 5.4 Gotcha checklist (say before coding)
+
+1. **Rows ≠ columns** — `matrix.length` vs `matrix[0].length`; confirm square vs rectangular (rotate needs square).
+2. **Empty grid** — guard `!matrix.length || !matrix[0].length` first.
+3. **Bounds on every neighbour** — the `inBounds` helper, no exceptions.
+4. **Visited discipline** — flood fill without marking revisits forever (or use a `Set` of `"r,c"` when mutating input is forbidden).
+5. **Don't mutate while reading** — zeroes and Game of Life need markers/encoding + second pass.
+6. **Spiral double-walk** — re-check `top <= bottom` / `left <= right` before the bottom and left walls.
+
+### 5.5 Practice map (repo `04-matrix/` module)
+
+Spiral Matrix (54) → Move 1 · Rotate Image (48) → Move 2 · Number of Islands (200) → Move 3 · Search a 2D Matrix II (240) → Move 4 · Set Matrix Zeroes (73) + Game of Life (289) → Move 5 · Word Search (79) → Move 3 with backtracking (un-mark on retreat) · Sudoku Solver (37) → Move 3 with constraint sets per row/col/box.
+
+### 5.6 Sources
+
+- NeetCode — Spiral Matrix solution & explanation (boundary/layer method, four pointers per layer)
+- AlgoMonster — Rotate Image in-depth (transpose + 4-way layer rotation)
+- AlgoMaster — Rotate Image DSA guide · CodePath — Rotate Image guide (U-nderstand edge cases: square matrix, O(1) space)
+- Geekific — BFS vs DFS in interviews (shortest path vs regions framing)
