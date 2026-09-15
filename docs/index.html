@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Top Interview 150 — Visual JS Manual</title>
-  <meta name="description" content="All 150 LeetCode Top Interview problems, each with 3 JavaScript solution levels, visual dry runs, and MAANG follow-ups.">
+  <meta name="description" content="All 150 LeetCode Top Interview problems, each with 3 JavaScript solution levels, visual dry runs, and MAANG follow-ups — plus 4 MAANG interview guides (roadmap, core CS, system design, behavioral).">
   <meta name="theme-color" content="#08090D">
   <meta property="og:title" content="Top Interview 150 — Visual JS Manual">
   <meta property="og:description" content="150 problems. 3 solution levels each. Zero fluff.">
@@ -162,6 +162,7 @@
       <div class="flex-1"></div>
       <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0"></div>
       <div id="authArea" class="shrink-0"></div>
+      <button id="guidesBtn" onclick="openArticle('24-maang-guides_01-maang-sde-roadmap')" title="Open the MAANG interview guides" class="hidden sm:flex items-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 py-2 text-sm font-semibold min-h-[40px]" style="color:var(--accent);">Guides</button>
       <button id="paletteBtn" class="flex items-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 py-2 text-sm text-slate-400 min-h-[40px]">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         <span class="hidden md:inline">Jump to…</span>
@@ -583,16 +584,32 @@
       articleHead.innerHTML = '';
       const totalGuides = flatOrder.length;
       const primerCount = (byId.size - flatOrder.length);
-      const trackCount = DATA.filter(c => c.category !== 'FOUNDATIONS').length;
+      const trackCount = DATA.filter(c => c.category !== 'FOUNDATIONS' && c.category !== 'MAANG GUIDES').length;
+      const guideCat = DATA.find(c => c.category === 'MAANG GUIDES');
+      const guideCount = guideCat ? guideCat.items.length : 0;
+      const problemCount = totalGuides - guideCount;
+      const guideCard = (id, n, t, d) => '<button data-guide="' + id + '" class="text-left rounded-xl border border-[rgba(200,250,75,.25)] bg-[rgba(200,250,75,.04)] hover:bg-[rgba(200,250,75,.1)] active:bg-[rgba(200,250,75,.15)] px-4 py-3.5 min-h-[56px] transition-colors">' +
+        '<span class="block text-[10px] font-mono uppercase tracking-widest" style="color:var(--accent)">' + n + '</span>' +
+        '<span class="block text-sm font-semibold text-slate-100 mt-1">' + t + '</span>' +
+        '<span class="block text-[13px] text-slate-400 mt-0.5 leading-relaxed">' + d + '</span></button>';
       const feat = (t, d) => '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-4 py-3.5"><div class="text-sm font-semibold text-slate-100">' + t + '</div><div class="text-[13px] text-slate-400 mt-1 leading-relaxed">' + d + '</div></div>';
       contentArea.innerHTML =
         '<p class="text-xs font-mono uppercase tracking-widest mb-2" style="color:var(--accent)">Top Interview 150 · JavaScript</p>' +
         '<h1>What is this manual?</h1>' +
         '<p>A visual, interview-first study manual for the <strong class="text-slate-100">LeetCode Top Interview 150</strong>, written entirely in modern JavaScript. Every problem is a self-contained study session — intuition, diagrams, dry runs, runnable code, and the follow-up questions MAANG interviewers actually ask.</p>' +
-        '<div class="grid grid-cols-3 gap-2.5 my-5">' +
-          '<div class="rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + totalGuides + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">problem guides</div></div>' +
+        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-5">' +
+          '<div class="rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + problemCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">problem guides</div></div>' +
           '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + trackCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">topic tracks</div></div>' +
+          '<div class="rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + guideCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">MAANG guides</div></div>' +
           '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + primerCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">primers</div></div>' +
+        '</div>' +
+        '<h2 id="sec-maang">MAANG interview guides</h2>' +
+        '<p>Roadmap first, then depth — research-backed guides with definitions, top-50 question banks, and prep plans. Also in the sidebar under <strong class="text-slate-100">MAANG GUIDES</strong>.</p>' +
+        '<div class="grid sm:grid-cols-2 gap-2.5 my-4">' +
+          guideCard('24-maang-guides_01-maang-sde-roadmap', 'Guide 01 · Roadmap', 'What it takes to get into MAANG as SDE', 'Resume, DSA, core CS, system design, behavioral, levels — the full funnel.') +
+          guideCard('24-maang-guides_02-core-cs-fundamentals', 'Guide 02 · Core CS', 'OS, DBMS, networks, OOP', 'Definitions first, then top-50 Q&A per topic, grouped by subtopic.') +
+          guideCard('24-maang-guides_03-system-design', 'Guide 03 · System Design', 'HLD + LLD interview prep', 'Design framework, top-50 by tier, LLD machines and pattern map.') +
+          guideCard('24-maang-guides_04-behavioral-leadership', 'Guide 04 · Behavioral', 'Leadership & Googleyness', '16 LPs, 8 STAR stories, Googleyness, Meta signals, 50-question bank.') +
         '</div>' +
         '<div class="flex flex-wrap gap-3 my-5">' +
           '<button id="homeStart" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Start studying →</button>' +
@@ -616,7 +633,7 @@
           feat('Filters that stick', 'Easy / Med / Hard pills plus full-text sidebar filter per session.') +
         '</div>' +
         '<h2 id="sec-how">How to use it</h2>' +
-        '<ol><li><strong class="text-slate-100">Read the 4 foundation primers</strong> in the sidebar first — runtime quirks, polyfills, patterns, complexity.</li><li><strong class="text-slate-100">Pick a track</strong> (arrays → graphs) and work each guide L1 → L3, dry-running by hand.</li><li><strong class="text-slate-100">Say it out loud</strong> using the “How to Explain to Interviewer” script in each guide.</li></ol>';
+        '<ol><li><strong class="text-slate-100">Start with the MAANG guides</strong> above — roadmap, core CS, system design, behavioral — to know what the bar actually is.</li><li><strong class="text-slate-100">Read the 4 foundation primers</strong> in the sidebar — runtime quirks, polyfills, patterns, complexity.</li><li><strong class="text-slate-100">Pick a track</strong> (arrays → graphs) and work each guide L1 → L3, dry-running by hand.</li><li><strong class="text-slate-100">Say it out loud</strong> using the “How to Explain to Interviewer” script in each guide.</li></ol>';
       enhanceCodeBlocks();
       renderTOC();
       renderPrevNext();
@@ -626,6 +643,7 @@
       updateProgressBar();
       $('homeStart').onclick = () => { if (flatOrder.length) openArticle(flatOrder[0]); };
       $('homeSearch').onclick = () => openPalette();
+      contentArea.querySelectorAll('[data-guide]').forEach(b => { b.onclick = () => openArticle(b.dataset.guide); });
     }
 
     /* ---------- judge pilot: auth + run panel ---------- */

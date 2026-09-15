@@ -1193,7 +1193,7 @@ function collectProblemFiles() {
   const files = [];
   function scan(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'scripts' || entry.name === '00-foundations') continue;
+      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'scripts' || entry.name === '00-foundations' || entry.name === '24-maang-guides') continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) scan(full);
       else if (entry.name.endsWith('.md') && !entry.name.includes('PLAN') && !entry.name.includes('README')) files.push(full);
