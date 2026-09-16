@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#f0fdf4" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: See Phrase → Pick Pattern (JS)</text>
+<rect x="30" y="60" width="300" height="120" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="88" font-size="14" font-weight="bold">sorted + pair/triplet?</text>
+<text x="45" y="110" font-size="13">→ Two Pointers O(n)</text>
+<text x="45" y="130" font-size="13">longest/shortest run?</text>
+<text x="45" y="150" font-size="13">→ Sliding Window O(n)</text>
+<rect x="360" y="60" width="300" height="120" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="375" y="88" font-size="14" font-weight="bold">levels / shortest path?</text>
+<text x="375" y="110" font-size="13">→ BFS queue O(V+E)</text>
+<text x="375" y="130" font-size="13">all paths / cycles?</text>
+<text x="375" y="150" font-size="13">→ DFS + visited set</text>
+<rect x="690" y="60" width="270" height="120" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="705" y="88" font-size="14" font-weight="bold">top K / median?</text>
+<text x="705" y="110" font-size="13">→ Heap O(n log k)</text>
+<text x="705" y="130" font-size="13">overlapping ranges?</text>
+<text x="705" y="150" font-size="13">→ Sort + scan intervals</text>
+<line x1="330" y1="120" x2="360" y2="120" stroke="#1f2937" stroke-width="3"/>
+<line x1="660" y1="120" x2="690" y2="120" stroke="#1f2937" stroke-width="3"/>
+<rect x="30" y="200" width="930" height="120" rx="12" fill="#fefce8" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="228" font-size="14" font-weight="bold">150 > 2000: quality over count. 5-week Blind-75 rhythm:</text>
+<text x="45" y="250" font-size="13">W1 arrays+strings • W2 two-ptr/slide/stack • W3 trees/graphs/heaps • W4 tries/intervals/advanced • W5 DP</text>
+<text x="45" y="272" font-size="13">Per problem: clarify → brute O(n²) aloud → optimize → code JS → dry-run → state Big-O.</text>
+<text x="45" y="294" font-size="13">Start TwoPtr/Slide/HashMap (40% of asks), then BinarySearch/DFS/BFS/Stack.</text>
+<rect x="30" y="340" width="450" height="160" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="368" font-size="14" font-weight="bold">Tree/Graph must-memorize</text>
+<text x="45" y="390" font-size="13">DFS pre/in/post • BFS level order</text>
+<text x="45" y="410" font-size="13">visited set stops infinite loop</text>
+<text x="45" y="430" font-size="13">empty / 1-node / disconnected</text>
+<text x="45" y="450" font-size="13">topo sort = build order</text>
+<text x="45" y="470" font-size="13">Dijkstra only if weighted</text>
+<rect x="510" y="340" width="450" height="160" rx="12" fill="#e0f2fe" stroke="#1f2937" stroke-width="3"/>
+<text x="525" y="368" font-size="14" font-weight="bold">DP starter kit (JS memo)</text>
+<text x="525" y="390" font-size="13">stairs / robber / coin / LCS</text>
+<text x="525" y="410" font-size="13">memo object → tabulate</text>
+<text x="525" y="430" font-size="13">state = what repeats?</text>
+<text x="525" y="450" font-size="13">Kadane for max subarray O(n)</text>
+<text x="525" y="470" font-size="13">knapsack = pick-or-skip</text>
+</svg>
