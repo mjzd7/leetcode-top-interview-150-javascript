@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#fff7ed" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Audit AI Code Before It Melts Prod</text>
+<rect x="30" y="65" width="280" height="100" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="92" font-size="15" font-weight="bold">AI gives you code</text>
+<text x="45" y="114" font-size="13">“10M rows? nested loop fine!”</text>
+<text x="45" y="134" font-size="13" fill="#b91c1c">O(n²) = 100 TRILLION ops</text>
+<rect x="350" y="65" width="300" height="100" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="365" y="92" font-size="15" font-weight="bold">Your audit (5 checks)</text>
+<text x="365" y="114" font-size="12">1 Reads? 2 Edge cases? 3 Big-O?</text>
+<text x="365" y="134" font-size="12">4 Injection? 5 Eval on prod-like data?</text>
+<rect x="690" y="65" width="270" height="100" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="705" y="92" font-size="15" font-weight="bold" fill="#14532d">Ship or reject</text>
+<text x="705" y="114" font-size="13" fill="#14532d">Fix to O(n) with Map / index</text>
+<text x="705" y="134" font-size="13" fill="#14532d">Add regression eval</text>
+<line x1="310" y1="115" x2="350" y2="115" stroke="#1f2937" stroke-width="3"/>
+<line x1="650" y1="115" x2="690" y2="115" stroke="#15803d" stroke-width="3"/>
+<text x="30" y="200" font-size="16" font-weight="bold">The 10M-row math (why server melts):</text>
+<rect x="30" y="215" width="450" height="90" rx="12" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="45" y="242" font-size="14" font-weight="bold" fill="#7f1d1d">O(n²) on 10M = 10M × 10M = 1e14</text>
+<text x="45" y="265" font-size="13" fill="#7f1d1d">At 1e9 ops/sec → ~28 HOURS. Timeout. Meltdown.</text>
+<text x="45" y="287" font-size="13" fill="#7f1d1d">AI won’t warn you. Your Big-O brain must.</text>
+<rect x="510" y="215" width="450" height="90" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="525" y="242" font-size="14" font-weight="bold" fill="#14532d">O(n) with Map = 10M ops</text>
+<text x="525" y="265" font-size="13" fill="#14532d">At 1e9 ops/sec → ~0.01 sec. Ships fine.</text>
+<text x="525" y="287" font-size="13" fill="#14532d">Same answer, 10-million-x cheaper.</text>
+<text x="30" y="335" font-size="16" font-weight="bold">OWASP lens (AI code is untrusted input):</text>
+<rect x="30" y="350" width="930" height="150" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="378" font-size="13">LLM09 Misinformation (hallucinated APIs) → verify against docs • LLM05 Improper Output Handling → validate JSON, escape SQL/HTML</text>
+<text x="45" y="402" font-size="13">LLM01 Prompt Injection → treat retrieved docs as untrusted • LLM06 Excessive Agency → least-privilege tools, HITL on deletes/refunds</text>
+<text x="45" y="426" font-size="13">LLM07 System Prompt Leakage → no secrets in prompts • LLM10 Unbounded Consumption → step + token budgets per task</text>
+<text x="45" y="450" font-size="13" font-weight="bold">Strategic rule: pretty locally ≠ safe in prod. Audit readability + edges + complexity + security + eval.</text>
+<text x="45" y="474" font-size="13">2026 list: prompt-injection, sensitive-disclosure, supply-chain, data-poisoning, improper-output, excessive-agency, prompt-leakage, vector-weakness, misinfo, unbounded-use.</text>
+</svg>

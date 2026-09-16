@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="520" rx="18" fill="#f5f3ff" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: JS OOP — Class → Object → Prototype</text>
+<rect x="30" y="60" width="300" height="130" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="88" font-size="15" font-weight="bold">class Person {</text>
+<text x="45" y="110" font-size="13">#secret; // hard private</text>
+<text x="45" y="130" font-size="13">static count = 0;</text>
+<text x="45" y="150" font-size="13">constructor(name){...}</text>
+<text x="45" y="170" font-size="13">introduce(){...} }</text>
+<rect x="370" y="60" width="260" height="130" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="385" y="88" font-size="15" font-weight="bold">extends = is-a</text>
+<text x="385" y="110" font-size="13">Professor extends Person</text>
+<text x="385" y="130" font-size="13">super(name) first!</text>
+<text x="385" y="150" font-size="13">override introduce()</text>
+<text x="385" y="170" font-size="13">no access to #secret</text>
+<rect x="670" y="60" width="290" height="130" rx="12" fill="#e0f2fe" stroke="#1f2937" stroke-width="3"/>
+<text x="685" y="88" font-size="15" font-weight="bold">4 pillars</text>
+<text x="685" y="110" font-size="13">Encap: hide via # + methods</text>
+<text x="685" y="130" font-size="13">Abstr: what, not how</text>
+<text x="685" y="150" font-size="13">Inherit: reuse via extends</text>
+<text x="685" y="170" font-size="13">Poly: same call, diff behavior</text>
+<line x1="330" y1="125" x2="370" y2="125" stroke="#1f2937" stroke-width="3"/>
+<rect x="30" y="220" width="930" height="110" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="248" font-size="14" font-weight="bold">JS quirks interviewers love:</text>
+<text x="45" y="270" font-size="13">class = special function on prototype • body always strict • NOT hoisted (TDZ like let) • methods shared on prototype • # private is hard (no outside access)</text>
+<text x="45" y="292" font-size="13">Prefer composition/delegation over deep extends trees. One extends only — use mixins for multi-behavior.</text>
+<text x="45" y="314" font-size="13">this binding: arrow keeps this, normal method loses it in callbacks → bind or arrow.</text>
+<rect x="30" y="350" width="450" height="130" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="45" y="378" font-size="14" font-weight="bold" fill="#14532d">Good: canStudyArchery()</text>
+<text x="45" y="400" font-size="13" fill="#14532d">Logic in ONE place (Student).</text>
+<text x="45" y="420" font-size="13" fill="#14532d">Change rule once, all callers safe.</text>
+<text x="45" y="442" font-size="13" fill="#14532d">Encapsulation win.</text>
+<rect x="520" y="350" width="440" height="130" rx="12" fill="#fee2e2" stroke="#b91c1c" stroke-width="3" stroke-dasharray="8 5"/>
+<text x="535" y="378" font-size="14" font-weight="bold" fill="#7f1d1d">Bad: if (student.year &gt; 1)</text>
+<text x="535" y="400" font-size="13" fill="#7f1d1d">Rule copied everywhere.</text>
+<text x="535" y="420" font-size="13" fill="#7f1d1d">Change rule → break 10 files.</text>
+<text x="535" y="442" font-size="13" fill="#7f1d1d">Leaky abstraction.</text>
+</svg>
