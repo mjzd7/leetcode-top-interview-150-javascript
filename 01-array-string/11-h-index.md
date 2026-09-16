@@ -302,3 +302,109 @@ function hIndexSorted(citations) {
 ### Follow-Up 2: Dynamic / Real-Time H-Index with Continuous Publication Stream
 - **Scenario**: Support `addPaper(citations)` and `getHIndex()` dynamically.
 - **Solution Strategy**: Two Heaps (MinHeap and MaxHeap) or Fenwick Tree / Treap.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by StefanGryczka —
+`https://leetcode.com/problems/h-index/solutions/71068/3-lines-c-solution-with-explanation-yqkc/`
+— 1.7K votes / 134.5K views / 19 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Sort citations descending, then find the largest h
+where citations[h-1] >= h.
+
+```text
+FUNCTION hIndexNaive(citations):
+    sorted = SORT citations DESCENDING
+    h = 0
+    FOR i FROM 0 TO LENGTH(sorted) - 1:
+        IF sorted[i] >= i + 1:
+            h = i + 1
+        ELSE:
+            BREAK
+    RETURN h
+```
+
+- Time: O(n log n) for sorting
+- Space: O(n) for sorted array
+
+### B. Post's way: O(n) bucket counting
+
+Use counting sort idea. Bucket citations by value,
+then scan from high to low accumulating counts.
+
+```text
+FUNCTION hIndexOptimal(citations):
+    n = LENGTH(citations)
+    buckets = ARRAY of size n + 1 filled with 0
+    FOR c IN citations:
+        IF c >= n:
+            buckets[n] = buckets[n] + 1
+        ELSE:
+            buckets[c] = buckets[c] + 1
+    total = 0
+    FOR i FROM n DOWN TO 0:
+        total = total + buckets[i]
+        IF total >= i:
+            RETURN i
+    RETURN 0
+```
+
+- Time: O(n)
+- Space: O(n) for buckets
+- Single backward scan: total papers with >= i citations.
+
+```mermaid
+flowchart TD
+    Start["n = length, buckets[n+1] = 0"]
+    Start --> Fill["FOR c in citations: buckets[MIN(c,n)]++"]
+    Fill --> Scan["total = 0, FOR i = n DOWN TO 0"]
+    Scan --> Accum["total += buckets[i]"]
+    Accum --> Check{"total >= i?"}
+    Check --> |Yes| ReturnI["Return i"]
+    Check --> |No| Continue["i = i - 1"]
+    Continue --> Scan
+    ReturnI --> End
+```
+
+### C. Dry run on LeetCode Example 1
+
+`citations = [3, 0, 6, 1, 5]`
+
+Buckets (n=5): index 0=1, 1=1, 2=0, 3=1, 4=0, 5=2
+
+| i | buckets[i] | total | total >= i? |
+| :--- | :--- | :--- | :--- |
+| 5 | 2 | 2 | No (2 < 5) |
+| 4 | 0 | 2 | No (2 < 4) |
+| 3 | 1 | 3 | Yes (3 >= 3) |
+| - | - | - | Return 3 |
+
+h-index = 3. Matches.
+
+### D. Why B beats A
+
+- A: O(n log n) sorting dominates.
+- B: O(n) linear, avoids sort.
+- Same O(n) space but B has better constant factor.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Bucket n holds all citations >= n (capped).
+- Must scan DOWNWARD from n to 0.
+- total accumulates papers with >= i citations.
+- Return 0 if no h found (empty array handled).
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

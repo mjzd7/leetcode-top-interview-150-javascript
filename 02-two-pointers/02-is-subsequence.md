@@ -347,3 +347,75 @@ class SubsequenceMatcher {
 ### Follow-Up 2: Shortest Way to Form String
 - **Scenario**: Find minimum number of subsequences of $t$ needed to concatenate into $s$ (LeetCode 1055).
 - **Solution Strategy**: Greedy Two Pointers restarting at beginning of $t$ each time no further character can be matched.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/is-subsequence/solutions/3034947/video-two-pointer-solution/`
+— 45.7K views / 252 votes / 7 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Pointers)
+
+To check if `s` is a subsequence of `t`, we must find all characters of `s` inside `t` in the correct relative order. We can use two pointers: `sp` pointing to `s` and `tp` pointing to `t`. We iterate through `t`, and whenever the character in `t` matches the character in `s`, we advance `sp`. If `sp` reaches the end of `s`, we found the whole subsequence.
+
+```text
+FUNCTION isSubsequence(s, t):
+    sp = 0
+    tp = 0
+    
+    WHILE sp < length(s) AND tp < length(t):
+        IF s[sp] == t[tp]:
+            sp++
+        tp++
+        
+    RETURN sp == length(s)
+```
+
+- Time: O(T) where T is the length of string `t`. We traverse `t` at most once.
+- Space: O(1) using only two integer pointers.
+
+```mermaid
+flowchart TD
+    Init["sp = 0, tp = 0"] --> Loop{"sp < len(s) AND tp < len(t)?"}
+    Loop -->|"Yes"| Comp{"s[sp] == t[tp]?"}
+    Comp -->|"Yes"| IncSP["sp++"]
+    IncSP --> IncTP["tp++"]
+    Comp -->|"No"| IncTP
+    IncTP --> Loop
+    Loop -->|"No"| CheckEnd{"sp == len(s)?"}
+    CheckEnd -->|"Yes"| ReturnTrue["Return true"]
+    CheckEnd -->|"No"| ReturnFalse["Return false"]
+```
+
+### B. Dry run on LeetCode Example 1 (s = "abc", t = "ahbgdc")
+
+| Step | `sp` | `s[sp]` | `tp` | `t[tp]` | Match? | Action |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | 'a' | 0 | 'a' | Yes | `sp++`, `tp++` |
+| 2 | 1 | 'b' | 1 | 'h' | No | `tp++` |
+| 3 | 1 | 'b' | 2 | 'b' | Yes | `sp++`, `tp++` |
+| 4 | 2 | 'c' | 3 | 'g' | No | `tp++` |
+| 5 | 2 | 'c' | 4 | 'd' | No | `tp++` |
+| 6 | 2 | 'c' | 5 | 'c' | Yes | `sp++`, `tp++` |
+| 7 | 3 | (end)| 6 | (end)| - | Loop ends. |
+
+Result: `sp` (3) == `length(s)` (3), returns true.
+
+### C. Pitfalls from comments
+
+- **Using built-in `indexOf`:** Some attempts loop over `s` and use `t.indexOf(char, lastIndex)` to find the next character. While this works and often performs well in modern standard libraries, the Two Pointers manual loop is explicitly $O(T)$ in the worst case without any hidden overhead, and demonstrates algorithmic understanding.
+- **Dynamic Programming overkill:** Since this question is often grouped with DP string questions (like Longest Common Subsequence), some users write an $O(S \cdot T)$ 2D matrix DP solution. This is massive overkill in time and space when a simple greedy $O(T)$ match is guaranteed to work because any valid match prefix preserves the possibility of finding the remaining suffix.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (15): Adobe, Amazon, Bloomberg, Goldman Sachs, Google, Infosys, Meta, Microsoft, Pinterest, Qualcomm, Tesla, Tinkoff, Wix, Yandex, Zoho.
+- Recent: 30 days — (none).
+- Recent: 3 months — Amazon.

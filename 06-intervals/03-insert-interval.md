@@ -383,3 +383,200 @@ function removeInterval(intervals, toBeRemoved) {
   return result;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Andrey Timoshpolsky —
+`https://leetcode.com/problems/insert-interval/solutions/21602/short-and-straight-forward-java-solution-h749/`
+— 1.1K votes / 188.5K views / 101 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Insert, re-sort, run full merge
+(Q56). Works, re-sorts sorted input.
+
+```text
+FUNCTION insertNaive(intervals, newInt):
+    APPEND newInt TO intervals
+    SORT BY start
+    RETURN MERGE ALL (Q56 sweep)
+```
+
+- Time: O(n log n)
+- Space: O(n)
+
+### B. Post's way: three phases, one pass
+
+Sorted + disjoint input splits the
+work: ends before new start pass
+through; overlapping stretch the
+new interval; the rest appends.
+
+```text
+FUNCTION insertOptimal(intervals, newInt):
+    out = []; i = 0
+    WHILE i < n AND intervals[i][1] < newInt[0]:
+        PUSH intervals[i]; i++
+    WHILE i < n AND intervals[i][0] <= newInt[1]:
+        newInt = [MIN(starts), MAX(ends)]
+        i++
+    PUSH newInt
+    WHILE i < n:
+        PUSH intervals[i]; i++
+    RETURN out
+```
+
+- Time: O(n)
+- Space: O(n) output
+
+```mermaid
+flowchart TD
+    L["Pass left non-overlap"] --> M["Absorb overlap into new"]
+    M --> P["Push merged"]
+    P --> R["Pass right rest"]
+    R --> Done["Return out"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`intervals = [[1,3],[6,9]]`
+`newInterval = [2,5]`
+
+| Phase | Check | out |
+| :--- | :--- | :--- |
+| Left | [1,3]: 3<2? No | [] |
+| Merge | [1,3]: 1<=5 → [1,5] | [] |
+| Merge | [6,9]: 6<=5? No | [] |
+| Push | - | [[1,5]] |
+| Right | [6,9] | [[1,5],[6,9]] |
+
+### D. Why B beats A
+
+- No re-sort of sorted input.
+- Merge-while-scanning replaces
+  the second Q56 pass.
+- Q57 IS Q56 with a head start
+  (top thread, 63).
+
+### E. Pitfalls from comments
+
+- `<=` on the merge test: [1,4]
+  and [4,5] touch → merge.
+- Mutate newInt in place instead
+  of allocating (24).
+- In-place variant exists (183)
+  but complicates the 3 phases.
+- Signature changed to arrays
+  (244) — old Interval code rots.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Apple,
+  Bloomberg, Google, LinkedIn,
+  Meta, Microsoft, MongoDB, Oracle,
+  PayPal, PhonePe, TCS, Tesco,
+  TikTok, Uber, Walmart Labs.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon,
+  Google.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Otabek Kholmirzaev —
+`https://leetcode.com/problems/insert-interval/solutions/4886915/98-87-beats-easy-explanation-c-java-python/`
+— 13.4K views / 91 votes / 9 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Three-Phase Linear Scan)
+
+Because the input array of intervals is *already sorted* by the start times, we do not need to sort it or insert the new interval and re-sort. We can achieve a strict $O(N)$ solution by breaking the process into three distinct, sequential phases:
+1. **Left (Before):** Add all intervals that end strictly *before* the new interval starts. These have no overlap.
+2. **Middle (Overlap):** For all intervals that overlap with the new interval, merge them by updating the `newInterval`'s start and end times. An interval overlaps if its start time is $\le$ the new interval's end time.
+3. **Right (After):** Add the completely merged `newInterval`, and then add all remaining intervals.
+
+```text
+FUNCTION insert(intervals, newInterval):
+    result = empty List
+    i = 0
+    n = length(intervals)
+    
+    // Phase 1: Add all intervals ending before newInterval starts
+    WHILE i < n AND intervals[i][1] < newInterval[0]:
+        result.add(intervals[i])
+        i += 1
+        
+    // Phase 2: Merge overlapping intervals
+    WHILE i < n AND intervals[i][0] <= newInterval[1]:
+        newInterval[0] = MIN(newInterval[0], intervals[i][0])
+        newInterval[1] = MAX(newInterval[1], intervals[i][1])
+        i += 1
+        
+    // Add the merged new interval
+    result.add(newInterval)
+    
+    // Phase 3: Add all remaining intervals
+    WHILE i < n:
+        result.add(intervals[i])
+        i += 1
+        
+    RETURN result
+```
+
+- Time: O(N) where N is the number of intervals. Each interval is visited exactly once across the three loops.
+- Space: O(N) for the result list.
+
+```mermaid
+flowchart TD
+    Init["result = [], i = 0"] --> Phase1{"i < N AND<br>intervals[i][1] < new[0]?"}
+    Phase1 -->|"Yes"| AddLeft["result.push(intervals[i]), i++"]
+    AddLeft --> Phase1
+    Phase1 -->|"No"| Phase2{"i < N AND<br>intervals[i][0] <= new[1]?"}
+    Phase2 -->|"Yes"| Merge["new[0] = min(new[0], intervals[i][0])<br>new[1] = max(new[1], intervals[i][1])<br>i++"]
+    Merge --> Phase2
+    Phase2 -->|"No"| AddMerged["result.push(newInterval)"]
+    AddMerged --> Phase3{"i < N?"}
+    Phase3 -->|"Yes"| AddRight["result.push(intervals[i]), i++"]
+    AddRight --> Phase3
+    Phase3 -->|"No"| Return["Return result"]
+```
+
+### B. Dry run on LeetCode Example 2 (intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8])
+
+| `i` | `intervals[i]` | Condition Check | Action | `result` / `newInterval` |
+| :--- | :--- | :--- | :--- | :--- |
+| **Phase 1** | | | | |
+| 0 | `[1,2]` | `2 < 4` (True) | Add to result. `i++`. | `result = [[1,2]]` |
+| 1 | `[3,5]` | `5 < 4` (False) | Phase 1 ends. | |
+| **Phase 2** | | | | |
+| 1 | `[3,5]` | `3 <= 8` (True) | Merge: `new = [min(4,3), max(8,5)] = [3,8]`. `i++`.| `newInterval = [3,8]` |
+| 2 | `[6,7]` | `6 <= 8` (True) | Merge: `new = [min(3,6), max(8,7)] = [3,8]`. `i++`.| `newInterval = [3,8]` |
+| 3 | `[8,10]`| `8 <= 8` (True) | Merge: `new = [min(3,8), max(8,10)] = [3,10]`. `i++`.| `newInterval = [3,10]` |
+| 4 | `[12,16]`| `12 <= 10` (False)| Phase 2 ends. Add `newInterval` to result. | `result = [[1,2], [3,10]]` |
+| **Phase 3** | | | | |
+| 4 | `[12,16]`| `4 < 5` (True) | Add to result. `i++`. | `result = [[1,2], [3,10], [12,16]]` |
+
+### C. Pitfalls from comments
+
+- **Binary Search Temptation:** Because the input array is sorted, many developers try to over-optimize by using Binary Search to find the insertion points (which takes $O(\log N)$). However, shifting elements in an array or copying them to a new list still takes $O(N)$ time. The overall time complexity remains $O(N)$, but the code becomes drastically more complex and error-prone. The three-`while`-loop $O(N)$ solution is heavily favored in interviews for its readability and simplicity.
+- **The overlapping condition:** Understanding *why* `intervals[i][0] <= newInterval[1]` is the correct check for Phase 2 is crucial. Since Phase 1 guaranteed that `intervals[i]` does *not* end before `newInterval` starts, the only way they wouldn't overlap is if `intervals[i]` starts strictly *after* `newInterval` ends. Thus, as long as `intervals[i]` starts $\le$ `newInterval` ends, they overlap.
+- **Python slice optimization:** In Python, instead of writing the third `while` loop, you can just do `result.extend(intervals[i:])`. This is much cleaner and optimized in C under the hood.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Apple, Bloomberg, Google, LinkedIn, Meta, Microsoft, MongoDB, Oracle, PayPal, PhonePe, TCS, Tesco, TikTok, Uber, Walmart Labs.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Google.

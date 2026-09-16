@@ -328,3 +328,91 @@ function minSubArrayLen(target, nums) {
 ### Follow-Up 2: Streaming Network Rate-Limiting Window
 - **Scenario**: Find the minimum duration window in a live stream of packet timestamps containing at least $K$ megabytes of throughput.
 - **Solution**: Dynamic Sliding Window with timestamp delta tracking.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/minimum-size-subarray-sum/solutions/3558838/video-sliding-window-solution/`
+— 44.3K views / 169 votes / 4 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sliding Window)
+
+To find the minimum length of a contiguous subarray whose sum is $\ge$ `target`, we can use the Sliding Window technique. We maintain a `current_sum` by adding elements with a `right` pointer. Whenever the sum becomes $\ge$ `target`, we update our minimum length record and try to shrink the window from the left by moving the `left` pointer forward (subtracting elements) to find an even smaller valid subarray.
+
+```text
+FUNCTION minSubArrayLen(target, nums):
+    left = 0
+    current_sum = 0
+    min_length = INFINITY
+    
+    FOR right = 0 TO length(nums) - 1:
+        current_sum = current_sum + nums[right]
+        
+        WHILE current_sum >= target:
+            // Calculate current window length and update min
+            current_length = right - left + 1
+            min_length = min(min_length, current_length)
+            
+            // Shrink window from the left
+            current_sum = current_sum - nums[left]
+            left++
+            
+    IF min_length == INFINITY:
+        RETURN 0
+    ELSE:
+        RETURN min_length
+```
+
+- Time: O(N) where N is the length of `nums`. Each element is added by `right` exactly once and removed by `left` at most once.
+- Space: O(1) using only integer variables.
+
+```mermaid
+flowchart TD
+    Init["left = 0, sum = 0, minLen = INF"] --> Loop{"right < len(nums)?"}
+    Loop -->|"Yes"| Add["sum += nums[right]"]
+    Add --> InnerLoop{"sum >= target?"}
+    InnerLoop -->|"Yes"| UpdateMin["minLen = min(minLen, right - left + 1)"]
+    UpdateMin --> Shrink["sum -= nums[left], left++"]
+    Shrink --> InnerLoop
+    InnerLoop -->|"No"| IncRight["right++"]
+    IncRight --> Loop
+    Loop -->|"No"| CheckValid{"minLen == INF?"}
+    CheckValid -->|"Yes"| ReturnZero["Return 0"]
+    CheckValid -->|"No"| ReturnMin["Return minLen"]
+```
+
+### B. Dry run on LeetCode Example 1 (target = 7, nums = [2,3,1,2,4,3])
+
+| Step | `left` | `right` | `nums[right]` | `sum` | Meets Target? | Action | `minLen` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | 0 | 2 | 2 | No | `right++` | INF |
+| 2 | 0 | 1 | 3 | 5 | No | `right++` | INF |
+| 3 | 0 | 2 | 1 | 6 | No | `right++` | INF |
+| 4 | 0 | 3 | 2 | 8 | **Yes** (8 $\ge$ 7) | len = 3-0+1 = 4. `sum -= 2`, `left++` | 4 |
+| 5 | 1 | 3 | - | 6 | No | `right++` | 4 |
+| 6 | 1 | 4 | 4 | 10 | **Yes** (10 $\ge$ 7) | len = 4-1+1 = 4. `sum -= 3`, `left++` | 4 |
+| 7 | 2 | 4 | - | 7 | **Yes** (7 $\ge$ 7) | len = 4-2+1 = 3. `sum -= 1`, `left++` | 3 |
+| 8 | 3 | 4 | - | 6 | No | `right++` | 3 |
+| 9 | 3 | 5 | 3 | 9 | **Yes** (9 $\ge$ 7) | len = 5-3+1 = 3. `sum -= 2`, `left++` | 3 |
+| 10 | 4 | 5 | - | 7 | **Yes** (7 $\ge$ 7) | len = 5-4+1 = 2. `sum -= 4`, `left++` | 2 |
+| 11 | 5 | 5 | - | 3 | No | Loop ends. | 2 |
+
+### C. Pitfalls from comments
+
+- **The $O(N \log N)$ Binary Search follow-up:** The problem statement asks for an $O(N \log N)$ solution if you have already figured out the $O(N)$ solution. The $O(N \log N)$ solution involves creating a prefix sum array and then for each element, using binary search (`lower_bound`) to find the first prefix sum that is $\ge$ `target + current_prefix`. However, the $O(N)$ Sliding Window is strictly better and is what interviewers actually want first.
+- **Handling Arrays without a valid subarray:** If no subarray sum reaches `target` (e.g., target = 100, nums = [1,2]), `min_length` remains `INFINITY`. You must check for this at the very end and return `0`.
+- **Negative Numbers:** The Sliding Window approach only works because all numbers are strictly positive (as per constraints), meaning expanding the window *always* increases the sum and shrinking *always* decreases it. If negative numbers were allowed, this greedy window approach would fail, and we would need a Deque or Prefix Sum + HashMap approach.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Citigroup, DE Shaw, DoorDash, Goldman Sachs, Google, HCL, Infosys, Meta, Microsoft, Nvidia, Oracle, TCS, TikTok, Yandex.
+- Recent: 30 days — Meta, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

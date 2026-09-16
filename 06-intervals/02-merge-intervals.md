@@ -420,3 +420,230 @@ function mergeParallelChunks(chunks) {
   return merge(allIntervals);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by brubru777 —
+`https://leetcode.com/problems/merge-intervals/solutions/21222/a-simple-java-solution-by-brubru777-83sh/`
+— 840 votes / 268.8K views / 124 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Compare every pair, merge any
+overlap, repeat until stable.
+Correct, wasteful.
+
+```text
+FUNCTION mergeNaive(intervals):
+    REPEAT:
+        changed = False
+        FOR each pair (a, b):
+            IF OVERLAP(a, b):
+                MERGE into one
+                changed = True
+    UNTIL NOT changed
+```
+
+- Time: O(n cubed)
+- Space: O(n)
+
+### B. Post's way: sort, then sweep once
+
+Sorted starts turn overlap into a
+local check: next start past the
+running end means a clean break.
+Otherwise stretch the end.
+
+```text
+FUNCTION mergeOptimal(intervals):
+    SORT BY start
+    out = [intervals[0]]
+    FOR [s, e] IN intervals[1:]:
+        IF s <= out[TAIL][1]:
+            out[TAIL][1] = MAX(out[TAIL][1], e)
+        ELSE:
+            PUSH [s, e]
+    RETURN out
+```
+
+- Time: O(n log n)
+- Space: O(n) output
+
+```mermaid
+flowchart TD
+    S["Sort by start"] --> Loop{"more [s,e]?"}
+    Loop -->|"Yes"| Over{"s<=tail end?"}
+    Over -->|Yes| Stretch["tail end=max"]
+    Over -->|No| Push["push new"]
+    Stretch --> Loop
+    Push --> Loop
+    Loop -->|"No"| Done["Return out"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`[[1,3],[2,6],[8,10],[15,18]]`
+
+| [s,e] | Tail | Action | out |
+| :--- | :--- | :--- | :--- |
+| [1,3] | - | Seed | [[1,3]] |
+| [2,6] | [1,3] | 2<=3, end=6 | [[1,6]] |
+| [8,10] | [1,6] | 8>6, push | [[1,6],[8,10]] |
+| [15,18] | [8,10] | 15>10, push | +[15,18] |
+
+### D. Why B wins
+
+- Sorting buys the single pass:
+  overlap is always adjacent.
+- Running end absorbs chains
+  ([1,3],[2,6] swallow more).
+- Post kept it readable: lambda
+  sort + for-each, no tricks.
+
+### E. Pitfalls from comments
+
+- Sibling drills in one thread
+  (396): 252, 253, 435 Non-overlap
+  differs by ~3 lines — do all four.
+- Sort by START; end order only
+  breaks ties.
+- Touching edges ([1,4],[4,5])
+  DO overlap — use <=, not <.
+- Signature changed 2019 (arrays
+  not lists) — old copies break.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (101): Accenture, Adobe,
+  Amazon, AMD, American Express,
+  Anduril, Apple, Applied Intuition,
+  athenahealth, Atlassian, Autodesk,
+  Bloomberg, ByteDance, Capital One,
+  Chewy, Cisco, Citadel, Coupang,
+  CrowdStrike, Darwinbox, Databricks,
+  Deloitte, Disney, Docusign,
+  DoorDash, Dropbox, EarnIn, eBay,
+  EPAM Systems, Expedia, Flipkart,
+  Geico, General Motors, GoDaddy,
+  Goldman Sachs, Google, Grammarly,
+  Grubhub, Hubspot, IBM, Infosys,
+  Intuit, IXL, Juspay, LinkedIn,
+  MakeMyTrip, Meta, Microsoft,
+  Millennium, MongoDB, Morgan Stanley,
+  Moveworks, Netflix, Nextdoor,
+  Nutanix, Nvidia, Okta, Oracle,
+  Ozon, Palo Alto Networks, Patreon,
+  PayPal, PhonePe, Pinterest,
+  razorpay, Remitly, Ripple,
+  Rippling, Roblox, Salesforce,
+  Samsung, SAP, ServiceNow, Siemens,
+  Sigmoid, Snap, Squarespace, Stripe,
+  Swiggy, TCS, Tesco, Tesla, TikTok,
+  Turing, Twitch, Uber, Verkada,
+  Visa, VK, Walmart Labs,
+  Wells Fargo, Wipro, Wix, X,
+  Yandex, Yelp, Zalando, Zepto,
+  Zeta, Zoho, Zomato.
+- Recent: 30 days — Amazon,
+  Bloomberg, Google, Infosys,
+  Meta, Microsoft,
+  Palo Alto Networks.
+- Recent: 3 months — Amazon, Apple,
+  Atlassian, Bloomberg, Coupang,
+  Goldman Sachs, Google, IBM,
+  Infosys, Meta, Microsoft,
+  MongoDB, Palo Alto Networks,
+  Salesforce, Visa, Yandex.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pradhuman Gupta —
+`https://leetcode.com/problems/merge-intervals/solutions/5248107/beats-97-95-beginner-friendly-explanation-java-python-c-javascript/`
+— 48.4K views / 221 votes / 8 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sort First, Merge in One Pass)
+
+The foundational trick to almost all interval problems is **sorting the intervals by their start time**. 
+Once the intervals are sorted by their start times, any intervals that can be merged must be adjacent to each other in the sorted list. This allows us to merge everything in a single pass.
+We maintain a `prev` interval (or just look at the last interval in our `result` list). For each interval, we check if its start time overlaps with the `prev` interval's end time. If it does, we merge them by extending the `prev` interval's end time to the maximum of both end times. If it doesn't overlap, we push the interval to our `result` list and it becomes our new `prev`.
+
+```text
+FUNCTION merge(intervals):
+    IF length(intervals) <= 1:
+        RETURN intervals
+        
+    // Sort intervals by their start time
+    SORT intervals BY intervals[i][0]
+    
+    result = empty List
+    // Add the first interval to start comparing
+    result.add(intervals[0])
+    
+    FOR i = 1 TO length(intervals) - 1:
+        currentInterval = intervals[i]
+        lastMergedInterval = result.getLast()
+        
+        // Check for overlap: does current start BEFORE or AT last merged end?
+        IF currentInterval[0] <= lastMergedInterval[1]:
+            // Merge them: update the end time to the maximum
+            lastMergedInterval[1] = MAX(lastMergedInterval[1], currentInterval[1])
+        ELSE:
+            // No overlap, add to result
+            result.add(currentInterval)
+            
+    RETURN result
+```
+
+- Time: O(N log N) dominated by the sorting step. The subsequent pass takes $O(N)$ time.
+- Space: O(N) or O(log N) depending on the sorting algorithm's auxiliary space, plus $O(N)$ for the result list.
+
+```mermaid
+flowchart TD
+    Init["Sort intervals by start time<br>result = [intervals[0]]"] --> Loop{"For i = 1 to N-1"}
+    Loop -->|"Next i"| CheckOverlap{"intervals[i][0] <= result.last()[1]?"}
+    CheckOverlap -->|"Yes (Overlap)"| Merge["result.last()[1] = max(result.last()[1], intervals[i][1])"]
+    CheckOverlap -->|"No (Disjoint)"| AddNew["result.push(intervals[i])"]
+    Merge --> Loop
+    AddNew --> Loop
+    Loop -->|"Done"| Return["Return result"]
+```
+
+### B. Dry run on LeetCode Example 1 (intervals = [[1,3],[2,6],[8,10],[15,18]])
+
+The input is already sorted by start time.
+`result` initialized to `[[1,3]]`.
+
+| `i` | `current` | `lastMerged` | Overlap (`curr[0] <= last[1]`)? | Action | `result` state |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `[2,6]` | `[1,3]` | 2 <= 3 (**True**) | Merge. `last[1] = max(3, 6) = 6`. | `[[1,6]]` |
+| 2 | `[8,10]` | `[1,6]` | 8 <= 6 (False) | Add `[8,10]` to result. | `[[1,6], [8,10]]` |
+| 3 | `[15,18]`| `[8,10]` | 15 <= 10 (False) | Add `[15,18]` to result. | `[[1,6], [8,10], [15,18]]` |
+
+Result: `[[1,6],[8,10],[15,18]]`.
+
+### C. Pitfalls from comments
+
+- **Sorting by End Time?** Some people try to sort by end time instead of start time. While sorting by end time is useful for finding the maximum number of *non-overlapping* intervals (like in problem 435. Non-overlapping Intervals), it makes merging adjacent intervals much harder because a later interval with an early start time could stretch back and swallow multiple previous intervals. Always sort by **start time** for merging.
+- **Forgetting `Math.max` on the end time:** A common mistake when merging is writing `lastMergedInterval[1] = currentInterval[1]`. This fails when an interval completely swallows another, e.g., `[[1, 5], [2, 4]]`. The correct logic is `lastMergedInterval[1] = Math.max(lastMergedInterval[1], currentInterval[1])` to retain the `5`.
+- **In-place merging:** A commenter notes that "In C++ creating a new vector is less efficient than editing the same vector". You *can* do this in-place by maintaining a `writeIndex` and modifying the input array, then truncating it at the end to save $O(N)$ space. However, modifying inputs is generally frowned upon in functional paradigms, and creating a new result list is the most standard, readable approach.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (101): Accenture, Adobe, Amazon, AMD, American Express, Anduril, Apple, Applied Intuition, athenahealth, Atlassian, Bloomberg, ByteDance, Capital One, Chewy, Cisco, Citadel, Coupang, CrowdStrike, Darwinbox, Databricks, Deloitte, Disney, Docusign, DoorDash, Dropbox, EarnIn, eBay, EPAM Systems, Expedia, Flipkart, Geico, General Motors, GoDaddy, Goldman Sachs, Google, Grammarly, Grubhub, Hubspot, IBM, Infosys, Intuit, IXL, Juspay, LinkedIn, MakeMyTrip, Meta, Microsoft, Millennium, MongoDB, Morgan Stanley, Moveworks, Netflix, Nextdoor, Nutanix, Nvidia, Okta, Oracle, Ozon, Palo Alto Networks, Patreon, PayPal, PhonePe, Pinterest, razorpay, Remitly, Ripple, Rippling, Roblox, Salesforce, Samsung, SAP, ServiceNow, Siemens, Sigmoid, Snap, Squarespace, Stripe, Swiggy, TCS, Tesco, Tesla, TikTok, Turing, Twitch, Uber, Verkada, Visa, VK, Walmart Labs, Wells Fargo, Wipro, Wix, X, Yandex, Yelp, Zalando, Zepto, Zeta, Zoho, Zomato.
+- Recent: 30 days — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, Palo Alto Networks.
+- Recent: 3 months — Amazon, Apple, Atlassian, Bloomberg, Coupang, Goldman Sachs, Google, IBM, Infosys, Meta, Microsoft, MongoDB, Palo Alto Networks, Salesforce, Visa, Yandex.

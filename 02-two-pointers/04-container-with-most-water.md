@@ -314,3 +314,82 @@ function maxArea(height) {
 ### Follow-Up 2: 3D Container With Most Water (Grid Matrix)
 - **Scenario**: Given an $M \times N$ matrix of pillar heights, find a 4-wall bounding container holding the maximum water volume.
 - **Solution Strategy**: 4-Pointer convergence on boundary planes $(r_1, r_2, c_1, c_2)$.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Rahul Varma —
+`https://leetcode.com/problems/container-with-most-water/solutions/3701708/best-method-c-java-python-beginner-friendly/`
+— 320.1K views / 1.8K votes / 65 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Pointers / Greedy Shrinking)
+
+To maximize the volume of water, you want both maximum width and maximum height. You start with the maximum possible width by placing pointers at the beginning (`left`) and the end (`right`) of the array. To explore other potentially larger containers, you must increase the height. You do this by moving the pointer that points to the shorter line inward.
+
+```text
+FUNCTION maxArea(height):
+    left = 0
+    right = length(height) - 1
+    max_area = 0
+    
+    WHILE left < right:
+        current_height = min(height[left], height[right])
+        width = right - left
+        current_area = current_height * width
+        
+        max_area = max(max_area, current_area)
+        
+        IF height[left] < height[right]:
+            left++
+        ELSE:
+            right--
+            
+    RETURN max_area
+```
+
+- Time: O(N) where N is the number of lines. We iterate through the array once.
+- Space: O(1) using only integer variables.
+
+```mermaid
+flowchart TD
+    Init["left = 0, right = N - 1, maxArea = 0"] --> Loop{"left < right?"}
+    Loop -->|"Yes"| Calc["currentArea = min(height[left], height[right]) * (right - left)"]
+    Calc --> UpdateMax["maxArea = max(maxArea, currentArea)"]
+    UpdateMax --> CheckHeight{"height[left] < height[right]?"}
+    CheckHeight -->|"Yes"| MoveLeft["left++"]
+    CheckHeight -->|"No"| MoveRight["right--"]
+    MoveLeft --> Loop
+    MoveRight --> Loop
+    Loop -->|"No"| End["Return maxArea"]
+```
+
+### B. Dry run on LeetCode Example 1 ([1,8,6,2,5,4,8,3,7])
+
+| Step | `left` | `right` | `h[left]` | `h[right]` | `width` | `area` | `max_area` | Action |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | 8 | 1 | 7 | 8 | 1 * 8 = 8 | 8 | 1 < 7, move `left` to 1 |
+| 2 | 1 | 8 | 8 | 7 | 7 | 7 * 7 = 49 | 49 | 7 < 8, move `right` to 7 |
+| 3 | 1 | 7 | 8 | 3 | 6 | 3 * 6 = 18 | 49 | 3 < 8, move `right` to 6 |
+| 4 | 1 | 6 | 8 | 8 | 5 | 8 * 5 = 40 | 49 | 8 == 8, move `right` to 5 |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
+
+Final `max_area` is 49.
+
+### C. Pitfalls from comments
+
+- **Why move the shorter line?** The most common question in the discussion is the mathematical proof of why we move the shorter line. If you move the taller line inward, the width decreases, but the maximum possible height is still constrained by the shorter line, guaranteeing that the new area will be smaller or equal. The *only* way to find a larger area is to discard the shorter line and hope for a taller one.
+- **Brute Force (O(N^2)):** Using two nested loops to check all possible pairs of lines will easily time out (TLE) on LeetCode for larger arrays ($N \approx 10^5$).
+- **Handling equal heights:** When `height[left] == height[right]`, it technically doesn't matter which one you move, because moving either one brings the bottleneck down to a smaller width without improving the height of the remaining identical bound. Most algorithms just move `right--` or both.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (53): Accenture, Accolite, Adobe, Airtel, Amazon, Apple, Bloomberg, Capgemini, Capital One, Careem, DE Shaw, Deloitte, Dream11, Expedia, Flipkart, FreshWorks, Goldman Sachs, Google, Groww, HashedIn, Huawei, IBM, Infosys, Intel, Juspay, Meta, Microsoft, Morgan Stanley, Myntra, Nvidia, Okta, Ola Cabs, Oracle, PayPal, Paytm, PornHub, Publicis Sapient, PubMatic, Qualcomm, Salesforce, SAP, ServiceNow, Snowflake, TCS, Tesla, TikTok, Uber, Visa, Walmart Labs, Wix, Workday, Yandex, Zoho, Zomato, Zopsmart.
+- Recent: 30 days — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, Ola Cabs, TCS.
+- Recent: 3 months — Amazon, Bloomberg, Goldman Sachs, Google, Infosys, Meta, Microsoft, TCS.

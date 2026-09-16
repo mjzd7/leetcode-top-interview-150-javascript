@@ -287,3 +287,77 @@ function longestCommonPrefix(strs) {
 ### Follow-Up 2: Longest Common Substring (Non-Prefix)
 - **Scenario**: Find the longest common contiguous substring anywhere inside all strings.
 - **Solution Strategy**: Generalized Suffix Tree or Binary Search on substring length + Rolling Hash (Rabin-Karp) in $O(N \cdot M \log M)$ time.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Akbar —
+`https://leetcode.com/problems/longest-common-prefix/solutions/3273176/python3-c-java-19-ms-beats-99-91/`
+— 3.2M views / 4.6K votes / 194 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sort & Compare Ends)
+
+If you sort an array of strings alphabetically, you only need to compare the first string and the last string in the sorted array. Any common prefix they share must necessarily be shared by all the strings between them in the sorted order.
+
+```text
+FUNCTION longestCommonPrefixSort(strs):
+    IF length(strs) == 0 RETURN ""
+    
+    SORT strs alphabetically
+    
+    first = strs[0]
+    last = strs[length(strs) - 1]
+    ans = ""
+    
+    FOR i = 0 TO min(length(first), length(last)) - 1:
+        IF first[i] != last[i]:
+            BREAK
+        ans += first[i]
+        
+    RETURN ans
+```
+
+- Time: O(M * N log N) where N is number of strings and M is max string length
+- Space: O(1) or O(N) depending on language's sorting algorithm
+
+```mermaid
+flowchart TD
+    Init["Sort array alphabetically"] --> GetEnds["first = strs[0], last = strs[N-1]"]
+    GetEnds --> Loop{"i < min(len(first), len(last))?"}
+    Loop -->|"Yes"| Comp{"first[i] == last[i]?"}
+    Comp -->|"Yes"| Add["Append to ans, i++"]
+    Add --> Loop
+    Comp -->|"No"| Done["Return ans"]
+    Loop -->|"No"| Done
+```
+
+### B. Dry run on LeetCode Example 1 (["flower","flow","flight"])
+
+| Step | Action | State |
+| :--- | :--- | :--- |
+| 1 | Sort the array alphabetically | `["flight", "flow", "flower"]` |
+| 2 | Assign `first` and `last` | `first = "flight"`, `last = "flower"` |
+| 3 | Compare `first[0]` ('f') and `last[0]` ('f') | Match. `ans = "f"` |
+| 4 | Compare `first[1]` ('l') and `last[1]` ('l') | Match. `ans = "fl"` |
+| 5 | Compare `first[2]` ('i') and `last[2]` ('o') | Mismatch. Break loop. |
+
+Final answer returned: `"fl"`
+
+### C. Pitfalls from comments
+
+- **Sorting Overhead:** While incredibly concise, sorting is mathematically slower ($O(M \cdot N \log N)$) than a vertical scan ($O(M \cdot N)$). For typical interview constraints it is perfectly fast, but in an interview, be prepared to discuss vertical scanning to avoid the $O(N \log N)$ hit.
+- **Why sorting works:** The most common confusion in the comments is why comparing only the first and last strings is sufficient. Alphabetic sorting guarantees that the strings with the *most different* characters are at the opposite ends of the array.
+- **Shortest string fallacy:** A common misconception is that sorting places the shortest string first. Alphabetic sorting sorts by character values, not length (e.g., `["abcd", "abefg", "abd"]` sorts to `["abcd", "abd", "abefg"]`, where neither the first nor last is shortest).
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (53): Accenture, Adobe, Amazon, American Express, Apple, Barclays, Bloomberg, Capgemini, CME Group, Deloitte, Deutsche Bank, Disney, EPAM Systems, Fidelity, Google, HashedIn, HSBC, Hudson River Trading, IBM, Infosys, Jane Street, Larsen & Toubro, Meta, Microsoft, Nokia, Nvidia, Opentext, Oracle, Oyo, Palo Alto Networks, Persistent Systems, PhonePe, Publicis Sapient, PwC, Qualcomm, Quora, Revolut, Roblox, SAP, Sigmoid, Target, TCS, TikTok, Uber, USAA, Virtusa, Visa, Walmart Labs, Wipro, Yahoo, Yelp, Zoho.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google, IBM, Meta, Microsoft, Opentext, TCS.

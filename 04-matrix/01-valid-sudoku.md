@@ -479,3 +479,89 @@ function isValidGeneralizedSudoku(board, k) {
   return true;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by daulat_309 —
+`https://leetcode.com/problems/valid-sudoku/solutions/5713401/valid-sudoku-100-beat-o-1-java-c-c-c-python3-go-javascript-typescript/`
+— 82.2K views / 411 votes / 18 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (One Pass with Hash Sets / Boolean Arrays)
+
+To validate a Sudoku board efficiently, we can verify the rows, columns, and 3x3 boxes in a single pass. We can use three arrays of Hash Sets (or 2D boolean arrays since the dimensions are fixed to 9) to keep track of the digits we've seen.
+The trickiest part is determining which 3x3 box a cell `(i, j)` belongs to. The formula `boxIndex = (i / 3) * 3 + (j / 3)` maps any `(row, col)` to a box index from 0 to 8.
+
+```text
+FUNCTION isValidSudoku(board):
+    rows = 9 arrays of size 9 initialized to false
+    cols = 9 arrays of size 9 initialized to false
+    boxes = 9 arrays of size 9 initialized to false
+    
+    FOR r = 0 TO 8:
+        FOR c = 0 TO 8:
+            IF board[r][c] == '.':
+                CONTINUE
+                
+            // Convert character '1'-'9' to integer index 0-8
+            num = board[r][c] - '1'
+            boxIndex = floor(r / 3) * 3 + floor(c / 3)
+            
+            IF rows[r][num] OR cols[c][num] OR boxes[boxIndex][num]:
+                RETURN false
+                
+            rows[r][num] = true
+            cols[c][num] = true
+            boxes[boxIndex][num] = true
+            
+    RETURN true
+```
+
+- Time: O(1) or O(81). Since the board is strictly 9x9, the time complexity is constant.
+- Space: O(1) or O(81 * 3). The memory used by the boolean arrays is also strictly constant.
+
+```mermaid
+flowchart TD
+    Init["Initialize rows, cols, boxes arrays"] --> LoopR{"r = 0 to 8"}
+    LoopR -->|"Next r"| LoopC{"c = 0 to 8"}
+    LoopC -->|"Next c"| CheckEmpty{"board[r][c] == '.'?"}
+    CheckEmpty -->|"Yes"| LoopC
+    CheckEmpty -->|"No"| Calc["num = val-1, boxIdx = (r/3)*3 + (c/3)"]
+    Calc --> CheckSeen{"Seen in rows, cols, or boxes?"}
+    CheckSeen -->|"Yes"| ReturnFalse["Return false"]
+    CheckSeen -->|"No"| MarkSeen["Mark num as true in rows, cols, boxes"]
+    MarkSeen --> LoopC
+    LoopC -->|"Done"| LoopR
+    LoopR -->|"Done"| ReturnTrue["Return true"]
+```
+
+### B. Dry run on LeetCode Example 1 (snippet)
+
+Consider processing the top-left cell `board[0][0] = '5'` and `board[0][1] = '3'`:
+
+| `r` | `c` | `board[r][c]` | `num` | `boxIndex` | Check | Action |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 0 | '5' | 4 | (0/3)*3 + (0/3) = 0 | Not seen | `rows[0][4] = true`<br>`cols[0][4] = true`<br>`boxes[0][4] = true` |
+| 0 | 1 | '3' | 2 | (0/3)*3 + (1/3) = 0 | Not seen | `rows[0][2] = true`<br>`cols[1][2] = true`<br>`boxes[0][2] = true` |
+| ... | ...| ... | ... | ... | ... | ... |
+
+If `board[0][4]` later contains '5', `rows[0][4]` is already true, so we return false.
+
+### C. Pitfalls from comments
+
+- **The `boxIndex` Formula:** The formula `(r / 3) * 3 + (c / 3)` is commonly forgotten in interviews. It relies on integer division (where `floor(r/3)` maps rows 0,1,2 to 0; 3,4,5 to 1; 6,7,8 to 2). An alternative that avoids this is using a 3D boolean array `boxes[r/3][c/3][num] = true`, which is often easier to memorize and conceptualize.
+- **Constant Time Confusion:** Some candidates get into debates with interviewers over whether the complexity is $O(N^2)$ where $N=9$, or $O(1)$. Since the grid size is permanently fixed at 9x9 by the problem description, iterating 81 times is technically $O(1)$. In an interview, it's best to say "It's $O(1)$ because the board size is fixed at 81, but generalized to an $N \times N$ board, it would be $O(N^2)$".
+- **String Encoding (Not Recommended):** An older popular solution created strings like `"5 in row 0"` and `"5 in col 0"` and added them to a single Hash Set. While clever, this allocates memory and does string concatenation 81 times, making it incredibly slow compared to the boolean array approach.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (24): Amazon, Apple, Bloomberg, Confluent, EarnIn, Geico, Goldman Sachs, Google, Karat, Meta, Microsoft, Oracle, PayPal, Riot Games, Samsara, Snap, TikTok, Uber, Upstart, Verkada, Walmart Labs, Wissen Technology, Yandex, Zoho.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google.

@@ -314,3 +314,66 @@ function intToRoman(num) {
 ### Follow-Up 2: Excel Sheet Column Title Conversion (LeetCode 168)
 - **Scenario**: Convert a number to Excel 1-indexed Base-26 alphanumeric titles (`1 -> A`, `28 -> AB`).
 - **Solution Strategy**: Base-26 conversion with 1-based offset subtraction (`(num - 1) % 26`).
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Aditya Bhate —
+`https://leetcode.com/problems/integer-to-roman/solutions/2849929/easiest-o1-faang-method-ever/`
+— 177.7K views / 807 votes / 79 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Greedy Subtraction / Array Mapping)
+
+Hardcode arrays for each decimal place (thousands, hundreds, tens, ones). Then use modulo and division to pick the exact Roman numeral string for each digit. Since the maximum number is 3999, the arrays are small and fixed.
+
+```text
+FUNCTION intToRoman(num):
+    thousands = ["", "M", "MM", "MMM"]
+    hundreds = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"]
+    tens = ["", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"]
+    ones = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
+    
+    RETURN thousands[num / 1000] 
+           + hundreds[(num % 1000) / 100] 
+           + tens[(num % 100) / 10] 
+           + ones[num % 10]
+```
+
+- Time: O(1)
+- Space: O(1)
+
+```mermaid
+flowchart TD
+    Init["Define arrays for 1000s, 100s, 10s, 1s"] --> Math{"Extract digits via / and %"}
+    Math --> Concat["Concatenate array lookups"]
+    Concat --> Done["Return string"]
+```
+
+### B. Dry run on LeetCode Example 3 (1994)
+
+| Step | Place | Calculation | Array | Index | String |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | Thousands | 1994 / 1000 | thousands | 1 | "M" |
+| 2 | Hundreds | (1994 % 1000) / 100 = 994 / 100 | hundreds | 9 | "CM" |
+| 3 | Tens | (1994 % 100) / 10 = 94 / 10 | tens | 9 | "XC" |
+| 4 | Ones | 1994 % 10 = 4 | ones | 4 | "IV" |
+
+Final string: "M" + "CM" + "XC" + "IV" = "MCMXCIV"
+
+### C. Pitfalls from comments
+
+- **Time Complexity Debate:** Some comments argue over whether this is $O(1)$ or $O(N)$. Because the problem limits input to 3999, the number of operations is strictly bounded and constant, making it $O(1)$.
+- **Alternative (Loop):** You can also use a greedy loop with pairs `[1000, "M"], [900, "CM"]...` where you subtract the largest possible value until `num == 0`. The array lookup (shown above) avoids the loop entirely and is up to 3x faster in environments like Java/C++.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (30): Adobe, Agoda, Amazon, AMD, BlackRock, Bloomberg, Booking.com, Docusign, DoorDash, Geico, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Meta, Microsoft, Oracle, Palo Alto Networks, Salesforce, Swiggy, TCS, TikTok, UiPath, Verkada, Walmart Labs, Warnermedia, Wix, X, Zoho.
+- Recent: 30 days — Google, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, IBM, Meta, Microsoft, TCS.

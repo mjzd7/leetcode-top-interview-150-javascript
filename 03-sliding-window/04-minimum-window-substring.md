@@ -420,3 +420,119 @@ function minWindowASCII(s, t) {
 ### Follow-Up 2: Smallest Subarray Containing All Occurrences of Most Frequent Element
 - **Scenario**: Find the shortest contiguous subarray containing every occurrence of the array's most frequent element (LeetCode 697).
 - **Solution Strategy**: Track `{ firstIndex, lastIndex, frequency }` in a single hash map pass.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by zjh08177 (with explanation by redtesla) —
+`https://leetcode.com/problems/minimum-window-substring/solutions/26808/here-is-a-10-line-template-that-can-solve-most-substring-problems/`
+— 1M+ views / 7K+ votes / 278+ comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sliding Window + Frequency Map Template)
+
+This is the famous "10-line template that solves most substring problems". We use two pointers: `start` and `end`.
+1. We use a Hash Map (or fixed array of size 128 for ASCII) to count how many times each character in `t` is required.
+2. We use a `counter` equal to the length of `t` to track how many *required characters* are currently missing from our window.
+3. We move `end` to expand the window. If the current character is required (its count in the map > 0), we decrease the `counter`. We decrease the character's count in the map regardless.
+4. When `counter == 0`, the window is valid. We then record the minimum window size and try to shrink it by moving `start`.
+5. When shrinking, if the character leaving the window is a required one (its count becomes > 0), we increase the `counter`, making the window invalid again, forcing `end` to move forward.
+
+```text
+FUNCTION minWindow(s, t):
+    IF length(s) == 0 OR length(t) == 0:
+        RETURN ""
+        
+    map = Array of 128 integers, all 0
+    FOR each char in t:
+        map[char]++
+        
+    counter = length(t)
+    start = 0, end = 0
+    minStart = 0, minLen = INFINITY
+    
+    WHILE end < length(s):
+        // If s[end] is in t, decrease the required counter
+        IF map[s[end]] > 0:
+            counter--
+        
+        // Decrease the frequency in map (can be negative for chars not in t or excess chars)
+        map[s[end]]--
+        end++
+        
+        // When counter is 0, the window is valid. Try shrinking it.
+        WHILE counter == 0:
+            IF end - start < minLen:
+                minLen = end - start
+                minStart = start
+                
+            // s[start] is leaving the window
+            map[s[start]]++
+            
+            // If it was a required char, our window is now invalid
+            IF map[s[start]] > 0:
+                counter++
+                
+            start++
+            
+    IF minLen == INFINITY:
+        RETURN ""
+    ELSE:
+        RETURN substring(s, minStart, minLen)
+```
+
+- Time: O(S + T) where S and T are the lengths of strings `s` and `t`. Both `start` and `end` traverse `s` at most once.
+- Space: O(1) because the ASCII map is a constant size (128).
+
+```mermaid
+flowchart TD
+    Init["Populate map with t, counter = len(t)"] --> Loop{"end < len(s)?"}
+    Loop -->|"Yes"| ExpandCheck{"map[s[end]] > 0?"}
+    ExpandCheck -->|"Yes"| DecCounter["counter--"]
+    DecCounter --> MapDec
+    ExpandCheck -->|"No"| MapDec["map[s[end]]--, end++"]
+    MapDec --> ValidLoop{"counter == 0?"}
+    ValidLoop -->|"Yes"| UpdateMin["Update minLen and minStart"]
+    UpdateMin --> ShrinkMap["map[s[start]]++"]
+    ShrinkMap --> ShrinkCheck{"map[s[start]] > 0?"}
+    ShrinkCheck -->|"Yes"| IncCounter["counter++"]
+    IncCounter --> IncStart["start++"]
+    ShrinkCheck -->|"No"| IncStart
+    IncStart --> ValidLoop
+    ValidLoop -->|"No"| Loop
+    Loop -->|"No"| Return["Return min substring"]
+```
+
+### B. Dry run on LeetCode Example 1 (s = "ADOBECODEBANC", t = "ABC")
+
+Initial Map: `A:1, B:1, C:1`. `counter = 3`.
+
+| `end` | `s[end]` | `map` (key elements) | `counter` | `start` (shrinking logic) | `minLen` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 'A' | `A:0, B:1, C:1` | 2 | | INF |
+| 1-2 | 'D','O' | `A:0, B:1, C:1, D:-1...` | 2 | | INF |
+| 3 | 'B' | `A:0, B:0, C:1` | 1 | | INF |
+| 4-4 | 'E' | ... | 1 | | INF |
+| 5 | 'C' | `A:0, B:0, C:0` | **0 (Valid)** | Shrink `start`: 'A' leaves. `A:1`. `counter` = 1. Window was `0..5` | 6 |
+| 6-9 | ... | `B:-1, C:-1` ... | 1 | | 6 |
+| 10 | 'A' | `A:0, B:-1, C:-1` | **0 (Valid)** | Shrink `start`: 'D','O','B','E','C' leave. `C:0`. `counter` = 1. Window was `5..10` | 6 |
+| 11 | 'N' | ... | 1 | | 6 |
+| 12 | 'C' | `A:0, B:0, C:0` | **0 (Valid)** | Shrink `start`: 'O','D','E','B','A' leave. `A:1`. `counter` = 1. Window was `9..12` | 4 ("BANC") |
+
+### C. Pitfalls from comments
+
+- **Negative values in the map:** A common point of confusion is why the map values go negative. The map tracks `required_count - current_window_count`. If a character is not in `t` at all, its value drops to `-1, -2, ...` as we expand, and returns to `0` as we shrink. If it is in `t` but we have *excess*, it also drops below `0`. We only increase the `counter` when a value becomes strictly `> 0`, meaning we are actually missing a required character.
+- **`end++` vs Length Calculation:** The algorithm increments `end++` *before* the inner `WHILE` loop. Because of this, the window size calculation is simply `end - start` (not `end - start + 1`). This off-by-one is a massive source of bugs.
+- **Cryptic Code-Golf:** The original post writes `if (map[s[end++]]-- > 0) counter--;`. The discussion highly recommends expanding this out into readable lines for actual interviews, as doing operations inside array indices with post-increments is prone to errors and hard for an interviewer to read.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (36): Adobe, Airbnb, Amazon, Anduril, Apollo.io, Apple, Bloomberg, Cisco, DP world, Goldman Sachs, Google, Harness, IBM, Infosys, LinkedIn, Lyft, Meesho, Meta, Microsoft, Moloco, Oracle, Qualtrics, Salesforce, SAP, Snap, Snowflake, SoFi, Swiggy, Thoughtspot, TikTok, Uber, Walmart Labs, Wissen Technology, Yandex, Zeta, Zoho.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google, Lyft, Meta, Microsoft.

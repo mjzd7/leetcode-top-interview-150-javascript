@@ -408,3 +408,115 @@ function findSubstring(s, words) {
 ### Follow-Up 2: Substring Search on Streaming Compressed Log Files
 - **Scenario**: Detect concatenated command strings across gigabytes of streaming log data without loading full chunks into memory.
 - **Solution Strategy**: Rolling Hash on $L$-gram tokens in a fixed-size ring buffer.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Amit Shaw —
+`https://leetcode.com/problems/substring-with-concatenation-of-all-words/solutions/3932788/if-not-understood-block-me/`
+— 29.7K views / 143 votes / 11 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sliding Window with Offset)
+
+This is a Hard problem because we are dealing with words instead of characters. The optimal solution uses a Sliding Window approach. Since every word in the `words` array is the exact same length (`wordSize`), we can move our window in increments of `wordSize`.
+To cover all possible starting indices, we must run the Sliding Window `wordSize` times, starting with offsets `0, 1, ..., wordSize - 1`.
+
+```text
+FUNCTION findSubstring(s, words):
+    IF length(words) == 0 OR length(s) == 0:
+        RETURN []
+        
+    wordSize = length(words[0])
+    numWords = length(words)
+    totalLen = wordSize * numWords
+    originalCount = HashMap counting frequencies of each word in 'words'
+    result = []
+    
+    FOR offset = 0 TO wordSize - 1:
+        left = offset
+        count = 0
+        currentCount = empty HashMap
+        
+        FOR right = offset TO length(s) - wordSize STEP wordSize:
+            word = substring(s, right, wordSize)
+            
+            IF word is in originalCount:
+                currentCount[word]++
+                count++
+                
+                WHILE currentCount[word] > originalCount[word]:
+                    leftWord = substring(s, left, wordSize)
+                    currentCount[leftWord]--
+                    count--
+                    left += wordSize
+                    
+                IF count == numWords:
+                    result.push(left)
+            ELSE:
+                // Word is entirely invalid. Reset the window.
+                currentCount = empty HashMap
+                count = 0
+                left = right + wordSize
+                
+    RETURN result
+```
+
+- Time: O(N) where N is the length of string `s`. The outer loop runs `wordSize` times. The inner loop processes `s` in jumps of `wordSize`. $O(\text{wordSize} \times \frac{N}{\text{wordSize}}) = O(N)$. String slicing takes $O(\text{wordSize})$, making it $O(N \cdot \text{wordSize})$ strictly speaking, but `wordSize` is usually small.
+- Space: O(M) where M is the total length of all words in the `words` array to store the frequency maps.
+
+```mermaid
+flowchart TD
+    Init["Create originalCount Map"] --> OuterLoop{"For offset = 0 to wordSize-1"}
+    OuterLoop -->|"Next offset"| Setup["left = offset, count = 0, currentCount = {}"]
+    Setup --> InnerLoop{"For right = offset to len(s) step wordSize"}
+    InnerLoop -->|"Next word"| CheckValid{"Is word in originalCount?"}
+    CheckValid -->|"No"| Reset["Reset currentCount, count = 0, left = right + wordSize"]
+    Reset --> InnerLoop
+    CheckValid -->|"Yes"| Add["currentCount[word]++, count++"]
+    Add --> CheckExcess{"currentCount[word] > originalCount[word]?"}
+    CheckExcess -->|"Yes"| RemoveExcess["currentCount[leftWord]--, count--, left += wordSize"]
+    RemoveExcess --> CheckExcess
+    CheckExcess -->|"No"| CheckMatch{"count == numWords?"}
+    CheckMatch -->|"Yes"| AddResult["result.push(left)"]
+    AddResult --> InnerLoop
+    CheckMatch -->|"No"| InnerLoop
+    InnerLoop -->|"Done"| OuterLoop
+    OuterLoop -->|"Done"| Return["Return result"]
+```
+
+### B. Dry run on LeetCode Example 1 (s = "barfoothefoobarman", words = ["foo","bar"])
+
+`wordSize` = 3, `numWords` = 2, `totalLen` = 6.
+`originalCount` = `{"foo": 1, "bar": 1}`.
+Outer loop: `offset` = 0, 1, 2.
+
+**offset = 0:**
+| `right` | `word` | `currentCount` | `count` | `left` | Action | Result |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | "bar" | `{"bar": 1}` | 1 | 0 | Valid. | |
+| 3 | "foo" | `{"bar": 1, "foo": 1}` | 2 | 0 | Valid. `count == 2`, match! | `[0]` |
+| 6 | "the" | `{}` | 0 | 9 | Invalid! Reset map, move `left`. | `[0]` |
+| 9 | "foo" | `{"foo": 1}` | 1 | 9 | Valid. | `[0]` |
+| 12| "bar" | `{"foo": 1, "bar": 1}` | 2 | 9 | Valid. `count == 2`, match! | `[0, 9]` |
+| 15| "man" | `{}` | 0 | 18 | Invalid! Reset map. | `[0, 9]` |
+
+Final result after all offsets: `[0, 9]`.
+
+### C. Pitfalls from comments
+
+- **Missing the offset loop:** A common mistake is to only run the sliding window starting at index 0. If $s = \text{"xfoobar"}$ and `words = ["foo", "bar"]`, the words start at index 1. If you only check `right = 0, 3, 6`, the words you extract will be "xfo", "oba", "r" – none of which match. You *must* run the Sliding Window logic `wordSize` times with starting offsets.
+- **Excess words logic:** If the current window contains more of a valid word than required (e.g., we have two "foo"s but only need one), we shouldn't reset the whole window. Instead, we shrink from the left by moving `left += wordSize` and decrementing counts until the excess word is removed.
+- **Plagiarism drama:** The top comment points out the poster copy-pasted another user's solution and explanation verbatim. It's a reminder that LeetCode Discuss often has highly upvoted reposts of classic algorithms. The algorithm itself (Sliding Window with Hash Maps) remains the gold standard.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (10): Amazon, Apple, Bloomberg, eBay, Google, Infosys, Meta, Microsoft, Samsung, Texas Instruments.
+- Recent: 30 days — (none).
+- Recent: 3 months — Amazon, Bloomberg, Google.
