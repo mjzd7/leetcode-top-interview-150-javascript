@@ -898,6 +898,16 @@
       contentArea.querySelectorAll('h2[id]').forEach(h => spy.observe(h));
     };
 
+    /* ---------- in-article cross-links (#<article-id>) ---------- */
+    // Guide pages link to each other via #bundle-id anchors. Open those as
+    // articles; leave #sec-N TOC anchors to default smooth-scroll behavior.
+    contentArea.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      const id = a.getAttribute('href').slice(1);
+      if (id && byId.has(id)) { e.preventDefault(); openArticle(id); }
+    });
+
     /* ---------- init ---------- */
     paintFilterPills();
     renderNav();

@@ -187,4 +187,4 @@ More banks (free discovery, use if main link fails):
 ## 10. Quiz + checklist
 Quiz: 1) Why put context at end? 2) Temp for JSON? 3) Zero vs few-shot? 4) Why pin snapshot? 5) First step before tuning?
 Checklist: [ ] shipped 1 JSON-only prompt with evals [ ] tried temp 0.2 vs 0.9 [ ] versioned prompt in git
-Next: [02 — Agentic Thinking](./02-agentic-thinking.md)
+Next: [02 — Agentic Thinking](#docs_modern-engineer-skills_02-agentic-thinking)

@@ -175,4 +175,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) PUT vs PATCH? 2) 401 vs 403? 3) Offset vs cursor on 10M? 4) INNER vs LEFT? 5) AuthN vs AuthZ?
 Checklist: [ ] built CRUD + auth [ ] 1 JOIN + index + EXPLAIN [ ] cursor page on big table
-Next: [F4 — Docker + AWS + Actions](./f4-docker-aws-actions.md)
+Next: [F4 — Docker + AWS + Actions](#docs_fresher-roadmap_f4-docker-aws-actions)

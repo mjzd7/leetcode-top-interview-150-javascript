@@ -161,4 +161,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) Class vs object? 2) super rule? 3) # vs _? 4) Static? 5) Compose vs extends?
 Checklist: [ ] built Person tree [ ] used # + static [ ] fixed 1 this bug
-Next: [F2 — DSA Patterns](../fresher-roadmap/f2-dsa-150-patterns-js.md)
+Next: [F2 — DSA Patterns](#docs_fresher-roadmap_f2-dsa-150-patterns-js)

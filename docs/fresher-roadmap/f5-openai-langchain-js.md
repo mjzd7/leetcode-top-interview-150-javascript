@@ -163,4 +163,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) Key where? 2) Responses vs Assistants? 3) Tool who runs? 4) Node version? 5) Trace where?
 Checklist: [ ] 1 Responses call [ ] 1 tool agent [ ] LangChain basic + memory + trace
-Next: Mid M1 — [Advanced System Design](../mid-level-roadmap/m1-advanced-system-design.md)
+Next: Mid M1 — [Advanced System Design](#docs_mid-level-roadmap_m1-advanced-system-design)

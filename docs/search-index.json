@@ -1,1 +1,310 @@
-{"generated":"2026-09-16","pages":[{"path":"00-INDEX.md","title":"Master Index — Study Order, Weeks, Projects"},{"path":"modern-engineer-skills/index.md","title":"Modern Engineer Skills — Parent Guide"},{"path":"modern-engineer-skills/01-prompt-engineering-constraints.md","title":"01 — Prompt Engineering & Constraint Design in JS"},{"path":"modern-engineer-skills/02-agentic-thinking.md","title":"02 — Agentic Thinking in JS"},{"path":"modern-engineer-skills/03-auditing-ai-strategic-bigo.md","title":"03 — Auditing AI Output, Strategic Thinking, Big-O Safety"},{"path":"modern-engineer-skills/04-architectural-communication-hld.md","title":"04 — Architectural Communication + HLD Mindset"},{"path":"fresher-roadmap/index.md","title":"Fresher Roadmap — JS-only Path (Phase 1-5)"},{"path":"fresher-roadmap/f1-js-oop.md","title":"F1 — JS + OOP (JS-only)"},{"path":"fresher-roadmap/f2-dsa-150-patterns-js.md","title":"F2 — DSA 150 Patterns in JS"},{"path":"fresher-roadmap/f3-postgres-rest-auth.md","title":"F3 — Postgres + REST API + Auth in JS"},{"path":"fresher-roadmap/f4-docker-aws-actions.md","title":"F4 — Docker + AWS Free Tier + GitHub Actions"},{"path":"fresher-roadmap/f5-openai-langchain-js.md","title":"F5 — OpenAI API + LangChain JS Agents"},{"path":"mid-level-roadmap/index.md","title":"Mid-level Roadmap — Domains 1-4"},{"path":"mid-level-roadmap/m1-advanced-system-design.md","title":"M1 — Advanced System Design (LB, Sharding, LLD)"},{"path":"mid-level-roadmap/m2-distributed-systems.md","title":"M2 — Distributed Systems (Microservices, Redis, Kafka, K8s)"},{"path":"mid-level-roadmap/m3-applied-agentics-rag.md","title":"M3 — Applied Agentics (RAG Pipelines, Multi-Agent)"},{"path":"mid-level-roadmap/m4-ai-security.md","title":"M4 — AI Security (Prompt Injection, Hallucinations)"}],"usage":"Website search: index frontmatter title/description/keywords/tags + H2 headers per page. 13 subpages x 50 links verified."}
+{
+ "generated": "2026-09-16",
+ "pages": [
+  {
+   "path": "docs/00-INDEX.md",
+   "title": "Master Index — Study Order, Weeks, Projects",
+   "description": "Week-by-week path through Modern Skills, Fresher JS, Mid-level, with project checklist and search.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "Parents",
+    "Week-by-week (12 weeks, JS-only)",
+    "Project checklist (must-ship)",
+    "Verification (Final, Sep 16 2026)"
+   ]
+  },
+  {
+   "path": "docs/00-IA-PLAN.md",
+   "title": "00-IA-PLAN",
+   "description": "",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "Parents + subpages",
+    "Searchable requirements (every subpage)",
+    "Per-subpage mandatory sections (same format)",
+    "Firecrawl full-capture policy (no truncation)",
+    "Credit-saving fallback policy (1270 credits at start)",
+    "Language rule"
+   ]
+  },
+  {
+   "path": "docs/modern-engineer-skills/01-prompt-engineering-constraints.md",
+   "title": "01 — Prompt Engineering & Constraint Design in JS",
+   "description": "What prompt engineering really is, how instructions beat free text, and how to lock AI with constraints — explained like you're 15, with runnable JS.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture, not truncated)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — prompt engineering",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/modern-engineer-skills/02-agentic-thinking.md",
+   "title": "02 — Agentic Thinking in JS",
+   "description": "Agents vs workflows, ReAct loops, router vs swarm, tools, memory, guardrails — explained like you're 15, with runnable JS using the OpenAI Agents SDK.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture, not truncated)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — agentic AI",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/modern-engineer-skills/03-auditing-ai-strategic-bigo.md",
+   "title": "03 — Auditing AI Output, Strategic Thinking, Big-O Safety",
+   "description": "How to catch AI mistakes before prod: read it, test edges, check Big-O, block injection — with JS demos including the 10M-row O(n²) meltdown.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — audit + Big-O + debugging",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/modern-engineer-skills/04-architectural-communication-hld.md",
+   "title": "04 — Architectural Communication + HLD Mindset",
+   "description": "How to talk about systems like a senior: request paths, tradeoffs, 7-step HLD frame, AWS pillars — plus how new debug-style interviews work.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — architecture / LLD+HLD",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/modern-engineer-skills/index.md",
+   "title": "Modern Engineer Skills — Parent Guide",
+   "description": "Prompt engineering, agentic thinking, auditing AI output, and architectural communication explained simply with JS examples, diagrams, and top-50 interview links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "Subpages"
+   ]
+  },
+  {
+   "path": "docs/fresher-roadmap/f1-js-oop.md",
+   "title": "F1 — JS + OOP (JS-only)",
+   "description": "JavaScript classes, prototypes, inheritance, encapsulation with # private — explained like you're 15, with runnable JS and Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — JS + OOP",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/fresher-roadmap/f2-dsa-150-patterns-js.md",
+   "title": "F2 — DSA 150 Patterns in JS",
+   "description": "Stop grinding 2000 random problems. Learn 150 by pattern — two pointers, sliding window, trees, graphs, DP — with JS code and Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core patterns in simple words (JS-first)",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — DSA patterns",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/fresher-roadmap/f3-postgres-rest-auth.md",
+   "title": "F3 — Postgres + REST API + Auth in JS",
+   "description": "Relational backend in JS: Postgres joins, REST nouns, JWT auth, injection guards — with runnable pg + Express and Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — Postgres + REST + Auth",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/fresher-roadmap/f4-docker-aws-actions.md",
+   "title": "F4 — Docker + AWS Free Tier + GitHub Actions",
+   "description": "Actually deploy: Dockerfile, EC2 free tier without surprise bills, Actions CI/CD — with JS app examples and Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — Docker + AWS + Actions",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/fresher-roadmap/f5-openai-langchain-js.md",
+   "title": "F5 — OpenAI API + LangChain JS Agents",
+   "description": "Entry AI integration in JS: first Responses call, tools, streaming, then LangChain.js task agents with memory and tracing.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why companies care",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — OpenAI + LangChain",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/fresher-roadmap/index.md",
+   "title": "Fresher Roadmap — JS-only Path (Phase 1-5)",
+   "description": "JS + OOP, DSA 150 patterns in JS, Postgres + REST + Auth, Docker + AWS + Actions, OpenAI + LangChain JS — with examples, diagrams, top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "Subpages"
+   ]
+  },
+  {
+   "path": "docs/mid-level-roadmap/index.md",
+   "title": "Mid-level Roadmap — Domains 1-4",
+   "description": "Advanced system design, distributed systems with Redis Kafka K8s, applied RAG and multi-agent workflows, AI security — with JS examples, diagrams, top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "Subpages"
+   ]
+  },
+  {
+   "path": "docs/mid-level-roadmap/m1-advanced-system-design.md",
+   "title": "M1 — Advanced System Design (LB, Sharding, LLD)",
+   "description": "Load balancing deep dive, shard-key design without hotspots, and JS LLD — with diagrams and Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why mid-level cares",
+    "3. Core concepts in simple words",
+    "4. Detailed examples (JS where it helps)",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — M1",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/mid-level-roadmap/m2-distributed-systems.md",
+   "title": "M2 — Distributed Systems (Microservices, Redis, Kafka, K8s)",
+   "description": "How services talk: sync vs events, Redis caching, Kafka logs, K8s orchestration — with JS code and Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why mid-level cares",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — M2",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/mid-level-roadmap/m3-applied-agentics-rag.md",
+   "title": "M3 — Applied Agentics (RAG Pipelines, Multi-Agent)",
+   "description": "Enterprise RAG: chunk, embed, hybrid retrieve, rerank, eval — plus when agentic/multi-agent earns its cost. JS-focused with Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why mid-level cares",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — RAG + multi-agent",
+    "10. Quiz + checklist"
+   ]
+  },
+  {
+   "path": "docs/mid-level-roadmap/m4-ai-security.md",
+   "title": "M4 — AI Security (Prompt Injection, Hallucinations)",
+   "description": "New security flaws: injection via docs and images, hallucinations as bugs, and JS guards that work — with Top-50 links.",
+   "keywords": [],
+   "tags": [],
+   "sections": [
+    "1. TL;DR + analogy",
+    "2. Why mid-level cares",
+    "3. Core concepts in simple words",
+    "4. Detailed JS examples",
+    "5. Flowchart",
+    "6. Whiteboard diagram",
+    "7. Official notes (Firecrawl full-capture)",
+    "8. Cross-verify table",
+    "9. Top-50 interview questions — AI security",
+    "10. Quiz + checklist"
+   ]
+  }
+ ]
+}

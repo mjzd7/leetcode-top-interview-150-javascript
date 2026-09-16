@@ -170,4 +170,4 @@ Main banks (all linked, pick your depth):
 ## 10. Quiz + checklist
 Quiz: 1) O(n²) on 10M = ? 2) First audit step? 3) OWASP overreliance = ? 4) Fix for nested dupes? 5) Why validate outputs?
 Checklist: [ ] timed O(n) vs O(n²) [ ] audited 1 AI file with 5 checks [ ] added 1 regression eval
-Next: [04 — Architectural Communication](./04-architectural-communication-hld.md)
+Next: [04 — Architectural Communication](#docs_modern-engineer-skills_04-architectural-communication-hld)
