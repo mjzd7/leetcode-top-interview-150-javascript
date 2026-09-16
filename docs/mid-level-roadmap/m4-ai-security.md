@@ -154,4 +154,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) Direct vs indirect? 2) Jailbreak? 3) System prompt secret? 4) RAG fix injection? 5) SelfCheck?
 Checklist: [ ] delimited untrusted demo [ ] canary test [ ] IDK fallback wired
-Next: [Final index + search](../00-IA-PLAN.md)
+Next: [Final index + search](https://github.com/mjzd7/leetcode-top-interview-150-javascript/blob/main/docs/00-IA-PLAN.md)

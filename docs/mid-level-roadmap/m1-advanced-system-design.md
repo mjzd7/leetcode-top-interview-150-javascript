@@ -156,4 +156,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) ALB vs NLB? 2) Good shard key? 3) Hotspot fix? 4) Sticky when? 5) Health truth?
 Checklist: [ ] sketched LB+shard [ ] hashed 4 shards in JS [ ] listed LLD classes
-Next: [M2 — Distributed Systems](./m2-distributed-systems.md)
+Next: [M2 — Distributed Systems](#docs_mid-level-roadmap_m2-distributed-systems)

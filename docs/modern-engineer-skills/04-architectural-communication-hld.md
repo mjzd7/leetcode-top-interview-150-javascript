@@ -166,4 +166,4 @@ More banks: https://www.geeksforgeeks.org/system-design/top-10-system-design-int
 ## 10. Quiz + checklist
 Quiz: 1) HLD blocks? 2) LB algos? 3) Sync vs async? 4) 7 steps? 5) Race fix?
 Checklist: [ ] drew 1 HLD [ ] narrated tradeoffs [ ] fixed 1 race live
-Next: Fresher F1 — [JS + OOP](../fresher-roadmap/f1-js-oop.md)
+Next: Fresher F1 — [JS + OOP](#docs_fresher-roadmap_f1-js-oop)

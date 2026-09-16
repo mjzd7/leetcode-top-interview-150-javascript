@@ -203,4 +203,4 @@ Pattern drills: https://resources.devweekends.com/dsa-patterns/overview (phrase�
 ## 10. Quiz + checklist
 Quiz: 1) Sorted+pair? 2) Longest run? 3) Levels? 4) TopK? 5) Overlap ranges?
 Checklist: [ ] solved 2-3 easy +1 med/day W1-2 [ ] dry-ran BFS+DFS [ ] memoized 1 DP
-Next: [F3 — Postgres + REST + Auth](./f3-postgres-rest-auth.md)
+Next: [F3 — Postgres + REST + Auth](#docs_fresher-roadmap_f3-postgres-rest-auth)

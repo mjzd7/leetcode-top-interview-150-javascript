@@ -156,4 +156,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) Sync vs async? 2) Cache-aside steps? 3) Partition why? 4) K8s object for Redis? 5) Saga?
 Checklist: [ ] cached 1 route [ ] produced/consumed 1 topic [ ] charted 1 deploy
-Next: [M3 — Applied Agentics](./m3-applied-agentics-rag.md)
+Next: [M3 — Applied Agentics](#docs_mid-level-roadmap_m3-applied-agentics-rag)

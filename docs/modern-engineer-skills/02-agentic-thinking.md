@@ -182,4 +182,4 @@ More banks (free discovery):
 ## 10. Quiz + checklist
 Quiz: 1) Agent vs workflow? 2) Who runs tool code? 3) Handoff vs agent-as-tool? 4) First split signal? 5) Senior anti-agent rule?
 Checklist: [ ] ran 1 tool agent [ ] built triage handoff [ ] sketched ReAct with MAX_STEPS
-Next: [03 — Auditing AI / Big-O](./03-auditing-ai-strategic-bigo.md)
+Next: [03 — Auditing AI / Big-O](#docs_modern-engineer-skills_03-auditing-ai-strategic-bigo)
