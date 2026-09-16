@@ -285,3 +285,105 @@ async function streamingMaxProfitK(k, priceStream) {
   return sell[k];
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Ruofan Jin (jinrf) —
+`https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv/solutions/54113/a-concise-dp-solution-in-java-by-jinrf-fivd/`
+— 153.4K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Greedy Regime Shortcut + 1D State Machine)
+
+Bifurcate execution based on whether transaction limits can physically bind:
+
+1. **The $K \ge N/2$ Unconstrained Shortcut:**
+   - Any profitable buy-and-sell cycle requires at least 2 distinct days. Within an array of $N$ days, no more than $\lfloor N/2 \rfloor$ independent profitable trades can physically exist.
+   - If $k \ge N / 2$, transaction limits are irrelevant. The problem collapses to unlimited transactions (Stock II): greedily sum every positive day-over-day price difference $\max(0, prices[i] - prices[i-1])$.
+   - This bypasses all array allocations and prevents Out-Of-Memory (MLE) errors when $k$ is huge (e.g. $k = 10^9$).
+2. **The Constrained Regime ($K < N/2$):**
+   - Maintain two 1D state arrays of size $k + 1$:
+     - `buy[t]`: Maximum capital balance having bought stock in transaction $t$ ($1 \le t \le k$), initialized to $-\infty$.
+     - `sell[t]`: Maximum cumulative profit having completed transaction $t$ ($1 \le t \le k$), initialized to $0$.
+   - For each price $p$ in `prices`:
+     - For $t$ from 1 to $k$:
+       `buy[t]  = MAX(buy[t], sell[t - 1] - p)`
+       `sell[t] = MAX(sell[t], buy[t] + p)`
+   - Return `sell[k]`.
+
+```text
+FUNCTION maxProfit(k, prices):
+    n = LENGTH(prices)
+    IF n <= 1 OR k == 0:
+        RETURN 0
+
+    // Unconstrained regime: greedy capture of all upticks
+    IF k >= INT_DIV(n, 2):
+        profit = 0
+        FOR i FROM 1 TO n - 1:
+            IF prices[i] > prices[i - 1]:
+                profit = profit + (prices[i] - prices[i - 1])
+        RETURN profit
+
+    // Constrained regime: state machine DP
+    buy = ARRAY OF SIZE (k + 1) FILLED WITH -INFINITY
+    sell = ARRAY OF SIZE (k + 1) FILLED WITH 0
+
+    FOR EACH p IN prices:
+        FOR t FROM 1 TO k:
+            buy[t]  = MAX(buy[t], sell[t - 1] - p)
+            sell[t] = MAX(sell[t], buy[t] + p)
+
+    RETURN sell[k]
+```
+
+- Time: O(N) when $k \ge n/2$; O(k * N) when $k < n/2$.
+- Space: O(1) when $k \ge n/2$; O(k) auxiliary space when $k < n/2$.
+
+```mermaid
+flowchart TD
+    Check{"k >= n / 2?"}
+    Check -->|"Yes (Unconstrained)"| Greedy["Greedy scan: sum all positive differences prices[i] - prices[i-1]"]
+    Greedy --> RetGreedy["RETURN profit (O(n) time, O(1) space)"]
+    Check -->|"No (Constrained)"| Alloc["Allocate buy[1..k] = -inf, sell[1..k] = 0"]
+    Alloc --> DayLoop["For each price p in prices"]
+    DayLoop --> TransLoop["For t from 1 to k"]
+    TransLoop --> Upd["buy[t] = max(buy[t], sell[t-1] - p)<br>sell[t] = max(sell[t], buy[t] + p)"]
+    Upd --> TransLoop
+    TransLoop --> DayLoop
+    DayLoop --> RetDP["RETURN sell[k] (O(k * n) time, O(k) space)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`k = 2, prices = [2,4,1]`)
+
+- $n = 3, k = 2$.
+- Condition check: $k \ge \lfloor 3 / 2 \rfloor = 1$ is TRUE ($2 \ge 1$).
+- Enters greedy branch:
+  - Day 1 vs 0: $prices[1] - prices[0] = 4 - 2 = 2 > 0 \implies profit = 2$.
+  - Day 2 vs 1: $prices[2] - prices[1] = 1 - 4 = -3 \le 0 \implies$ ignore.
+- Returns `profit = 2` immediately with zero state array allocations.
+
+Final result: `2`.
+
+### C. Why the $K \ge N/2$ Shortcut Prevents Memory Limit Exceeded (MLE)
+
+- Without the threshold check, an input with $N = 1000$ and $K = 10^9$ forces attempts to allocate multi-gigabyte matrices, immediately crashing the runtime.
+- Because an asset must be bought before it can be sold, at most $N/2$ profitable round trips can physically occur, rendering any $K \ge N/2$ unconstrained.
+
+### D. Pitfalls from comments
+
+- **Out of Memory on Arbitrary K:** Failing to include the $k \ge n/2$ guard triggers Memory Limit Exceeded on LeetCode's adversarial test cases.
+- **Initial Baseline Values:** `buy` must initialize to $-\infty$ (or $-prices[0]$), never $0$. Initializing to $0$ incorrectly implies free stock purchases.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Apple, Citadel, Goldman Sachs, Google, HashedIn, Infosys, Meta, Microsoft, Nielsen, PubMatic, TikTok, Visa.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

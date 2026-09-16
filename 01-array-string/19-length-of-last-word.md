@@ -244,3 +244,74 @@ function lengthOfLastWord(s) {
 ### Follow-Up 2: Length of First Word vs Last Word
 - **Scenario**: Return both `{ firstWordLen, lastWordLen }` in a single pass.
 - **Solution**: Scan forward from start for `firstWordLen`, and backward from end for `lastWordLen`.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Firdavs —
+`https://leetcode.com/problems/length-of-last-word/solutions/5096503/97-43-easy-solution-with-explanation/`
+— 176.7K views / 590 votes / 4 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Reverse Traversal)
+
+The last word is always at the end of the string. Instead of splitting the string and allocating an array, start from the end and work backward. First, skip any trailing spaces. Then, count the characters until you hit the next space or the start of the string.
+
+```text
+FUNCTION lengthOfLastWord(s):
+    count = 0
+    i = length(s) - 1
+    
+    WHILE i >= 0 AND s[i] == ' ':
+        i--
+        
+    WHILE i >= 0 AND s[i] != ' ':
+        count++
+        i--
+        
+    RETURN count
+```
+
+- Time: O(N)
+- Space: O(1)
+
+```mermaid
+flowchart TD
+    Init["i = length(s) - 1, count = 0"] --> Loop1{"i >= 0 AND s[i] == ' '?"}
+    Loop1 -->|"Yes"| SkipSpace["i--"]
+    SkipSpace --> Loop1
+    Loop1 -->|"No"| Loop2{"i >= 0 AND s[i] != ' '?"}
+    Loop2 -->|"Yes"| Count["count++, i--"]
+    Count --> Loop2
+    Loop2 -->|"No"| Done["Return count"]
+```
+
+### B. Dry run on LeetCode Example 2 ("   fly me   to   the moon  ")
+
+| Step | `i` | `s[i]` | Action | `count` |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 26, 25 | ' ' | Skip spaces | 0 |
+| 2 | 24 | 'n' | Found letter | 1 |
+| 3 | 23 | 'o' | Found letter | 2 |
+| 4 | 22 | 'o' | Found letter | 3 |
+| 5 | 21 | 'm' | Found letter | 4 |
+| 6 | 20 | ' ' | Found space | Break loop |
+
+Final count returned: 4.
+
+### C. Pitfalls from comments
+
+- **Using Split:** Some languages have `.trim().split(" ")` built-in, but this allocates an array of strings resulting in $O(N)$ space and two passes. The reverse loop achieves $O(1)$ space and early termination.
+- **Two Loops Criticism:** A comment argues two loops are sub-optimal, but using one while loop with an `IF` condition or two distinct while loops both perform exactly $O(N)$ time. The two `WHILE` loops pattern is structurally cleaner for early termination.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (7): Amazon, Bloomberg, Google, Meta, Microsoft, Qualcomm, TCS.
+- Recent: 30 days — (none).
+- Recent: 3 months — Bloomberg, Google.

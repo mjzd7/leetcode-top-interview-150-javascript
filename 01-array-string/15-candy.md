@@ -353,3 +353,114 @@ function candy(ratings) {
 ### Follow-Up 2: 2D Grid Candy Distribution
 - **Scenario**: Children are arranged in an $R \times C$ matrix, and a child must receive more candies than any adjacent neighbor with a strictly lower rating.
 - **Solution Strategy**: Sort all grid cells by rating value (or use Kahn's Topological Sort on a DAG) and compute longest path using DP: $\text{candy}(r, c) = 1 + \max_{\text{neighbors } (nr, nc)} \text{candy}(nr, nc)$.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by LeadingTheAbyss —
+`https://leetcode.com/problems/candy/solutions/5504896/double-pass-greedy-with-images-walkthrough-cppythonjava/`
+— 57.9K views / 0 votes / 0 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+For each child, compare with neighbors repeatedly until
+ratings are satisfied. Multiple passes.
+
+```text
+FUNCTION candyNaive(ratings):
+    n = LENGTH(ratings)
+    candies = ARRAY of size n, filled with 1
+    changed = true
+    WHILE changed:
+        changed = false
+        FOR i FROM 1 TO n - 1:
+            IF ratings[i] > ratings[i-1] AND candies[i] <= candies[i-1]:
+                candies[i] = candies[i-1] + 1
+                changed = true
+        FOR i FROM n - 2 DOWN TO 0:
+            IF ratings[i] > ratings[i+1] AND candies[i] <= candies[i+1]:
+                candies[i] = candies[i+1] + 1
+                changed = true
+    RETURN SUM(candies)
+```
+
+- Time: O(n^2) worst case
+- Space: O(n)
+
+### B. Post's way: two-pass greedy
+
+Left-to-right: higher rating than left gets more candy.
+Right-to-left: higher rating than right gets more candy.
+Take max of both passes.
+
+```text
+FUNCTION candyOptimal(ratings):
+    n = LENGTH(ratings)
+    candies = ARRAY of size n, filled with 1
+    FOR i FROM 1 TO n - 1:
+        IF ratings[i] > ratings[i-1]:
+            candies[i] = candies[i-1] + 1
+    FOR i FROM n - 2 DOWN TO 0:
+        IF ratings[i] > ratings[i+1]:
+            candies[i] = MAX(candies[i], candies[i+1] + 1)
+    RETURN SUM(candies)
+```
+
+- Time: O(n)
+- Space: O(n)
+- Two linear passes; no while loop.
+
+```mermaid
+flowchart TD
+    Start["candies = [1..n]"]
+    Start --> Left["FOR i = 1 to n-1"]
+    Left --> CheckL{"ratings[i] > ratings[i-1]?"}
+    CheckL --> |Yes| IncL["candies[i] = candies[i-1] + 1"]
+    CheckL --> |No| LeftEnd{"i == n-1?"}
+    IncL --> LeftEnd
+    LeftEnd --> |No| Left
+    LeftEnd --> |Yes| Right["FOR i = n-2 DOWN TO 0"]
+    Right --> CheckR{"ratings[i] > ratings[i+1]?"}
+    CheckR --> |Yes| IncR["candies[i] = MAX(candies[i], candies[i+1]+1)"]
+    CheckR --> |No| RightEnd{"i == 0?"}
+    IncR --> RightEnd
+    RightEnd --> |No| Right
+    RightEnd --> |Yes| Sum["RETURN SUM(candies)"]
+    Sum --> End
+```
+
+### C. Dry run on LeetCode Example 1
+
+`ratings = [1, 0, 2]`
+
+Left pass: candies = [1, 1, 2]
+Right pass:
+- i=1: ratings[1]=0 NOT > ratings[2]=2 -> no change
+- i=0: ratings[0]=1 > ratings[1]=0 -> candies[0] = MAX(1, 1+1) = 2
+
+Final candies = [2, 1, 2], sum = 5. Matches.
+
+### D. Why B beats A
+
+- A: Repeated passes until stable, O(n^2) worst case.
+- B: Exactly two passes, O(n).
+- Invariant: left pass handles ascending runs, right pass handles descending runs.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Initialize all candies to 1 (each child gets at least one).
+- Right pass must use MAX to preserve left-pass increments.
+- Equal ratings: no extra candy needed.
+- Single child returns 1.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

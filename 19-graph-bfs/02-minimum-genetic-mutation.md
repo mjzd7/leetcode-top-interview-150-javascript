@@ -330,3 +330,120 @@ function minCostMutation(startGene, endGene, bank, costOf) {
   return dijkstraMutations(startGene, endGene, bank, costOf); // heap replaces FIFO
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Ponnuru Surya Ganesh —
+`https://leetcode.com/problems/minimum-genetic-mutation/solutions/1853512/c-bfs-0ms-solution-commented-by-suryapsg-p6l7/`
+— 11.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Queue-Driven BFS with 4-Letter Neighborhood Branching)
+
+Model the genetic mutation problem as finding the shortest path in an unweighted graph where valid gene states form vertices:
+
+1. **Uniform Edge Cost BFS:**
+   - Every valid single-character substitution costs exactly 1 mutation step.
+   - Breadth-First Search (BFS) starting from `startGene` guarantees finding the minimal sequence of mutations to reach `endGene`.
+2. **Alphabet Mutation vs. Full Bank Iteration:**
+   - Gene length is fixed at $L = 8$, with 4 allowable nucleotide bases ($\{\text{'A'}, \text{'C'}, \text{'G'}, \text{'T'}\}$).
+   - For any active gene, there are exactly $8 \times 3 = 24$ single-mutation neighbors.
+   - Probing 24 candidate strings against a hash set of `bank` is $O(L \cdot 4) = O(1)$ per state, outperforming an $O(B \cdot L)$ scan across all bank entries.
+3. **In-Set Deletion for Visited Tracking:**
+   - Convert `bank` into a hash set `bankSet`.
+   - Pre-condition: If `endGene` is not in `bankSet`, no mutation path can terminate legally; return $-1$ immediately.
+   - When a generated mutant is found in `bankSet`, enqueue the mutant and immediately erase it from `bankSet`. Erasing acts as the visited marker, eliminating redundant lookups and cycles.
+
+```text
+FUNCTION minMutation(startGene, endGene, bank):
+    bankSet = SET(bank)
+    IF endGene NOT IN bankSet:
+        RETURN -1
+
+    queue = QUEUE()
+    queue.ENQUEUE(startGene)
+
+    mutations = ['A', 'C', 'G', 'T']
+    steps = 0
+
+    WHILE queue IS NOT EMPTY:
+        levelSize = LENGTH(queue)
+
+        FOR k FROM 1 TO levelSize:
+            curr = queue.DEQUEUE()
+
+            IF curr == endGene:
+                RETURN steps
+
+            FOR i FROM 0 TO 7:
+                originalChar = curr[i]
+                FOR EACH ch IN mutations:
+                    IF ch != originalChar:
+                        candidate = curr[0...i-1] + ch + curr[i+1...7]
+                        IF candidate IN bankSet:
+                            bankSet.REMOVE(candidate)  // mark visited
+                            queue.ENQUEUE(candidate)
+
+        steps = steps + 1
+
+    RETURN -1
+```
+
+- Time: O(B * L^2 * 4) = O(B) — with $L = 8$, constant mutation generation per visited gene.
+- Space: O(B * L) — to store `bankSet` and the BFS queue.
+
+```mermaid
+flowchart TD
+    Start["Check: endGene in bankSet?"] -->|No| Fail["RETURN -1"]
+    Start -->|Yes| InitQueue["queue.enqueue(startGene), steps = 0"]
+    InitQueue --> QLoop{"Queue empty?"}
+    QLoop -->|"No"| Level["Pop level size: process current layer"]
+    Level --> CheckGoal{"curr == endGene?"}
+    CheckGoal -->|"Yes"| Success["RETURN steps"]
+    CheckGoal -->|"No"| GenMutants["Generate 24 candidate mutations<br>by varying 8 indices with {A, C, G, T}"]
+    GenMutants --> InBank{"candidate in bankSet?"}
+    InBank -->|"Yes"| EnqueueM["bankSet.remove(candidate)<br>queue.enqueue(candidate)"]
+    InBank -->|"No"| GenMutants
+    EnqueueM --> LevelDone{"Level finished?"}
+    LevelDone -->|"Yes"| IncStep["steps += 1"] --> QLoop
+    LevelDone -->|"No"| Level
+    QLoop -->|"Yes"| Fail
+```
+
+### B. Dry run on LeetCode Example 1 (`startGene = "AACCGGTT", endGene = "AACCGGTA", bank = ["AACCGGTA"]`)
+
+- `bankSet = {"AACCGGTA"}`.
+- `endGene` exists in `bankSet` $\implies$ valid.
+- `queue = ["AACCGGTT"]`, `steps = 0`.
+- Process `"AACCGGTT"`:
+  - Mutating index 7 with `'A'` gives `"AACCGGTA"`.
+  - `"AACCGGTA"` is in `bankSet`.
+  - `bankSet.remove("AACCGGTA")`.
+  - Enqueue `"AACCGGTA"`.
+- Next level: `steps = 1`.
+  - Dequeue `"AACCGGTA"`.
+  - Matches `endGene` $\implies$ return `steps = 1`.
+- Final output: 1.
+
+### C. Why Candidate Generation Scales Better Than Iterating Bank
+
+- Checking all $B$ bank elements against the current gene requires $O(B \cdot L)$ string comparisons per BFS level.
+- Generating all 24 possible mutants takes constant time $O(8 \times 4) = 32$ operations regardless of whether $B$ has 10 genes or 10,000 genes, achieving optimal throughput when backed by an $O(1)$ hash set.
+
+### D. Pitfalls from comments
+
+- **Premature Returns on Non-Bank Targets:** If `endGene` is equal to `startGene`, the mutation count is 0; if `endGene` is not in `bank`, the problem rules specify that it cannot be reached.
+- **Mutual Mutation Loops:** Without removing visited nodes from `bankSet` (or tracking them in a `visited` set), `AACCGGTT` mutating to `AACCGGTA` would immediately mutate back to `AACCGGTT`, creating an infinite cycle.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (6): Amazon, Bloomberg, Google, Meta, Microsoft, X.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

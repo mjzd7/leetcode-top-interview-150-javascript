@@ -305,3 +305,112 @@ function maxProfitWithDays(prices) {
   return maxProfit > 0 ? { profit: maxProfit, buyDay: bestBuy, sellDay: bestSell } : { profit: 0, buyDay: -1, sellDay: -1 };
 }
 ```
+
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Md Farhan Zaman —
+`https://leetcode.com/problems/best-time-to-buy-and-sell-stock/solutions/4868897/most-optimized-kadanes-algorithm-java-c-2yt85/`
+— 2.1K votes / 327.1K views / 83 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Nested loop: for each pair (i, j), compute prices[j] - prices[i].
+Returns the max difference found.
+
+```text
+FUNCTION maxProfitNaive(prices):
+    n = LENGTH(prices)
+    max_profit = 0
+    FOR i FROM 0 TO n - 1:
+        FOR j FROM i + 1 TO n - 1:
+            IF prices[j] - prices[i] > max_profit:
+                max_profit = prices[j] - prices[i]
+    RETURN max_profit
+```
+
+- Time: O(n^2)
+- Space: O(1)
+
+### B. Post's way: single-pass Kadane's tracking
+
+The key insight is to treat the price difference as a
+running sum. Track the minimum price seen so far and
+compute profit against it in one pass.
+
+```text
+FUNCTION maxProfitOptimal(prices):
+    IF LENGTH(prices) < 2:
+        RETURN 0
+    min_price = prices[0]
+    max_profit = 0
+    FOR i FROM 1 TO LENGTH(prices) - 1:
+        IF prices[i] < min_price:
+            min_price = prices[i]
+        ELSE IF prices[i] - min_price > max_profit:
+            max_profit = prices[i] - min_price
+    RETURN max_profit
+```
+
+- Time: O(n)
+- Space: O(1)
+- Single pass: min_price + max_profit updated inline.
+
+```mermaid
+flowchart TD
+    Start["Start: min_price = prices[0]"]
+    Start --> Loop["FOR i = 1 to n-1"]
+    Loop --> Check{"prices[i] < min_price?"}
+    Check --> |Yes| UpdateMin["min_price = prices[i]"]
+    UpdateMin --> Continue["Continue to next i"]
+    Check --> |No| CheckProfit{"prices[i] - min_price > max_profit?"}
+    CheckProfit --> |Yes| UpdateMax["max_profit = prices[i] - min_price"]
+    CheckProfit --> |No| Continue
+    UpdateMax --> Continue
+    Continue --> "i+1"
+    "i+1" --> End{"i == n?"}
+    End --> |No| Loop
+    End --> |Yes| Done["Return max_profit"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`prices = [7, 1, 5, 3, 6, 4]`
+
+| Step | Day | Price | min_price | max_profit |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | - | - | 7 | 0 |
+| 1 | 1 | 1 | 1 | 0 |
+| 2 | 2 | 5 | 1 | 4 |
+| 3 | 3 | 3 | 1 | 4 |
+| 4 | 4 | 6 | 1 | 5 |
+| 5 | 5 | 4 | 1 | 5 |
+
+Buy on day 2 (price = 1), sell on day 5 (price = 6),
+profit = 5. Matches.
+
+### D. Why B beats A
+
+- A: O(n^2) brute force, recomputes all pairs.
+- B: O(n) single pass, min_price acts as a running
+  floor. No pair revisit needed.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Prices keep dropping: profit stays 0, never negative.
+- Must initialize min_price to prices[0], not infinity.
+- Update min_price and max_profit in the same iteration.
+- Edge: n < 2 returns 0 immediately.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

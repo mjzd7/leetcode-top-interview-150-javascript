@@ -284,3 +284,103 @@ async function streamingMaxProfit2(priceStream) {
   return sell2;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by weijiac —
+`https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/solutions/39611/is-it-best-solution-with-on-o1-by-weijia-a7ru/`
+— 200.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (4-Variable State Machine DP)
+
+Compress the 2-transaction market lifecycle into four scalar accumulator registers:
+
+1. **State Machine Formulation:**
+   At any trading day, an account constrained to at most two transactions resides in one of four balance stages:
+   - `hold1`: Balance after buying the 1st stock (starts at $-\infty$, updated as $\max(hold1, -price)$).
+   - `release1`: Profit after selling the 1st stock (starts at $0$, updated as $\max(release1, hold1 + price)$).
+   - `hold2`: Reinvested balance after buying the 2nd stock (starts at $-\infty$, updated as $\max(hold2, release1 - price)$).
+   - `release2`: Cumulative profit after completing the 2nd sale (starts at $0$, updated as $\max(release2, hold2 + price)$).
+2. **Reverse State Propagation:**
+   - By updating the states in reverse order (`release2` $\to$ `hold2` $\to$ `release1` $\to$ `hold1`), each stage consumes the prior day's values without intermediate shadow buffers.
+   - Reinvesting zero profits on duplicate days incurs no penalty, automatically supporting cases where taking only one transaction yields the global maximum.
+
+```text
+FUNCTION maxProfit(prices):
+    hold1 = -INFINITY
+    hold2 = -INFINITY
+    release1 = 0
+    release2 = 0
+
+    FOR EACH price IN prices:
+        release2 = MAX(release2, hold2 + price)
+        hold2    = MAX(hold2,    release1 - price)
+        release1 = MAX(release1, hold1 + price)
+        hold1    = MAX(hold1,    -price)
+
+    RETURN release2
+```
+
+- Time: O(N) — single linear scan through the price series.
+- Space: O(1) auxiliary space — 4 scalar primitive registers.
+
+```mermaid
+flowchart LR
+    Start["Origin: $0"] -->|"buy1: -p"| H1["hold1: Max balance holding Stock 1"]
+    H1 -->|"sell1: +p"| R1["release1: Max profit sold Stock 1"]
+    R1 -->|"buy2: -p"| H2["hold2: Max balance holding Stock 2"]
+    H2 -->|"sell2: +p"| R2["release2: Max cumulative profit"]
+    H1 -.->|"hold"| H1
+    R1 -.->|"rest"| R1
+    H2 -.->|"hold"| H2
+    R2 -.->|"rest"| R2
+```
+
+### B. Dry run on LeetCode Example 1 (`prices = [3,3,5,0,0,3,1,4]`)
+
+- Init: `hold1 = -inf`, `release1 = 0`, `hold2 = -inf`, `release2 = 0`.
+- Day 0 ($p = 3$): `hold1 = -3`, `release1 = 0`, `hold2 = -3`, `release2 = 0`.
+- Day 1 ($p = 3$): Unchanged.
+- Day 2 ($p = 5$):
+  - `release2 = max(0, -3 + 5) = 2`
+  - `hold2 = max(-3, 0 - 5) = -3`
+  - `release1 = max(0, -3 + 5) = 2`
+  - `hold1 = max(-3, -5) = -3`
+- Day 3 ($p = 0$):
+  - `hold2 = max(-3, 2 - 0) = 2` (reinvest 1st profit of 2 into stock priced at 0!)
+  - `hold1 = max(-3, -0) = 0`
+- Day 4 ($p = 0$): Unchanged.
+- Day 5 ($p = 3$):
+  - `release2 = max(2, 2 + 3) = 5`
+  - `release1 = max(2, 0 + 3) = 3`
+- Day 6 ($p = 1$):
+  - `hold2 = max(2, 3 - 1) = 2`
+- Day 7 ($p = 4$):
+  - `release2 = max(5, 2 + 4) = 6`
+- Return `release2 = 6`.
+
+Final result: `6` (Buy at 3, sell at 5 [+2]; buy at 0, sell at 4 [+4]).
+
+### C. Why Four Registers Replace Full 3D DP Arrays
+
+- A traditional top-down formulation allocates $O(N \times 2 \times 2)$ entries for `dp[day][transactions_left][holding_flag]`.
+- Because transition dependencies are purely local to day $t - 1$, the state collapses into four CPU register variables, eliminating all heap allocations.
+
+### D. Pitfalls from comments
+
+- **Update Order Inversion:** Updating `hold1` before `release1` can compute buying and selling on the exact same price tick. While mathematical profit from zero-delta trades is 0, reverse updating maintains clean separation.
+- **Premature Resetting:** Never re-initialize `hold2` when `release1` updates; the `max` operation automatically retains the historical best reinvestment entry point.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (14): Amazon, Apple, Bloomberg, Citadel, Goldman Sachs, Google, Infosys, Meta, Microsoft, PayPal, Snap, Tekion, TikTok, Visa.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

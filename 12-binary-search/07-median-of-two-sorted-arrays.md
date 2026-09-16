@@ -301,3 +301,128 @@ async function medianDistributed(fetchA, fetchB, m, n) {
   return partitionSearchRemote(fetchA, fetchB, m, n);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Sidhant Singh —
+`https://leetcode.com/problems/median-of-two-sorted-arrays/solutions/4070500/99journey-from-brute-force-to-most-optim-z3k8/`
+— 481.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Binary Search on Partition Cut of Smaller Array)
+
+Rather than merging the arrays ($O(M+N)$), binary search for a valid partition cut on the smaller array such that the combined left half contains exactly $\lfloor(M+N+1)/2\rfloor$ elements and all elements on the left are $\le$ all elements on the right:
+
+1. **Size Optimization:** If $M > N$, swap the inputs so $nums_1$ is guaranteed to be the shorter array.
+2. **Search Space:** Define `low = 0`, `high = M`.
+3. **Partition Invariant:** While `low <= high`:
+   - Cut in $nums_1$: `i = low + (high - low) / 2`.
+   - Complementary cut in $nums_2$: `j = (M + N + 1) / 2 - i`.
+   - Sample the 4 border elements (using $-\infty$ and $+\infty$ for boundaries):
+     - `left1 = (i == 0) ? -∞ : nums1[i - 1]`
+     - `right1 = (i == M) ? +∞ : nums1[i]`
+     - `left2 = (j == 0) ? -∞ : nums2[j - 1]`
+     - `right2 = (j == N) ? +∞ : nums2[j]`
+   - **Validation:**
+     - If `left1 <= right2` AND `left2 <= right1`:
+       The partition is optimal.
+       - If $(M + N)$ is odd, return $\max(left1, left2)$.
+       - If $(M + N)$ is even, return $(\max(left1, left2) + \min(right1, right2)) / 2.0$.
+     - Else if `left1 > right2`: `nums1` contributes too many elements -> `high = i - 1`.
+     - Else (`left2 > right1`): `nums1` contributes too few elements -> `low = i + 1`.
+
+```text
+FUNCTION findMedianSortedArrays(nums1, nums2):
+    IF length(nums1) > length(nums2):
+        RETURN findMedianSortedArrays(nums2, nums1)
+
+    m = length(nums1)
+    n = length(nums2)
+    low = 0
+    high = m
+    totalLeft = (m + n + 1) / 2
+
+    WHILE low <= high:
+        i = low + (high - low) / 2
+        j = totalLeft - i
+
+        left1 = (i == 0) ? -INFINITY : nums1[i - 1]
+        right1 = (i == m) ? INFINITY : nums1[i]
+        left2 = (j == 0) ? -INFINITY : nums2[j - 1]
+        right2 = (j == n) ? INFINITY : nums2[j]
+
+        IF left1 <= right2 AND left2 <= right1:
+            IF (m + n) % 2 == 1:
+                RETURN max(left1, left2)
+            ELSE:
+                RETURN (max(left1, left2) + min(right1, right2)) / 2.0
+        ELSE IF left1 > right2:
+            high = i - 1
+        ELSE:
+            low = i + 1
+
+    RETURN 0.0
+```
+
+- Time: O(log(min(M, N))) bisection over the shorter array.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Cut["Partition: i from nums1, j = (M+N+1)/2 - i from nums2"]
+    Cut --> Check{"left1 <= right2 && left2 <= right1?"}
+    Check -->|"Yes (Valid Partition)"| Calc{"(M + N) % 2 == 1?"}
+    Calc -->|"Odd"| RetOdd["Return max(left1, left2)"]
+    Calc -->|"Even"| RetEven["Return (max(left1, left2) + min(right1, right2)) / 2.0"]
+    Check -->|"left1 > right2"| ShiftLeft["high = i - 1 (too far right)"]
+    Check -->|"left2 > right1"| ShiftRight["low = i + 1 (too far left)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums1 = [1, 3], nums2 = [2]`)
+
+- $m = 2, n = 1$. Since $m > n$, swap: $nums_1 = [2]$ ($m=1$), $nums_2 = [1, 3]$ ($n=2$).
+- Total elements $= 3$. `totalLeft = (1 + 2 + 1) / 2 = 2`.
+- `low = 0`, `high = 1`.
+- Iteration 1:
+  - `i = 0 + (1 - 0) / 2 = 0`.
+  - `j = 2 - 0 = 2`.
+  - Boundary values:
+    - `left1 = -∞`, `right1 = nums1[0] = 2`.
+    - `left2 = nums2[1] = 3`, `right2 = +∞`.
+  - Check: Is `left2 <= right1` ($3 \le 2$)? False.
+  - Since `left2 > right1`, `nums1` cut was too small -> `low = 0 + 1 = 1`.
+- Iteration 2:
+  - `i = 1`, `high = 1`.
+  - `j = 2 - 1 = 1`.
+  - Boundary values:
+    - `left1 = nums1[0] = 2`, `right1 = +∞`.
+    - `left2 = nums2[0] = 1`, `right2 = nums2[1] = 3`.
+  - Check: `left1 <= right2` ($2 \le 3$, True) AND `left2 <= right1` ($1 \le \infty$, True).
+  - Valid partition! Total length 3 is odd:
+    - Median $= \max(left1, left2) = \max(2, 1) = 2.0$.
+
+Final result: `2.0`.
+
+### C. Why Partitioning the Smaller Array is Crucial
+
+- Partitioning the smaller array guarantees $j = \lfloor(M+N+1)/2\rfloor - i$ is always within $[0, N]$, because $i \le M \le N \implies j \ge 0$.
+- Searching the larger array could produce negative indices for $j$, requiring extra boundary clamping.
+- Searching the smaller array minimizes total iterations to $O(\log(\min(M, N)))$.
+
+### D. Pitfalls from comments
+
+- **Integer Division Truncation:** In strongly typed languages (C++, Java), calculating `(max(...) + min(...)) / 2` performs integer division and truncates decimal halves (e.g. producing `2` instead of `2.5`). Divide by float `2.0`.
+- **Sentinels for Extreme Cuts:** When $i=0$ or $i=M$, array elements do not exist on one side. Initializing missing left bounds to $-\infty$ and right bounds to $+\infty$ avoids cumbersome nested conditionals.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (44): Accenture, Adobe, Amazon, Apple, Arcesium, Autodesk, Bloomberg, Capgemini, Cognizant, DE Shaw, Dropbox, eBay, Flipkart, GE Healthcare, Goldman Sachs, Google, IBM, Infosys, Meta, Microsoft, Nvidia, Okta, Oracle, Palo Alto Networks, PayPal, Pwc, Qualcomm, Rippling, Salesforce, Samsung, ServiceNow, tcs, Tesla, TikTok, Turing, Uber, VMware, Walmart Labs, Wix, Yahoo, Yandex, Zenefits, Zeta, Zoho.
+- Recent: 30 days — Amazon, Bloomberg, Google, Meta, Microsoft, Rippling.
+- Recent: 3 months — Amazon, Bloomberg, eBay, Goldman Sachs, Google, Meta, Microsoft, Rippling, tcs.

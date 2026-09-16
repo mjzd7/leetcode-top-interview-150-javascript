@@ -301,3 +301,113 @@ function maxProfitWithCooldown(prices) {
   return Math.max(sold, rest);
 }
 ```
+
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by lc-Shankar —
+`https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/solutions/7692876/greedy-wins-100-beats-by-lc-shankar-p55g/`
+— 19.7K views / 0 votes (new post) / 0 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Find all local minima and maxima explicitly, then sum
+the differences. Multiple passes over the array.
+
+```text
+FUNCTION maxProfitNaive(prices):
+    IF LENGTH(prices) < 2:
+        RETURN 0
+    profit = 0
+    i = 0
+    n = LENGTH(prices)
+    WHILE i < n - 1:
+        // Find local minimum (buy)
+        WHILE i < n - 1 AND prices[i + 1] <= prices[i]:
+            i = i + 1
+        buy = prices[i]
+        // Find local maximum (sell)
+        WHILE i < n - 1 AND prices[i + 1] >= prices[i]:
+            i = i + 1
+        sell = prices[i]
+        profit = profit + sell - buy
+        i = i + 1
+    RETURN profit
+```
+
+- Time: O(n)
+- Space: O(1)
+
+### B. Post's way: greedy single-pass
+
+Sum every positive day-to-day difference directly.
+One pass, one accumulator.
+
+```text
+FUNCTION maxProfitOptimal(prices):
+    profit = 0
+    FOR i FROM 1 TO LENGTH(prices) - 1:
+        IF prices[i] > prices[i - 1]:
+            profit = profit + prices[i] - prices[i - 1]
+    RETURN profit
+```
+
+- Time: O(n)
+- Space: O(1)
+- One accumulator, no state machine.
+
+```mermaid
+flowchart TD
+    Start["profit = 0"]
+    Start --> Loop["FOR i = 1 to n-1"]
+    Loop --> Check{"prices[i] > prices[i-1]?"}
+    Check --> |Yes| Add["profit += prices[i] - prices[i-1]"]
+    Check --> |No| Continue["Continue"]
+    Add --> Continue
+    Continue --> End{"i == n?"}
+    End --> |No| Loop
+    End --> |Yes| Done["Return profit"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`prices = [7, 1, 5, 3, 6, 4]`
+
+| Step | i | prices[i] | prices[i-1] | Diff | profit |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | - | - | - | - | 0 |
+| 1 | 1 | 1 | 7 | -6 | 0 |
+| 2 | 2 | 5 | 1 | +4 | 4 |
+| 3 | 3 | 3 | 5 | -2 | 4 |
+| 4 | 4 | 6 | 3 | +3 | 7 |
+| 5 | 5 | 4 | 6 | -2 | 7 |
+
+Total profit = 7. Matches.
+
+### D. Why B beats A
+
+- A: Two nested while loops, complex state tracking.
+- B: Single for loop, one if-check per element.
+- Both O(n) but B has fewer branches and no
+  min/max bookkeeping.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Empty or single-element arrays return 0 naturally.
+- Strictly decreasing prices: no positive diffs,
+  profit stays 0.
+- Flat prices: differences are 0, no profit added.
+- Greedy works because multiple transactions allowed.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

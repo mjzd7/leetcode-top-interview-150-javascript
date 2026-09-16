@@ -313,3 +313,70 @@ function reverseWords(s) {
 ### Follow-Up 2: Reverse Words III (Keep Word Order, Reverse Characters in Each Word)
 - **Scenario**: Reverse the characters in each word while preserving word order (LeetCode 557).
 - **Solution**: Skip step 3 (do not reverse entire array, only reverse individual words).
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Raunak dinesh kodwani —
+`https://leetcode.com/problems/reverse-words-in-a-string/solutions/3595568/5-line-simple-solution-with-full-explanation/`
+— 163.2K views / 890 votes / 40 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Split & Reverse)
+
+The simplest approach splits the string by whitespaces into an array of words, then iterates through the array backward, appending each word and a single space to the result.
+
+```text
+FUNCTION reverseWords(s):
+    s = TRIM(s)
+    words = SPLIT(s, by multiple spaces)
+    out = ""
+    
+    FOR i = length(words) - 1 DOWN TO 1:
+        out = out + words[i] + " "
+        
+    out = out + words[0]
+    RETURN out
+```
+
+- Time: O(N)
+- Space: O(N)
+
+```mermaid
+flowchart TD
+    Trim["Trim leading/trailing spaces"] --> Split["Split string by multiple spaces into array"]
+    Split --> Loop{"Loop backward from last word to 2nd word"}
+    Loop -->|"Yes"| Append["Append word and ' '"]
+    Append --> Loop
+    Loop -->|"No"| Final["Append first word (index 0) without trailing space"]
+    Final --> Return["Return result"]
+```
+
+### B. Dry run on LeetCode Example 2 ("  hello world  ")
+
+| Step | Operation | Result |
+| :--- | :--- | :--- |
+| 1 | Trim spaces | `"hello world"` |
+| 2 | Split by multiple spaces | `["hello", "world"]` |
+| 3 | Loop `i = 1` | `out = "" + "world" + " "` |
+| 4 | End loop | `out = "world "` |
+| 5 | Append `words[0]` | `out = "world " + "hello"` |
+
+Final returned string: `"world hello"`.
+
+### C. Pitfalls from comments
+
+- **String Concatenation Overhead:** Using standard string concatenation (e.g., `out += ...`) in languages like Java creates a new string object in memory on every addition, making the time complexity degrade to $O(N^2)$ in the worst case. It is highly recommended to use a mutable structure like `StringBuilder`, an array `join()`, or a two-pointer in-place reversal algorithm (where strings are mutable, like C++).
+- **Two Pointers (In-Place) approach:** Many comments point out that while splitting is easy and clean, interviewers often ask to solve it with $O(1)$ extra space if strings are mutable (C++). This requires a 3-step process: 1. Reverse the entire string, 2. Reverse each individual word, 3. Clean up the spaces.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (36): Accenture, Amazon, Apple, Barclays, Bloomberg, Cisco, Deutsche Bank, EPAM Systems, Goldman Sachs, Google, HCL, IBM, Infosys, LinkedIn, Meta, Microsoft, Nvidia, Nykaa, Oracle, ServiceNow, Snap, TCS, TikTok, Uber, Yelp, Zoho, Zopsmart.
+- Recent: 30 days — Meta.
+- Recent: 3 months — Amazon, Deutsche Bank, Google, Meta.

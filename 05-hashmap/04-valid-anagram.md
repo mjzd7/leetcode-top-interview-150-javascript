@@ -352,3 +352,90 @@ function getAnagramPrimeHash(str) {
   return hash;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Vikas Pathak —
+`https://leetcode.com/problems/valid-anagram/solutions/3261665/easy-solutions-in-java-python-javascript-and-c-look-at-once/`
+— 165.8K views / 828 votes / 56 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Frequency Array)
+
+Just like in Ransom Note, we can solve this optimally by counting characters. Since the strings consist of lowercase English letters, a fixed-size integer array of length 26 is the best choice over a Hash Map or sorting.
+We iterate through both strings simultaneously: we increment the count for a character found in string `s`, and decrement the count for a character found in string `t`. Finally, if all values in the frequency array are exactly 0, the strings are valid anagrams.
+
+```text
+FUNCTION isAnagram(s, t):
+    IF length(s) != length(t):
+        RETURN false
+        
+    counts = Array of 26 integers, initialized to 0
+    
+    FOR i = 0 TO length(s) - 1:
+        // Increment for string s
+        counts[s[i] - 'a']++
+        // Decrement for string t
+        counts[t[i] - 'a']--
+        
+    // Check if any count is non-zero
+    FOR each count in counts:
+        IF count != 0:
+            RETURN false
+            
+    RETURN true
+```
+
+- Time: O(N) where N is the length of the string. We iterate through the string of length N once, and then iterate through the fixed-size array of 26 elements once.
+- Space: O(1) since the array is always exactly size 26.
+
+```mermaid
+flowchart TD
+    CheckLen{"len(s) == len(t)?"}
+    CheckLen -->|"No"| ReturnFalseEarly["Return false"]
+    CheckLen -->|"Yes"| InitArray["counts = Array(26).fill(0)"]
+    InitArray --> LoopS{"For i = 0 to N-1"}
+    LoopS -->|"Next i"| AdjustCounts["counts[s[i] - 'a']++, counts[t[i] - 'a']--"]
+    AdjustCounts --> LoopS
+    LoopS -->|"Done"| LoopCheck{"For each count in counts"}
+    LoopCheck -->|"Next count"| IsZero{"count == 0?"}
+    IsZero -->|"Yes"| LoopCheck
+    IsZero -->|"No"| ReturnFalse["Return false"]
+    LoopCheck -->|"Done"| ReturnTrue["Return true"]
+```
+
+### B. Dry run on LeetCode Example 1 (s = "anagram", t = "nagaram")
+
+Both have length 7.
+`counts` initialized to `[0, ..., 0]`.
+
+| `i` | `s[i]` | `t[i]` | Action on `counts` | Non-zero state |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 'a' | 'n' | `counts['a']++`, `counts['n']--` | `a:1, n:-1` |
+| 1 | 'n' | 'a' | `counts['n']++`, `counts['a']--` | `a:0, n:0` |
+| 2 | 'a' | 'g' | `counts['a']++`, `counts['g']--` | `a:1, g:-1` |
+| 3 | 'g' | 'a' | `counts['g']++`, `counts['a']--` | `a:0, g:0` |
+| 4 | 'r' | 'r' | `counts['r']++`, `counts['r']--` | all 0 |
+| 5 | 'a' | 'a' | `counts['a']++`, `counts['a']--` | all 0 |
+| 6 | 'm' | 'm' | `counts['m']++`, `counts['m']--` | all 0 |
+
+Final array is all 0. Returns `true`.
+
+### C. Pitfalls from comments
+
+- **Sorting vs Counting:** A common one-liner in Python or JavaScript is `return sort(s) == sort(t)`. While this is very easy to write, sorting takes $O(N \log N)$ time, which is strictly slower than the $O(N)$ counting approach. Most interviewers will ask you to optimize the sorting solution into the counting solution.
+- **HashMap vs Array:** Some commenters argue that a Hash Map is more space-efficient because it only allocates memory for distinct characters (e.g., if a string is all 'a's, the map only stores one key). However, since the maximum size of the alphabet is 26, the overhead of a Hash Map (hashing, collision handling, object wrapping) is vastly slower and heavier than an array of 26 primitive integers. An array is undeniably better here.
+- **Unicode Follow-up:** A classic follow-up question is "What if the inputs contain unicode characters?". If the input isn't restricted to lowercase English letters, the 26-character array won't work. In that case, you *must* use a Hash Map.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (39): Accenture, Affirm, Amadeus, Amazon, American Express, Apple, Bloomberg, Capgemini, Cisco, Cognizant, DE Shaw, Dell, Deloitte, EPAM Systems, Fidelity, Goldman Sachs, Google, IBM, Infosys, Mastercard, Meta, Microsoft, Nagarro, Netflix, Nokia, Nvidia, Oracle, Ozon, PayPal, Siemens, TCS, Tesla, Uber, Visa, Wipro, Yandex, Yelp, Zoho, Zopsmart.
+- Recent: 30 days — Amazon, Google, Microsoft, TCS.
+- Recent: 3 months — Amazon, Bloomberg, Google, IBM, Infosys, Meta, Microsoft, TCS.

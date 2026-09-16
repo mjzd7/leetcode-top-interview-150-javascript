@@ -394,3 +394,103 @@ function rotate180(matrix) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Shichao —
+`https://leetcode.com/problems/rotate-image/solutions/18872/a-common-method-to-rotate-the-image/`
+— 335.9K views / 4.1K votes / 262 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Reverse + Transpose)
+
+Rotating a 2D matrix by 90 degrees clockwise in-place can be tricky if you try to swap 4 corners at a time using complex index math. The most upvoted approach on LeetCode reveals a much simpler, two-step mathematical trick:
+1. **Reverse** the matrix vertically (flip upside down).
+2. **Transpose** the matrix (swap elements across the main diagonal).
+
+Alternatively, you can Transpose first, then Reverse horizontally (left-to-right). Both achieve the exact same 90-degree clockwise rotation.
+
+```text
+FUNCTION rotate(matrix):
+    n = length(matrix)
+    
+    // Step 1: Reverse up to down
+    top = 0
+    bottom = n - 1
+    WHILE top < bottom:
+        // Swap entire rows
+        swap(matrix[top], matrix[bottom])
+        top++
+        bottom--
+        
+    // Step 2: Transpose (swap symmetry)
+    FOR i = 0 TO n - 1:
+        // Start j from i + 1 to only swap across the diagonal once
+        FOR j = i + 1 TO n - 1:
+            swap(matrix[i][j], matrix[j][i])
+```
+
+- Time: O(M) where M is the total number of cells in the matrix ($N \times N$). We touch each cell twice (once during reverse, once during transpose).
+- Space: O(1) as the problem strictly requires an in-place rotation without allocating a new 2D array.
+
+```mermaid
+flowchart TD
+    Init["n = len(matrix)"] --> ReverseLoop{"top < bottom?"}
+    ReverseLoop -->|"Yes"| SwapRows["Swap matrix[top] and matrix[bottom]"]
+    SwapRows --> IncTopDecBot["top++, bottom--"]
+    IncTopDecBot --> ReverseLoop
+    ReverseLoop -->|"No"| TransposeOuter{"i = 0 to n-1"}
+    TransposeOuter -->|"Next i"| TransposeInner{"j = i+1 to n-1"}
+    TransposeInner -->|"Next j"| SwapCells["Swap(matrix[i][j], matrix[j][i])"]
+    SwapCells --> TransposeInner
+    TransposeInner -->|"Done"| TransposeOuter
+    TransposeOuter -->|"Done"| End["Return (rotated in-place)"]
+```
+
+### B. Dry run on LeetCode Example 1
+
+Original Matrix:
+```text
+1 2 3
+4 5 6
+7 8 9
+```
+
+**Step 1: Reverse up to down**
+Swap row 0 with row 2. Row 1 stays in place.
+```text
+7 8 9
+4 5 6
+1 2 3
+```
+
+**Step 2: Transpose (swap symmetry)**
+Swap elements across the top-left to bottom-right diagonal.
+- `i=0, j=1`: swap(8, 4)
+- `i=0, j=2`: swap(9, 1)
+- `i=1, j=2`: swap(6, 2)
+```text
+7 4 1
+8 5 2
+9 6 3
+```
+Result matches exactly.
+
+### C. Pitfalls from comments
+
+- **Anti-Clockwise Rotation:** A highly upvoted comment notes that this pattern is universally useful. To rotate **anti-clockwise**, you simply reverse the order of operations: Transpose first, then reverse up-to-down (or reverse left-to-right, then transpose).
+- **Transposing incorrectly:** A common bug during the Transpose step is running the inner loop `j` from `0` to `n-1`. This swaps every element twice, completely undoing the transpose! The inner loop *must* start from `j = i + 1` so that it only sweeps the upper triangle of the matrix.
+- **Direct 4-way swap:** Some interviewers might ask you to do it in one pass without reversing. To do a direct 4-way swap, the loop bounds are tricky: `i = 0 to n/2`, `j = i to n-i-1`, and the swap relies on `tmp = m[i][j]`, moving `m[n-1-j][i]` to top-left, etc. While faster (one pass), the Reverse + Transpose method is heavily preferred by candidates for being infinitely less prone to index-out-of-bounds bugs.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (34): Accenture, Adobe, Amazon, Anduril, Apple, Bloomberg, Capital One, Cisco, Citigroup, Flipkart, Goldman Sachs, Google, IBM, Infosys, Intel, Mastercard, Meta, Microsoft, Nutanix, Nvidia, Oracle, PayPal, Qualcomm, Rakuten, Roblox, Samsung, SIG, TCS, Tesla, TikTok, Uber, Visa, Zillow, Zoho.
+- Recent: 30 days — Amazon, Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

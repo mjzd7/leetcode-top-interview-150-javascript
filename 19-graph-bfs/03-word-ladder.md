@@ -341,3 +341,136 @@ function minCostLadder(beginWord, endWord, wordList, costOf) {
   return dijkstraWords(beginWord, endWord, wordList, costOf); // heap replaces FIFO
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Jianchao Li —
+`https://leetcode.com/problems/word-ladder/solutions/40707/c-bfs-by-jianchao-li-n5jy/`
+— 176.4K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Bidirectional BFS with Alphabet Substitution)
+
+Model transformation sequences as shortest paths in an unweighted graph, cutting the search branching factor in half using two-end BFS:
+
+1. **State Space Formulation:**
+   - Every word in `wordList` represents a vertex.
+   - An edge exists between words that differ by exactly 1 character.
+   - Target is the total word count in the minimal transformation chain (edges + 1).
+2. **Alphabet Mutation Neighborhood ($26 \times L$):**
+   - For a word of length $L$, generate mutated candidates by replacing each character with `'a'` through `'z'`.
+   - Testing $26 \times L$ generated strings against a hash set `dict` takes $O(26 \cdot L^2)$ time, bypassing an expensive $O(N \cdot L)$ scan across all dictionary words.
+3. **Bidirectional Frontier Collisions:**
+   - Maintain two frontier sets: `beginSet = {beginWord}` and `endSet = {endWord}`.
+   - Guard condition: If `endWord` is not in `dict`, return 0 immediately.
+   - At each level, swap pointers to always expand the smaller set:
+     `IF LENGTH(beginSet) > LENGTH(endSet): SWAP(beginSet, endSet)`.
+   - For every word in `beginSet`, generate its $26 \times L$ mutant candidates:
+     - If candidate exists in `endSet`, the two search frontiers have collided! Return `ladderLength + 1`.
+     - If candidate exists in `dict`, insert into `nextLevel` and delete from `dict` to mark visited.
+   - Advance `beginSet = nextLevel`, increment `ladderLength`.
+
+```text
+FUNCTION ladderLength(beginWord, endWord, wordList):
+    dict = SET(wordList)
+    IF endWord NOT IN dict:
+        RETURN 0
+
+    beginSet = SET([beginWord])
+    endSet = SET([endWord])
+    dict.REMOVE(endWord)
+
+    ladder = 1
+
+    WHILE beginSet IS NOT EMPTY AND endSet IS NOT EMPTY:
+        IF LENGTH(beginSet) > LENGTH(endSet):
+            SWAP(beginSet, endSet)
+
+        nextLevel = SET()
+
+        FOR EACH word IN beginSet:
+            FOR i FROM 0 TO LENGTH(word) - 1:
+                origChar = word[i]
+                FOR ch FROM 'a' TO 'z':
+                    IF ch != origChar:
+                        candidate = word[0...i-1] + ch + word[i+1...END]
+
+                        IF candidate IN endSet:
+                            RETURN ladder + 1
+
+                        IF candidate IN dict:
+                            nextLevel.ADD(candidate)
+                            dict.REMOVE(candidate)
+
+        beginSet = nextLevel
+        ladder = ladder + 1
+
+    RETURN 0
+```
+
+- Time: O(N * L * 26) — where $N$ is dictionary size and $L$ is word length. Bidirectional search drastically bounds visited nodes.
+- Space: O(N * L) — to store the dictionary set and the two active search frontiers.
+
+```mermaid
+flowchart TD
+    Start["Check: endWord in dict?"] -->|No| Fail["RETURN 0"]
+    Start -->|Yes| Init["beginSet = {beginWord}<br>endSet = {endWord}<br>ladder = 1"]
+    Init --> Loop{"beginSet empty?"}
+    Loop -->|"No"| Balance["If len(beginSet) > len(endSet):<br>SWAP(beginSet, endSet)"]
+    Balance --> GenMutants["For each word in beginSet:<br>Generate 26*L candidate mutants"]
+    GenMutants --> Meet{"candidate in endSet?"}
+    Meet -->|"Yes (Frontiers meet!)"| Success["RETURN ladder + 1"]
+    Meet -->|"No"| InDict{"candidate in dict?"}
+    InDict -->|"Yes"| AddNext["nextLevel.add(candidate)<br>dict.remove(candidate)"]
+    InDict -->|"No"| GenMutants
+    AddNext --> GenMutants
+    GenMutants --> LevelDone["beginSet = nextLevel<br>ladder += 1"] --> Loop
+    Loop -->|"Yes"| Fail
+```
+
+### B. Dry run on LeetCode Example 1 (`beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log","cog"]`)
+
+- `dict = {"hot","dot","dog","lot","log"}` (removed `cog`).
+- `beginSet = {"hit"}`, `endSet = {"cog"}`, `ladder = 1`.
+- Round 1:
+  - Expand `"hit"`: mutant `"hot"` is in `dict`.
+  - `nextLevel = {"hot"}`, removed from `dict`.
+  - `beginSet = {"hot"}`, `ladder = 2`.
+- Round 2:
+  - `beginSet = {"hot"}` (size 1), `endSet = {"cog"}` (size 1).
+  - Expand `"hot"`: mutants `"dot"`, `"lot"` in `dict`.
+  - `nextLevel = {"dot", "lot"}`.
+  - `beginSet = {"dot", "lot"}`, `ladder = 3`.
+- Round 3:
+  - `beginSet` (size 2), `endSet = {"cog"}` (size 1).
+  - Swap: `beginSet = {"cog"}`, `endSet = {"dot", "lot"}`.
+  - Expand `"cog"`: mutants `"dog"`, `"log"` in `dict`.
+  - `nextLevel = {"dog", "log"}`.
+  - `beginSet = {"dog", "log"}`, `ladder = 4`.
+- Round 4:
+  - Expand `"dog"`: mutant `"dot"` exists in `endSet`!
+  - Target hit! Return `ladder + 1 = 5`.
+- Output: 5.
+
+### C. Why Bidirectional BFS Reduces Exponential Branching
+
+- Standard BFS exploring a tree of depth $d$ with branching factor $b$ visits approximately $b^d$ states.
+- Bidirectional search launches two frontiers that meet midway at depth $d/2$, visiting only $2 \cdot b^{d/2}$ states. For $b=10, d=6$, this reduces expansions from $1,000,000$ to $2,000$.
+
+### D. Pitfalls from comments
+
+- **Target Word Presence:** If `endWord` is absent from `wordList`, no transformation path is possible; returning 0 immediately avoids unnecessary graph search.
+- **Off-By-One Sequence Counting:** The problem asks for the count of words in the sequence (nodes), not the number of letter transitions (edges); initialize sequence length to 1.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (40): Adobe, Amazon, Apple, Bloomberg, Box, ByteDance, Capital One, Cisco, Citadel, Docusign, eBay, Expedia, Flipkart, Goldman Sachs, Google, LinkedIn, Lyft, MakeMyTrip, Meta, Microsoft, Navan, Nutanix, Okta, Oracle, PhonePe, Reddit, Salesforce, Samsung, ServiceNow, Snap, SoFi, tcs, Tekion, Tesla, The Trade Desk, TikTok, Uber, Visa, Yelp, ZScaler.
+- Recent: 30 days — Amazon, Google, Ola Cabs.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google.

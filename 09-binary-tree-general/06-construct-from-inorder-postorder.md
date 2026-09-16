@@ -342,3 +342,100 @@ async function buildExternal(inFile, postFile, inLeft, inRight, postIdx) {
   return assembleFromDisk(rootVal, mid, inLeft, inRight);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Vikas Pathak —
+`https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/solutions/3302159/easy-solutions-in-java-python-and-c-look-71ia/`
+— 48.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Reverse Postorder Cursor + Right-First Descent)
+
+Reconstruction from `inorder` and `postorder` reverses the preorder paradigm:
+
+1. **Root Extraction from End:** In postorder traversal (`Left -> Right -> Root`), the root of any subtree is always its last element.
+2. **Reverse Traversal Order:** Decrementing a cursor `postIdx` from `length - 1` down to 0 processes nodes in the exact order: **`Root -> Right -> Left`**.
+3. **Inorder Partitioning:** Look up the root value in an `inorder` hash map to locate index `mid`.
+   - `[inStart, mid - 1]` contains the left subtree.
+   - `[mid + 1, inEnd]` contains the right subtree.
+4. **Execution Invariant:** Because the backward cursor visits the right subtree first, **we must recursively build `root.right` before `root.left`**.
+
+```text
+FUNCTION buildTree(inorder, postorder):
+    inMap = new HashMap()
+    FOR i FROM 0 TO length(inorder) - 1:
+        inMap.put(inorder[i], i)
+
+    postIdx = length(postorder) - 1
+
+    FUNCTION helper(inStart, inEnd):
+        IF inStart > inEnd:
+            RETURN null
+
+        rootVal = postorder[postIdx]
+        postIdx = postIdx - 1
+        root = new TreeNode(rootVal)
+
+        mid = inMap.get(rootVal)
+
+        // CRUCIAL: Must build RIGHT subtree before LEFT subtree
+        root.right = helper(mid + 1, inEnd)
+        root.left = helper(inStart, mid - 1)
+
+        RETURN root
+
+    RETURN helper(0, length(inorder) - 1)
+```
+
+- Time: O(N) where N is total nodes, visiting each node once with O(1) map lookups.
+- Space: O(N) auxiliary space for the hash map and recursive call stack.
+
+```mermaid
+flowchart TD
+    Post["postorder: [9, 15, 7, 20, 3] (postIdx starts at end -> Root 3)"] --> Root["Root: 3"]
+    Root --> InSplit["inorder split around 3: [9] | 3 | [15, 20, 7]"]
+    InSplit -->|"postIdx moves to 20"| RightSub["Right subtree: [15, 20, 7]"]
+    InSplit -->|"postIdx moves to 9"| LeftSub["Left subtree: [9]"]
+    RightSub --> Post20["Root 20 splits [15] and [7]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`inorder = [9,3,15,20,7], postorder = [9,15,7,20,3]`)
+
+- Map: `{9:0, 3:1, 15:2, 20:3, 7:4}`, `postIdx = 4`.
+- Call `helper(0, 4)`:
+  - `rootVal = postorder[4] = 3`, `postIdx = 3`, `mid = 1`.
+  - Build `root.right` via `helper(2, 4)`:
+    - `rootVal = postorder[3] = 20`, `postIdx = 2`, `mid = 3`.
+    - Build right child: `helper(4, 4)` -> `rootVal = postorder[2] = 7`, `postIdx = 1`, returns `Node(7)`.
+    - Build left child: `helper(2, 2)` -> `rootVal = postorder[1] = 15`, `postIdx = 0`, returns `Node(15)`.
+    - Returns `Node(20)` with left=15, right=7.
+  - Build `root.left` via `helper(0, 0)`:
+    - `rootVal = postorder[0] = 9`, `postIdx = -1`, returns `Node(9)`.
+- Root 3 attaches left=9, right=20.
+
+Result: Perfectly reconstructed tree.
+
+### C. Why Right-Subtree-First Recursion is Non-Negotiable
+
+- **The Order Inversion:** In postorder, the sequence is `... Left Subtree ... Right Subtree ... Root`.
+- Step backwards from `Root`: you immediately enter the nodes of the **Right Subtree**.
+- If you call `root.left = helper(...)` first, the left subtree builder will consume the right subtree's root and children from `postorder`, corrupting the entire tree.
+
+### D. Pitfalls from comments
+
+- **Calling Left before Right:** The most frequent bug across Discuss submissions. When consuming postorder from right to left, the right child must always be recurred on first.
+- **Subarray copying:** Passing array slices (`postorder[0..mid]`) degrades runtime to $O(N^2)$ due to repetitive array allocations.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google, Microsoft.

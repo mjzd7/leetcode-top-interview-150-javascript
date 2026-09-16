@@ -326,3 +326,130 @@ function robustSnakesPath(board, K) {
   return kRobustShortestPath(board, K); // worst-case K deletions tolerated
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by lee215 —
+`https://leetcode.com/problems/snakes-and-ladders/solutions/173378/diagram-and-bfs-by-lee215-xhwv/`
+— 59.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Queue-Driven BFS on Boustrophedon Flattened Board)
+
+Model the game as an unweighted directed graph where every dice roll represents a directed edge of weight 1:
+
+1. **Boustrophedon Coordinate Translation:**
+   - Cells are numbered $1$ to $N^2$ starting from the bottom-left and alternating direction each row:
+     - $rowFromBottom = \lfloor(s - 1) / N\rfloor$
+     - Grid row index: $r = N - 1 - rowFromBottom$
+     - Grid column index: if $rowFromBottom$ is even, $c = (s - 1) \pmod N$; if odd, $c = N - 1 - ((s - 1) \pmod N)$.
+2. **Single-Hop Jump Semantics:**
+   - Rolling a die from square $x$ permits landing on $next \in [x + 1, \min(x + 6, N^2)]$.
+   - If square $next$ contains a ladder or snake ($board[r][c] \ne -1$), immediately teleport to destination $dest = board[r][c]$.
+   - Teleportation occurs at most once per move (no chaining).
+3. **Shortest Path BFS:**
+   - Seed a BFS queue with `(square: 1, moves: 0)`.
+   - Maintain a boolean `visited` array of size $N^2 + 1$. Mark square 1 as visited.
+   - Dequeue $(curr, moves)$. If $curr == N^2$, return $moves$.
+   - For each roll $1 \dots 6$: compute candidate destination $dest$.
+   - If $dest$ has not been visited, mark it visited and enqueue `(dest, moves + 1)`.
+   - If queue empties without reaching $N^2$, return $-1$.
+
+```text
+FUNCTION snakesAndLadders(board):
+    n = LENGTH(board)
+    target = n * n
+
+    FUNCTION getCoordinates(s):
+        rowFromBottom = (s - 1) / n
+        r = n - 1 - rowFromBottom
+        c = (s - 1) % n
+        IF rowFromBottom % 2 == 1:
+            c = n - 1 - c
+        RETURN (r, c)
+
+    queue = QUEUE()
+    queue.ENQUEUE((1, 0))  // (square, moves)
+
+    visited = SET()
+    visited.ADD(1)
+
+    WHILE queue IS NOT EMPTY:
+        (curr, moves) = queue.DEQUEUE()
+
+        IF curr == target:
+            RETURN moves
+
+        FOR roll FROM 1 TO 6:
+            nxt = curr + roll
+            IF nxt > target:
+                BREAK
+
+            (r, c) = getCoordinates(nxt)
+            dest = nxt
+            IF board[r][c] != -1:
+                dest = board[r][c]
+
+            IF dest NOT IN visited:
+                visited.ADD(dest)
+                queue.ENQUEUE((dest, moves + 1))
+
+    RETURN -1
+```
+
+- Time: O(N^2) — each square $1 \dots N^2$ is enqueued at most once, and each state evaluates at most 6 dice outcomes.
+- Space: O(N^2) — queue and visited set / array.
+
+```mermaid
+flowchart TD
+    Start["Queue = [(1, 0)], Visited = {1}"] --> Loop{"Queue empty?"}
+    Loop -->|"No"| Pop["(curr, moves) = queue.dequeue()"]
+    Pop --> CheckTarget{"curr == N^2?"}
+    CheckTarget -->|"Yes"| RetMoves["RETURN moves"]
+    CheckTarget -->|"No"| RollLoop["For roll = 1..6:<br>nxt = curr + roll"]
+    RollLoop --> Bounds{"nxt <= N^2?"}
+    Bounds -->|"No"| Loop
+    Bounds -->|"Yes"| Teleport{"board[nxt] != -1?"}
+    Teleport -->|"Yes"| DestJump["dest = board[nxt]"]
+    Teleport -->|"No"| DestSame["dest = nxt"]
+    DestJump --> CheckVisited{"dest visited?"}
+    DestSame --> CheckVisited
+    CheckVisited -->|"No"| MarkQueue["visited.add(dest)<br>queue.enqueue((dest, moves + 1))"] --> RollLoop
+    CheckVisited -->|"Yes"| RollLoop
+    Loop -->|"Yes"| RetFail["RETURN -1"]
+```
+
+### B. Dry run on LeetCode Example 1 (`board = [[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]`)
+
+- Board size $6 \times 6$, target $36$.
+- Start at square 1 (moves = 0).
+- Dice rolls $1 \dots 6$:
+  - Roll 1 $\to$ square 2: $board[r][c] = 15$ (ladder). Enqueue $(15, 1)$.
+  - Rolls 2..6 $\to$ squares 3..7 (all $-1$). Enqueue $(3, 1), (4, 1), (5, 1), (6, 1), (7, 1)$.
+- From square 15:
+  - Roll 2 $\to$ square 17: $board[r][c] = 13$ (snake). Enqueue $(13, 2)$.
+  - Progression continues via level BFS until square 35 takes ladder to 36 in 4 moves.
+- Output: 4.
+
+### C. Why Destination Marking Eliminates Redundant Teleports
+
+- Marking the post-teleport square ($dest$) as visited guarantees that once a position is reached via the shortest path, no future dice rolls re-evaluate paths already traversed from that square.
+- Marking pre-teleport landing cells would allow cyclical bouncing between snakes and ladders.
+
+### D. Pitfalls from comments
+
+- **No Chaining of Ladders/Snakes:** Landing on square 2 climbs ladder to 15; even if 15 had a snake or ladder, you do NOT take it on the same turn.
+- **Boustrophedon Index Flips:** Forgetting that row 1 (second from bottom) travels right-to-left causes every odd row to map to inverted cells.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Amazon, Anduril, Apple, Bloomberg, Cisco, Goldman Sachs, Google, Meta, Microsoft, Tesla, TikTok, Zomato.
+- Recent: 30 days — None.
+- Recent: 3 months — Tesla.

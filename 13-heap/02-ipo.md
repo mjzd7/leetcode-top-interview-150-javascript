@@ -336,3 +336,102 @@ function claimProject(states, i, investorId) {
   return true;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Abhinash Singh —
+`https://leetcode.com/problems/ipo/solutions/3219987/day-54-c-priority_queue-easiest-beginner-m55e/`
+— 42.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Greedy Sorted Capital + Max-Heap for Available Profits)
+
+Since completed projects only add non-negative profit and capital never decreases, projects once affordable remain affordable permanently:
+
+1. **Preprocessing:** Pair each project's required capital with its profit `(capital[i], profits[i])` and sort the pairs ascending by required capital.
+2. **Priority Pool:** Maintain a max-heap of profits representing projects that are currently affordable.
+3. **Greedy Selection:**
+   - Maintain an index pointer `i = 0` tracking the first unaffordable project.
+   - For up to $K$ iterations:
+     - While `i < n` and `projects[i].capital <= w`:
+       - Push `projects[i].profit` into the max-heap.
+       - Increment `i`.
+     - If the max-heap is empty, break early (no affordable projects remain).
+     - Extract the highest profit from the max-heap and add it to `w`.
+4. Return accumulated capital `w`.
+
+```text
+FUNCTION findMaximizedCapital(k, w, profits, capital):
+    n = length(profits)
+    projects = ARRAY OF PAIRS (capital[i], profits[i]) FOR i IN 0..n-1
+    SORT projects ASCENDING BY capital
+
+    maxHeap = new MaxHeap()
+    i = 0
+
+    FOR step FROM 1 TO k:
+        WHILE i < n AND projects[i].capital <= w:
+            maxHeap.push(projects[i].profit)
+            i = i + 1
+
+        IF maxHeap.isEmpty():
+            BREAK
+
+        w = w + maxHeap.pop()
+
+    RETURN w
+```
+
+- Time: O(N log N + K log N) — sorting takes $O(N \log N)$ and each project is pushed/popped from the heap at most once ($O(N \log N + K \log N)$).
+- Space: O(N) to store paired projects and heap elements.
+
+```mermaid
+flowchart TD
+    Init["Sort projects by required capital"] --> Loop{"Step <= K?"}
+    Loop -->|"Yes"| Unlock["While projects[i].capital <= w:<br>push profits[i] to maxHeap, i++"]
+    Unlock --> CheckEmpty{"maxHeap empty?"}
+    CheckEmpty -->|"Yes"| Done["Break early"]
+    CheckEmpty -->|"No"| PopMax["w += maxHeap.pop()"] --> Loop
+    Loop -->|"No"| Done
+    Done --> Ret["Return w"]
+```
+
+### B. Dry run on LeetCode Example 1 (`k = 2, w = 0, profits = [1,2,3], capital = [0,1,1]`)
+
+- Paired & sorted: `[(0, 1), (1, 2), (1, 3)]`.
+- Iteration 1:
+  - Capital $w = 0$.
+  - `i = 0`: `projects[0].capital = 0 <= 0` -> push profit 1 to heap. `i = 1`.
+  - `i = 1`: `projects[1].capital = 1 > 0` -> stop unlocking.
+  - Heap: `[1]`. Pop max (1) -> $w = 0 + 1 = 1$.
+- Iteration 2:
+  - Capital $w = 1$.
+  - `i = 1`: `projects[1].capital = 1 <= 1` -> push profit 2. `i = 2`.
+  - `i = 2`: `projects[2].capital = 1 <= 1` -> push profit 3. `i = 3`.
+  - Heap: `[3, 2]`. Pop max (3) -> $w = 1 + 3 = 4$.
+- Completed $K=2$ rounds. Return $w = 4$.
+
+Final result: `4`.
+
+### C. Why Greedy Choice Yields Global Optimum
+
+- Capital thresholds do not deduct capital upon completion; they only gate eligibility.
+- Choosing the maximum available profit at step $t$ yields the highest possible new capital $w_{t+1}$, which strictly supersedes or equals the set of projects unlockable by any alternative choice, guaranteeing global optimality (greedy choice property).
+
+### D. Pitfalls from comments
+
+- **Repeated Linear Scans:** Scanning all $N$ projects every round takes $O(K \times N)$ time, resulting in TLE on LeetCode's large test suites ($N, K = 10^5$). Pre-sorting ensures each project is pushed into the heap exactly once.
+- **Premature Underflow:** Attempting to pop from an empty heap when $w$ is insufficient to unlock any remaining projects will cause a runtime exception if the emptiness check is omitted.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (8): Amazon, Bloomberg, Google, Meta, Microsoft, Samsung, Stackline, Uber.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google.

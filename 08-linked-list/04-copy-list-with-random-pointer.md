@@ -315,3 +315,97 @@ function cloneVersioned(head) {
   return copy;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Lisong —
+`https://leetcode.com/problems/copy-list-with-random-pointer/solutions/43491/a-solution-with-constant-space-complexit-no2d/`
+— 253.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Three-Pass Interweaving Pattern)
+
+Rather than consuming $O(N)$ extra memory using a hash map to map original nodes to copies, the top Discuss solution uses an **in-place interweaving technique** in three linear passes:
+
+1. **Pass 1 (Interweave clones):** For each original node `curr`, instantiate its copy `copy = new Node(curr.val)` and insert it immediately after `curr`: `curr -> copy -> curr.next`.
+2. **Pass 2 (Assign random pointers):** For each original node `curr`, its clone is `curr.next`. If `curr.random` exists, its cloned counterpart is `curr.random.next`. Hence: `curr.next.random = curr.random.next`.
+3. **Pass 3 (Separate and restore):** Unweave the interwoven list into two independent lists: restore original pointers `curr.next = copy.next` and stitch cloned pointers `copy.next = copy.next.next`.
+
+```text
+FUNCTION copyRandomList(head):
+    IF head == null:
+        RETURN null
+
+    // Pass 1: Duplicate each node right next to itself
+    curr = head
+    WHILE curr != null:
+        nxt = curr.next
+        copy = new Node(curr.val)
+        curr.next = copy
+        copy.next = nxt
+        curr = nxt
+
+    // Pass 2: Assign random pointers for copies
+    curr = head
+    WHILE curr != null:
+        IF curr.random != null:
+            curr.next.random = curr.random.next
+        curr = curr.next.next
+
+    // Pass 3: Unweave and restore original list
+    curr = head
+    dummy = new Node(0)
+    copyCurr = dummy
+    WHILE curr != null:
+        nxt = curr.next.next
+        copy = curr.next
+        copyCurr.next = copy
+        copyCurr = copy
+        curr.next = nxt
+        curr = nxt
+
+    RETURN dummy.next
+```
+
+- Time: O(N) where N is the length of the list across three sequential passes.
+- Space: O(1) auxiliary space (excluding the returned cloned list).
+
+```mermaid
+flowchart TD
+    Pass1["Pass 1: Interweave<br>A -> A' -> B -> B' -> null"] --> Pass2["Pass 2: Wire Randoms<br>A'.random = A.random.next"]
+    Pass2 --> Pass3["Pass 3: Unweave & Restore<br>Original: A -> B -> null<br>Cloned: A' -> B' -> null"]
+    Pass3 --> Return["Return cloned head"]
+```
+
+### B. Dry run on small sublist (`A -> B`, `A.random = B`, `B.random = A`)
+
+| Pass | Action | State Diagram |
+| :--- | :--- | :--- |
+| **Pass 1** | Duplicate nodes in-place | `A -> A' -> B -> B' -> null` |
+| **Pass 2** | `A'.random = A.random.next` | `A'.random` points to `B'` |
+| | `B'.random = B.random.next` | `B'.random` points to `A'` |
+| **Pass 3** | Unweave lists | Original restored: `A -> B -> null`<br>Cloned output: `A' -> B' -> null` |
+
+### C. Why In-Place Interweaving Beats Hash Tables
+
+- **Zero Auxiliary Memory Overhead:** Eliminates the need for $O(N)$ hash tables (`Map<Node, Node>`), reducing memory footprint and preventing garbage collection stalls.
+- **Cache Locality:** During random resolution, `curr.next` is immediately adjacent in cache memory rather than requiring hash bucket lookups.
+
+### D. Pitfalls from comments
+
+- **Failing to restore original list:** LeetCode test suites verify that the input list remains strictly identical to its initial state. Leaving `curr.next` linked to copy nodes causes instant test failure.
+- **Null check on `curr.random`:** Calling `curr.random.next` when `curr.random == null` causes a null dereference runtime error. Always guard with `if (curr.random != null)`.
+- **Dangling references:** When separating in Pass 3, ensure both the original list tail and cloned list tail terminate cleanly with `null`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (21): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google, Microsoft.

@@ -335,3 +335,80 @@ async function streamHasPathSum(eventStream, targetSum) {
   return false;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Firdavs —
+`https://leetcode.com/problems/path-sum/solutions/3977919/easy-solutionpython3cccjavaexplain-line-zwis1/`
+— 83K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Top-Down Target Reduction with Strict Leaf Guard)
+
+The community-standard recursive approach tests whether a root-to-leaf path equals `targetSum` by decrementing the target along the path:
+
+1. **Base Case (Empty Tree):** If `root == null`, return `false`. (An empty tree contains no paths).
+2. **Leaf Node Verification:** If both `root.left == null` and `root.right == null`, `root` is a valid leaf. Return whether `root.val == targetSum`.
+3. **Recursive Descent:** Subtract `root.val` from `targetSum` and recursively query both subtrees with logical OR short-circuiting.
+
+```text
+FUNCTION hasPathSum(root, targetSum):
+    IF root == null:
+        RETURN false
+
+    // Must verify both children are null to qualify as a leaf
+    IF root.left == null AND root.right == null:
+        RETURN targetSum == root.val
+
+    remaining = targetSum - root.val
+
+    RETURN hasPathSum(root.left, remaining) OR hasPathSum(root.right, remaining)
+```
+
+- Time: O(N) where N is the number of nodes; worst case explores every branch once, with early exit upon finding a valid path.
+- Space: O(H) auxiliary space on the call stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Root["5 (target: 22 -> remaining: 17)"] --> L["4 (remaining: 13)"]
+    Root --> R["8 (remaining: 9)"]
+    L --> L11["11 (remaining: 2)"]
+    L11 --> L7["7 (leaf, val != 2 -> false)"]
+    L11 --> L2["2 (leaf, val == 2 -> TRUE)"]
+    L2 --> Found["Short-circuit Return TRUE"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22`)
+
+- Node 5: non-leaf, target becomes $22 - 5 = 17$. Recurse left to 4.
+- Node 4: non-leaf, target becomes $17 - 4 = 13$. Recurse left to 11.
+- Node 11: non-leaf, target becomes $13 - 11 = 2$. Recurse left to 7.
+- Node 7: leaf, $7 \neq 2$ -> returns `false`.
+- Recurse right from 11 to 2:
+- Node 2: leaf, $2 == 2$ -> returns `true`.
+- Short-circuit propagates `true` through 11, 4, and 5 without inspecting the right subtree of 5.
+
+Result: `true`.
+
+### C. Why Subtraction Beats Passing an Accumulated Sum
+
+- **Single Parameter Reduction:** Deducting `root.val` at each level compares directly against `targetSum == root.val` at the leaf, avoiding state management for an accumulated running total.
+- **Short-Circuit Pruning:** The `||` operator halts traversal of any pending right branches the microsecond any left leaf path succeeds.
+
+### D. Pitfalls from comments
+
+- **The Single-Child False Leaf Trap:** Checking `if (root == null) return targetSum == 0;` causes nodes with only ONE child to misidentify the absent child as a leaf with sum 0! A leaf is strictly defined as a node where BOTH `left` and `right` are `null`.
+- **Negative node values:** Node values and `targetSum` can be negative (e.g. `root = [-2, null, -3], targetSum = -5`). Pruning when `targetSum < 0` is an error because subsequent negative values can increase the match.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (23): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — Amazon, Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg, Meta.

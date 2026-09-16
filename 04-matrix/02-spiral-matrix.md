@@ -485,3 +485,112 @@ async function* streamSpiralFromDisk(fileHandle, m, n, bytesPerElem = 4) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by lexitron —
+`https://leetcode.com/problems/spiral-matrix/solutions/6321151/clean-code-beats-100-c-java-py3-js-easy-explanation/`
+— 55.8K views / 277 votes / 12 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Boundary Simulation)
+
+The most intuitive and readable way to traverse the matrix in a spiral is to simulate the process by maintaining four boundary variables: `top`, `bottom`, `left`, and `right`.
+We iterate in four directions (Right, Down, Left, Up), shrinking the respective boundary after each direction is completed.
+
+```text
+FUNCTION spiralOrder(matrix):
+    IF length(matrix) == 0:
+        RETURN []
+        
+    res = []
+    top = 0
+    bottom = length(matrix) - 1
+    left = 0
+    right = length(matrix[0]) - 1
+    
+    WHILE top <= bottom AND left <= right:
+        // Traverse Right
+        FOR i = left TO right:
+            res.push(matrix[top][i])
+        top++
+        
+        // Traverse Down
+        FOR i = top TO bottom:
+            res.push(matrix[i][right])
+        right--
+        
+        // Check if we still have a valid row to traverse Left
+        IF top <= bottom:
+            FOR i = right DOWN TO left:
+                res.push(matrix[bottom][i])
+            bottom--
+            
+        // Check if we still have a valid column to traverse Up
+        IF left <= right:
+            FOR i = bottom DOWN TO top:
+                res.push(matrix[i][left])
+            left++
+            
+    RETURN res
+```
+
+- Time: O(M * N) where M is the number of rows and N is the number of columns. Every element is visited exactly once.
+- Space: O(1) extra space (excluding the output array).
+
+```mermaid
+flowchart TD
+    Init["top=0, bottom=M-1, left=0, right=N-1"] --> Loop{"top <= bottom AND left <= right?"}
+    Loop -->|"Yes"| GoRight["Traverse Left -> Right across top row"]
+    GoRight --> ShrinkTop["top++"]
+    ShrinkTop --> GoDown["Traverse Top -> Bottom down right column"]
+    GoDown --> ShrinkRight["right--"]
+    ShrinkRight --> CheckRow{"top <= bottom?"}
+    CheckRow -->|"Yes"| GoLeft["Traverse Right -> Left across bottom row"]
+    GoLeft --> ShrinkBottom["bottom--"]
+    ShrinkBottom --> CheckCol
+    CheckRow -->|"No"| CheckCol{"left <= right?"}
+    CheckCol -->|"Yes"| GoUp["Traverse Bottom -> Top up left column"]
+    GoUp --> ShrinkLeft["left++"]
+    ShrinkLeft --> Loop
+    CheckCol -->|"No"| Loop
+    Loop -->|"No"| End["Return result"]
+```
+
+### B. Dry run on LeetCode Example 1
+
+Matrix:
+```text
+[1, 2, 3]
+[4, 5, 6]
+[7, 8, 9]
+```
+`top`=0, `bottom`=2, `left`=0, `right`=2.
+
+| Step | Action | Output `res` | Boundary Update |
+| :--- | :--- | :--- | :--- |
+| 1 | Right: `left` to `right` on `top` (0) | `[1, 2, 3]` | `top++` = 1 |
+| 2 | Down: `top` to `bottom` on `right` (2) | `[1, 2, 3, 6, 9]` | `right--` = 1 |
+| 3 | Left: `right` to `left` on `bottom` (2) | `[1, 2, 3, 6, 9, 8, 7]` | `bottom--` = 1 |
+| 4 | Up: `bottom` to `top` on `left` (0) | `[1, 2, 3, 6, 9, 8, 7, 4]` | `left++` = 1 |
+| 5 | Right: `left` to `right` on `top` (1) | `[... 7, 4, 5]` | `top++` = 2 |
+| 6 | Loop ends because `top` (2) > `bottom` (1). | | |
+
+### C. Pitfalls from comments
+
+- **Missing the Inner Conditionals:** The most common mistake is omitting `IF top <= bottom:` before moving Left, and `IF left <= right:` before moving Up. Without these checks, if you have a non-square matrix (e.g., 3x4), the loop will bounce back and duplicate the middle elements because the bounds have crossed within the `WHILE` loop itself.
+- **Off-by-one errors:** People often try to make the boundary variables exclusive (e.g., `right = cols`, looping to `right - 1`). Using inclusive boundaries (`right = cols - 1`) and `<= ` checks makes the logic significantly easier to reason about.
+- **Direction Arrays (Alternative Approach):** Some solutions use a `visited` matrix and a direction array `[(0,1), (1,0), (0,-1), (-1,0)]`. While this avoids boundary shrinking logic, it usually requires $O(M \cdot N)$ extra space for the `visited` matrix, making it less optimal than this boundary simulation.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (68): Accenture, Adobe, Akamai, Amazon, AMD, Anduril, Apple, Autodesk, Bloomberg, Capital One, Cisco, Darwinbox, Databricks, Dataminr, Deutsche Bank, Docusign, eBay, Epic Systems, Flipkart, Goldman Sachs, Google, IBM, Infosys, Intuit, Josh Technology, Meta, Microsoft, Morgan Stanley, NetApp, Nordstrom, Nutanix, Nvidia, Oracle, PayPal, PhonePe, PornHub, RBC, Roblox, Salesforce, SIG, TCS, The Trade Desk, TikTok, Uber, Visa, Walmart Labs, Wells Fargo, Wissen Technology, Yahoo, Yandex, Zoho.
+- Recent: 30 days — Bloomberg, Google, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

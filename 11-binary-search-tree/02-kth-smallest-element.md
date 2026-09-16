@@ -314,3 +314,86 @@ async function kthPaged(rootId, k, loadPage) {
   return null;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Nine —
+`https://leetcode.com/problems/kth-smallest-element-in-a-bst/solutions/63660/3-ways-implemented-in-java-python-binary-mzbo/`
+— 241.1K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Lazy Iterative Inorder with Early Cutoff)
+
+Because an in-order traversal of a BST yields nodes in sorted ascending order, the $k$-th visited node is the target. Using an explicit stack permits lazy evaluation with instantaneous early termination:
+
+1. **Left Spine Push:** Starting at `root`, push every left child onto the stack until reaching `null`.
+2. **Pop & Decrement:** Pop the top node `curr`. This is the next smallest element in the entire BST. Decrement $k = k - 1$.
+3. **Immediate Cutoff:** If $k == 0$, return `curr.val` immediately — no subsequent nodes are visited.
+4. **Shift to Right Subtree:** If $k > 0$, set `curr = curr.right` and repeat.
+
+```text
+FUNCTION kthSmallest(root, k):
+    stack = []
+    curr = root
+
+    WHILE curr != null OR length(stack) > 0:
+        WHILE curr != null:
+            stack.push(curr)
+            curr = curr.left
+
+        curr = stack.pop()
+        k = k - 1
+
+        IF k == 0:
+            RETURN curr.val
+
+        curr = curr.right
+
+    RETURN -1
+```
+
+- Time: O(H + k) where H is tree height ($O(\log N + k)$ balanced, $O(N)$ skewed), stopping immediately after visiting the $k$-th node.
+- Space: O(H) auxiliary space on the stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Descent["Descend Left Spine: push 3, push 1"] --> Pop1["Pop 1 (k: 2 -> 1)"]
+    Pop1 --> MoveRight["1.right = 2, push 2"]
+    MoveRight --> Pop2["Pop 2 (k: 1 -> 0) -> STOP & RETURN 2"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [3,1,4,null,2], k = 1`)
+
+- `curr = 3`: push 3.
+  - `curr = 1`: push 1.
+  - `curr = 1.left = null`.
+- Pop 1 from stack:
+  - Decrement: $k = 1 - 1 = 0$.
+  - $k == 0$ condition met!
+  - Return `1` immediately.
+- Nodes 2, 3, and 4 are never touched.
+
+Final result: `1`.
+
+### C. Why Lazy Stack Traversal Outperforms Full Inorder Dumps
+
+- Dumping the entire BST into an array (`inorder(root)`) and indexing `arr[k - 1]` incurs an unnecessary $O(N)$ time and $O(N)$ space cost.
+- Lazy traversal stops after visiting only $k$ nodes, reducing average runtime to $O(H + k)$ and memory to $O(H)$.
+
+### D. Pitfalls from comments
+
+- **Pass-by-value bugs in recursive implementations:** In languages where primitives are passed by value, decrementing `k` inside a recursive frame fails to update parent caller frames unless tracked via a reference/wrapper or instance variable.
+- **Follow-up for frequent mutations:** If the BST is modified frequently with recurring $k$-th rank queries, augment each tree node with a `size` field (Order Statistic Tree), enabling $O(H)$ rank queries without traversing the stack.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Amazon, Bloomberg, Cisco, Expedia, Google, LinkedIn, Meta, Microsoft, Oracle, tcs, TikTok, Uber.
+- Recent: 30 days — tcs.
+- Recent: 3 months — Amazon, Google, Microsoft, tcs.

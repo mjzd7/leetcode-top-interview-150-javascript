@@ -315,3 +315,84 @@ async function symmetricStream(levelOrderStream) {
   return true;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Vikas Pathak —
+`https://leetcode.com/problems/symmetric-tree/solutions/3290112/easy-solutions-in-java-python-and-c-look-zypw/`
+— 129K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Mirror-Pair Reflection Invariant)
+
+A binary tree is symmetric around its center if and only if its left and right subtrees are mirror reflections of each other:
+
+1. **Base Case:** An empty root is trivially symmetric (`return true`).
+2. **Mirror Helper `isMirror(t1, t2)`:**
+   - If both `t1` and `t2` are `null`, the leaves match symmetrically — return `true`.
+   - If only one is `null`, or if `t1.val != t2.val`, reflection fails — return `false`.
+   - **Cross-Comparison:** Recursively verify outer children (`t1.left` with `t2.right`) AND inner children (`t1.right` with `t2.left`).
+3. Return `isMirror(root.left, root.right)`.
+
+```text
+FUNCTION isSymmetric(root):
+    IF root == null:
+        RETURN true
+    RETURN isMirror(root.left, root.right)
+
+FUNCTION isMirror(t1, t2):
+    IF t1 == null AND t2 == null:
+        RETURN true
+    IF t1 == null OR t2 == null OR t1.val != t2.val:
+        RETURN false
+
+    RETURN isMirror(t1.left, t2.right) AND isMirror(t1.right, t2.left)
+```
+
+- Time: O(N) where N is the number of nodes, checking every node at most once.
+- Space: O(H) call stack height ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Root["Root (1)"] --> L["Left (2)"]
+    Root --> R["Right (2)"]
+    L -.->|"Compare outer"| R
+    L --> L3["Left child (3)"]
+    L --> L4["Right child (4)"]
+    R --> R4["Left child (4)"]
+    R --> R3["Right child (3)"]
+    L3 <-.->|"Mirror Pair"| R3
+    L4 <-.->|"Mirror Pair"| R4
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [1,2,2,3,4,4,3]`)
+
+- Call `isMirror(Node(2_left), Node(2_right))`:
+  - Values match (`2 == 2`).
+  - Outer pair: `isMirror(3, 3)` -> leaves match -> `true`.
+  - Inner pair: `isMirror(4, 4)` -> leaves match -> `true`.
+- Both conjunctions evaluate to `true`.
+- Final result: `true`.
+
+### C. Why Mirror Pairing Beats In-Order Traversal Palindrome Checks
+
+- **The Palindrome Trap:** While a symmetric tree's in-order traversal forms a palindrome, an in-order palindrome does **not** prove symmetry. For example, `[1, 2, 2, 2, null, 2]` produces `2, 2, 1, 2, 2` (a palindrome), yet the tree is structurally asymmetric.
+- Mirror pairing verifies both structure and value simultaneously without ambiguity.
+
+### D. Pitfalls from comments
+
+- **Accidental identity check:** Writing `isMirror(t1.left, t2.left)` checks if subtrees are identical duplicates, NOT mirrored reflections. Reflection strictly mandates pairing left with right.
+- **Queue pairing order:** In iterative BFS implementations, always push mirror candidates in adjacent pairs: push `(t1.left, t2.right)` together, then `(t1.right, t2.left)` together.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft.

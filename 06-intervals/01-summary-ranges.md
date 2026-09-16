@@ -414,3 +414,183 @@ class SummaryRangesStream {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Aryant Tripathi —
+`https://leetcode.com/problems/summary-ranges/solutions/1805583/c-detailed-explanation-w-dry-run-faster-z6tx6/`
+— 315 votes / 42.1K views / 28 comments.
+Language-independent summary. No new JS here.
+
+### A. Post's way: expected-number scan
+
+Sorted input is the gift: each step
+expects previous + 1. A mismatch
+closes the range. Single numbers
+print bare, spans print a->b.
+
+```text
+FUNCTION rangesOptimal(nums):
+    IF EMPTY: RETURN []
+    out = []
+    start = nums[0]
+    FOR i FROM 1 TO n - 1:
+        IF nums[i] != nums[i-1] + 1:
+            PUSH FORMAT(start, nums[i-1])
+            start = nums[i]
+    PUSH FORMAT(start, nums[n-1])
+    RETURN out
+FUNCTION FORMAT(a, b):
+    RETURN a == b ? "a" : "a->b"
+```
+
+- Time: O(n)
+- Space: O(1) extra
+
+```mermaid
+flowchart TD
+    Init["start=nums[0]"] --> Loop{"i<n?"}
+    Loop -->|"Yes"| Gap{"nums[i]!=prev+1?"}
+    Gap -->|Yes| Flush["push format, start=nums[i]"]
+    Gap -->|No| Next["i++"]
+    Flush --> Next
+    Next --> Loop
+    Loop -->|"No"| Last["push final range"]
+```
+
+### B. Dry run on LeetCode Example 1
+
+`nums = [0, 1, 2, 4, 5, 7]`
+
+| i | nums[i] | Expected? | Action |
+| :--- | :--- | :--- | :--- |
+| 1 | 1 | Yes | - |
+| 2 | 2 | Yes | - |
+| 3 | 4 | No (3) | Push 0->2 |
+| 4 | 5 | Yes | - |
+| 5 | 7 | No (6) | Push 4->5 |
+| end | - | - | Push 7 |
+
+### C. Why this is enough
+
+- Sorted order removes all search.
+- One comparison per element.
+- Format rule is the only branch.
+
+### D. Pitfalls from comments
+
+- Empty array: return [] first.
+- Single-element range prints
+  bare ("7", not "7->7").
+- Last range flushes AFTER
+  the loop, not inside.
+- Two-liner variants exist (4)
+  but hide the format rule.
+
+### E. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Amazon, Bloomberg,
+  Google, Meta, Microsoft, Netflix,
+  Tinkoff, VK, Yandex.
+- Recent: 30 days — none.
+- Recent: 3 months — Amazon,
+  Google, Yandex.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pradhuman Gupta —
+`https://leetcode.com/problems/summary-ranges/solutions/3990812/beats-100-two-pointers-explanation-java-c-python-javascript/`
+— 20.1K views / 114 votes / 6 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Pointers)
+
+The optimal and most straightforward way to solve this is using a simple **Two-Pointer** approach (or a start/end index tracker) with a single pass through the array. 
+Because the input array is already sorted and contains unique integers, consecutive sequences are perfectly adjacent. We can maintain a `start` pointer. As we iterate through with an `end` pointer, we check if the next number `nums[i]` is exactly `nums[i-1] + 1`. If it is, we extend the range. If it is not, the sequence is broken, and we format the range from `start` to `end-1` into the result list, and reset `start` to `end`.
+
+```text
+FUNCTION summaryRanges(nums):
+    result = empty List
+    n = length(nums)
+    
+    IF n == 0:
+        RETURN result
+        
+    start = nums[0]
+    
+    FOR i = 1 TO n:
+        // If we reach the end OR the sequence breaks
+        IF i == n OR nums[i] != nums[i - 1] + 1:
+            // Format the current range
+            IF start == nums[i - 1]:
+                result.add(String(start))
+            ELSE:
+                result.add(String(start) + "->" + String(nums[i - 1]))
+                
+            // Reset start for the next range
+            IF i < n:
+                start = nums[i]
+                
+    RETURN result
+```
+
+- Time: O(N) where N is the length of `nums`. We traverse the array exactly once. String formatting is proportional to the number of output strings, bounded by $N$.
+- Space: O(1) auxiliary space (excluding the space needed for the output list of strings).
+
+```mermaid
+flowchart TD
+    Init["result = [], start = nums[0]"] --> CheckEmpty{"len(nums) == 0?"}
+    CheckEmpty -->|"Yes"| ReturnEmpty["Return result"]
+    CheckEmpty -->|"No"| Loop{"For i = 1 to N"}
+    Loop -->|"Next i"| CheckBreak{"i == N OR<br>nums[i] != nums[i-1] + 1?"}
+    CheckBreak -->|"No (Sequence continues)"| Loop
+    CheckBreak -->|"Yes (Sequence breaks)"| FormatRange{"start == nums[i-1]?"}
+    FormatRange -->|"Yes"| AddSingle["result.push(str(start))"]
+    FormatRange -->|"No"| AddRange["result.push(str(start) + '->' + str(nums[i-1]))"]
+    AddSingle --> ResetStart{"i < N?"}
+    AddRange --> ResetStart
+    ResetStart -->|"Yes"| DoReset["start = nums[i]"]
+    ResetStart -->|"No"| Loop
+    DoReset --> Loop
+    Loop -->|"Done"| Return["Return result"]
+```
+
+### B. Dry run on LeetCode Example 1 (nums = [0,1,2,4,5,7])
+
+`n` = 6. `start` = 0.
+
+| `i` | `nums[i]` | Condition `nums[i] != nums[i-1] + 1` | Action | `result` list |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 1 | 1 != 0 + 1 (False) | Continue | `[]` |
+| 2 | 2 | 2 != 1 + 1 (False) | Continue | `[]` |
+| 3 | 4 | 4 != 2 + 1 **(True)** | Break! Range: `0` to `2`. Reset `start` to 4. | `["0->2"]` |
+| 4 | 5 | 5 != 4 + 1 (False) | Continue | `["0->2"]` |
+| 5 | 7 | 7 != 5 + 1 **(True)** | Break! Range: `4` to `5`. Reset `start` to 7. | `["0->2", "4->5"]` |
+| 6 | - | `i == n` **(True)** | Break! Range: `7` to `7`. | `["0->2", "4->5", "7"]` |
+
+Final Result: `["0->2", "4->5", "7"]`.
+
+### C. Pitfalls from comments
+
+- **The Last Element Edge Case:** A very common bug in string-building loops is forgetting to add the final accumulated range when the loop finishes. Many developers write a loop from `1` to `N-1`, and then manually write duplicate logic outside the loop to handle the final sequence. By letting the loop run to `i == n` (and checking `i == n` inside the loop), you gracefully handle the final element without duplicating the string formatting logic.
+- **Integer Overflow:** The problem guarantees `-2^31 <= nums[i] <= 2^31 - 1`. Therefore, checking `nums[i] == nums[i-1] + 1` could technically cause integer overflow in languages with fixed-size 32-bit integers if `nums[i-1]` is exactly $2^{31}-1$. Fortunately, `nums[i]` cannot be greater than $2^{31}-1$, so the only way `nums[i-1]` is $2^{31}-1$ is if it's the absolute maximum possible element, meaning there is no `nums[i]` after it, so the comparison doesn't evaluate anyway. Still, strict static analyzers sometimes flag `nums[i-1] + 1`. A safer check is `nums[i] - nums[i-1] == 1` (though `nums[i] - nums[i-1]` can *also* overflow if `nums[i-1]` is negative, so `long` casting is preferred in Java/C++).
+- **Python grouping shortcut:** In Python, the `itertools.groupby` function can elegantly solve this by grouping on `n - i` (value minus index). Since the array is sorted, `n - i` remains constant for contiguous sequences. While elegant ("Two lines of code for this task"), an interviewer will still ask you to implement the raw pointer logic without library tricks.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Amazon, Bloomberg, Google, Meta, Microsoft, Netflix, Tinkoff, VK, Yandex.
+- Recent: 30 days — (None listed).
+- Recent: 3 months — Amazon, Google, Yandex.

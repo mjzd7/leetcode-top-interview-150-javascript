@@ -242,3 +242,108 @@ function addBitwise(a, b) {
   return a;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Himanshu Malik —
+`https://leetcode.com/problems/add-binary/solutions/1679423/well-detailed-explaination-java-c-python-o3iz/`
+— 150.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Full Adder Right-to-Left Dual-Pointer Simulation)
+
+Simulate a hardware ripple-carry full adder bit-by-bit from least-significant to most-significant digit:
+
+1. **State Tracking:**
+   - Maintain index pointers $i = \text{len}(a) - 1$ and $j = \text{len}(b) - 1$, and an integer `carry = 0`.
+2. **Columnar Iteration:**
+   - Loop while $i \ge 0$ OR $j \ge 0$ OR $carry > 0$:
+     - Initialize `sum = carry`.
+     - If $i \ge 0$: add $a[i] - \text{'0'}$, decrement $i$.
+     - If $j \ge 0$: add $b[j] - \text{'0'}$, decrement $j$.
+     - Result bit: `sum % 2`.
+     - Propagated carry: `sum / 2` (integer division).
+     - Append result bit to an output buffer.
+3. **Reversal:**
+   - Reverse the collected buffer to yield the MSB-first binary representation.
+
+```text
+FUNCTION addBinary(a, b):
+    result = []
+    i = LENGTH(a) - 1
+    j = LENGTH(b) - 1
+    carry = 0
+
+    WHILE i >= 0 OR j >= 0 OR carry > 0:
+        sum = carry
+
+        IF i >= 0:
+            sum = sum + (a[i] - '0')
+            i = i - 1
+
+        IF j >= 0:
+            sum = sum + (b[j] - '0')
+            j = j - 1
+
+        result.APPEND(sum % 2)
+        carry = sum / 2
+
+    REVERSE(result)
+    RETURN JOIN(result, "")
+```
+
+- Time: O(max(N, M)) — where $N$ and $M$ are string lengths. Each character position is evaluated in $O(1)$ operations.
+- Space: O(max(N, M)) — auxiliary memory required to store the resultant sum characters.
+
+```mermaid
+flowchart TD
+    Init["i = len(a) - 1, j = len(b) - 1, carry = 0"] --> CondCheck{"i >= 0 OR<br>j >= 0 OR<br>carry > 0?"}
+    CondCheck -->|"Yes"| ColSum["sum = carry<br>+ (a[i] if valid)<br>+ (b[j] if valid)"]
+    ColSum --> AppendBit["Append sum % 2<br>carry = sum / 2<br>i--, j--"]
+    AppendBit --> CondCheck
+    CondCheck -->|"No"| Rev["Reverse result array<br>Join into binary string"]
+    Rev --> Done["RETURN binary string"]
+```
+
+### B. Dry run on LeetCode Example 1 (`a = "11"`, `b = "1"`)
+
+- Pointers: $i = 1, j = 0, carry = 0$.
+- **Round 1:**
+  - $a[1] = 1, b[0] = 1 \implies sum = 0 + 1 + 1 = 2$.
+  - Output bit: $2 \pmod 2 = 0$.
+  - Carry: $\lfloor 2 / 2 \rfloor = 1$.
+  - Result: `['0']`, $i = 0, j = -1$.
+- **Round 2:**
+  - $a[0] = 1, b \text{ exhausted} \implies sum = 1 + 1 + 0 = 2$.
+  - Output bit: $2 \pmod 2 = 0$.
+  - Carry: $1$.
+  - Result: `['0', '0']`, $i = -1, j = -1$.
+- **Round 3:**
+  - Both strings exhausted, but $carry = 1 \implies sum = 1$.
+  - Output bit: $1 \pmod 2 = 1$.
+  - Carry: $0$.
+  - Result: `['0', '0', '1']`.
+- **Reversal:** `['1', '0', '0']` $\implies$ `"100"`.
+
+### C. Why Direct Parse (`parseInt` / `Number`) Fails
+
+- Binary strings in inputs may span up to $10^4$ characters.
+- Built-in numeric primitives overflow beyond $2^{53} - 1$ (IEEE 754 float limits), resulting in rounding loss and inaccurate calculations for large strings.
+
+### D. Pitfalls from comments
+
+- **Quadratic String Prepend:** In many languages, executing `res = bit + res` inside the loop reallocates the string on every step, turning an $O(N)$ algorithm into $O(N^2)$. Appending and reversing once is essential.
+- **Forgetting Final Carry Overflow:** Omitting `carry > 0` from the loop condition results in dropping the final overflow bit when inputs like `"1" + "1"` yield carry 1.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Bloomberg, Capgemini, Deloitte, Google, IBM, Infosys, Meta, Microsoft, Snap, tcs, Visa, Walmart Labs, Wipro, Yandex, Zoho.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft.

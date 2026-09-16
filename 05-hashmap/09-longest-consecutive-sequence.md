@@ -454,3 +454,216 @@ function getLongestConsecutiveElements(nums) {
   return result;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Stefan Pochmann —
+`https://leetcode.com/problems/longest-consecutive-sequence/solutions/41057/simple-on-with-explanation-just-walk-eac-ovr2/`
+— 2.5K votes / 296K views / 247 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Sort, then scan for runs. Simple,
+pays the sort tax.
+
+```text
+FUNCTION longestNaive(nums):
+    IF EMPTY: RETURN 0
+    SORT nums
+    best = 1; cur = 1
+    FOR i FROM 1 TO n - 1:
+        IF nums[i] == nums[i-1]: CONTINUE
+        IF nums[i] == nums[i-1] + 1: cur++
+        ELSE: best = MAX(best, cur); cur = 1
+    RETURN MAX(best, cur)
+```
+
+- Time: O(n log n)
+- Space: O(1)
+
+### B. Post's way: walk each streak once
+
+Set for O(1) lookup. Only start
+walking at streak heads (x-1
+missing). Each number walked once,
+so the inner loop is free overall.
+
+```text
+FUNCTION longestOptimal(nums):
+    s = SET(nums)
+    best = 0
+    FOR x IN s:
+        IF x - 1 NOT IN s:
+            y = x
+            WHILE y IN s:
+                y++
+            best = MAX(best, y - x)
+    RETURN best
+```
+
+- Time: O(n)
+- Space: O(n)
+
+```mermaid
+flowchart TD
+    S["s=set(nums)"] --> Loop{"more x?"}
+    Loop -->|"Yes"| Head{"x-1 in s?"}
+    Head -->|Yes| Skip["skip, not a head"]
+    Head -->|No| Walk["y=x, walk up"]
+    Walk --> Rec["best=max(best,y-x)"]
+    Skip --> Loop
+    Rec --> Loop
+    Loop -->|"No"| Done["Return best"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [100, 4, 200, 1, 3, 2]`
+
+| x | x-1 in s? | Walk | Length |
+| :--- | :--- | :--- | :--- |
+| 100 | 99? No | 100 | 1 |
+| 4 | 3? Yes | skip | - |
+| 200 | 199? No | 200 | 1 |
+| 1 | 0? No | 1,2,3,4 | 4 |
+| 3 | 2? Yes | skip | - |
+| 2 | 1? Yes | skip | - |
+
+best = 4.
+
+### D. Why B beats A
+
+- No sort anywhere.
+- Heads-only rule bounds total
+  walks to n.
+- Set membership is the only
+  operation.
+
+### E. Pitfalls from comments
+
+- The x-1 check is the whole
+  trick (top praise, 473).
+- O(1) lookups assumed: hashed
+  structures required (long
+  debate in replies).
+- Duplicates die in the set —
+  walk the SET, not the array.
+- Empty input: return 0 guard.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (40): Adobe, Amazon,
+  Apple, Atlassian, BitGo,
+  Bloomberg, Capital One, Cisco,
+  DE Shaw, Deloitte, EPAM Systems,
+  Goldman Sachs, Google, IBM,
+  Infosys, LinkedIn, Lyft, Meesho,
+  Meta, Microsoft, Morgan Stanley,
+  Myntra, Nvidia, Okta, Oracle,
+  PayPal, Paytm, PhonePe, Roblox,
+  Salesforce, Swiggy, TCS, Tesla,
+  TikTok, Uber, Visa, Walmart Labs,
+  Wissen Technology, Zepto, Zoho.
+- Recent: 30 days — Amazon,
+  Bloomberg, Google, Microsoft,
+  TCS.
+- Recent: 3 months — Amazon,
+  Apple, Bloomberg, Google, Meta,
+  Microsoft, TCS.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Stefan Pochmann / Sanjay_M07 —
+`https://leetcode.com/problems/longest-consecutive-sequence/solutions/41055/my-really-simple-java-on-solution-accepted/`
+— 296K views / 2.5K votes / 247 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Hash Set & Sequence Start Check)
+
+The intuitive brute force way is to sort the array and then iterate through it to find the longest sequence. However, sorting takes $O(N \log N)$ time, and the problem explicitly demands an $O(N)$ solution.
+The most universally loved $O(N)$ solution involves throwing all the numbers into a Hash Set. Then, we iterate through the set. We only attempt to build a sequence if the current number is the *start* of a sequence. How do we know it's a start? Simple: `num - 1` does not exist in the set! If it is a start, we count upwards (`num + 1`, `num + 2`, etc.) as long as the next number is in the set, and update our maximum length.
+
+```text
+FUNCTION longestConsecutive(nums):
+    IF length(nums) == 0:
+        RETURN 0
+        
+    numSet = empty Hash Set
+    FOR each num in nums:
+        numSet.add(num)
+        
+    maxLength = 0
+    
+    FOR each num in numSet:
+        // Only do work if this is the start of a sequence
+        IF (num - 1) is not in numSet:
+            currentNum = num
+            currentStreak = 1
+            
+            // Count how long the sequence goes
+            WHILE (currentNum + 1) is in numSet:
+                currentNum += 1
+                currentStreak += 1
+                
+            maxLength = MAX(maxLength, currentStreak)
+            
+    RETURN maxLength
+```
+
+- Time: O(N). Although there is a `while` loop inside the `for` loop, the `while` loop only runs for the *start* of a sequence. Every number in the array is visited exactly twice: once in the `for` loop (to check if it's a start), and at most once in the `while` loop (when building a sequence). Hash Set operations are $O(1)$, making the total time $O(N)$.
+- Space: O(N) to store the Hash Set.
+
+```mermaid
+flowchart TD
+    InitSet["Add all nums to numSet"] --> LoopSet{"For each num in numSet"}
+    LoopSet -->|"Next num"| CheckStart{"(num - 1) in numSet?"}
+    CheckStart -->|"Yes (Not a start)"| LoopSet
+    CheckStart -->|"No (Is a start)"| InitCount["currentNum = num<br>streak = 1"]
+    InitCount --> LoopStreak{"(currentNum + 1) in numSet?"}
+    LoopStreak -->|"Yes"| IncStreak["currentNum++<br>streak++"]
+    IncStreak --> LoopStreak
+    LoopStreak -->|"No"| UpdateMax["maxLength = max(maxLength, streak)"]
+    UpdateMax --> LoopSet
+    LoopSet -->|"Done"| Return["Return maxLength"]
+```
+
+### B. Dry run on LeetCode Example 1 (nums = [100, 4, 200, 1, 3, 2])
+
+`numSet` = `{100, 4, 200, 1, 3, 2}`
+
+| `num` | `num - 1` in set? | Action | `streak` | `maxLength` |
+| :--- | :--- | :--- | :--- | :--- |
+| 100 | 99 (No) | Start sequence. Count 100. Next 101? No. | 1 | 1 |
+| 4 | 3 (Yes) | Skip. Not the start of a sequence. | - | 1 |
+| 200 | 199 (No) | Start sequence. Count 200. Next 201? No. | 1 | 1 |
+| 1 | 0 (No) | Start sequence. Count 1. Next 2? Yes. Next 3? Yes. Next 4? Yes. Next 5? No. | 4 | 4 |
+| 3 | 2 (Yes) | Skip. Not the start. | - | 4 |
+| 2 | 1 (Yes) | Skip. Not the start. | - | 4 |
+
+Result is `4`.
+
+### C. Pitfalls from comments
+
+- **The false $O(N^2)$ alarm:** At first glance, a `while` loop nested inside a `for` loop looks like $O(N^2)$. However, the `if ((num - 1) not in set)` check is the crucial gatekeeper. It guarantees the inner `while` loop only executes once per entire sequence. Therefore, across the entire iteration, the `while` loop only runs $N$ total times. It is strictly $O(N)$.
+- **Iterating the Array vs the Set:** Make sure the main `for` loop iterates over `numSet` (or the unique elements) rather than the raw `nums` array. If the array has extreme duplicates (e.g., `[1, 1, 1, 1...]`), iterating the array would process the same start element multiple times, degrading performance. The Hash Set implicitly deduplicates.
+- **Sorting is practically fast:** Many commenters point out that in languages like C++, `std::sort` ($O(N \log N)$) often runs faster in real life than the Hash Set ($O(N)$) solution because array sorting is incredibly cache-friendly, whereas hashing scatters memory access. However, in an interview, you MUST give the $O(N)$ Hash Set solution first to satisfy the theoretical complexity requirement of the prompt.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (40): Adobe, Amazon, Apple, Atlassian, BitGo, Bloomberg, Capital One, Cisco, DE Shaw, Deloitte, EPAM Systems, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Lyft, Meesho, Meta, Microsoft, Morgan Stanley, Myntra, Nvidia, Okta, Oracle, PayPal, Paytm, PhonePe, Roblox, Salesforce, Swiggy, TCS, Tesla, TikTok, Uber, Visa, Walmart Labs, Wissen Technology, Zepto, Zoho.
+- Recent: 30 days — Amazon, Bloomberg, Google, Microsoft, TCS.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google, Meta, Microsoft, TCS.

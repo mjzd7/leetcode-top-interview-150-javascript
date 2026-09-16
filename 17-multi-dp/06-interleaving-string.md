@@ -276,3 +276,105 @@ async function interleaveStreamed(s1Stream, s2Stream, s3Stream) {
   return wavefrontVerdicts(s1Stream, s2Stream, s3Stream); // anti-diagonal sweep
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by sherryxmhe —
+`https://leetcode.com/problems/interleaving-string/solutions/31879/my-dp-solution-in-c-by-sherryxmhe-a9pa/`
+— 83.4K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (1D Rolling Boolean DP with Dimension Optimization)
+
+Compress the 2D interleaving match grid into a single rolling 1D boolean array:
+
+1. **Length Invariant Precheck:**
+   - A valid interleaving strictly preserves all characters: if `length(s1) + length(s2) != length(s3)`, return `false` immediately without allocating state.
+2. **Dimension Minimization:**
+   - If `length(s1) < length(s2)`, swap `s1` and `s2` so the rolling buffer corresponds to the shorter string ($O(\min(M, N))$ space).
+3. **State Transition Invariant:**
+   - `dp[j]` represents whether prefixes `s1[0...i-1]` and `s2[0...j-1]` successfully interleave to form prefix `s3[0...i+j-1]`.
+   - At cell $(i, j)$, validity propagates from two potential predecessors:
+     - **Vertical Transition (taking from s1):** `dp[j]` was already true AND `s1[i - 1] == s3[i + j - 1]`.
+     - **Horizontal Transition (taking from s2):** `dp[j - 1]` is true AND `s2[j - 1] == s3[i + j - 1]`.
+   $$dp[j] = (dp[j] \land s1[i - 1] == s3[i + j - 1]) \lor (dp[j - 1] \land s2[j - 1] == s3[i + j - 1])$$
+
+```text
+FUNCTION isInterleave(s1, s2, s3):
+    m = LENGTH(s1)
+    n = LENGTH(s2)
+    IF m + n != LENGTH(s3):
+        RETURN false
+
+    IF m < n:
+        SWAP(s1, s2)
+        SWAP(m, n)
+
+    dp = ARRAY OF SIZE (n + 1) FILLED WITH false
+    dp[0] = true
+
+    FOR j FROM 1 TO n:
+        dp[j] = dp[j - 1] AND (s2[j - 1] == s3[j - 1])
+
+    FOR i FROM 1 TO m:
+        dp[0] = dp[0] AND (s1[i - 1] == s3[i - 1])
+        FOR j FROM 1 TO n:
+            fromTop = dp[j] AND (s1[i - 1] == s3[i + j - 1])
+            fromLeft = dp[j - 1] AND (s2[j - 1] == s3[i + j - 1])
+            dp[j] = fromTop OR fromLeft
+
+    RETURN dp[n]
+```
+
+- Time: O(M * N) — each cell evaluates in constant time.
+- Space: O(min(M, N)) auxiliary space for the rolling 1D array.
+
+```mermaid
+flowchart TD
+    LenCheck{"len(s1) + len(s2) == len(s3)?"}
+    LenCheck -->|"No"| RetFalse["RETURN false"]
+    LenCheck -->|"Yes"| Init["Seed dp[0..n] for row 0 (s2 prefix vs s3)"]
+    Init --> RowLoop["For row i from 1 to m"]
+    RowLoop --> UpdateFirst["dp[0] = dp[0] AND (s1[i-1] == s3[i-1])"]
+    UpdateFirst --> ColLoop["For col j from 1 to n"]
+    ColLoop --> Check{"(dp[j] AND s1[i-1] == s3[i+j-1])<br>OR<br>(dp[j-1] AND s2[j-1] == s3[i+j-1])"}
+    Check -->|"Set"| SetDP["dp[j] = result"] --> ColLoop
+    ColLoop --> RowLoop
+    RowLoop --> Ret["RETURN dp[n]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`s1 = "aabcc"`, `s2 = "dbbca"`, `s3 = "aadbbcbcac"`)
+
+- $m = 5, n = 5, |s3| = 10$. Length equality holds.
+- Initial seed: `dp[0] = true`. Because `s2[0] = 'd' != s3[0] = 'a'`, all `dp[1...5] = false`.
+- Row $i = 1$ ($s1[0] = \text{'a'}$):
+  - $j = 0$: `dp[0] = true && ('a' == 'a') = true`.
+  - $j = 1$: $s3[1] = \text{'a'}$. Top matches ($dp[1]=false$), left matches ($s2[0]='d' \ne 'a'$). `dp[1] = false`.
+- Continuing step-by-step through the matrix confirms reachability along path:
+  $s1[\text{"aa"}] \to s2[\text{"dbbc"}] \to s1[\text{"bc"}] \to s2[\text{"a"}] \to s1[\text{"c"}]$.
+- Final cell `dp[5]` evaluates to `true`.
+
+Final result: `true`.
+
+### C. Why Dynamic Programming Prevents Exponential Backtracking
+
+- When characters in $s1$ and $s2$ are identical (e.g. $s1 = \text{"aaa"}, s2 = \text{"aaa"}$), a naive recursive split checks both possibilities at every index, producing $O(2^{M+N})$ operations.
+- Caching boolean reachability bounds the state space strictly to $(M + 1) \times (N + 1)$ subproblems.
+
+### D. Pitfalls from comments
+
+- **Length Gate Omission:** Without an initial length check, $k = i + j$ can index out of bounds on $s3$, causing undefined behavior or bogus index comparisons.
+- **Greedy Trap:** Choosing greedily when $s1[i - 1] == s2[j - 1] == s3[i + j - 1]$ causes wrong answers; evaluating the logical `OR` of both transitions is essential.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Amazon, Apple, Axon, Bloomberg, eBay, Google, Meta, Microsoft, Zoho.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google.

@@ -256,3 +256,82 @@ function trailingZeroesBig(n) {
   return total;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Hao Chen —
+`https://leetcode.com/problems/factorial-trailing-zeroes/solutions/52373/simple-cc-solution-with-detailed-explain-2y2g/`
+— 54.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Legendre's Formula on Prime Factor 5)
+
+Never materialize the factorial product; directly tally prime factors of 5 using Legendre's Formula:
+
+1. **Number-Theoretic Invariant:**
+   - A trailing zero is produced by a factor of 10, which decomposes into $2 \times 5$.
+   - In any factorial $n! = 1 \times 2 \times \dots \times n$, factors of 2 are strictly more frequent than factors of 5.
+   - Thus, the total number of trailing zeros is dictated entirely by the exponent of 5 in the prime factorization of $n!$.
+2. **Legendre's Formula Accumulation:**
+   - Multiples of 5 each contribute one factor of 5 ($\lfloor n / 5 \rfloor$).
+   - Multiples of 25 each contribute a second factor of 5 ($\lfloor n / 25 \rfloor$).
+   - Multiples of $5^k$ contribute additional factors ($\lfloor n / 5^k \rfloor$).
+3. **Repeated Division Kernel:**
+   - Rather than maintaining an increasing multiplier $i = 5, 25, 125, \dots$ (which risks integer overflow), repeatedly divide $n$ by 5 and sum the quotients until $n = 0$.
+
+```text
+FUNCTION trailingZeroes(n):
+    count = 0
+    WHILE n > 0:
+        n = INT_DIV(n, 5)
+        count = count + n
+    RETURN count
+```
+
+- Time: O(log5(n)) — the loop iterates roughly $\approx 13$ times for 32-bit integers ($5^{13} > 2^{31} - 1$).
+- Space: O(1) auxiliary space using one integer accumulator.
+
+```mermaid
+flowchart TD
+    Start["trailingZeroes(n)"] --> Loop{"n > 0?"}
+    Loop -->|"Yes"| Div["n = INT_DIV(n, 5)<br>count += n"]
+    Div --> Loop
+    Loop -->|"No"| Ret["RETURN count"]
+```
+
+### B. Dry run on LeetCode Example 2 and Edge Case $n = 100$
+
+- **Example 2 ($n = 5$):**
+  - Iteration 1: $n = \lfloor 5 / 5 \rfloor = 1, count = 1$.
+  - Iteration 2: $n = \lfloor 1 / 5 \rfloor = 0$. Loop terminates.
+  - Return: `1`.
+- **Case $n = 100$ ($100!$ trailing zeroes):**
+  - Iteration 1: $n = \lfloor 100 / 5 \rfloor = 20, count = 20$.
+  - Iteration 2: $n = \lfloor 20 / 5 \rfloor = 4, count = 20 + 4 = 24$.
+  - Iteration 3: $n = \lfloor 4 / 5 \rfloor = 0$. Loop terminates.
+  - Return: `24`.
+
+Final result: `24` trailing zeros.
+
+### C. Why Iterative Division Beats Power Multiplication
+
+- Writing `for (int i = 5; n / i > 0; i *= 5)` causes $i$ to overflow 32-bit signed integers when $i$ reaches $5^{14}$, leading to undefined behavior or infinite loops on inputs near $2^{31} - 1$.
+- Iteratively dividing $n = \lfloor n / 5 \rfloor$ strictly decreases the register towards zero, guaranteeing zero possibility of overflow without requiring 64-bit variables.
+
+### D. Pitfalls from comments
+
+- **Materializing Factorials:** Computing $n!$ directly fails even for $n = 20$, as $20! \approx 2.43 \times 10^{18}$ exceeds standard 64-bit integer capacities.
+- **Ignoring Higher Powers of 5:** Dividing by 5 once ($\lfloor n / 5 \rfloor$) misses extra factors provided by $25, 125, 625$, returning erroneous answers for any $n \ge 25$.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (6): Amazon, Bloomberg, Google, Meta, Microsoft, tcs.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

@@ -397,3 +397,93 @@ function longestValidParentheses(s) {
   return maxLen;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by phoenix13steve —
+`https://leetcode.com/problems/valid-parentheses/solutions/9178/short-java-solution-by-phoenix13steve-a11b/`
+— 360.1K views / 3.7K votes / 409 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Push Expected Closer Trick)
+
+Instead of pushing the opening bracket and needing a hash map or branching logic when popping to verify the match, push the **expected closing bracket** whenever an opener is encountered. 
+
+When any character other than an opening bracket appears, it must match the top of the stack. A mismatch or an empty stack immediately signifies an invalid sequence.
+
+```text
+FUNCTION isValid(s):
+    IF length(s) MOD 2 != 0:
+        RETURN false
+
+    stack = empty Stack
+    
+    FOR EACH char c IN s:
+        IF c == '(':
+            stack.push(')')
+        ELSE IF c == '{':
+            stack.push('}')
+        ELSE IF c == '[':
+            stack.push(']')
+        ELSE IF stack.isEmpty() OR stack.pop() != c:
+            RETURN false
+            
+    RETURN stack.isEmpty()
+```
+
+- Time: O(N) where N is the length of string `s`. Each character is processed once.
+- Space: O(N) in the worst case where all characters are opening brackets.
+
+```mermaid
+flowchart TD
+    Init["stack = []"] --> Loop{"More chars in s?"}
+    Loop -->|"Yes"| Char{"c is opener?"}
+    Char -->|"c == '('\ "| PushP["stack.push(')')"]
+    Char -->|"c == '{'\ "| PushB["stack.push('}')"]
+    Char -->|"c == '['\ "| PushS["stack.push(']')"]
+    Char -->|"No (Closer)"| Match{"stack not empty AND<br>stack.pop() == c?"}
+    Match -->|"No"| Fail["Return false"]
+    Match -->|"Yes"| Loop
+    PushP --> Loop
+    PushB --> Loop
+    PushS --> Loop
+    Loop -->|"No"| Done{"stack.isEmpty()?"}
+    Done -->|"Yes"| TrueRes["Return true"]
+    Done -->|"No"| FalseRes["Return false"]
+```
+
+### B. Dry run on LeetCode Example 4 (`s = "([])"`)
+
+| Step | `c` | Condition | Action | Stack State (top on right) |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | - | Initial | Odd check pass | `[]` |
+| 1 | `'('` | Opener `'('` | Push `')'` | `[')']` |
+| 2 | `'['` | Opener `'['` | Push `']'` | `[')', ']']` |
+| 3 | `']'` | Closer | Pop `']'` == `']'` (Match) | `[')']` |
+| 4 | `')'` | Closer | Pop `')'` == `')'` (Match) | `[]` |
+| 5 | End | Loop ends | `stack.isEmpty()` is True | Valid |
+
+### C. Why Push-Expected-Closer Beats Traditional Opener-Stack
+
+- **Eliminates reverse lookup:** Traditional stack approaches push `'('` and require a dictionary or `switch` to verify if the popped `'('` pairs with `')'`.
+- **Single identity check:** Popping directly compares `popped == c`.
+- **Fewer variables:** No need to store opening/closing map structures.
+
+### D. Pitfalls from comments
+
+- **Premature pop on empty stack:** If `s = "]"`, checking `stack.pop()` before verifying that the stack is non-empty triggers a stack underflow exception. Always test `stack.isEmpty()` first.
+- **Unclosed opening brackets:** Strings like `"(("` will finish the loop with elements still in the stack. Returning `true` without checking `stack.isEmpty()` is a classic bug.
+- **Odd length string:** Any string with an odd length cannot possibly form valid pairs. Checking `s.length % 2 !== 0` upfront is an $O(1)$ fast exit.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (100+): Amazon, Apple, Bloomberg, Cisco, Goldman Sachs, Google, Meta, Microsoft, Oracle, PayPal, Salesforce, TikTok, Uber.
+- Recent: 30 days — Amazon, BlackRock, Google, Microsoft.
+- Recent: 3 months — Accolite, Amazon, BlackRock, Bloomberg, Google, Intuit, Meta, Microsoft, TCS.

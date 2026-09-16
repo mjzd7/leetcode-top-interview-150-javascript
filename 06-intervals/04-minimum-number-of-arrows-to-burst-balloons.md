@@ -402,3 +402,87 @@ function minVerticalLasersForCircles(circles) {
   return findMinArrowShots(intervals);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Shuang Zhou —
+`https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/solutions/93703/share-my-explained-greedy-solution-by-jo-hddz/`
+— 72.1K views / 791 votes / 99 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Greedy by End Coordinate)
+
+Every balloon must be punctured by an arrow placed between its start and end coordinates inclusively. Sorting balloons by their ending position allows us to place an arrow as far to the right as possible (at `balloon[0][1]`). This greedy choice maximizes the number of subsequent balloons that this arrow can burst.
+
+We iterate through the sorted list: if a balloon starts after the current arrow position (`points[i][0] > arrowPos`), the current arrow cannot burst it. We increment the arrow count and set the new arrow position to the current balloon's end coordinate.
+
+```text
+FUNCTION findMinArrowShots(points):
+    IF length(points) == 0:
+        RETURN 0
+        
+    SORT points ASCENDING BY end coordinate (points[i][1])
+    
+    arrowPos = points[0][1]
+    arrowCount = 1
+    
+    FOR i FROM 1 TO length(points) - 1:
+        IF points[i][0] > arrowPos:
+            arrowCount += 1
+            arrowPos = points[i][1]
+            
+    RETURN arrowCount
+```
+
+- Time: O(N log N) dominated by sorting the N intervals.
+- Space: O(1) auxiliary space (or O(log N) stack space for sorting).
+
+```mermaid
+flowchart TD
+    Init["Sort by end coordinate<br>arrowCount = 1<br>arrowPos = points[0][1]"] --> Loop{"More points?"}
+    Loop -->|"Yes"| Check{"start > arrowPos?"}
+    Check -->|"Yes: new arrow"| NewArrow["arrowCount++<br>arrowPos = end"]
+    Check -->|"No: burst"| Skip["Continue"]
+    NewArrow --> Loop
+    Skip --> Loop
+    Loop -->|"No"| Done["Return arrowCount"]
+```
+
+### B. Dry run on LeetCode Example 1
+
+Input: `points = [[10,16],[2,8],[1,6],[7,12]]`
+
+Sorted by end coordinate: `[[1,6],[2,8],[7,12],[10,16]]`  
+Initial state: `arrowPos = 6`, `arrowCount = 1`
+
+| `i` | `points[i]` | Check (`start > arrowPos`) | Action | `arrowPos` | `arrowCount` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `[2,8]` | `2 > 6` (False) | Burst by arrow at 6 | 6 | 1 |
+| 2 | `[7,12]` | `7 > 6` (True) | Need new arrow | 12 | 2 |
+| 3 | `[10,16]` | `10 > 12` (False) | Burst by arrow at 12 | 12 | 2 |
+
+Final answer: 2 arrows (shot at x = 6 and x = 12).
+
+### C. End-sort vs Start-sort
+
+- **Sorting by end:** Shooting at the end of the current balloon guarantees that any future overlapping balloon starts $\le$ this point. No need to update the arrow coordinate for overlapping balloons.
+- **Sorting by start:** Also valid, but when intervals overlap, you must continuously shrink the shooting window (`arrowPos = MIN(arrowPos, points[i][1])`). Sorting by end eliminates this shrinking logic.
+
+### D. Pitfalls from comments
+
+- **Integer subtraction overflow in comparator:** In Java/C++, using `(a, b) -> a[1] - b[1]` causes 32-bit signed integer overflow when coordinates span values like `-2147483648` and `2147483647`. Always compare explicitly via `Integer.compare(a[1], b[1])` or conditional operators `<` / `>`.
+- **Strict inequality vs inclusive edge:** Points `[1, 2]` and `[2, 3]` overlap at $x = 2$. An arrow shot at 2 bursts both balloons. Therefore, the trigger for a new arrow must be strictly greater (`points[i][0] > arrowPos`), not `>=`.
+- **Identical to Interval Scheduling (LC 435):** Finding the minimum number of arrows is mathematically equivalent to finding the maximum number of mutually non-overlapping intervals (Activity Selection Problem).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (7): Amazon, Bloomberg, Goldman Sachs, Google, Microsoft, TikTok, Zoho.
+- Recent: 30 days — none.
+- Recent: 3 months — Google.

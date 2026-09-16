@@ -304,3 +304,74 @@ function fuzzySame(p, q, budget) {
   return { equal: l.equal && r.equal, used: cost + l.used + r.used };
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Deepank Yadav —
+`https://leetcode.com/problems/same-tree/solutions/3746149/recursive-approach-with-easy-steps-by-de-9vxb/`
+— 141.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Synchronized Dual-DFS with Early Pruning)
+
+The optimal approach performs lockstep traversal across both trees, comparing topology and node values simultaneously with immediate short-circuiting:
+
+1. **Both Null:** If both `p` and `q` are null, the subtrees are structurally identical at this leaf boundary — return `true`.
+2. **Mismatch Detection:** If only one node is null, or if their values differ (`p.val != q.val`), a structural or value discrepancy is found — return `false` immediately.
+3. **Recursive Descent:** Recursively evaluate whether both corresponding left subtrees and right subtrees are identical using logical AND short-circuiting.
+
+```text
+FUNCTION isSameTree(p, q):
+    IF p == null AND q == null:
+        RETURN true
+
+    IF p == null OR q == null OR p.val != q.val:
+        RETURN false
+
+    RETURN isSameTree(p.left, q.left) AND isSameTree(p.right, q.right)
+```
+
+- Time: O(min(N, M)) where N and M are the node counts; halts immediately at the earliest mismatch. Worst-case O(N) when trees are identical.
+- Space: O(min(Hp, Hq)) auxiliary call stack frames where H is tree height.
+
+```mermaid
+flowchart TD
+    Start["isSameTree(p, q)"] --> BothNull{"Both p & q null?"}
+    BothNull -->|"Yes"| RetTrue["Return true"]
+    BothNull -->|"No"| OneNull{"Either null OR p.val != q.val?"}
+    OneNull -->|"Yes"| RetFalse["Return false (Prune)"]
+    OneNull -->|"No"| Recurse["isSameTree(p.left, q.left) && isSameTree(p.right, q.right)"]
+    Recurse --> RetRes["Return conjunction"]
+```
+
+### B. Dry run on LeetCode Example 2 (`p = [1,2], q = [1,null,2]`)
+
+- Root level: `p.val = 1, q.val = 1` -> match. Recurse left: `isSameTree(p.left, q.left)`.
+- Left comparison: `p.left = Node(2)`, `q.left = null`.
+- `q.left == null` while `p.left != null` -> triggers mismatch condition `p == null || q == null`.
+- Short-circuits immediately to `false` without inspecting right subtrees.
+
+Output: `false`.
+
+### C. Why Synchronized DFS Beats Full Tree Serialization
+
+- **Instant Short-Circuit:** Pre-serializing both trees into strings (e.g., using null markers) forces a full $O(N + M)$ traversal and string allocation even if root values differ.
+- Dual-DFS terminates on the first conflicting node without extra string allocations.
+
+### D. Pitfalls from comments
+
+- **Null dereferencing order:** Accessing `p.val != q.val` before confirming that neither `p` nor `q` is `null` causes a runtime null dereference crash.
+- **Ignoring structure:** Comparing only node value multisets or counts misses differences in tree shapes (e.g. `[1, 2]` vs `[1, null, 2]`).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft.

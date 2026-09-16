@@ -322,3 +322,110 @@ export class DeduplicateTransformStream extends Transform {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Stefan Pochmann —
+`https://leetcode.com/problems/remove-duplicates-from-sorted-array-ii/solutions/27976/3-6-easy-lines-c-java-python-ruby-by-ste-pq39/`
+— 2K votes / 146.1K views / 226 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Count runs with a counter and rebuild.
+Extra state per run, easy off-by-one.
+
+```text
+FUNCTION dedupNaive(nums):
+    count = 1
+    out = [nums[0]]
+    FOR j FROM 1 TO LENGTH(nums) - 1:
+        IF nums[j] == nums[j-1]:
+            count++
+        ELSE:
+            count = 1
+        IF count <= 2:
+            APPEND nums[j] TO out
+    COPY out INTO nums
+    RETURN LENGTH(out)
+```
+
+- Time: O(n)
+- Space: O(n)
+
+### B. Post's way: keep if beyond last two
+
+Writer `i` starts at 0. Keep `n`
+when fewer than 2 kept so far
+(`i < 2`) or `n` exceeds `nums[i-2]`.
+Sorted order makes that check enough.
+
+```text
+FUNCTION dedupOptimal(nums):
+    i = 0
+    FOR n IN nums:
+        IF i < 2 OR n > nums[i-2]:
+            nums[i] = n
+            i++
+    RETURN i
+```
+
+- Time: O(n)
+- Space: O(1)
+- Generalizes to at most K: compare
+  against nums[i-K] (from comments).
+
+```mermaid
+flowchart TD
+    Init["i=0"] --> Loop{"more n?"}
+    Loop -->|"Yes"| Keep{"i<2 or n>nums[i-2]?"}
+    Keep -->|Yes| Write["nums[i]=n, i++"]
+    Keep -->|No| Skip["drop n"]
+    Write --> Loop
+    Skip --> Loop
+    Loop -->|"No"| Done["Return i"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [1, 1, 1, 2, 2, 3]`
+
+| Step | n | i | Action | nums |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 1 | 0 | i<2, keep | [1, 1, 1, 2, 2, 3] |
+| 1 | 1 | 1 | i<2, keep | [1, 1, 1, 2, 2, 3] |
+| 2 | 1 | 2 | 1>1? No, drop | [1, 1, 1, 2, 2, 3] |
+| 3 | 2 | 2 | 2>1? Yes, keep | [1, 1, 2, 2, 2, 3] |
+| 4 | 2 | 3 | 2>1? Yes, keep | [1, 1, 2, 2, 2, 3] |
+| 5 | 3 | 4 | 3>2? Yes, keep | [1, 1, 2, 2, 3, 3] |
+| 6 | - | 5 | Return 5 | [1, 1, 2, 2, 3, _] |
+
+### D. Why B beats A
+
+- No counter, no second array.
+- One comparison per element.
+- Same shape works for any K.
+
+### E. Pitfalls from comments
+
+- Magic `i-2` looks wrong until you
+  see sorted order guarantees it.
+- `n > nums[i-2]` not `!=`: with
+  at-most-2, greater is the test.
+- Return i, not i + 1 (unlike Q26).
+- First two always kept via `i < 2`.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Accolite, Amazon,
+  Bloomberg, FreshWorks, Google,
+  Meta, Microsoft, TikTok,
+  Wissen Technology.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Google.

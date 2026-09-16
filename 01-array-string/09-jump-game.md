@@ -286,3 +286,104 @@ function jumpMinCount(nums) {
 ### Follow-Up 2: Jump Game with Battery / Energy Drain
 - **Scenario**: Each jump of length $D$ consumes $D^2$ energy units. Given starting energy $E$, determine if you can reach index $n - 1$.
 - **Solution Strategy**: Dijkstra's algorithm on an implicit DAG using `PriorityQueue`.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by StefanGryczka —
+`https://leetcode.com/problems/jump-game/solutions/39038/kadanes-algorithm-since-no-one-has-menti-1wai/`
+— 1.7K votes / 237.9K views / 174 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Try every possible jump sequence recursively.
+For each position, try all forward jumps.
+Returns true if any path reaches the last index.
+
+```text
+FUNCTION canJumpNaive(nums):
+    RETURN dfs(nums, 0)
+
+FUNCTION dfs(nums, pos):
+    IF pos >= LENGTH(nums) - 1:
+        RETURN true
+    maxJump = nums[pos]
+    FOR i FROM 1 TO maxJump:
+        IF dfs(nums, pos + i):
+            RETURN true
+    RETURN false
+```
+
+- Time: O(2^n) worst case
+- Space: O(n) recursion depth
+
+### B. Post's way: Kadane's greedy tracking
+
+Track the farthest reachable index.
+If current index exceeds farthest, return false.
+
+```text
+FUNCTION canJumpOptimal(nums):
+    farthest = 0
+    FOR i FROM 0 TO LENGTH(nums) - 1:
+        IF i > farthest:
+            RETURN false
+        farthest = MAX(farthest, i + nums[i])
+        IF farthest >= LENGTH(nums) - 1:
+            RETURN true
+    RETURN true
+```
+
+- Time: O(n)
+- Space: O(1)
+- Single guard: check i > farthest before updating.
+
+```mermaid
+flowchart TD
+    Start["farthest = 0"]
+    Start --> Loop["FOR i = 0 to n-1"]
+    Loop --> Check{"i > farthest?"}
+    Check --> |Yes| Fail["Return false"]
+    Check --> |No| Update["farthest = MAX(farthest, i + nums[i])"]
+    Update --> DoneCheck{"farthest >= n-1?"}
+    DoneCheck --> |Yes| Success["Return true"]
+    DoneCheck --> |No| Continue["Continue"]
+    Continue --> Loop
+    Fail --> End
+    Success --> End
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [2, 3, 1, 1, 4]`
+
+| Step | i | nums[i] | farthest | Action |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 0 | 2 | 0 to 2 | Update farthest=2 |
+| 1 | 1 | 3 | 2 to 4 | Update farthest=4, reach end |
+| - | - | - | - | Return true |
+
+### D. Why B beats A
+
+- A: Exponential branching, revisits positions.
+- B: Single linear scan, O(1) space.
+- Invariant: farthest is always the maximum reachable index from visited positions.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Must check i > farthest BEFORE updating farthest.
+- If you update first, you might jump from an unreachable index.
+- Edge case: single element array [0] returns true immediately.
+- Zero in middle: farthest may not advance, loop terminates naturally.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

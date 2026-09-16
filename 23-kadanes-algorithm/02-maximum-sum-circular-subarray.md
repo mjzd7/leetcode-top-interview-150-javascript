@@ -284,3 +284,97 @@ function boundedCircularMax(nums, L) {
   return dequeConstrainedMax(nums, L); // sliding-window prefix extrema
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by lee215 —
+`https://leetcode.com/problems/maximum-sum-circular-subarray/solutions/178422/one-pass-by-lee215-navi/`
+— 91.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Dual Kadane One-Pass: Total Sum Minus Minimum Subarray)
+
+Solve the circular maximum subarray problem in a single pass by combining standard Kadane with its inverted minimum dual:
+
+1. **Two Spatial Cases:**
+   - **Case 1 (Non-circular / Interior):** The optimal subarray does not wrap across the circular boundary. Its sum is found by standard linear Kadane: `maxSum`.
+   - **Case 2 (Circular / Boundary Wrap):** The optimal subarray wraps around the ends, consisting of an array prefix and an array suffix. Because the elements outside this wrap form a contiguous interior subarray:
+     $$\max(\text{prefix} + \text{suffix}) = \text{totalSum} - \min(\text{contiguous interior subarray})$$
+     Maximizing the circular wrap is equivalent to minimizing the interior subarray (`minSum`).
+2. **Single Pass Accumulation:**
+   - In a single iteration over `nums`, track:
+     - Standard maximum subarray: `curMax = max(x, curMax + x)`, `maxSum = max(maxSum, curMax)`
+     - Inverted minimum subarray: `curMin = min(x, curMin + x)`, `minSum = min(minSum, curMin)`
+     - Total sum: `total += x`
+3. **The All-Negative Array Boundary:**
+   - If every number in `nums` is negative, `maxSum < 0` and the minimum subarray spans the entire array (`minSum == total`).
+   - Evaluating `total - minSum` produces 0, representing an empty subarray (forbidden by problem constraints).
+   - Guard check: If `maxSum > 0`, return `max(maxSum, total - minSum)`. Otherwise, return `maxSum`.
+
+```text
+FUNCTION maxSubarraySumCircular(nums):
+    total = 0
+    maxSum = nums[0]
+    curMax = 0
+    minSum = nums[0]
+    curMin = 0
+
+    FOR EACH x IN nums:
+        curMax = MAX(curMax + x, x)
+        maxSum = MAX(maxSum, curMax)
+
+        curMin = MIN(curMin + x, x)
+        minSum = MIN(minSum, curMin)
+
+        total = total + x
+
+    IF maxSum > 0:
+        RETURN MAX(maxSum, total - minSum)
+    ELSE:
+        RETURN maxSum
+```
+
+- Time: O(N) — single pass scanning through array of length $N$.
+- Space: O(1) — five scalar registers maintained throughout the loop.
+
+```mermaid
+flowchart TD
+    Init["total = 0<br>curMax = 0, maxSum = nums[0]<br>curMin = 0, minSum = nums[0]"] --> Loop["For each x in nums:<br>curMax = MAX(curMax + x, x)<br>curMin = MIN(curMin + x, x)<br>total += x"]
+    Loop --> DoneCheck{"All elements visited?"}
+    DoneCheck -->|"No"| Loop
+    DoneCheck -->|"Yes"| NegCheck{"maxSum > 0?"}
+    NegCheck -->|"Yes"| RetMax["RETURN MAX(maxSum, total - minSum)"]
+    NegCheck -->|"No (all negative)"| RetAllNeg["RETURN maxSum<br>(Avoids returning empty 0)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [1, -2, 3, -2]`)
+
+- $x = 1$: `curMax = 1, maxSum = 1`, `curMin = 1, minSum = 1`, `total = 1`.
+- $x = -2$: `curMax = -1, maxSum = 1`, `curMin = -2, minSum = -2`, `total = -1`.
+- $x = 3$: `curMax = 3, maxSum = 3`, `curMin = 1, minSum = -2`, `total = 2`.
+- $x = -2$: `curMax = 1, maxSum = 3`, `curMin = -2, minSum = -2`, `total = 0`.
+- At conclusion: `total = 0`, `maxSum = 3`, `minSum = -2`.
+- `maxSum > 0` condition holds $\implies \max(3, 0 - (-2)) = \max(3, 2) = 3$.
+
+### C. Why Total - Min Subarray Works
+
+- Partitioning a circular sequence into a wrapped subarray and an unwrapped subarray divides the complete set of indices $\{0, \dots, N-1\}$.
+- Because $\text{Sum}(\text{wrap}) + \text{Sum}(\text{interior}) = \text{totalSum}$, subtracting the minimum possible interior sum directly isolates the maximum possible wrap sum.
+
+### D. Pitfalls from comments
+
+- **The All-Negative Array Trap:** When all elements are negative, `total == minSum`, causing `total - minSum = 0`. Returning 0 corresponds to selecting an empty subarray. The conditional `maxSum > 0 ? ... : maxSum` ensures the single least-negative element is returned.
+- **Array Doubling Fallacy:** Simply concatenating `nums` to `nums` and applying standard Kadane fails because Kadane may accumulate a subarray exceeding $N$ elements, which double-counts elements and is invalid.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Amazon, Apple, Bloomberg, Goldman Sachs, Google, Infosys, MakeMyTrip, Meta, Microsoft, Sprinklr, TikTok, Two Sigma.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google.

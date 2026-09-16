@@ -333,3 +333,87 @@ function viewInsert(viewState, node, depth) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by WANG Zhitian —
+`https://leetcode.com/problems/binary-tree-right-side-view/solutions/56012/my-simple-accepted-solutionjava-by-zwang-ynil/`
+— 157K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Reverse Preorder DFS with Depth-Matching Invariant)
+
+While BFS level-order traversal is intuitive, the community's most concise approach uses reverse preorder DFS (`Root -> Right -> Left`):
+
+1. **Traversal Order:** Explore `curr.right` before `curr.left`.
+2. **Depth Invariant:** By visiting right branches first, the very first node encountered at any depth `d` is guaranteed to be the rightmost visible node of that level.
+3. **Capture Condition:** Check if `depth == result.size()`. If true, this is the first time reaching level `depth` — append `curr.val` to `result`.
+4. **Descent:** Recurse `curr.right` with `depth + 1`, then `curr.left` with `depth + 1`.
+
+```text
+FUNCTION rightSideView(root):
+    result = []
+    
+    FUNCTION dfs(curr, depth):
+        IF curr == null:
+            RETURN
+            
+        // First node reached at this depth is the rightmost node
+        IF depth == length(result):
+            result.push(curr.val)
+            
+        dfs(curr.right, depth + 1)
+        dfs(curr.left, depth + 1)
+        
+    dfs(root, 0)
+    RETURN result
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node once.
+- Space: O(H) auxiliary space on the call stack ($O(\log N)$ balanced, $O(N)$ skewed), compared to $O(W) \approx O(N)$ for a BFS queue.
+
+```mermaid
+flowchart TD
+    R["1 (depth 0, result: [1])"] --> R3["3 (depth 1, result: [1, 3])"]
+    R --> L2["2 (depth 1, depth < size -> skipped)"]
+    R3 --> R4["4 (depth 2, result: [1, 3, 4])"]
+    L2 --> L5["5 (depth 2, depth < size -> skipped)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [1,2,3,null,5,null,4]`)
+
+- `dfs(1, depth=0)`: `depth == length(result)` (0 == 0) -> `result = [1]`.
+  - Recurse right: `dfs(3, depth=1)`: `1 == 1` -> `result = [1, 3]`.
+    - Recurse right: `dfs(4, depth=2)`: `2 == 2` -> `result = [1, 3, 4]`.
+      - Children are null -> returns.
+    - Recurse left: null.
+  - Recurse left from root: `dfs(2, depth=1)`:
+    - `depth == length(result)` (1 == 3 is FALSE) -> skipped!
+    - Recurse right: `dfs(5, depth=2)`:
+      - `depth == length(result)` (2 == 3 is FALSE) -> skipped!
+    - Recurse left: null.
+
+Final result: `[1, 3, 4]`.
+
+### C. Why Reverse Preorder DFS Beats BFS Queue Memory
+
+- **Memory Efficiency:** BFS must hold the widest level of the tree in memory ($W = \lceil N/2 \rceil$ nodes in a complete tree).
+- Reverse preorder DFS requires only $O(H)$ stack frames ($H \le \log_2 N$ for balanced trees), consuming exponentially less memory while executing with minimal allocation overhead.
+
+### D. Pitfalls from comments
+
+- **Right-branch blindness:** A common misconception is that the right side view only contains nodes in the right subtree. If the right subtree is shallower than the left subtree, lower nodes from the left subtree become visible from the right! DFS handles this naturally: once the right subtree terminates, subsequent deeper left nodes satisfy `depth == result.size()`.
+- **Standard Preorder Traversal:** If traversing `Root -> Left -> Right`, earlier nodes at depth `d` must be overwritten with `result[depth] = curr.val` rather than appended.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (15): Accenture, Amazon, Apple, Bloomberg, ByteDance, Google, Meta, Microsoft, Oracle, ServiceNow, TikTok, Uber, Walmart Labs, Wix, Yandex.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google, Yandex.

@@ -267,3 +267,99 @@ function sparseUniquePaths(m, n, obstacles) {
   return weightedTabulation(rows, cols, obstacles);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by tusizi tiger —
+`https://leetcode.com/problems/unique-paths-ii/solutions/23250/short-java-solution-by-tusizi-xvfm/`
+— 79.4K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (1D Rolling Array Bottom-Up Dynamic Programming)
+
+Maintain a single 1D buffer that absorbs vertical and horizontal transitions while actively zeroing obstacle barriers:
+
+1. **State Invariant:**
+   - `dp[j]` represents the number of unique paths to reach the current row at column index $j$.
+2. **Transition Rules:**
+   - If the current cell is an obstacle (`row[j] == 1`), zero out the slot (`dp[j] = 0`). Overwriting is mandatory to destroy stale paths carried over from the row above.
+   - If the cell is free and $j > 0$, accumulate paths arriving from the left neighbor: `dp[j] += dp[j - 1]` (where `dp[j]` holds paths from above, and `dp[j - 1]` holds paths from the left).
+3. **Seeding:**
+   - Initialize `dp` of size $N$ with all 0s, except `dp[0] = 1`.
+   - If the origin `obstacleGrid[0][0]` is 1, the inner loop immediately overwrites `dp[0] = 0`, correctly yielding 0 paths.
+
+```text
+FUNCTION uniquePathsWithObstacles(obstacleGrid):
+    width = NUM_COLS(obstacleGrid)
+    dp = ARRAY OF SIZE width FILLED WITH 0
+    dp[0] = 1
+
+    FOR EACH row IN obstacleGrid:
+        FOR j FROM 0 TO width - 1:
+            IF row[j] == 1:
+                dp[j] = 0
+            ELSE IF j > 0:
+                dp[j] = dp[j] + dp[j - 1]
+
+    RETURN dp[width - 1]
+```
+
+- Time: O(M * N) — single pass across all cells in the grid.
+- Space: O(N) auxiliary space using a 1D array corresponding to grid width.
+
+```mermaid
+flowchart TD
+    Init["dp = [1, 0, 0, ... 0] of size width"] --> RowLoop["For each row in obstacleGrid"]
+    RowLoop --> ColLoop["For j from 0 to width - 1"]
+    ColLoop --> Check{"row[j] == 1?"}
+    Check -->|"Yes (Obstacle)"| ZeroOut["dp[j] = 0<br>(Destroys stale vertical carry)"] --> ColLoop
+    Check -->|"No and j > 0"| Accumulate["dp[j] += dp[j - 1]<br>(Add horizontal paths)"] --> ColLoop
+    Check -->|"No and j == 0"| Pass["Retain vertical paths"] --> ColLoop
+    ColLoop --> RowLoop
+    RowLoop --> Ret["RETURN dp[width - 1]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`obstacleGrid = [[0,0,0],[0,1,0],[0,0,0]]`)
+
+- Grid width = 3. `dp = [1, 0, 0]`.
+- Row 0 (`[0, 0, 0]`):
+  - $j = 0$: $row[0] = 0, j = 0 \implies dp[0] = 1$.
+  - $j = 1$: $row[1] = 0 \implies dp[1] += dp[0] \implies dp[1] = 1$.
+  - $j = 2$: $row[2] = 0 \implies dp[2] += dp[1] \implies dp[2] = 1$.
+  - `dp = [1, 1, 1]`.
+- Row 1 (`[0, 1, 0]`):
+  - $j = 0$: $dp[0] = 1$.
+  - $j = 1$: $row[1] == 1 \implies dp[1] = 0$ (obstacle clears stale path).
+  - $j = 2$: $dp[2] += dp[1] \implies 1 + 0 = 1$.
+  - `dp = [1, 0, 1]`.
+- Row 2 (`[0, 0, 0]`):
+  - $j = 0$: $dp[0] = 1$.
+  - $j = 1$: $dp[1] += dp[0] \implies 0 + 1 = 1$.
+  - $j = 2$: $dp[2] += dp[1] \implies 1 + 1 = 2$.
+  - `dp = [1, 1, 2]`.
+- Return `dp[2] = 2`.
+
+Final result: `2`.
+
+### C. Why Explicitly Zeroing Obstacles Prevents Leakage
+
+- Skipping obstacle cells in a rolling 1D array leaves the previous row's cumulative path count intact in `dp[j]`, effectively letting simulated agents "tunnel" vertically through walls.
+- Explicitly executing `dp[j] = 0` creates an impassable seal for the current row and all downstream transitions.
+
+### D. Pitfalls from comments
+
+- **Blocked Starting Point or Exit:** If `obstacleGrid[0][0] == 1`, setting `dp[0] = 0` on the first iteration ensures the entire DP pipeline collapses to 0. Similarly, an obstacle at the exit cell automatically yields 0.
+- **Skipping Inactive Indices:** Using `if (row[j] == 1) continue;` without assigning `dp[j] = 0` is the single most common implementation bug in rolling-array grid DP.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Agoda, Amazon, Bloomberg, Databricks, Goldman Sachs, Google, IMC, Meta, Microsoft, Nvidia, TikTok, Zepto.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, IMC, Microsoft.

@@ -325,3 +325,120 @@ async function captureTiled(tileStream) {
   return resolveTiles(tileStream, dsu); // capture non-border sets
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Abhishek Singh —
+`https://leetcode.com/problems/surrounded-regions/solutions/691675/c-beginner-friendly-boundary-dfs-inplace-ldk2/`
+— 74.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Boundary Inoculation DFS/BFS)
+
+Invert the problem perspective by protecting perimeter-connected cells rather than hunting enclosed ones:
+
+1. **The Inversion Principle:**
+   - Any `'O'` that connects (directly or transitively) to a boundary `'O'` can never be surrounded by `'X'`s.
+   - Any remaining `'O'` on the board that cannot reach a boundary must be completely enclosed.
+2. **Phase 1 — Inoculate the Perimeter:**
+   - Scan all four borders: row $0$, row $M-1$, col $0$, and col $N-1$.
+   - When encountering an `'O'`, initiate a flood fill (DFS or BFS) marking that entire connected cluster with a safe sentinel (e.g. `'#'`).
+3. **Phase 2 — Final In-Place Sweep:**
+   - Iterate across all cells $(r, c)$ in the matrix:
+     - If cell contains `'O'`: it is completely isolated from all boundaries, so flip it to `'X'`.
+     - If cell contains `'#'`: it was protected via perimeter connectivity, so restore it to `'O'`.
+
+```text
+FUNCTION solve(board):
+    IF board IS EMPTY:
+        RETURN
+
+    m = NUM_ROWS(board)
+    n = NUM_COLS(board)
+
+    FUNCTION dfs(r, c):
+        IF r < 0 OR r >= m OR c < 0 OR c >= n OR board[r][c] != 'O':
+            RETURN
+        board[r][c] = '#'  // mark as safe from capture
+        dfs(r + 1, c)
+        dfs(r - 1, c)
+        dfs(r, c + 1)
+        dfs(r, c - 1)
+
+    // Phase 1: Inoculate from all 4 borders
+    FOR r FROM 0 TO m - 1:
+        IF board[r][0] == 'O': dfs(r, 0)
+        IF board[r][n - 1] == 'O': dfs(r, n - 1)
+
+    FOR c FROM 0 TO n - 1:
+        IF board[0][c] == 'O': dfs(0, c)
+        IF board[m - 1][c] == 'O': dfs(m - 1, c)
+
+    // Phase 2: Capture enclosed 'O's and restore '#'s
+    FOR r FROM 0 TO m - 1:
+        FOR c FROM 0 TO n - 1:
+            IF board[r][c] == 'O':
+                board[r][c] = 'X'
+            ELSE IF board[r][c] == '#':
+                board[r][c] = 'O'
+```
+
+- Time: O(M * N) — every cell is touched at most a constant number of times across both phases.
+- Space: O(M * N) worst-case call stack or queue; O(1) auxiliary space beyond recursion.
+
+```mermaid
+flowchart TD
+    ScanBorder["Iterate across 4 outer borders"] --> FindO{"board[r][c] == 'O'?"}
+    FindO -->|"Yes"| Flood["Launch DFS/BFS:<br>Mutate reachable 'O' to '#'"]
+    FindO -->|"No"| NextBorder["Next border cell"]
+    Flood --> NextBorder
+    NextBorder --> BorderDone{"All borders inspected?"}
+    BorderDone -->|"No"| ScanBorder
+    BorderDone -->|"Yes"| FullScan["Full grid sweep (r, c)"]
+    FullScan --> CheckChar{"board[r][c] is?"}
+    CheckChar -->|"'O'"| FlipX["board[r][c] = 'X' (Captured)"]
+    CheckChar -->|"'#'"| RestoreO["board[r][c] = 'O' (Restored)"]
+    CheckChar -->|"'X'"| KeepX["Leave as 'X'"]
+    FlipX --> SweepDone{"Sweep complete?"}
+    RestoreO --> SweepDone
+    KeepX --> SweepDone
+    SweepDone -->|"No"| FullScan
+    SweepDone -->|"Yes"| Done["Board Solved"]
+```
+
+### B. Dry run on LeetCode Example 1 (`board = [["X","X","X","X"],["X","O","O","X"],["X","X","O","X"],["X","O","X","X"]]`)
+
+- Board size: $4 \times 4$.
+- Boundary Scan (Phase 1):
+  - Row 0, Col 0, Col 3: All `'X'`.
+  - Row 3: Cell $(3, 1) = \text{'O'}$. `dfs(3, 1)` marks $(3, 1)$ as `'#'`.
+  - Its neighbor $(2, 1) = \text{'X'}$, so flood terminates.
+  - Interior cells $(1, 1), (1, 2), (2, 2)$ remain `'O'`.
+- Matrix Sweep (Phase 2):
+  - Cells $(1, 1), (1, 2), (2, 2)$ are `'O'` $\implies$ flipped to `'X'`.
+  - Cell $(3, 1)$ is `'#'` $\implies$ restored to `'O'`.
+- Resulting board:
+  `[["X","X","X","X"],["X","X","X","X"],["X","X","X","X"],["X","O","X","X"]]`.
+
+### C. Why Boundary Inversion Eliminates Rollback Complexity
+
+- A naive traversal starting from interior `'O'`s must maintain state to detect whether a component touches an edge, and rollback tentative flips if an edge is reached.
+- Sinking inwards from the boundary guarantees that all boundary-connected cells are identified upfront, eliminating rollbacks and two-way verification logic.
+
+### D. Pitfalls from comments
+
+- **Small Grids ($M < 3$ or $N < 3$):** Boards with height or width less than 3 cannot have any enclosed cells, as every cell lies directly on a boundary.
+- **Deep Recursion Overflow:** Extremely winding `'O'` corridors can cause call stack limits to be exceeded in environments with constrained stacks. An explicit stack or BFS queue handles this cleanly.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Adobe, Amazon, Anduril, Bloomberg, Google, Meta, Microsoft, Nutanix, Oracle, PornHub, TikTok, Uber.
+- Recent: 30 days — Amazon, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

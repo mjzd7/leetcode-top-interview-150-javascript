@@ -298,3 +298,120 @@ function majorityElementII(nums) {
 ### Follow-Up 2: Distributed Map-Reduce / Streaming Telemetry at Scale
 - **Scenario**: What if telemetry data is split across 100 worker nodes in chunks ($N = 10^{12}$)?
 - **Solution Strategy**: Each worker runs Boyer-Moore locally and emits its `(candidate, count)`. The coordinator combines pairs: identical candidates sum counts; differing candidates subtract smaller count from larger. A second streaming map pass counts final candidate frequencies.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by coderoath —
+`https://leetcode.com/problems/majority-element/solutions/51613/on-time-o1-space-fastest-solution-by-cod-9pb9/`
+— 1.7K votes / 305.1K views / 191 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive ways (baseline context)
+
+Count with a HashMap, or sort and
+take the middle. Both cost extra.
+
+```text
+FUNCTION majorityNaive(nums):
+    counts = EMPTY MAP
+    FOR x IN nums:
+        counts[x]++
+        IF counts[x] > LENGTH(nums)/2:
+            RETURN x
+```
+
+- Time: O(n)
+- Space: O(n)
+
+### B. Post's way: Boyer-Moore vote
+
+Keep one candidate plus a count.
+Same value: count++. Different:
+count--. Zero count: swap in the
+new value. Majority (> n/2) always
+survives the cancellations.
+
+```text
+FUNCTION majorityOptimal(nums):
+    candidate = NONE
+    count = 0
+    FOR x IN nums:
+        IF count == 0:
+            candidate = x
+        IF x == candidate:
+            count++
+        ELSE:
+            count--
+    RETURN candidate
+```
+
+- Time: O(n)
+- Space: O(1)
+- Needs the > n/2 guarantee.
+
+```mermaid
+flowchart TD
+    Init["candidate=none, count=0"] --> Loop{"more x?"}
+    Loop -->|"Yes"| Zero{"count==0?"}
+    Zero -->|"Yes: candidate=x"| Same{"x==candidate?"}
+    Zero -->|"No"| Same
+    Same -->|Yes/No| Adj["count++ or count--"]
+    Adj --> Loop
+    Loop -->|"No"| Done["Return candidate"]
+```
+
+### C. Dry run on LeetCode Example 2
+
+`nums = [2, 2, 1, 1, 1, 2, 2]`
+
+| Step | x | candidate | count |
+| :--- | :--- | :--- | :--- |
+| 0 | - | none | 0 |
+| 1 | 2 | 2 | 1 |
+| 2 | 2 | 2 | 2 |
+| 3 | 1 | 2 | 1 |
+| 4 | 1 | 2 | 0 |
+| 5 | 1 | 1 | 1 |
+| 6 | 2 | 1 | 0 |
+| 7 | 2 | 2 | 1 |
+| 8 | - | 2 | Return 2 |
+
+### D. Why B beats A
+
+- No map, no sort.
+- One pass, two variables.
+- Cancelling pairs can never kill
+  a true > n/2 majority.
+
+### E. Pitfalls from comments
+
+- This IS Boyer-Moore (top comment
+  cites the source paper, 1.8K).
+- Needs > n/2, not >= n/2: input
+  like [1,1,1,1,2,3,4,5] is invalid.
+- No verification pass needed here
+  (unlike Majority Element II).
+- count==0 swap is the whole trick.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (24): Accenture, Adobe,
+  Amazon, Autodesk, Bloomberg,
+  Cognizant, DE Shaw, Flipkart,
+  Goldman Sachs, Google, IBM,
+  Infosys, Meta, Microsoft,
+  Morgan Stanley, Odoo, Oracle,
+  PornHub, Qualcomm, TCS,
+  Walmart Labs, Yandex, Zenefits,
+  Zoho.
+- Recent: 30 days — Amazon,
+  Google, Meta.
+- Recent: 3 months — Amazon,
+  Bloomberg, Google, Meta,
+  Microsoft.

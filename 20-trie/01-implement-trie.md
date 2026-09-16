@@ -321,3 +321,126 @@ function cowInsert(root, word) {
   return pathCopyInsert(root, word); // new root; old readers unaffected
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Loginov Kirill —
+`https://leetcode.com/problems/implement-trie-prefix-tree/solutions/6628445/conquer-prefix-matching-unlock-the-secre-9zvf/`
+— 13.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Character-Path Prefix Tree Trie Implementation)
+
+Structure dictionary storage character-by-character along directed edge paths:
+
+1. **Node Architecture:**
+   - Each `TrieNode` encapsulates:
+     - `children`: A branch table (fixed array of 26 pointers for lowercase English letters or a hash map).
+     - `isEnd`: A boolean indicator signaling whether a complete dictionary word terminates at this node.
+2. **Core Operation Algorithms:**
+   - **`insert(word)`:**
+     - Initialize `cur = root`.
+     - For each character $ch$ in $word$:
+       - If $ch$ is not present in `cur.children`, instantiate a new `TrieNode`.
+       - Advance `cur = cur.children[ch]`.
+     - Mark `cur.isEnd = true`.
+   - **`search(word)`:**
+     - Initialize `cur = root`.
+     - For each character $ch$ in $word$:
+       - If $ch$ is not present in `cur.children`, return `false`.
+       - Advance `cur = cur.children[ch]`.
+     - Return `cur.isEnd` (ensuring the word ended, not just a prefix).
+   - **`startsWith(prefix)`:**
+     - Initialize `cur = root`.
+     - For each character $ch$ in $prefix$:
+       - If $ch$ is not present in `cur.children`, return `false`.
+       - Advance `cur = cur.children[ch]`.
+     - Return `true` (path completion confirms valid prefix).
+
+```text
+CLASS TrieNode:
+    children = MAP() // char -> TrieNode
+    isEnd = FALSE
+
+CLASS Trie:
+    root = NEW TrieNode()
+
+    FUNCTION insert(word):
+        cur = root
+        FOR EACH ch IN word:
+            IF ch NOT IN cur.children:
+                cur.children[ch] = NEW TrieNode()
+            cur = cur.children[ch]
+        cur.isEnd = TRUE
+
+    FUNCTION search(word):
+        cur = root
+        FOR EACH ch IN word:
+            IF ch NOT IN cur.children:
+                RETURN FALSE
+            cur = cur.children[ch]
+        RETURN cur.isEnd
+
+    FUNCTION startsWith(prefix):
+        cur = root
+        FOR EACH ch IN prefix:
+            IF ch NOT IN cur.children:
+                RETURN FALSE
+            cur = cur.children[ch]
+        RETURN TRUE
+```
+
+- Time: O(L) per operation — where $L$ is string length. Each character transition is an $O(1)$ child branch traversal.
+- Space: O(N * L) total — shared prefixes collapse redundant storage across all $N$ inserted words.
+
+```mermaid
+flowchart TD
+    Op["Operation on string S"] --> Type{"Operation type?"}
+    Type -->|"insert(word)"| InsWalk["Walk path for each char.<br>Create missing nodes.<br>Set isEnd = true on final node"]
+    Type -->|"search(word)"| SearchWalk["Walk path for each char.<br>If edge missing: return false"]
+    SearchWalk --> CheckEnd{"Is final node.isEnd true?"}
+    CheckEnd -->|"Yes"| RetTrue1["RETURN true"]
+    CheckEnd -->|"No"| RetFalse1["RETURN false"]
+    Type -->|"startsWith(prefix)"| PrefixWalk["Walk path for each char.<br>If edge missing: return false"]
+    PrefixWalk --> RetTrue2["RETURN true"]
+```
+
+### B. Dry run on LeetCode Example
+
+- `insert("apple")`:
+  - Builds path: `root -> 'a' -> 'p' -> 'p' -> 'l' -> 'e'`.
+  - Marks node `'e'` with `isEnd = true`.
+- `search("apple")`:
+  - Traces to `'e'`. `node.isEnd == true` $\implies$ returns `true`.
+- `search("app")`:
+  - Traces to second `'p'`. `node.isEnd == false` $\implies$ returns `false`.
+- `startsWith("app")`:
+  - Traces to second `'p'`. Path completely traversed $\implies$ returns `true`.
+- `insert("app")`:
+  - Traces existing path to second `'p'`.
+  - Sets `node.isEnd = true` on second `'p'`.
+- `search("app")`:
+  - Traces to second `'p'`. `node.isEnd == true` $\implies$ returns `true`.
+
+### C. Why Trie Outclasses Hash Tables for Prefix Queries
+
+- While hash sets execute exact searches in $O(L)$, querying whether any word starts with a given prefix requires iterating over all keys ($O(N \cdot L)$) or indexing every prefix ($O(N \cdot L^2)$ storage).
+- A Trie navigates directly to the terminal node of the prefix in exactly $O(P)$ steps without inspecting unshared branches.
+
+### D. Pitfalls from comments
+
+- **Search vs Prefix Boundary Confusion:** A common bug is returning `true` in `search` simply because the walk succeeded; `search` must explicitly verify `node.isEnd == true`.
+- **Prototype Property Collisions:** In dynamic languages, using raw objects `{}` for child mappings can conflict with built-in prototype keys (such as `toString` or `constructor`). Utilizing `Map` or `Object.create(null)` prevents unexpected prototype leakage.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (21): Amazon, Apple, Bloomberg, Citadel, Docusign, DoorDash, General Motors, Goldman Sachs, Google, Grammarly, Lyft, Meta, Microsoft, MongoDB, Nutanix, Oracle, Roblox, Snowflake, TikTok, Uber, X.
+- Recent: 30 days — Google, Meta.
+- Recent: 3 months — Google, Meta.

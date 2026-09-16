@@ -401,3 +401,88 @@ function isIsomorphicUnicode(s, t) {
   return true;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/isomorphic-strings/solutions/3362145/video-keep-pairs-in-hashmap-2-solutions-bonus-idea/`
+— 62.8K views / 358 votes / 11 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Hash Maps or Index Mapping)
+
+Two strings are isomorphic if the characters in `s` can be replaced to get `t`. Every character in `s` must map to exactly one character in `t`, and every character in `t` must map back to exactly one character in `s` (a bijection).
+A very clever and optimal way to check this is to record the **first seen index** (or last seen index) of each character in both strings. As we iterate through `s` and `t` simultaneously, the recorded indices of the current character from `s` and the current character from `t` must always match.
+
+Since the problem guarantees ASCII characters, we can use two fixed-size integer arrays (size 256) instead of Hash Maps to make the space overhead extremely minimal and the lookup instant.
+
+```text
+FUNCTION isIsomorphic(s, t):
+    IF length(s) != length(t):
+        RETURN false
+        
+    // Arrays to store the last seen index (+1 to avoid 0 default)
+    indexS = Array of 256 integers, initialized to 0
+    indexT = Array of 256 integers, initialized to 0
+    
+    FOR i = 0 TO length(s) - 1:
+        charS = s[i]
+        charT = t[i]
+        
+        // If the recorded indices are different, the mapping is broken
+        IF indexS[charS] != indexT[charT]:
+            RETURN false
+            
+        // Store the index + 1
+        indexS[charS] = i + 1
+        indexT[charT] = i + 1
+        
+    RETURN true
+```
+
+- Time: O(N) where N is the length of the string. We iterate through the strings exactly once.
+- Space: O(1) since the arrays are fixed size (256 for ASCII) regardless of the string length.
+
+```mermaid
+flowchart TD
+    CheckLen{"len(s) == len(t)?"}
+    CheckLen -->|"No"| ReturnFalse["Return false"]
+    CheckLen -->|"Yes"| InitArrays["Init indexS[256], indexT[256]"]
+    InitArrays --> Loop{"For i = 0 to N-1"}
+    Loop -->|"Next i"| CheckIndices{"indexS[charS] != indexT[charT]?"}
+    CheckIndices -->|"Yes"| ReturnFalse
+    CheckIndices -->|"No"| UpdateIndices["indexS[charS] = i+1, indexT[charT] = i+1"]
+    UpdateIndices --> Loop
+    Loop -->|"Done"| ReturnTrue["Return true"]
+```
+
+### B. Dry run on LeetCode Example 2 (s = "foo", t = "bar")
+
+`indexS` and `indexT` are initialized to `0`s.
+
+| `i` | `charS` | `charT` | `indexS[charS]` | `indexT[charT]` | Match? | Action |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 'f' | 'b' | 0 | 0 | Yes | `indexS['f']=1`, `indexT['b']=1` |
+| 1 | 'o' | 'a' | 0 | 0 | Yes | `indexS['o']=2`, `indexT['a']=2` |
+| 2 | 'o' | 'r' | **2** | **0** | **NO** | Return `false` |
+
+At `i=2`, we see 'o' in `s` which was last seen at index 1 (`indexS` stores 2). But we see 'r' in `t` which has never been seen (`indexT` stores 0). The indices don't match, meaning 'o' is trying to map to a *new* character ('r') instead of what it mapped to previously ('a'). Invalid!
+
+### C. Pitfalls from comments
+
+- **One-way mapping:** A common mistake is mapping characters from `s` to `t` using only one map/array (e.g., `map[charS] = charT`). If you do this, you fail the bijection requirement. For example, `s = "ab", t = "cc"`. 'a' maps to 'c', 'b' maps to 'c'. The single map won't complain, but 'c' is being mapped to by two different characters! You need two maps, or the synchronized index approach above.
+- **The `+ 1` trick:** The arrays are initialized with zeroes. If we just stored `i`, then index `0` and "never seen" would both be `0`. Storing `i + 1` naturally avoids this collision.
+- **Bonus Idea (1-Liner):** In Python, a clever 1-liner is `return len(set(s)) == len(set(t)) == len(set(zip(s, t)))`. While elegant, the 256-array approach is heavily preferred in interviews for languages like C++/Java because it demonstrates an understanding of memory footprint and avoids the overhead of tuple/set creation.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (15): Amazon, American Express, Bloomberg, Google, HashedIn, LinkedIn, Meta, Microsoft, Oracle, Remitly, Sprinklr, TCS, Yandex, Zoho, Zomato.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft, TCS.

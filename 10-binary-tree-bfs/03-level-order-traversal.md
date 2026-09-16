@@ -344,3 +344,108 @@ async function levelOrderPaged(rootId, loadPage) {
   return out;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Suraj Kumar —
+`https://leetcode.com/problems/binary-tree-level-order-traversal/solutions/8364642/beats-9624-using-queue-javacpythonjs-on-gkebd/`
+— 6.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Queue Snapshot Level-Batching BFS)
+
+The standard and most robust BFS solution evaluates levels by fixing the queue's size at the start of each level iteration:
+
+1. **Queue Snapshot:** Capture `levelSize = queue.size()`. This freezes the count of nodes belonging strictly to the current tree level.
+2. **Inner Batch Loop:** Drain exactly `levelSize` nodes:
+   - Pop front node `node = queue.pop()`.
+   - Append `node.val` to the current level list.
+   - Enqueue non-null children (`node.left`, `node.right`) to the back of the queue (these belong to the *next* level and won't be touched until the next outer loop iteration).
+3. **Commit Level:** Append the collected level list to the master result.
+4. Continue until the queue is empty.
+
+```text
+FUNCTION levelOrder(root):
+    IF root == null:
+        RETURN []
+
+    result = []
+    queue = new Queue()
+    queue.push(root)
+
+    WHILE NOT queue.isEmpty():
+        levelSize = queue.size()
+        level = []
+
+        FOR i FROM 0 TO levelSize - 1:
+            node = queue.pop()
+            level.push(node.val)
+
+            IF node.left != null:
+                queue.push(node.left)
+            IF node.right != null:
+                queue.push(node.right)
+
+        result.push(level)
+
+    RETURN result
+```
+
+- Time: O(N) where N is the number of nodes, each node is pushed and popped exactly once.
+- Space: O(W) where W is the maximum width of the tree (up to $O(N)$ for a full binary tree's leaf level).
+
+```mermaid
+flowchart TD
+    subgraph Level 0
+        L0["Queue: [3] -> size: 1 -> Level: [3]"]
+    end
+    subgraph Level 1
+        L1["Queue: [9, 20] -> size: 2 -> Level: [9, 20]"]
+    end
+    subgraph Level 2
+        L2["Queue: [15, 7] -> size: 2 -> Level: [15, 7]"]
+    end
+    L0 --> L1 --> L2
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [3,9,20,null,null,15,7]`)
+
+- `queue = [3]`, `result = []`.
+- **Level 0:** `levelSize = 1`.
+  - Pop 3 -> `level = [3]`.
+  - Push children 9 and 20. `queue = [9, 20]`.
+  - Append to result: `result = [[3]]`.
+- **Level 1:** `levelSize = 2`.
+  - Pop 9 -> `level = [9]`, no children.
+  - Pop 20 -> `level = [9, 20]`, push children 15 and 7. `queue = [15, 7]`.
+  - Append to result: `result = [[3], [9, 20]]`.
+- **Level 2:** `levelSize = 2`.
+  - Pop 15 -> `level = [15]`, no children.
+  - Pop 7 -> `level = [15, 7]`, no children.
+  - Append to result: `result = [[3], [9, 20], [15, 7]]`.
+- Queue is empty.
+
+Final result: `[[3], [9, 20], [15, 7]]`.
+
+### C. Why Snapshot Sizing Replaces Sentinel Nodes and Double Queues
+
+- Early algorithms used sentinel `null` delimiters to mark level boundaries, or swapped two ping-pong buffers (`currentQueue` vs `nextQueue`).
+- Capturing `levelSize` upfront before looping completely eliminates sentinel allocations and buffer swaps while preserving strict level separation in a single queue.
+
+### D. Pitfalls from comments
+
+- **Dynamic loop boundary evaluation:** Writing `for (int i = 0; i < queue.size(); i++)` dynamically expands the limit as children are added, blending multiple levels together. Always capture `int size = queue.size()` in a local variable beforehand.
+- **Root null check:** Forgetting the early `if (root == null) return []` leads to returning `[[]]` instead of `[]`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (14): Adobe, Amazon, Apple, Bloomberg, Goldman Sachs, Google, josh technology, LinkedIn, Meta, Microsoft, Oracle, Palo Alto Networks, Visa, Yandex.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google, Meta.

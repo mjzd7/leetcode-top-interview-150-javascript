@@ -343,3 +343,103 @@ function validateTraversals(preorder, inorder) {
   for (const v of pre) if (!ino.has(v)) throw new Error('value set mismatch');
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pradhuman Gupta —
+`https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/solutions/7017307/beats-9589-beginner-friendly-solution-ja-ep33/`
+— 21.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (HashMap Indexing + Monotonic Preorder Cursor)
+
+Reconstructing a binary tree from preorder and inorder traversals relies on two complementary properties:
+
+1. **Root Identification:** The current root is always the next unused element in `preorder` (traversed from left to right: Root -> Left -> Right).
+2. **Subtree Partitioning:** In `inorder`, all nodes to the left of the root index belong to its left subtree; all nodes to the right belong to its right subtree.
+3. **O(1) Map Acceleration:** Precompute a hash map mapping each node value to its index in `inorder`.
+4. **Recursive Step:**
+   - Consume `preorder[preIdx++]` as `rootVal`.
+   - Find its partition index `mid = inMap[rootVal]`.
+   - Recursively construct `root.left` over inorder range `[inStart, mid - 1]`.
+   - Recursively construct `root.right` over inorder range `[mid + 1, inEnd]`.
+
+```text
+FUNCTION buildTree(preorder, inorder):
+    inMap = new HashMap()
+    FOR i FROM 0 TO length(inorder) - 1:
+        inMap.put(inorder[i], i)
+
+    preIdx = 0
+
+    FUNCTION helper(inStart, inEnd):
+        IF inStart > inEnd:
+            RETURN null
+
+        rootVal = preorder[preIdx]
+        preIdx = preIdx + 1
+        root = new TreeNode(rootVal)
+
+        mid = inMap.get(rootVal)
+
+        // Must construct left subtree before right subtree due to preorder sequence
+        root.left = helper(inStart, mid - 1)
+        root.right = helper(mid + 1, inEnd)
+
+        RETURN root
+
+    RETURN helper(0, length(inorder) - 1)
+```
+
+- Time: O(N) where N is the number of nodes; building the map takes O(N), and each node is processed once in O(1).
+- Space: O(N) auxiliary space for the hash map and recursion call stack.
+
+```mermaid
+flowchart TD
+    Pre["preorder: [3, 9, 20, 15, 7] (preIdx=0 -> Root 3)"] --> Root["Root: 3"]
+    Root --> InSplit["inorder split around 3: [9] | 3 | [15, 20, 7]"]
+    InSplit --> LeftSub["Left subtree: inorder [0..0] -> Node(9)"]
+    InSplit --> RightSub["Right subtree: inorder [2..4] -> Node(20)"]
+    RightSub --> InSplit2["inorder split around 20: [15] | 20 | [7]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]`)
+
+- `inMap`: `{9: 0, 3: 1, 15: 2, 20: 3, 7: 4}`
+- Call `helper(0, 4)`:
+  - `rootVal = preorder[0] = 3`, `mid = inMap[3] = 1`.
+  - Recurse left: `helper(0, 0)`:
+    - `rootVal = preorder[1] = 9`, `mid = inMap[9] = 0`.
+    - Left & right child calls have `inStart > inEnd` -> return `null`.
+    - Returns `Node(9)`.
+  - Recurse right: `helper(2, 4)`:
+    - `rootVal = preorder[2] = 20`, `mid = inMap[20] = 3`.
+    - Left `helper(2, 2)` -> returns `Node(15)`.
+    - Right `helper(4, 4)` -> returns `Node(7)`.
+    - Returns `Node(20)` with left=15, right=7.
+- Root 3 attaches left=9, right=20.
+
+Result: Tree matches Example 1.
+
+### C. Why Inorder HashMap Lookup Beats Subarray Slicing
+
+- **Eliminating Slicing Overhead:** Python `list[start:end]` or JavaScript `slice()` allocates new arrays at each node, triggering $O(N^2)$ aggregate time and heavy memory copying.
+- Index pointers (`inStart`, `inEnd`) combined with an $O(1)$ hash map lookup operate strictly in-place with zero subarray allocations.
+
+### D. Pitfalls from comments
+
+- **Reversing child recursion order:** Since `preorder` follows `Root -> Left -> Right`, invoking `helper(mid + 1, inEnd)` before `helper(inStart, mid - 1)` consumes the wrong elements for the right subtree! Left must always be constructed first.
+- **Duplicate elements assumption:** The hash map lookup requires all node values in the tree to be strictly unique. If duplicates exist, multiple candidate indices arise.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (33): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google.

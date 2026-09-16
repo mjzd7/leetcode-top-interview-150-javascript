@@ -369,3 +369,65 @@ function strStr(haystack, needle) {
 ### Follow-Up 2: Multi-Pattern Matching (Aho-Corasick Algorithm)
 - **Scenario**: Find occurrences of $K$ different dictionary words in a text simultaneously in $O(N + \sum M_i)$ time.
 - **Solution Strategy**: Build a Trie with KMP failure transitions (Aho-Corasick automaton).
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Hyassin —
+`https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/solutions/4751433/beats-100-with-this-easy-solution-in-java-python-c-c/`
+— 264.2K views / 968 votes / 81 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sliding Window / Substring Matching)
+
+Iterate through the `haystack` string with a window size equal to the length of the `needle`. Compare each substring. Since we only need the *first* occurrence, we can immediately return the index when a match is found.
+
+```text
+FUNCTION strStr(haystack, needle):
+    hLen = length(haystack)
+    nLen = length(needle)
+    
+    FOR i = 0 TO hLen - nLen:
+        IF substring(haystack, start=i, length=nLen) == needle:
+            RETURN i
+            
+    RETURN -1
+```
+
+- Time: O(N * M) where N is length of haystack and M is length of needle.
+- Space: O(1) conceptually, but depends on language implementation of substring slicing.
+
+```mermaid
+flowchart TD
+    Init["hLen = len(haystack), nLen = len(needle)"] --> Loop{"i <= hLen - nLen?"}
+    Loop -->|"Yes"| Extract["Extract substring(haystack, i, nLen)"]
+    Extract --> Comp{"substring == needle?"}
+    Comp -->|"Yes"| Match["Return i"]
+    Comp -->|"No"| Next["i++"]
+    Next --> Loop
+    Loop -->|"No"| End["Return -1"]
+```
+
+### B. Dry run on LeetCode Example 1 ("sadbutsad", "sad")
+
+| Step | `i` | Substring (len=3) | Matches "sad"? | Action |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | `haystack[0..2]` = "sad" | Yes | Return `i = 0` |
+
+### C. Pitfalls from comments
+
+- **Using built-in methods vs manual checking:** The top solution uses built-in `substring()` / `.substr()` or slicing. Many comments argue that in an interview setting, the interviewer will likely ban `indexOf()` and may also ban `substring()`, wanting you to manually check characters with a nested loop or use the KMP algorithm (Knuth-Morris-Pratt, $O(N+M)$). However, the manual nested loop is essentially the same $O(N \cdot M)$ complexity.
+- **Space complexity of substring:** In languages like Java or C++, `.substring()` or `.substr()` allocates a new string object, which means the space complexity in practice is $O(M)$ per iteration. A purely index-based two-pointer nested loop achieves true $O(1)$ space.
+- **Loop bound check:** The loop bound must be exactly `hLen - nLen` (inclusive). If you loop to `hLen - 1`, you will get out-of-bounds exceptions when extracting the substring near the end of `haystack`.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Apple, Bloomberg, Capgemini, Cognizant, Expedia, Google, Infosys, Meta, Microsoft, PayPal, Pocket Gems, Qualcomm, TCS, Yandex, Zoho.
+- Recent: 30 days — Amazon, Bloomberg, Google, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Cognizant, Google, Meta, Microsoft.

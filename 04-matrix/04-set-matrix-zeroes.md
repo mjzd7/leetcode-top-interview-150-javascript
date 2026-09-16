@@ -412,3 +412,117 @@ if (isMainThread) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/set-matrix-zeroes/solutions/3472518/video-o-1-space-use-the-first-row-and-column-as-a-note/`
+— 83.2K views / 749 votes / 14 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (In-place with First Row/Col as Notes)
+
+The problem asks us to set entire rows and columns to zero if any element is zero, but requires an $O(1)$ space solution. The optimal strategy is to use the **first row and first column** of the matrix itself to store our "flags" indicating whether that row or column needs to be zeroed.
+Because the first cell `matrix[0][0]` overlaps for both the first row and first column, we use an extra boolean variable (e.g., `firstRowHasZero`) to disambiguate.
+
+```text
+FUNCTION setZeroes(matrix):
+    ROWS = length(matrix)
+    COLS = length(matrix[0])
+    firstRowHasZero = false
+    
+    // Step 1: Scan first row
+    FOR c = 0 TO COLS - 1:
+        IF matrix[0][c] == 0:
+            firstRowHasZero = true
+            BREAK
+            
+    // Step 2: Use first row/col as markers
+    FOR r = 1 TO ROWS - 1:
+        FOR c = 0 TO COLS - 1:
+            IF matrix[r][c] == 0:
+                matrix[0][c] = 0  // Mark column
+                matrix[r][0] = 0  // Mark row
+                
+    // Step 3: Zero out inner matrix based on markers
+    FOR r = 1 TO ROWS - 1:
+        FOR c = 1 TO COLS - 1:
+            IF matrix[0][c] == 0 OR matrix[r][0] == 0:
+                matrix[r][c] = 0
+                
+    // Step 4: Zero out first column if needed
+    IF matrix[0][0] == 0:
+        FOR r = 0 TO ROWS - 1:
+            matrix[r][0] = 0
+            
+    // Step 5: Zero out first row if needed
+    IF firstRowHasZero:
+        FOR c = 0 TO COLS - 1:
+            matrix[0][c] = 0
+```
+
+- Time: O(M * N) where M is rows and N is columns. We iterate over the matrix roughly twice.
+- Space: O(1) since we only use one extra boolean variable and the matrix itself to store flags.
+
+```mermaid
+flowchart TD
+    Init["firstRowHasZero = false"] --> CheckFirstRow{"Scan row 0. Any 0s?"}
+    CheckFirstRow -->|"Yes"| SetFirstRowFlag["firstRowHasZero = true"]
+    CheckFirstRow -->|"No"| MarkFlags["For r=1..M-1, c=0..N-1"]
+    SetFirstRowFlag --> MarkFlags
+    MarkFlags --> InnerZeroCheck{"matrix[r][c] == 0?"}
+    InnerZeroCheck -->|"Yes"| SetMarkers["matrix[0][c] = 0, matrix[r][0] = 0"]
+    InnerZeroCheck -->|"No"| NextCell["Next cell"]
+    SetMarkers --> NextCell
+    NextCell --> ApplyFlags["For r=1..M-1, c=1..N-1"]
+    ApplyFlags --> CheckMarkers{"matrix[0][c]==0 OR matrix[r][0]==0?"}
+    CheckMarkers -->|"Yes"| ZeroCell["matrix[r][c] = 0"]
+    CheckMarkers -->|"No"| NextApply["Next cell"]
+    ZeroCell --> NextApply
+    NextApply --> FirstColCheck{"matrix[0][0] == 0?"}
+    FirstColCheck -->|"Yes"| ZeroFirstCol["Zero out entire first col"]
+    FirstColCheck -->|"No"| FirstRowCheck{"firstRowHasZero == true?"}
+    ZeroFirstCol --> FirstRowCheck
+    FirstRowCheck -->|"Yes"| ZeroFirstRow["Zero out entire first row"]
+    FirstRowCheck -->|"No"| Done["Return"]
+    ZeroFirstRow --> Done
+```
+
+### B. Dry run on LeetCode Example 2
+
+Matrix:
+```text
+0 1 2 0
+3 4 5 2
+1 3 1 5
+```
+- **Step 1:** `matrix[0][0]` is 0, so `firstRowHasZero = true`.
+- **Step 2:** Scan from `r=1`. No zeroes found in inner matrix.
+- **Step 3:** Apply markers. Inner matrix (`r=1..2, c=1..3`) remains untouched since markers aren't 0.
+- **Step 4:** `matrix[0][0] == 0`, so zero out first column.
+- **Step 5:** `firstRowHasZero == true`, so zero out first row.
+Result:
+```text
+0 0 0 0
+0 4 5 2
+0 3 1 5
+```
+
+### C. Pitfalls from comments
+
+- **The `matrix[0][0]` overlap:** `matrix[0][0]` sits at the intersection of the first row and first column. If you just use it to mark both, you lose track of whether it was a row zero or a col zero that triggered it, cascading into clearing rows/cols that shouldn't be cleared. That is why an external `firstRowHasZero` (or `firstColHasZero`) boolean is strictly necessary.
+- **Applying zeroes before finishing markers:** If you immediately set a row to zero when you find a zero, you destroy the data for upcoming iterations, resulting in the whole matrix turning into zeroes. You must do a distinct "mark" pass, and then a separate "apply" pass.
+- **Applying zeroes to the first row/col too early:** You MUST zero out the inner matrix (`r=1` onwards, `c=1` onwards) *before* zeroing out the first row/col. If you zero out the first row/col early, you wipe out all your marker flags!
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (20): Amazon, Apple, Autodesk, Bloomberg, eBay, Goldman Sachs, Google, Infosys, Juspay, Meta, Microsoft, Nutanix, Nvidia, Nykaa, Oracle, ServiceNow, TCS, Walmart Labs, Zoho, ZScaler.
+- Recent: 30 days — (none).
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

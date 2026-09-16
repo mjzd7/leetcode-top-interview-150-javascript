@@ -324,3 +324,127 @@ function canCompleteCircuit(gas, cost) {
 ### Follow-Up 2: Bidirectional Gas Station Tour
 - **Scenario**: What if you can choose to travel either clockwise or counter-clockwise?
 - **Solution Strategy**: Run Level 3 in the forward direction, then run a mirrored Level 3 in the backward direction, returning the valid index or `-1`.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by ayushita —
+`https://leetcode.com/problems/gas-station/solutions/1706142/c-java-python-3-greedy-o-n-bf/`
+— 1.7K votes / 98.3K views / 21 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Try every station as starting point. For each, simulate
+the full circuit checking if tank never goes negative.
+
+```text
+FUNCTION canCompleteCircuitNaive(gas, cost):
+    n = LENGTH(gas)
+    FOR start FROM 0 TO n - 1:
+        tank = 0
+        ok = true
+        FOR i FROM 0 TO n - 1:
+            idx = (start + i) MOD n
+            tank = tank + gas[idx] - cost[idx]
+            IF tank < 0:
+                ok = false
+                BREAK
+        IF ok:
+            RETURN start
+    RETURN -1
+```
+
+- Time: O(n^2)
+- Space: O(1)
+
+### B. Post's way: greedy single-pass
+
+If total gas >= total cost, a solution exists.
+Track running tank; if negative, reset start to next station.
+
+```text
+FUNCTION canCompleteCircuitOptimal(gas, cost):
+    totalTank = 0
+    currTank = 0
+    start = 0
+    FOR i FROM 0 TO LENGTH(gas) - 1:
+        diff = gas[i] - cost[i]
+        totalTank = totalTank + diff
+        currTank = currTank + diff
+        IF currTank < 0:
+            start = i + 1
+            currTank = 0
+    IF totalTank >= 0:
+        RETURN start
+    ELSE:
+        RETURN -1
+```
+
+- Time: O(n)
+- Space: O(1)
+- Single pass: totalTank checks feasibility, currTank finds start.
+
+```mermaid
+flowchart TD
+    Start["totalTank = 0, currTank = 0, start = 0"]
+    Start --> Loop["FOR i = 0 to n-1"]
+    Loop --> Diff["diff = gas[i] - cost[i]"]
+    Diff --> AccumTotal["totalTank += diff"]
+    AccumTotal --> AccumCurr["currTank += diff"]
+    AccumCurr --> Check{"currTank < 0?"}
+    Check --> |Yes| Reset["start = i + 1, currTank = 0"]
+    Check --> |No| Continue["Continue"]
+    Reset --> Continue
+    Continue --> EndLoop{"i == n-1?"}
+    EndLoop --> |No| Loop
+    EndLoop --> |Yes| FinalCheck{"totalTank >= 0?"}
+    FinalCheck --> |Yes| RetStart["RETURN start"]
+    FinalCheck --> |No| RetNeg["RETURN -1"]
+    RetStart --> End
+    RetNeg --> End
+```
+
+### C. Dry run on LeetCode Example 1
+
+`gas = [1, 2, 3, 4, 5], cost = [3, 4, 5, 1, 2]`
+
+diffs = [-2, -2, -2, 3, 3]
+
+| i | diff | totalTank | currTank | start |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | -2 | -2 | -2 | 0 |
+| - | - | - | <0 reset | 1 |
+| 1 | -2 | -4 | -2 | 1 |
+| - | - | - | <0 reset | 2 |
+| 2 | -2 | -6 | -2 | 2 |
+| - | - | - | <0 reset | 3 |
+| 3 | 3 | -3 | 3 | 3 |
+| 4 | 3 | 0 | 6 | 3 |
+| - | - | - | - | Return 3 |
+
+Start = 3. Matches.
+
+### D. Why B beats A
+
+- A: O(n^2) tries all starts.
+- B: O(n) single pass with greedy reset.
+- Invariant: if currTank < 0 at i, no station in [start..i] can be valid start.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Must check totalTank >= 0 at end (feasibility).
+- currTank reset doesn't affect totalTank.
+- start = i + 1 could become n (means 0), but loop ends.
+- Unique solution guaranteed if exists.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

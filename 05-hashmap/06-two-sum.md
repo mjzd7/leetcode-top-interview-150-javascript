@@ -347,3 +347,210 @@ function twoSumAllUniquePairs(nums, target) {
   return result;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Rahul Varma —
+`https://leetcode.com/problems/two-sum/solutions/3619262/3-methods-c-java-python-beginner-friendl-x595/`
+— 12.1K votes / 2.4M views / 291 comments.
+Language-independent summary. No new JS here.
+
+### A. Post's three methods
+
+Method 1 — brute force pairs.
+Method 2 — two-pass hash table.
+Method 3 — one-pass hash table.
+
+```text
+FUNCTION twoSumBrute(nums, target):
+    FOR i FROM 0 TO n - 1:
+        FOR j FROM i + 1 TO n - 1:
+            IF nums[i] + nums[j] == target:
+                RETURN [i, j]
+```
+
+- Time: O(n squared)
+- Space: O(1)
+
+### B. Post's pick: one-pass hash
+
+Read each value once. Ask the map
+for its complement first, store the
+value after. Complement found means
+the pair spans past and present.
+
+```text
+FUNCTION twoSumOptimal(nums, target):
+    seen = EMPTY MAP
+    FOR i FROM 0 TO n - 1:
+        need = target - nums[i]
+        IF need IN seen:
+            RETURN [seen[need], i]
+        seen[nums[i]] = i
+```
+
+- Time: O(n)
+- Space: O(n)
+
+```mermaid
+flowchart TD
+    Init["seen={}, i=0"] --> Loop{"i<n?"}
+    Loop -->|"Yes"| Need{"target-nums[i] in seen?"}
+    Need -->|Yes| Hit["Return [seen[need], i]"]
+    Need -->|No| Store["seen[nums[i]]=i, i++"]
+    Store --> Loop
+    Loop -->|"No"| Done["Return []"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [2, 7, 11, 15]`, `target = 9`
+
+| i | nums[i] | need | seen | Action |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 2 | 7 | {} | Store {2:0} |
+| 1 | 7 | 2 | {2:0} | Hit → [0,1] |
+
+### D. Why one-pass wins
+
+- Complement check before store
+  stops same-element pairing.
+- Exactly one solution exists,
+  so first hit returns.
+- Two-pass builds the map first;
+  one-pass merges both loops.
+
+### E. Pitfalls from comments
+
+- Author's beginner list is the
+  top thread (3.8K) — useful
+  study order, not errata.
+- Nested loops feel wrong after
+  learning maps (90) — trust it.
+- Store AFTER checking, never
+  before (self-pair bug).
+- Duplicate values fine: first
+  index stays until matched.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (115): Accenture,
+  Accolite, Adobe, Airbnb,
+  Airbus SE, Akamai, Altimetrik,
+  Amazon, AMD, American Express,
+  Anduril, Apple, Atlassian,
+  Autodesk, Barclays, BlackRock,
+  Bloomberg, ByteDance, Capgemini,
+  Capital One, ciena, Cisco,
+  Citadel, Citigroup, Cognizant,
+  Comcast, Criteo, Databricks,
+  DE Shaw, Delhivery, Dell,
+  Deloitte, Deutsche Bank, DevRev,
+  Devsinc, DoorDash, Dropbox, eBay,
+  EPAM Systems, Epic Systems,
+  Expedia, EY, Flipkart, Garmin,
+  Goldman Sachs, Google, Grab,
+  HashedIn, HCL, Honeywell, Huawei,
+  Hubspot, IBM, Infosys, Intel,
+  Intuit, Jane Street, jio, Juspay,
+  KLA, LinkedIn, Lowe's, Mastercard,
+  Meta, Microsoft, Microstrategy,
+  MindTree, MongoDB, Morgan Stanley,
+  NetApp, Nvidia, Optum, Oracle,
+  Ozon, Palo Alto Networks, PayPal,
+  persistent systems, PhonePe,
+  Publicis Sapient, Pwc, Qualcomm,
+  Roblox, Salesforce, Samsung, SAP,
+  ServiceNow, Snowflake, Sony,
+  Splunk, Spotify, Synopsys, TCS,
+  Tech Mahindra, Tekion, Tesla,
+  ThoughtWorks, Tiger Analytics,
+  TikTok, Tinkoff, Toast, Turing,
+  Uber, UKG, Virtusa, Visa, VK,
+  Walmart Labs, Warnermedia,
+  Western Digital, Wipro, Wix,
+  Yahoo, Yandex, Yelp, Zoho.
+- Recent: 30 days — Amazon,
+  Bloomberg, Google, Infosys,
+  Meta, Microsoft, Ola Cabs, TCS.
+- Recent: 3 months — Altimetrik,
+  Amazon, Apple, Bloomberg,
+  Capgemini, Cognizant, Google,
+  Infosys, Meta, Microsoft,
+  Microstrategy, MongoDB, TCS.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Rahul Varma —
+`https://leetcode.com/problems/two-sum/solutions/3619262/3-methods-c-java-python-beginner-friendly/`
+— 2.4M views / 12.1K votes / 291 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (One-Pass Hash Table)
+
+The brute force approach compares every pair of numbers ($O(N^2)$). The widely accepted optimal approach is to iterate through the array exactly once while building a Hash Map that stores `(number -> its index)`.
+For each number, we calculate its `complement` (i.e., `target - current number`). If the `complement` is already in the Hash Map, we immediately have our pair!
+
+```text
+FUNCTION twoSum(nums, target):
+    numToIndex = empty Hash Map
+    
+    FOR i = 0 TO length(nums) - 1:
+        complement = target - nums[i]
+        
+        // If we've already seen the number we need, return the pair
+        IF complement is in numToIndex:
+            RETURN [numToIndex[complement], i]
+            
+        // Otherwise, store the current number and its index
+        numToIndex[nums[i]] = i
+        
+    RETURN []
+```
+
+- Time: O(N) where N is the length of `nums`. We traverse the list exactly once, and Hash Map lookups are $O(1)$ on average.
+- Space: O(N) to store up to N elements in the Hash Map.
+
+```mermaid
+flowchart TD
+    Init["numToIndex = {}"] --> Loop{"For i = 0 to N-1"}
+    Loop -->|"Next i"| CalcComplement["complement = target - nums[i]"]
+    CalcComplement --> CheckMap{"complement in numToIndex?"}
+    CheckMap -->|"Yes"| Return["Return [numToIndex[complement], i]"]
+    CheckMap -->|"No"| AddToMap["numToIndex[nums[i]] = i"]
+    AddToMap --> Loop
+    Loop -->|"Done"| ReturnEmpty["Return []"]
+```
+
+### B. Dry run on LeetCode Example 1 (nums = [2, 7, 11, 15], target = 9)
+
+| `i` | `nums[i]` | `complement` | `numToIndex` has `complement`? | Action |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 2 | 9 - 2 = **7** | No. Map is `{}`. | Add `2:0`. Map becomes `{2:0}`. |
+| 1 | 7 | 9 - 7 = **2** | **Yes!** Map has `2` at index `0`. | Return `[0, 1]`. |
+
+The loop finishes on the second element. The result `[0, 1]` is perfectly correct.
+
+### C. Pitfalls from comments
+
+- **Two-Pass vs One-Pass:** A very common, slightly slower valid solution is building the Hash Map entirely first (Pass 1), and then iterating again to find the complement (Pass 2). You have to be careful in Pass 2 to ensure `numToIndex[complement] != i` (so you don't reuse the same element). The **One-Pass** approach strictly avoids this because we check the map *before* adding the current element, completely eliminating self-referential pair collisions.
+- **Sorting and Two Pointers:** If you sort the array, you can use two pointers (left at 0, right at end) to find the target in $O(N \log N)$ time and $O(1)$ space. However, because the problem asks for the *original indices*, sorting destroys the original indices. You'd have to store pairs `(value, original_index)` before sorting, which requires $O(N)$ space anyway, defeating the purpose of the $O(1)$ space benefit of sorting. The Hash Map is unequivocally the best approach.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (103): Accenture, Accolite, Adobe, Airbnb, Airbus SE, Akamai, Altimetrik, Amazon, AMD, American Express, Anduril, Apple, Atlassian, Autodesk, Barclays, BlackRock, Bloomberg, ByteDance, Capgemini, Capital One, ciena, Cisco, Citadel, Citigroup, Cognizant, Comcast, Criteo, Databricks, DE Shaw, Delhivery, Dell, Deloitte, Deutsche Bank, DevRev, Devsinc, DoorDash, Dropbox, eBay, EPAM Systems, Epic Systems, Expedia, EY, Flipkart, Garmin, Goldman Sachs, Google, Grab, HashedIn, HCL, Honeywell, Huawei, Hubspot, IBM, Infosys, Intel, Intuit, Jane Street, Jio, Juspay, KLA, LinkedIn, Lowe's, Mastercard, Meta, Microsoft, Microstrategy, MindTree, MongoDB, Morgan Stanley, NetApp, Nvidia, Optum, Oracle, Ozon, Palo Alto Networks, PayPal, Persistent Systems, PhonePe, Publicis Sapient, Pwc, Qualcomm, Roblox, Salesforce, Samsung, SAP, ServiceNow, Snowflake, Sony, Splunk, Spotify, Synopsys, TCS, Tech Mahindra, Tekion, Tesla, ThoughtWorks, Tiger Analytics, TikTok, Tinkoff, Toast, Turing, Uber, UKG, Virtusa, Visa, VK, Walmart Labs, Warnermedia, Western Digital, Wipro, Wix, Yahoo, Yandex, Yelp, Zoho.
+- Recent: 30 days — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, Ola Cabs, TCS.
+- Recent: 3 months — Altimetrik, Amazon, Apple, Bloomberg, Capgemini, Cognizant, Google, Infosys, Meta, Microsoft, Microstrategy, MongoDB, TCS.

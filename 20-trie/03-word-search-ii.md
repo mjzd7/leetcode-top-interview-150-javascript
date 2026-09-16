@@ -347,3 +347,127 @@ function liveAddWord(trie, board, word) {
   return rewalkDirtyRegions(board, trie, word); // new matches only
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by yavinci —
+`https://leetcode.com/problems/word-search-ii/solutions/59780/java-15ms-easiest-solution-10000-by-yavi-b0zj/`
+— 233.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Trie-Directed Board Backtracking with In-Place Visited Inoculation & Word Nullification)
+
+Simultaneously search all dictionary words across the grid using a unified Prefix Tree guide:
+
+1. **Simultaneous Prefix Pruning via Trie:**
+   - Searching each word independently yields $O(K \cdot M \cdot N \cdot 4^L)$, which exceeds execution limits.
+   - Inserting all target words into a Prefix Trie allows a single board walk from cell $(r, c)$ to explore all viable candidate prefixes concurrently, cutting dead ends at the earliest mismatched letter.
+2. **Terminal Word Caching (Zero String Allocation):**
+   - Store the complete string reference `node.word = word` directly at each terminal node rather than maintaining an accumulator string during DFS.
+   - When a match is encountered, push `node.word` directly into the results collection.
+3. **Word Nullification for Automatic De-duplication:**
+   - After emitting a found word, set `node.word = NULL`.
+   - If alternative board paths discover the same word later, `node.word` evaluates to null and prevents duplicate emission without requiring an external hash set.
+4. **In-Place Board Inoculation:**
+   - Mark the current cell `board[r][c] = '#'` to denote visited status during the active recursion path.
+   - Restore `board[r][c] = origChar` upon backtrack, requiring zero extra space for visited matrices.
+
+```text
+CLASS TrieNode:
+    children = MAP() // char -> TrieNode
+    word = NULL
+
+FUNCTION findWords(board, words):
+    root = NEW TrieNode()
+    FOR EACH w IN words:
+        cur = root
+        FOR EACH ch IN w:
+            IF ch NOT IN cur.children:
+                cur.children[ch] = NEW TrieNode()
+            cur = cur.children[ch]
+        cur.word = w
+
+    m = LENGTH(board)
+    n = LENGTH(board[0])
+    result = []
+
+    FUNCTION dfs(r, c, parentNode):
+        ch = board[r][c]
+        IF ch == '#' OR ch NOT IN parentNode.children:
+            RETURN
+
+        node = parentNode.children[ch]
+
+        IF node.word != NULL:
+            result.APPEND(node.word)
+            node.word = NULL // prevent duplicates
+
+        board[r][c] = '#' // mark visited
+
+        FOR EACH (dr, dc) IN [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr = r + dr
+            nc = c + dc
+            IF nr >= 0 AND nr < m AND nc >= 0 AND nc < n:
+                dfs(nr, nc, node)
+
+        board[r][c] = ch // backtrack restore
+
+    FOR r FROM 0 TO m - 1:
+        FOR c FROM 0 TO n - 1:
+            dfs(r, c, root)
+
+    RETURN result
+```
+
+- Time: O(M * N * 4 * 3^(L - 1)) worst-case grid exploration, heavily pruned by prefix branching.
+- Space: O(Sum(len(words))) to construct the Trie, plus $O(L)$ recursion stack depth.
+
+```mermaid
+flowchart TD
+    Build["Build Trie with words<br>Store full word at terminal node"] --> GridLoop["For each cell (r, c) on board:<br>dfs(r, c, root)"]
+    GridLoop --> CheckValid{"ch == '#' OR<br>ch not in node.children?"}
+    CheckValid -->|"Yes"| Ret["RETURN (Prune branch)"]
+    CheckValid -->|"No"| StepChild["node = node.children[ch]"]
+    StepChild --> CheckWord{"node.word != null?"}
+    CheckWord -->|"Yes"| Emit["result.append(node.word)<br>node.word = null (Deduplicate)"]
+    CheckWord -->|"No"| Inoculate["board[r][c] = '#' (Mark visited)"]
+    Emit --> Inoculate
+    Inoculate --> Explore["Recurse 4 directions: dfs(nr, nc, node)"]
+    Explore --> Restore["board[r][c] = ch (Restore cell)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`board = [["o","a","a","n"],["e","t","a","e"],["i","h","k","r"],["i","f","l","v"]], words = ["oath","pea","eat","rain"]`)
+
+- Trie holds `"oath"`, `"pea"`, `"eat"`, `"rain"`.
+- At $(0, 0)$ cell `'o'`:
+  - `'o'` matches root child $\to$ advance.
+  - Branch $(0, 1)$ cell `'a'` matches $\to$ advance.
+  - Branch $(1, 1)$ cell `'t'` matches $\to$ advance.
+  - Branch $(2, 1)$ cell `'h'` matches $\to$ advance.
+  - `node.word` is `"oath"` $\implies$ emitted! `node.word = null`.
+- Backtrack unwinds, cell characters restored.
+- Cell $(1, 0)$ `'e'` traverses `'e' -> 'a' -> 't'`, discovers `"eat"` $\implies$ emitted!
+- Result: `["oath", "eat"]`.
+
+### C. Why Trie-Guided DFS Outperforms Individual Word Searches
+
+- Independent searches duplicate prefix walks (e.g. `"cat"` and `"cater"` repeat identical traversals for `'c'`, `'a'`, `'t'`).
+- The Trie integrates all target words into a single search graph, terminating traversal the moment a prefix fails to exist anywhere in the dictionary.
+
+### D. Pitfalls from comments
+
+- **Duplicate Path Emission:** A word can often be formed through multiple distinct paths across the board; nullifying `node.word` upon first discovery cleanly eliminates duplicates without hash set overhead.
+- **Board Corruption:** Failing to restore `board[r][c] = ch` leaves the board permanently altered, invalidating subsequent searches from neighboring origin cells.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (19): Airbnb, Amazon, Apple, Aurora, Bloomberg, Cisco, DoorDash, Google, Meta, Microsoft, Oracle, Snap, Snowflake, TikTok, Two Sigma, Uber, Visa, Wix, Zoom.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon.

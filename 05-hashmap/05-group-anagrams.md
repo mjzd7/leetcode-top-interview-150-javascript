@@ -402,3 +402,214 @@ function reduceAnagramGroup(key, wordStream) {
   return group;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Jianchao Li —
+`https://leetcode.com/problems/group-anagrams/solutions/19200/c-unordered_map-and-counting-sort-by-jia-efff/`
+— 1.1K votes / 153K views / 97 comments.
+Language-independent summary. No new JS here.
+
+### A. Post's way: sorted key + map
+
+Sort a copy of each word, use it
+as the map key. Same key means
+anagrams.
+
+```text
+FUNCTION groupNaive(strs):
+    groups = EMPTY MAP
+    FOR w IN strs:
+        key = SORT CHARS(w)
+        APPEND w TO groups[key]
+    RETURN VALUES(groups)
+```
+
+- Time: O(n * k log k)
+- Space: O(n * k)
+
+### B. Post's upgrade: counting key
+
+Lowercase only: count letters into
+a 26-slot signature instead of
+sorting. Linear per word.
+
+```text
+FUNCTION groupOptimal(strs):
+    groups = EMPTY MAP
+    FOR w IN strs:
+        key = COUNT SIGNATURE(w)
+        APPEND w TO groups[key]
+    RETURN VALUES(groups)
+```
+
+- Time: O(n * k)
+- Space: O(n * k)
+
+```mermaid
+flowchart TD
+    W["word w"] --> Key["sorted or count key"]
+    Key --> Put["groups[key]+=w"]
+    Put --> More{"more words?"}
+    More -->|Yes| W
+    More -->|No| Out["Return groups"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`strs = ["eat","tea","tan","ate","nat","bat"]`
+
+| w | Key | Groups so far |
+| :--- | :--- | :--- |
+| eat | aet | {aet:[eat]} |
+| tea | aet | {aet:[eat,tea]} |
+| tan | ant | +{ant:[tan]} |
+| ate | aet | {aet:+ate} |
+| nat | ant | {ant:+nat} |
+| bat | abt | +{abt:[bat]} |
+
+### D. Why B refines A
+
+- Counting beats sorting per word
+  when alphabet is tiny.
+- Map lookup stays O(1).
+- Same grouping, less log factor.
+
+### E. Pitfalls from comments
+
+- Perf trio: refs not copies,
+  move vectors, reserve (177).
+- Index-only one-pass variant
+  skips storing strings (62).
+- Lowercase counting sort needs
+  a-z guarantee (65).
+- Key must encode COUNTS, not
+  just presence.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (79): Accolite, Adobe,
+  Affirm, Amazon, Anduril, Apple,
+  athenahealth, Atlassian, Autodesk,
+  Avito, BlackRock, blinkit,
+  Bloomberg, BNY Mellon, Capgemini,
+  Cisco, Citadel, Compass, Coupang,
+  CrowdStrike, Dell, Deloitte,
+  Disney, Docusign, DP world, eBay,
+  EPAM Systems, Expedia, FactSet,
+  FreshWorks, Goldman Sachs, Google,
+  HashedIn, IBM, Infosys, Instacart,
+  Intuit, jio, josh technology,
+  MakeMyTrip, Meta, Microsoft,
+  Millennium, Morgan Stanley,
+  Nielsen, Nike, Nutanix, Nvidia,
+  Okta, Oracle, Palo Alto Networks,
+  PayPal, persistent systems,
+  PhonePe, Publicis Sapient,
+  Salesforce, SAP, Siemens, Sigmoid,
+  Smartsheet, Snap, Squarepoint Capital,
+  TCS, TikTok, Turing, Twilio, Uber,
+  UBS, Upstart, Visa, Walmart Labs,
+  Wayfair, Whatnot, Wipro,
+  Wissen Technology, Workday,
+  Yandex, Yelp, Zoho.
+- Recent: 30 days — Amazon, Apple,
+  Bloomberg, Google, Meta,
+  Ola Cabs, TCS.
+- Recent: 3 months — Amazon, Apple,
+  Bloomberg, CrowdStrike, Deloitte,
+  Google, HashedIn, Meta, Microsoft,
+  Smartsheet, TCS, Walmart Labs.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Wes —
+`https://leetcode.com/problems/group-anagrams/solutions/19176/share-my-short-java-solution/`
+— 251.4K views / 1K votes / 107 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Character Count String as Map Key)
+
+The core challenge is identifying a unique "signature" or "key" that will perfectly match for any two words that are anagrams of each other. 
+The brute force way is to sort each string (e.g., "eat" becomes "aet") and use that sorted string as the Hash Map key. However, sorting takes $O(K \log K)$ per word.
+The strictly optimal $O(K)$ way is to build a frequency array (size 26) for the word, and then convert that array into a string (e.g., `"1#0#0#0...#1#0..."`) to use as the Hash Map key. All anagrams will produce the exact same frequency string.
+
+```text
+FUNCTION groupAnagrams(strs):
+    IF length(strs) == 0:
+        RETURN []
+        
+    map = empty Hash Map (maps String -> List of Strings)
+    
+    FOR each s in strs:
+        // Build the frequency array for the word
+        counts = Array of 26 integers, initialized to 0
+        FOR each char c in s:
+            counts[c - 'a']++
+            
+        // Convert the frequency array into a unique string key
+        key = ""
+        FOR i = 0 TO 25:
+            key += counts[i] + "#"
+            
+        // Add the original word to the corresponding group in the map
+        IF key is not in map:
+            map[key] = empty List
+        map[key].add(s)
+        
+    RETURN all values from map
+```
+
+- Time: O(N * K) where N is the number of strings and K is the maximum length of a string. Counting the characters takes $O(K)$, and building the key string takes $O(26)$. We do this $N$ times.
+- Space: O(N * K) to store the result in the Hash Map.
+
+```mermaid
+flowchart TD
+    Init["map = HashMap<String, List>"] --> LoopStrings{"For each s in strs"}
+    LoopStrings -->|"Next s"| InitCounts["counts = Array(26).fill(0)"]
+    InitCounts --> LoopChars{"For each c in s"}
+    LoopChars -->|"Next c"| IncCount["counts[c - 'a']++"]
+    IncCount --> LoopChars
+    LoopChars -->|"Done"| BuildKey["Build string key from counts array (e.g. '1#0#...1#0')"]
+    BuildKey --> MapAdd["map[key].push(s)"]
+    MapAdd --> LoopStrings
+    LoopStrings -->|"Done"| Return["Return map.values()"]
+```
+
+### B. Dry run on LeetCode Example 1 (strs = ["eat", "tea", "tan", "ate", "nat", "bat"])
+
+| `s` | `counts` array | Generated Key (compressed) | Map State |
+| :--- | :--- | :--- | :--- |
+| "eat" | a:1, e:1, t:1 | `"1#0#0#0#1...1..."` | `{ key1: ["eat"] }` |
+| "tea" | a:1, e:1, t:1 | `"1#0#0#0#1...1..."` | `{ key1: ["eat", "tea"] }` |
+| "tan" | a:1, n:1, t:1 | `"1#0...1...1..."` | `{ key1: ["eat", "tea"], key2: ["tan"] }` |
+| "ate" | a:1, e:1, t:1 | `"1#0#0#0#1...1..."` | `{ key1: ["eat", "tea", "ate"], key2: ["tan"] }` |
+| "nat" | a:1, n:1, t:1 | `"1#0...1...1..."` | `{ key1: [...], key2: ["tan", "nat"] }` |
+| "bat" | a:1, b:1, t:1 | `"1#1...1..."` | `{ key1: [...], key2: [...], key3: ["bat"] }` |
+
+Return the grouped values: `[["eat","tea","ate"], ["tan","nat"], ["bat"]]`.
+
+### C. Pitfalls from comments
+
+- **Sorting strings vs. Character counting:** Many solutions just do `char[] chars = s.toCharArray(); Arrays.sort(chars); String key = new String(chars);`. In Python, this is `tuple(sorted(s))`. While this is extremely concise and completely acceptable in an interview, the time complexity is $O(N \cdot K \log K)$. A pedantic interviewer will press you to achieve pure $O(N \cdot K)$ using the frequency-array-to-string technique.
+- **Why `#` delimiters?** If you build the key string without delimiters (e.g., `10100`), counts like 10 and 1 could blend with 1 and 01. Since LeetCode strings can be long enough that a letter appears 10+ times, you MUST delimit the numbers (e.g., `1#0#10#0`).
+- **Python optimization trick:** In Python, a tuple of 26 integers is hashable. You can completely skip building the `#` delimited string and just use `tuple(counts)` as the dictionary key!
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (79): Accolite, Adobe, Affirm, Amazon, Anduril, Apple, athenahealth, Atlassian, Autodesk, Avito, BlackRock, blinkit, Bloomberg, BNY Mellon, Capgemini, Cisco, Citadel, Compass, Coupang, CrowdStrike, Dell, Deloitte, Disney, Docusign, DP world, eBay, EPAM Systems, Expedia, FactSet, FreshWorks, Goldman Sachs, Google, HashedIn, IBM, Infosys, Instacart, Intuit, jio, josh technology, MakeMyTrip, Meta, Microsoft, Millennium, Morgan Stanley, Nielsen, Nike, Nutanix, Nvidia, Okta, Oracle, Palo Alto Networks, PayPal, persistent systems, PhonePe, Publicis Sapient, Salesforce, SAP, Siemens, Sigmoid, Smartsheet, Snap, Squarepoint Capital, TCS, TikTok, Turing, Twilio, Uber, UBS, Upstart, Visa, Walmart Labs, Wayfair, Whatnot, Wipro, Wissen Technology, Workday, Yandex, Yelp, Zoho.
+- Recent: 30 days — Amazon, Apple, Bloomberg, Google, Meta, Ola Cabs, TCS.
+- Recent: 3 months — Amazon, Apple, Bloomberg, CrowdStrike, Deloitte, Google, HashedIn, Meta, Microsoft, Smartsheet, TCS, Walmart Labs.

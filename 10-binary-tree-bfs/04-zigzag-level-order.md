@@ -329,3 +329,114 @@ function snakeWalk(root) {
   return out;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pradhuman Gupta —
+`https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/solutions/6896289/beats-100-using-bfs-and-deque-java-pytho-uc88/`
+— 19K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Preserve FIFO Queue with Fixed-Size Index Placement)
+
+Rather than reversing arrays after traversal or changing queue insertion logic, the optimal approach preserves standard BFS and assigns each value directly into its pre-allocated slot:
+
+1. **Standard FIFO Queue:** Nodes are always enqueued left-to-right.
+2. **Direction Flag:** Maintain a boolean flag `isLeftToRight = true`.
+3. **Pre-allocated Level Slots:** For each level of size $K$, allocate an array of size $K$:
+   - If `isLeftToRight` is true, write to index $i$.
+   - If `isLeftToRight` is false, write to index $K - 1 - i$.
+4. **Flip Orientation:** Invert `isLeftToRight = !isLeftToRight` after completing each level.
+
+```text
+FUNCTION zigzagLevelOrder(root):
+    IF root == null:
+        RETURN []
+
+    result = []
+    queue = new Queue()
+    queue.push(root)
+    isLeftToRight = true
+
+    WHILE NOT queue.isEmpty():
+        levelSize = queue.size()
+        level = new Array(levelSize)
+
+        FOR i FROM 0 TO levelSize - 1:
+            curr = queue.pop()
+
+            // Calculate target slot based on direction
+            index = isLeftToRight ? i : (levelSize - 1 - i)
+            level[index] = curr.val
+
+            // Children ALWAYS enter queue in standard left-to-right order
+            IF curr.left != null:
+                queue.push(curr.left)
+            IF curr.right != null:
+                queue.push(curr.right)
+
+        result.push(level)
+        isLeftToRight = NOT isLeftToRight
+
+    RETURN result
+```
+
+- Time: O(N) where N is the number of nodes, each node is processed once with $O(1)$ index placement.
+- Space: O(W) where W is the maximum tree width (up to $O(N)$ queue storage).
+
+```mermaid
+flowchart TD
+    subgraph Level 0: Left-to-Right
+        L0["Queue: [3] -> size: 1 -> level[0] = 3 -> [3]"]
+    end
+    subgraph Level 1: Right-to-Left
+        L1["Queue: [9, 20] -> size: 2 -> 9 at level[1], 20 at level[0] -> [20, 9]"]
+    end
+    subgraph Level 2: Left-to-Right
+        L2["Queue: [15, 7] -> size: 2 -> 15 at level[0], 7 at level[1] -> [15, 7]"]
+    end
+    L0 --> L1 --> L2
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [3,9,20,null,null,15,7]`)
+
+- `queue = [3]`, `isLeftToRight = true`.
+- **Level 0 (`size = 1`):**
+  - $i=0$: pop 3. `isLeftToRight` true -> `index = 0`. `level[0] = 3`.
+  - Children 9, 20 enqueued left-to-right.
+  - Result: `[[3]]`. Flip `isLeftToRight = false`.
+- **Level 1 (`size = 2`):**
+  - $i=0$: pop 9. `isLeftToRight` false -> `index = 2 - 1 - 0 = 1`. `level[1] = 9`.
+  - $i=1$: pop 20. `index = 2 - 1 - 1 = 0`. `level[0] = 20`.
+  - Children 15, 7 enqueued left-to-right.
+  - Level array is `[20, 9]`. Result: `[[3], [20, 9]]`. Flip `isLeftToRight = true`.
+- **Level 2 (`size = 2`):**
+  - $i=0$: pop 15 -> `level[0] = 15`.
+  - $i=1$: pop 7 -> `level[1] = 7`.
+  - Level array is `[15, 7]`. Result: `[[3], [20, 9], [15, 7]]`. Flip `isLeftToRight = false`.
+- Queue is empty.
+
+Final result: `[[3], [20, 9], [15, 7]]`.
+
+### C. Why Direct Index Assignment Beats Reversal Passes
+
+- Calling an explicit array reverse (`level.reverse()`) or unshifting onto lists takes $O(K)$ extra operations or shifts per level.
+- Computing `level[isLeftToRight ? i : (size - 1 - i)] = curr.val` writes each element directly to its destination index in $O(1)$ time with zero subsequent re-ordering.
+
+### D. Pitfalls from comments
+
+- **Altering Child Push Order:** Trying to reverse the queue order by pushing `right` before `left` during odd levels corrupts the tree structure for subsequent levels. The queue MUST always receive children in left-to-right order.
+- **Toggling Flag in the Inner Loop:** Placing `isLeftToRight = !isLeftToRight` inside the node-processing loop alternates per-node rather than per-level.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (20): Accenture, Adobe, Amazon, Apple, Bloomberg, ByteDance, Citadel, Goldman Sachs, Google, LinkedIn, Meta, Microsoft, Nutanix, Oracle, Palo Alto Networks, Sigmoid, TikTok, Walmart Labs, Yandex.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Bloomberg, Google.

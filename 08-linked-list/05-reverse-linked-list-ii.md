@@ -319,3 +319,98 @@ function reverseBetweenPersistent(head, left, right) {
   return spliceSegment(head, left, right, vals);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Ardya Dipta Nandaviri —
+`https://leetcode.com/problems/reverse-linked-list-ii/solutions/30666/simple-java-solution-with-clear-explanat-yd1u/`
+— 124.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (One-Pass Head-Insertion Reversal)
+
+Rather than severing the subsegment, reversing it in isolation, and stitching seams back together, the optimal Discuss technique performs an **in-place head insertion** in a single pass using four pointers (`dummy`, `pre`, `start`, `then`):
+
+1. Position a sentinel `dummy` node before `head`.
+2. Advance `pre` by `left - 1` steps so it points directly before the reversal zone.
+3. Fix `start = pre.next` (the initial node of the sublist, which will end up as the sublist's tail).
+4. Repeatedly pluck node `then = start.next` and move it to the front of the reversed section (right after `pre`):
+   - `start.next = then.next` (bypass `then`)
+   - `then.next = pre.next` (link `then` to the current front)
+   - `pre.next = then` (update front of sublist)
+   - `then = start.next` (advance `then` to next candidate)
+5. Repeat for exactly `right - left` iterations.
+
+```text
+FUNCTION reverseBetween(head, left, right):
+    IF head == null OR left == right:
+        RETURN head
+
+    dummy = new ListNode(0)
+    dummy.next = head
+    pre = dummy
+
+    FOR i FROM 1 TO left - 1:
+        pre = pre.next
+
+    start = pre.next
+    then = start.next
+
+    FOR i FROM 0 TO (right - left - 1):
+        start.next = then.next
+        then.next = pre.next
+        pre.next = then
+        then = start.next
+
+    RETURN dummy.next
+```
+
+- Time: O(N) single-pass traversal visiting at most `right` nodes.
+- Space: O(1) auxiliary pointer manipulation in-place.
+
+```mermaid
+flowchart TD
+    Init["pre at left-1<br>start = pre.next<br>then = start.next"] --> Loop{"Loop (right - left) times?"}
+    Loop -->|"Yes (More nodes)"| Step1["start.next = then.next<br>(bypass then)"]
+    Step1 --> Step2["then.next = pre.next<br>(link to sublist head)"]
+    Step2 --> Step3["pre.next = then<br>(anchor then after pre)"]
+    Step3 --> Step4["then = start.next<br>(pick next node)"]
+    Step4 --> Loop
+    Loop -->|"Done"| Return["Return dummy.next"]
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [1,2,3,4,5], left = 2, right = 4`)
+
+Initial list: `dummy -> 1 -> 2 -> 3 -> 4 -> 5`. `pre = 1`, `start = 2`, `then = 3`.
+
+| Iteration | Action | Pointer State | Resulting Chain |
+| :--- | :--- | :--- | :--- |
+| `i = 0` | Move 3 after `pre` (1) | `pre=1, start=2, then=4` | `dummy -> 1 -> 3 -> 2 -> 4 -> 5` |
+| `i = 1` | Move 4 after `pre` (1) | `pre=1, start=2, then=5` | `dummy -> 1 -> 4 -> 3 -> 2 -> 5` |
+| Done | Loop finished | - | Return `dummy.next` |
+
+Output: `[1, 4, 3, 2, 5]`.
+
+### C. Why Head-Insertion Beats Disconnect-and-Reconnect
+
+- **Seam Safety:** Standard reverse breaks the list into three disconnected fragments (`left`, `mid`, `right`), requiring careful re-attachment of edge pointers.
+- **Continuous Invariant:** The list remains valid and connected after each inner step of head insertion.
+
+### D. Pitfalls from comments
+
+- **Reversing from head (`left = 1`):** Without a `dummy` node, moving nodes before `head` invalidates original references. `pre` starting at `dummy` handles `left = 1` uniformly.
+- **Off-by-one iterations:** The loop must execute exactly `right - left` times, moving `right - left` nodes to the front.
+- **Null pointer when `right` exceeds list length:** Constraints state $1 \le \text{left} \le \text{right} \le N$, ensuring `then` is never null during the loop.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — Amazon, Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft.
