@@ -247,3 +247,98 @@ async function streamSingleNumberII(numberStream) {
   return ones;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by kamyu —
+`https://leetcode.com/problems/single-number-ii/solutions/43295/detailed-explanation-and-generalization-i9d5p/`
+— 183K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two-Bit Modulo-3 Bitwise State Machine)
+
+Isolate the non-triplicated element by tracking the arrival frequency of set bits across all 32 bit positions simultaneously modulo 3:
+
+1. **State Machine Formulation:**
+   - Counting modulo 3 requires 3 distinct states per bit: $0 \to 1 \to 2 \to 0$.
+   - A minimum of 2 state bits (`twos` and `ones`) are required to encode the count:
+     - Count 0: `twos = 0, ones = 0`
+     - Count 1: `twos = 0, ones = 1`
+     - Count 2: `twos = 1, ones = 0`
+     - Count 3 (reset): `twos = 0, ones = 0`
+2. **Boolean Transition Equations:**
+   - For every incoming number $x$:
+     - `ones = (ones XOR x) AND (NOT twos)`
+     - `twos = (twos XOR x) AND (NOT ones)`
+   - On the 1st occurrence of a bit: `ones` becomes 1 while `twos` remains 0.
+   - On the 2nd occurrence of a bit: `ones` resets to 0 while `twos` becomes 1.
+   - On the 3rd occurrence of a bit: both `ones` and `twos` are forced back to 0.
+3. **Extraction:**
+   - Every number appearing 3 times completes the full cycle $0 \to 1 \to 2 \to 0$, leaving 0 in both state registers.
+   - The unique element appears exactly once, remaining latched in `ones`.
+
+```text
+FUNCTION singleNumber(nums):
+    ones = 0
+    twos = 0
+    FOR EACH x IN nums:
+        ones = (ones XOR x) AND (NOT twos)
+        twos = (twos XOR x) AND (NOT ones)
+    RETURN ones
+```
+
+- Time: O(N) — single linear pass through the array with elementary bitwise operations.
+- Space: O(1) — exactly two integer registers maintained in memory.
+
+```mermaid
+flowchart TD
+    Init["ones = 0, twos = 0"] --> Loop["For each x in nums:<br>ones = (ones ^ x) & ~twos<br>twos = (twos ^ x) & ~ones"]
+    Loop --> CheckEnd{"All numbers processed?"}
+    CheckEnd -->|"No"| Loop
+    CheckEnd -->|"Yes"| ReturnOnes["RETURN ones<br>(All triples reset to 0; single remains in ones)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [2, 2, 3, 2]`)
+
+- In binary: $2 = 010_2$, $3 = 011_2$.
+- Initial: `ones = 000_2, twos = 000_2`.
+- **Process 1st `2` ($010_2$):**
+  - `ones = (000 ^ 010) & ~000 = 010`
+  - `twos = (000 ^ 010) & ~010 = 010 & 101 = 000`
+  - State: `ones = 010, twos = 000` (count = 1).
+- **Process 2nd `2` ($010_2$):**
+  - `ones = (010 ^ 010) & ~000 = 000`
+  - `twos = (000 ^ 010) & ~000 = 010`
+  - State: `ones = 000, twos = 010` (count = 2).
+- **Process 1st `3` ($011_2$):**
+  - Bit 0 arrives for 1st time; Bit 1 arrives for 3rd time (transitions $2 \to 0$).
+  - `ones = (000 ^ 011) & ~010 = 011 & 101 = 001`
+  - `twos = (010 ^ 011) & ~001 = 001 & 110 = 000`
+  - State: `ones = 001, twos = 000`.
+- **Process 3rd `2` ($010_2$):**
+  - `ones = (001 ^ 010) & ~000 = 011`
+  - `twos = (000 ^ 010) & ~011 = 010 & 100 = 000`
+- Final result: `ones = 011_2 = 3`.
+
+### C. Why Bitwise Counters Beat Bit-Iteration Loops
+
+- Summing bits along 32 separate iterations requires $32 \times N$ loop cycles.
+- The two-bit state machine evaluates all 32 bit positions in parallel in 6 bitwise CPU instructions per element, operating in $1 \times N$ time.
+
+### D. Pitfalls from comments
+
+- **Update Ordering:** `twos` must evaluate using the newly computed `ones` value. Computing both from the prior iteration values requires a different boolean formula.
+- **Negative Number Handling:** In languages with signed integers, bitwise operations naturally operate on two's complement representations without extra conditional logic for negative numbers.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (8): Amazon, Bloomberg, Google, Meta, Microsoft, Oracle, Siemens, Zomato.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft.

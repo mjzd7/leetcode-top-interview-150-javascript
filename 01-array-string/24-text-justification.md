@@ -432,3 +432,112 @@ function fullJustify(words, maxWidth) {
 ### Follow-Up 2: Bidirectional Right-to-Left Justification (Arabic / Hebrew)
 - **Scenario**: When formatting Right-to-Left (RTL) scripts, extra spaces must be placed on the rightmost gaps instead of leftmost gaps.
 - **Solution**: Invert the remainder condition: `k >= gaps - extraSpaces ? baseSpaces + 1 : baseSpaces`.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by KidOptimo —
+`https://leetcode.com/problems/text-justification/solutions/24873/java-easy-to-understand-broken-into-several-functions/`
+— 96.2K views / 809 votes / 55 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Greedy Packing + Modular Justification)
+
+This is a pure simulation problem that becomes incredibly messy if written in a single giant function. The top advice is to break it down into modular helper functions: 
+1. Find the rightmost word that fits on the current line.
+2. Justify that specific line.
+3. Pad with spaces based on whether it's the last line, a single word line, or a normal line.
+
+```text
+FUNCTION fullJustify(words, maxWidth):
+    result = []
+    left = 0
+    
+    WHILE left < length(words):
+        right = findRight(left, words, maxWidth)
+        result.push(justify(left, right, words, maxWidth))
+        left = right + 1
+        
+    RETURN result
+
+FUNCTION findRight(left, words, maxWidth):
+    right = left
+    sum = length(words[right])
+    
+    WHILE right + 1 < length(words) AND sum + 1 + length(words[right + 1]) <= maxWidth:
+        right++
+        sum = sum + 1 + length(words[right])
+        
+    RETURN right
+
+FUNCTION justify(left, right, words, maxWidth):
+    IF left == right: // Single word
+        RETURN padRight(words[left], maxWidth)
+        
+    isLastLine = (right == length(words) - 1)
+    numSpaces = right - left
+    totalSpace = maxWidth - lengthOfAllWordsBetween(left, right)
+    
+    IF isLastLine:
+        line = join(words from left to right with 1 space)
+        RETURN padRight(line, maxWidth)
+        
+    // Normal line
+    spacePerGap = totalSpace / numSpaces
+    extraSpaces = totalSpace % numSpaces
+    
+    line = ""
+    FOR i = left TO right - 1:
+        line = line + words[i]
+        line = line + stringOfSpaces(spacePerGap)
+        IF extraSpaces > 0:
+            line = line + " "
+            extraSpaces--
+            
+    line = line + words[right]
+    RETURN line
+```
+
+- Time: O(N) where N is the total number of characters in all words (we touch each word basically twice).
+- Space: O(N) to store the result strings.
+
+```mermaid
+flowchart TD
+    Main["While left < len(words)"] --> FindRight["findRight(left): greedily pack words"]
+    FindRight --> Justify{"Justify line"}
+    Justify -->|Single word| PadRight["Pad right with spaces"]
+    Justify -->|Last line| JoinSpace["Join with 1 space, pad right"]
+    Justify -->|Normal line| Distribute["Distribute spaces evenly + extra spaces on left"]
+    PadRight --> AddResult["Add to result, left = right + 1"]
+    JoinSpace --> AddResult
+    Distribute --> AddResult
+    AddResult --> Main
+```
+
+### B. Dry run on LeetCode Example 1 (maxWidth = 16)
+
+Words: `["This", "is", "an", "example", "of", "text", "justification."]`
+
+| Line | `left` | `right` | Words included | Justification Logic | Result Line |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | 2 | "This", "is", "an" | Normal: 3 gaps? No, 2 gaps. 16 chars max, words=8 chars. 8 spaces total. `8/2=4` spaces per gap. | `"This    is    an"` |
+| 2 | 3 | 5 | "example", "of", "text" | Normal: words=13 chars. 3 spaces total. 2 gaps. `3/2=1` space per gap, `3%2=1` extra space for first gap. | `"example  of text"` |
+| 3 | 6 | 6 | "justification." | Last line/Single word: Pad right with 2 spaces. | `"justification.  "` |
+
+### C. Pitfalls from comments
+
+- **The "Giant Function" Anti-Pattern:** A major pitfall is trying to handle the greedy packing, space distribution, and string building in one massive nested loop. Comments highly praise separating `findRight` and `justify`, noting that "This is THE CODE we hope to see... Rather than kinda code focusing on shortening. TBH, this only exposes you are not an experienced developer."
+- **Last Line Padding:** Forgetting that the last line is strictly left-justified with exactly one space between words, and the *remaining* spaces are padded at the very end.
+- **Single Word Line:** A line containing only one word must be left-justified, padded on the right, even if it is not the last line. If you divide by `numSpaces` when `left == right`, you get a division by zero error.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (35): Airbnb, Amazon, Apple, Atlassian, Autodesk, Bloomberg, ByteDance, Capital One, Coursera, Databricks, DE Shaw, Goldman Sachs, Google, Hive, Hudson River Trading, Karat, LinkedIn, Meta, Microsoft, MongoDB, Moveworks, PayPal, Pinterest, Quora, Robinhood, Roblox, Sentry, SIG, SoFi, TikTok, Tinder, Uber, Visa, Waymo, WeRide.
+- Recent: 30 days — (none).
+- Recent: 3 months — Airbnb.

@@ -248,3 +248,80 @@ function rangeBitwiseAndBig(left, right) {
   return n;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Yash Gupta —
+`https://leetcode.com/problems/bitwise-and-of-numbers-range/solutions/593317/simple-3-line-java-solution-faster-than-lwyot/`
+— 30.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Brian Kernighan Right-Bound LSB Clearing)
+
+Calculate the range bitwise AND by stripping non-shared trailing set bits from the upper bound:
+
+1. **Common Binary Prefix Invariant:**
+   - As integers increment by 1 through $[left, right]$, low-order bits flip back and forth between 0 and 1.
+   - Any bit position that alternates to 0 at any point inside the range yields 0 in the final bitwise AND.
+   - The result is identical to the **Longest Common Prefix** (LCP) of the binary representations of $left$ and $right$, with all remaining lower bits zeroed out.
+2. **LSB Clearing Loop:**
+   - Rather than shifting both bounds until they match, apply Brian Kernighan's bit-clearing operation $n = n \ \& \ (n - 1)$ on the upper bound $n = right$.
+   - While $n > left$, extinguish the lowest set bit of $n$.
+   - When $n \le left$, all bits that diverged above $left$ are extinguished, leaving the exact common prefix.
+   - Return $n$.
+
+```text
+FUNCTION rangeBitwiseAnd(left, right):
+    n = right
+    WHILE n > left:
+        n = n AND (n - 1)
+    RETURN n
+```
+
+- Time: O(1) — at most 31 bit-clearing operations, terminating as soon as $n \le left$.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Init["n = right"] --> LoopCheck{"n > left?"}
+    LoopCheck -->|"Yes"| ClearLSB["n = n AND (n - 1)<br>(Clears rightmost set bit)"]
+    ClearLSB --> LoopCheck
+    LoopCheck -->|"No (n <= left)"| ReturnN["RETURN n<br>(Leaves only common prefix with trailing zeros)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`left = 5, right = 7`)
+
+- $left = 5 = 101_2, right = 7 = 111_2$.
+- $n = 7$.
+- **Iteration 1:**
+  - $n = 7 > 5$.
+  - $n = 7 \ \& \ (7 - 1) = 111_2 \ \& \ 110_2 = 110_2 = 6$.
+- **Iteration 2:**
+  - $n = 6 > 5$.
+  - $n = 6 \ \& \ (6 - 1) = 110_2 \ \& \ 101_2 = 100_2 = 4$.
+- **Check:**
+  - $n = 4 \le 5 \implies$ loop terminates.
+- Result: $4 = 100_2$ (matching common prefix of $5$ and $7$).
+
+### C. Why Clearing `right` Beats Bit Shifting
+
+- Standard prefix finding shifts both `left` and `right` rightward while incrementing a shift counter, then shifts `left` back leftward by that count.
+- Kernighan clearing directly subtracts set bits from `right` without maintaining counters or shifting variables, requiring fewer machine cycles on average.
+
+### D. Pitfalls from comments
+
+- **Linear Traversal TLE:** Iterating through all values from $left$ to $right$ with $O(right - left)$ bitwise ANDs times out because the difference can be as large as $2 \cdot 10^9$.
+- **Strict Inequality Bound:** The condition must be `n > left` rather than `n >= left`. Using `>=` would clear an extra bit when $left == right$, producing an incorrect zero.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (5): Amazon, Bloomberg, Google, Meta, Microsoft.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

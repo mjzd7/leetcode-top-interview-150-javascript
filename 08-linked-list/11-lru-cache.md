@@ -373,3 +373,132 @@ function shardFor(key, shardCount) {
   return hashKey(key) % shardCount; // consistent hashing in production
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Lisong —
+`https://leetcode.com/problems/lru-cache/solutions/45911/java-hashtable-double-linked-list-with-a-mihw/`
+— 395.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Doubly Linked List + Hash Map with Pseudo Sentinels)
+
+The textbook industry standard combines a hash map for $O(1)$ key lookup with a Doubly Linked List (DLL) for $O(1)$ node relocation:
+
+1. **Node Structure:** Each node stores both `key` and `value`, along with `prev` and `next` pointers. (Storing `key` in the node is crucial so the cache can look up and delete the key from the hash map when evicting).
+2. **Sentinel Nodes:** A pseudo-`head` (MRU boundary) and pseudo-`tail` (LRU boundary) prevent null pointer exceptions and eliminate edge-case checks during node insertions and deletions.
+3. **Core Helper Methods:**
+   - `addNode(node)`: Always insert immediately after `head` (marks as Most Recently Used).
+   - `removeNode(node)`: Unlink node from its neighbors in $O(1)$ (`node.prev.next = node.next`, `node.next.prev = node.prev`).
+   - `moveToHead(node)`: Unlink node via `removeNode(node)` and re-insert at front via `addNode(node)`.
+   - `popTail()`: Unlink and return the least recently used node right before pseudo-`tail`.
+4. **Operations:**
+   - `get(key)`: If key missing, return -1. Otherwise, move node to head and return `node.value`.
+   - `put(key, value)`: If key exists, update value and move node to head. If new, instantiate node, insert at head, and add to map. If size exceeds capacity, call `popTail()`, delete its key from map, and decrement count.
+
+```text
+CLASS LRUCache:
+    STRUCTURE DLinkedNode:
+        key, value
+        prev, next
+
+    INIT(capacity):
+        this.capacity = capacity
+        this.size = 0
+        this.map = new HashMap()
+        this.head = new DLinkedNode(0, 0)
+        this.tail = new DLinkedNode(0, 0)
+        head.next = tail
+        tail.prev = head
+
+    METHOD addNode(node):
+        node.prev = head
+        node.next = head.next
+        head.next.prev = node
+        head.next = node
+
+    METHOD removeNode(node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    METHOD moveToHead(node):
+        removeNode(node)
+        addNode(node)
+
+    METHOD popTail():
+        res = tail.prev
+        removeNode(res)
+        RETURN res
+
+    METHOD get(key):
+        node = map.get(key)
+        IF node == null:
+            RETURN -1
+        moveToHead(node)
+        RETURN node.value
+
+    METHOD put(key, value):
+        node = map.get(key)
+        IF node != null:
+            node.value = value
+            moveToHead(node)
+        ELSE:
+            newNode = new DLinkedNode(key, value)
+            map.put(key, newNode)
+            addNode(newNode)
+            size = size + 1
+            IF size > capacity:
+                tailNode = popTail()
+                map.remove(tailNode.key)
+                size = size - 1
+```
+
+- Time: O(1) strictly for both `get` and `put` operations.
+- Space: O(capacity) auxiliary memory for hash map entries and doubly linked list nodes.
+
+```mermaid
+flowchart LR
+    Head["pseudo-head (MRU)"] <--> N1["Node(k1, v1)"]
+    N1 <--> N2["Node(k2, v2)"]
+    N2 <--> Tail["pseudo-tail (LRU)"]
+    Map["HashMap: key -> Node"] -.-> N1
+    Map -.-> N2
+```
+
+### B. Dry run on LeetCode Example 1 (`capacity = 2`)
+
+| Operation | Action Taken | Map Contents | List Order (MRU -> LRU) | Output |
+| :--- | :--- | :--- | :--- | :--- |
+| `put(1, 1)` | Insert node 1 | `{1: N1}` | `[1]` | - |
+| `put(2, 2)` | Insert node 2 | `{1: N1, 2: N2}` | `[2, 1]` | - |
+| `get(1)` | Move 1 to head | `{1: N1, 2: N2}` | `[1, 2]` | 1 |
+| `put(3, 3)` | Evict LRU (2), Insert 3 | `{1: N1, 3: N3}` | `[3, 1]` | - |
+| `get(2)` | Not found in map | `{1: N1, 3: N3}` | `[3, 1]` | -1 |
+| `put(4, 4)` | Evict LRU (1), Insert 4 | `{3: N3, 4: N4}` | `[4, 3]` | - |
+| `get(1)` | Not found in map | `{3: N3, 4: N4}` | `[4, 3]` | -1 |
+| `get(3)` | Move 3 to head | `{3: N3, 4: N4}` | `[3, 4]` | 3 |
+| `get(4)` | Move 4 to head | `{3: N3, 4: N4}` | `[4, 3]` | 4 |
+
+### C. Why Pseudo Nodes Beat Nullable Pointers
+
+- **Zero Branching:** Inserting at head or removing from tail executes identical pointer rewiring without `if (node.prev == null)` or `if (node.next == null)` checks.
+- **Invariance:** Pseudo-`head` and pseudo-`tail` remain stable for the lifetime of the cache.
+
+### D. Pitfalls from comments
+
+- **Missing `key` in node:** If `DLinkedNode` only stores `value`, when `popTail()` evicts the least recently used node, it cannot determine which key to delete from the hash map without a linear scan.
+- **Updating existing key must refresh recency:** Invoking `put` with an existing key updates its value AND moves the node to the head of the list.
+- **Hash collision & memory leaks:** In native languages, memory for evicted nodes must be explicitly reclaimed after being removed from both the list and the map.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (109): Adobe, Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, NetApp, Nvidia, Oracle, Salesforce, Uber, TikTok, Goldman Sachs, Palo Alto Networks, etc.
+- Recent: 30 days — Adobe, Amazon, Bloomberg, Google, Meta, NetApp.
+- Recent: 3 months — Adobe, Amazon, Apple, Bloomberg, Goldman Sachs, Google, Meta, Microsoft, NetApp, Palo Alto Networks, TikTok.

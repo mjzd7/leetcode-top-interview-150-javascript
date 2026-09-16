@@ -344,3 +344,107 @@ async function connectPaged(rootId, loadLevel, storeLinks) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by flashstone —
+`https://leetcode.com/problems/populating-next-right-pointers-in-each-node-ii/solutions/37828/o-1-how-to-solve-it-easily-in-c/`
+— 155.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Dummy Sentinel Level-Stitching Invariant)
+
+Since the current level is already linked into a singly-linked list via `.next` pointers, it serves as the iteration queue for linking its children on the next level with $O(1)$ auxiliary space:
+
+1. **Outer Level Loop:** Start with `cur = root`.
+2. **Sentinel Initialization:** For each level, instantiate a sentinel `dummy` node and set `tail = dummy`.
+3. **Inner Horizontal Sweep:** While `cur != null`:
+   - If `cur.left != null`, append it: `tail.next = cur.left; tail = tail.next;`.
+   - If `cur.right != null`, append it: `tail.next = cur.right; tail = tail.next;`.
+   - Advance horizontally: `cur = cur.next`.
+4. **Descent:** When `cur` finishes the row, drop down to the start of the newly stitched row: `cur = dummy.next`.
+5. Repeat until no children remain (`cur == null`).
+
+```text
+FUNCTION connect(root):
+    cur = root
+
+    WHILE cur != null:
+        dummy = new Node(0)
+        tail = dummy
+
+        // Traverse current level like a linked list
+        WHILE cur != null:
+            IF cur.left != null:
+                tail.next = cur.left
+                tail = tail.next
+            IF cur.right != null:
+                tail.next = cur.right
+                tail = tail.next
+            cur = cur.next
+
+        // Drop down to the start of the next level
+        cur = dummy.next
+
+    RETURN root
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node twice (once as a child being linked, once as a parent traversing horizontally).
+- Space: O(1) auxiliary space, requiring only two pointers (`dummy` and `tail`).
+
+```mermaid
+flowchart TD
+    subgraph Level 1
+        C1["Node 1 (cur)"]
+    end
+    subgraph Level 2
+        D["dummy"] --> N2["Node 2"] --> N3["Node 3 (tail)"]
+    end
+    C1 -->|"cur.left"| N2
+    C1 -->|"cur.right"| N3
+    N3 -.->|"next level starts at dummy.next"| NextLvl["cur = Node 2"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [1,2,3,4,5,null,7]`)
+
+- **Level 1 (`cur = 1`):**
+  - `dummy` initialized, `tail = dummy`.
+  - `1.left` (2) attached: `tail.next = 2`, `tail = 2`.
+  - `1.right` (3) attached: `tail.next = 3`, `tail = 3`.
+  - `cur = 1.next = null`.
+  - Advance: `cur = dummy.next = 2`.
+- **Level 2 (`cur = 2`):**
+  - `dummy` initialized, `tail = dummy`.
+  - At node 2: `2.left` (4) attached -> `tail = 4`; `2.right` (5) attached -> `tail = 5`.
+  - Step across: `cur = 2.next = 3`.
+  - At node 3: `3.left` is null; `3.right` (7) attached: `5.next = 7`, `tail = 7`.
+  - Step across: `cur = 3.next = null`.
+  - Advance: `cur = dummy.next = 4`.
+- **Level 3 (`cur = 4`):**
+  - Walk nodes 4 -> 5 -> 7; none have children.
+  - Advance: `cur = dummy.next = null`. Loop terminates.
+
+Result: Level 2 linked as `2 -> 3 -> null`, Level 3 linked as `4 -> 5 -> 7 -> null`.
+
+### C. Why Sentinel Dummy Head Eliminates Edge-Case Branching
+
+- Without `dummy`, code must handle three annoying edge cases: which child is the head of the row, whether `cur.left` exists, and whether `cur.right` exists.
+- The dummy node unifies all child additions into an identical `tail.next = child; tail = child;` operation, making the logic immune to null left or right branches.
+
+### D. Pitfalls from comments
+
+- **Right-before-Left requirement in recursive approaches:** If implemented recursively instead of iteratively, one MUST call `connect(root.right)` before `connect(root.left)`. Traversing left first causes incomplete links across distant subtrees because right-side connections have not yet been formed.
+- **Dangling pointers:** Unlike queues, `tail.next` must cleanly terminate at `null`. Using `dummy.next` guarantees that the final child's next pointer remains `null`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (26): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — None.
+- Recent: 3 months — Meta.

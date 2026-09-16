@@ -315,3 +315,93 @@ function publishMerged(headRef, newHead, version) {
   headRef.current = { head: newHead, version }; // one store => atomic for readers
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Knockcat —
+`https://leetcode.com/problems/merge-two-sorted-lists/solutions/1826666/c-easy-to-understand-2-approaches-recurs-592f/`
+— 436.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Iterative In-Place Splicing)
+
+The optimal approach merges both lists iteratively using a sentinel `dummy` node without allocating new nodes or recursion overhead:
+1. Initialize `dummy = new ListNode(0)` and `tail = dummy`.
+2. Compare current nodes: link `tail.next` to the smaller of `list1` and `list2`, then advance that list's pointer.
+3. Advance `tail = tail.next`.
+4. As soon as one list is exhausted, splice the entire remaining segment of the non-empty list in a single $O(1)$ pointer assignment.
+5. Return `dummy.next`.
+
+```text
+FUNCTION mergeTwoLists(list1, list2):
+    dummy = new ListNode(0)
+    tail = dummy
+
+    WHILE list1 != null AND list2 != null:
+        IF list1.val <= list2.val:
+            tail.next = list1
+            list1 = list1.next
+        ELSE:
+            tail.next = list2
+            list2 = list2.next
+        tail = tail.next
+
+    IF list1 != null:
+        tail.next = list1
+    ELSE:
+        tail.next = list2
+
+    RETURN dummy.next
+```
+
+- Time: O(N + M) where N and M are the lengths of `list1` and `list2`. Each node is compared and linked at most once.
+- Space: O(1) auxiliary memory since existing pointers are rewired in place.
+
+```mermaid
+flowchart TD
+    Init["dummy = Node(0), tail = dummy"] --> Check{"list1 != null AND<br>list2 != null?"}
+    Check -->|"Yes"| Comp{"list1.val <= list2.val?"}
+    Comp -->|"Yes"| Link1["tail.next = list1<br>list1 = list1.next"]
+    Comp -->|"No"| Link2["tail.next = list2<br>list2 = list2.next"]
+    Link1 --> AdvTail["tail = tail.next"]
+    Link2 --> AdvTail
+    AdvTail --> Check
+    Check -->|"No"| Splice["tail.next = (list1 != null ? list1 : list2)"]
+    Splice --> Return["Return dummy.next"]
+```
+
+### B. Dry run on LeetCode Example 1 (`list1 = [1,2,4], list2 = [1,3,4]`)
+
+| Step | `list1.val` | `list2.val` | Picked Node | `tail.next` | Remaining `list1` | Remaining `list2` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 1 | 1 | `list1` (1) | 1 | `[2, 4]` | `[1, 3, 4]` |
+| 2 | 2 | 1 | `list2` (1) | 1 | `[2, 4]` | `[3, 4]` |
+| 3 | 2 | 3 | `list1` (2) | 2 | `[4]` | `[3, 4]` |
+| 4 | 4 | 3 | `list2` (3) | 3 | `[4]` | `[4]` |
+| 5 | 4 | 4 | `list1` (4) | 4 | `[]` (null) | `[4]` |
+| End | null | 4 | Splice remainder `list2` (4) | 4 | null | null |
+
+Result: `1 -> 1 -> 2 -> 3 -> 4 -> 4`.
+
+### C. Why Iterative In-Place Splicing Beats Recursive Merging
+
+- **Stack Safety:** Recursive solutions consume $O(N + M)$ call stack space and hit call stack overflow limits on large lists.
+- **Constant Memory:** Iterative splicing reuses existing memory cells and executes in pure $O(1)$ auxiliary space.
+
+### D. Pitfalls from comments
+
+- **Iterating through remaining nodes:** After the loop finishes, looping through remaining nodes of the active list is redundant; a single pointer assignment `tail.next = list1 ? list1 : list2` attaches the entire tail in $O(1)$.
+- **Creating new node copies:** Allocating new node instances wastes heap space and incurs garbage collection pauses. Rewiring existing references is strictly optimal.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (37): Amazon, Apple, Bloomberg, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — Amazon, Bloomberg, Google, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

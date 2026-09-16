@@ -335,3 +335,83 @@ function validPalindromeII(s) {
 ### Follow-Up 2: Handling Multi-Byte Unicode / Emoji Palindromes
 - **Scenario**: What if the string contains UTF-16 surrogate pairs (e.g. emojis `😀`)?
 - **Solution Strategy**: Use `[...s]` array destructuring or `Intl.Segmenter` to iterate grapheme clusters rather than raw UTF-16 code units.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/valid-palindrome/solutions/6166160/video-transforming-the-input-string/`
+— 135.5K views / 609 votes / 10 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Pointers In-Place)
+
+The classic solution is to use two pointers, one at the beginning (`left`) and one at the end (`right`). We iterate toward the center. If either pointer points to a non-alphanumeric character, we skip it. If they both point to valid characters, we compare their lowercase versions. If they differ, it's not a palindrome.
+
+```text
+FUNCTION isPalindrome(s):
+    left = 0
+    right = length(s) - 1
+    
+    WHILE left < right:
+        WHILE left < right AND NOT isAlphaNumeric(s[left]):
+            left++
+        WHILE left < right AND NOT isAlphaNumeric(s[right]):
+            right--
+            
+        IF lower(s[left]) != lower(s[right]):
+            RETURN false
+            
+        left++
+        right--
+        
+    RETURN true
+```
+
+- Time: O(N) where N is the length of the string. We traverse the string exactly once.
+- Space: O(1) as we use no extra memory and do not allocate new strings.
+
+```mermaid
+flowchart TD
+    Init["left = 0, right = length(s) - 1"] --> MainLoop{"left < right?"}
+    MainLoop -->|"Yes"| SkipLeft{"isAlphaNum(s[left])?"}
+    SkipLeft -->|"No"| IncLeft["left++"]
+    IncLeft --> SkipLeft
+    SkipLeft -->|"Yes"| SkipRight{"isAlphaNum(s[right])?"}
+    SkipRight -->|"No"| DecRight["right--"]
+    DecRight --> SkipRight
+    SkipRight -->|"Yes"| Compare{"lower(s[left]) == lower(s[right])?"}
+    Compare -->|"No"| ReturnFalse["Return false"]
+    Compare -->|"Yes"| Advance["left++, right--"]
+    Advance --> MainLoop
+    MainLoop -->|"No"| ReturnTrue["Return true"]
+```
+
+### B. Dry run on LeetCode Example 1 ("A man, a plan, a canal: Panama")
+
+| Step | `left` char | `right` char | Action | `left` idx | `right` idx |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 'A' | 'a' | Match (lowercase 'a' == 'a'). Move both. | 1 | 28 |
+| 2 | ' ' | 'm' | Skip space on left. | 2 | 28 |
+| 3 | 'm' | 'm' | Match ('m' == 'm'). Move both. | 3 | 27 |
+| ... | ... | ... | ... | ... | ... |
+| N | 'c' | 'c' | Match at the center. `left` meets `right`. | 14 | 14 |
+
+Final state: `left >= right`, loop ends, returns `true`.
+
+### C. Pitfalls from comments
+
+- **The Regex / Filter approach:** The post author notes a "bonus" solution where you can use Regex (`/[^a-zA-Z0-9]/`) to replace all bad characters, then reverse the string. While this is a 1-liner in Python (`s == s[::-1]`), a top comment points out that `replaceAll()` or Regex filtering creates a brand new string and scales poorly (often $O(N \cdot M)$ or $O(N)$ with heavy hidden constants and $O(N)$ space). The two-pointer in-place approach is what interviewers actually want.
+- **Nested Loop Guards:** When skipping non-alphanumeric characters with `WHILE` loops inside the main loop, you must re-check `left < right`. If a string is entirely punctuation (e.g., `"   "`), failing to re-check will cause index out-of-bounds exceptions.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (56): Accenture, Adobe, Amazon, Apple, Arista Networks, Attentive, Axon, Bloomberg, Cadence, Cisco, Cognizant, Comcast, Deloitte, eBay, Epic Systems, Fidelity, Fortinet, Goldman Sachs, Google, HCL, IBM, Infosys, Intuit, LTI, Meta, Microsoft, Oracle, Roku, Salesforce, SAP, Spotify, TCS, TikTok, Uber, UKG, Visa, VK, Walmart Labs, Wayfair, Whatnot, Yandex, Zenefits, Zoho.
+- Recent: 30 days — Amazon, Google, Meta, TCS, Yandex.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, TCS, Yandex.

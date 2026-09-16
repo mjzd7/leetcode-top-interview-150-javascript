@@ -323,3 +323,94 @@ function evalSlice(slice) {
   return evalRPN(slice); // reuse canonical evaluator per worker
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pablo Valdes —
+`https://leetcode.com/problems/evaluate-reverse-polish-notation/solutions/47430/java-accepted-code-stack-implementation-h2vxv/`
+— 82K views / 310 votes / 65 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Operand Stack Evaluation)
+
+Reverse Polish Notation (postfix) eliminates the need for parentheses and operator precedence rules. An operand stack evaluates expressions in a single forward pass:
+- When a numeric token is encountered, convert it to an integer and push it onto the stack.
+- When an operator is encountered, pop the top two numbers: the first popped is operand `b` (right-hand operand), and the second popped is operand `a` (left-hand operand).
+- Perform `a OP b`, truncate division results toward zero, and push the outcome back onto the stack.
+
+```text
+FUNCTION evalRPN(tokens):
+    stack = empty Stack
+    
+    FOR EACH token IN tokens:
+        IF token == "+":
+            b = stack.pop(); a = stack.pop()
+            stack.push(a + b)
+        ELSE IF token == "-":
+            b = stack.pop(); a = stack.pop()
+            stack.push(a - b)
+        ELSE IF token == "*":
+            b = stack.pop(); a = stack.pop()
+            stack.push(a * b)
+        ELSE IF token == "/":
+            b = stack.pop(); a = stack.pop()
+            stack.push(TRUNCATE_TOWARD_ZERO(a / b))
+        ELSE:
+            stack.push(PARSE_INT(token))
+            
+    RETURN stack.pop()
+```
+
+- Time: O(N) where N is the number of tokens. Each token is pushed and popped at most twice.
+- Space: O(N) in the worst case to hold intermediate operands.
+
+```mermaid
+flowchart TD
+    Start["stack = []"] --> Loop{"More tokens?"}
+    Loop -->|"Yes"| Type{"Is operator (+, -, *, /)?"}
+    Type -->|"No (Number)"| PushNum["Push parsed number"]
+    Type -->|"Yes (Op)"| PopTwo["b = stack.pop()<br>a = stack.pop()"]
+    PopTwo --> Calc["res = a OP b (truncate /)"]
+    Calc --> PushRes["stack.push(res)"]
+    PushNum --> Loop
+    PushRes --> Loop
+    Loop -->|"No"| Return["Return stack.pop()"]
+```
+
+### B. Dry run on LeetCode Example 2 (`tokens = ["4","13","5","/","+"]`)
+
+| Token | Type | Action | Stack State (top on right) |
+| :--- | :--- | :--- | :--- |
+| `"4"` | Number | Push 4 | `[4]` |
+| `"13"` | Number | Push 13 | `[4, 13]` |
+| `"5"` | Number | Push 5 | `[4, 13, 5]` |
+| `"/"` | Operator | `b = 5, a = 13` $\rightarrow$ `trunc(13 / 5) = 2`, push 2 | `[4, 2]` |
+| `"+"` | Operator | `b = 2, a = 4` $\rightarrow$ `4 + 2 = 6`, push 6 | `[6]` |
+
+Final Output: `6`.
+
+### C. The LIFO Operand Order Invariant
+
+For non-commutative operators (`-` and `/`), order of evaluation is critical:
+- In expression `a b -`, `a` was pushed before `b`.
+- LIFO popping yields `b` first, then `a`.
+- The operation must evaluate `a - b` and `a / b`, never `b - a` or `b / a`.
+
+### D. Pitfalls from comments
+
+- **Floor division vs truncation toward zero:** Standard integer division in languages like Python (`//`) floors toward $-\infty$ (e.g. `6 // -132` gives `-1`), whereas LeetCode specifies truncation toward zero (yielding `0`). Use `int(a / b)` in Python or `Math.trunc(a / b)` in JS.
+- **Negative number token confusion:** Negative integer tokens like `"-3"` start with a minus sign. Distinguishing operators from numbers must check string equality `token == "-"` rather than `token.startsWith("-")`.
+- **Division by zero:** Guaranteed not to occur per problem constraints.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (18): Amazon, Anduril, Apollo.io, Apple, Bloomberg, Canonical, Citadel, Citigroup, Goldman Sachs, Google, Grammarly, Infosys, LinkedIn, Meta, Microsoft, Oracle, Tesla, Yandex.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google.

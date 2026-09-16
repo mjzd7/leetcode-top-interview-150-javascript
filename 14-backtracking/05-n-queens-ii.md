@@ -326,3 +326,116 @@ function minConflictsQueens(n, maxSteps = 10000) {
   return queens;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Saurav Wani —
+`https://leetcode.com/problems/n-queens-ii/solutions/8522092/on-optimal-solution-beginner-friendly-ba-p9rr/`
+— Backtracking + Bitmasking.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Bitmask Backtracking with Bitwise Propagation)
+
+Because N-Queens II asks only for the count of valid board configurations rather than materialized boards, all conflict checking can be condensed into 3 bitmask integers:
+
+1. **Board Mask:** Set `allPositions = (1 << n) - 1`, where each of the first $n$ bits represents an available column.
+2. **Bitwise Conflict State:** Track 3 bitmasks across the recursion:
+   - `cols`: Bitmask of columns currently occupied by placed queens.
+   - `diag1`: Bitmask of main diagonals (`\`) projecting into the current row.
+   - `diag2`: Bitmask of anti-diagonals (`/`) projecting into the current row.
+3. **Execution & Transition:**
+   - **Base Case:** When `row == n`, all $n$ queens are placed safely. Return `1`.
+   - **Available Slots:** Compute `available = allPositions & ~(cols | diag1 | diag2)`. Every 1-bit marks an unattacked column in the current row.
+   - **Iterate Set Bits:** While `available > 0`:
+     - Extract lowest available bit: `pos = available & -available`.
+     - Remove `pos`: `available = available - pos`.
+     - Advance to next row with shifted diagonals:
+       - Next `cols` = `cols | pos`.
+       - Next `diag1` = `((diag1 | pos) << 1) & allPositions`.
+       - Next `diag2` = `(diag2 | pos) >> 1`.
+     - Accumulate valid configuration count.
+
+```text
+FUNCTION totalNQueens(n):
+    allPositions = (1 << n) - 1
+
+    FUNCTION backtrack(row, cols, diag1, diag2):
+        IF row == n:
+            RETURN 1
+
+        count = 0
+        available = allPositions & ~(cols | diag1 | diag2)
+
+        WHILE available > 0:
+            pos = available & -available  // Extract lowest set bit
+            available = available - pos   // Clear candidate bit
+
+            count = count + backtrack(
+                row + 1,
+                cols | pos,
+                ((diag1 | pos) << 1) & allPositions,
+                (diag2 | pos) >> 1
+            )
+
+        RETURN count
+
+    RETURN backtrack(0, 0, 0, 0)
+```
+
+- Time: O(N!) — in the worst case, branching factor decreases with each placed queen, bounded by $N!$.
+- Space: O(N) auxiliary stack depth. Zero heap allocations.
+
+```mermaid
+flowchart TD
+    State["State: (row, cols, diag1, diag2)"] --> Calc["available = allPositions & ~(cols | diag1 | diag2)"]
+    Calc --> Loop{"available > 0?"}
+    Loop -->|"Yes"| Extract["pos = available & -available<br>available -= pos"]
+    Extract --> Recurse["backtrack(row+1, cols|pos, (diag1|pos)<<1, (diag2|pos)>>1)"]
+    Recurse --> Loop
+    Loop -->|"No (all placed or no slots)"| Base{"row == n?"}
+    Base -->|"Yes"| Ret1["Return 1"]
+    Base -->|"No"| Ret0["Return 0"]
+```
+
+### B. Dry run on LeetCode Example 1 (`n = 4`)
+
+- `allPositions = 0b1111 = 15`.
+- `row 0`: `cols=0, d1=0, d2=0` -> `available = 0b1111`.
+  - Place queen at col 1 (`pos = 0b0010`):
+    - `row 1`: `cols=0b0010, d1=0b0100, d2=0b0001`.
+    - `available = 15 & ~(0b0111) = 0b1000` (only col 3 available).
+    - Place queen at col 3 (`pos = 0b1000`):
+      - `row 2`: `cols=0b1010, d1=0b0000, d2=0b0100`.
+      - `available = 15 & ~(0b1110) = 0b0001` (only col 0 available).
+      - Place queen at col 0 (`pos = 0b0001`):
+        - `row 3`: `cols=0b1011, d1=0b0010, d2=0b0100`.
+        - `available = 15 & ~(0b1111) = 0b0000` (dead end).
+  - Place queen at col 2 (`pos = 0b0100`):
+    - Explores path yielding 1st valid solution `[1, 3, 0, 2]`.
+  - Symmetric branches yield the 2nd valid solution `[2, 0, 3, 1]`.
+
+Total valid solutions: `2`.
+
+### C. Why Bitmask Shifts Outperform HashSets and Arrays
+
+- Traditional approaches store diagonal indices `row - col` and `row + col` in hash sets or boolean arrays, incurring memory lookups and branch mispredictions.
+- Bit shifting models diagonal projection via hardware instructions: advancing one row shifts the left diagonal shadow left (`<< 1`) and right diagonal shadow right (`>> 1`).
+- `available & -available` isolates viable candidate columns in a single CPU cycle without scanning invalid squares.
+
+### D. Pitfalls from comments
+
+- **High-Bit Leaks on Left Shift:** Shifting `(diag1 | pos) << 1` can generate bits higher than $n - 1$. Always mask with `& allPositions` to prevent higher bits from inadvertently blocking other checks.
+- **Signed 32-bit Shift Semantics:** In languages with signed 32-bit bitwise operations, ensure shifts do not flip sign bits when operating on large integers. For $N \le 9$, all values fit comfortably in standard machine words.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (10): Amazon, Bloomberg, Deutsche Bank, Google, Liftoff, Meta, Microsoft, Snowflake, Walmart Labs, Zenefits.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

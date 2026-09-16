@@ -317,3 +317,99 @@ function publishRotation(headRef, newHead, newTail) {
   headRef.current = newHead; // then publish
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Dong Wang —
+`https://leetcode.com/problems/rotate-list/solutions/22735/my-clean-c-code-quite-standard-find-tail-p15w/`
+— 81.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Circular Ring Closure & Seam Break)
+
+Rather than maintaining separate disjoint lists or computing offsets with complicated two-pointer windows, the standard optimal approach connects the list into a circular ring and cuts the seam at the correct offset:
+
+1. **Find Length & Tail:** Traverse to the end to determine list length `len` and locate the last node `tail`.
+2. **Close Ring:** Set `tail.next = head` to form a circular list.
+3. **Normalize Rotation:** Compute `k = k % len`. If `k == 0`, untie the ring (`tail.next = null`) and return `head`.
+4. **Advance to New Tail:** Walk `len - k` steps forward from `tail` (which brings the pointer to the node that should become the new tail).
+5. **Break Ring:**
+   - Record `newHead = newTail.next`
+   - Set `newTail.next = null`
+6. Return `newHead`.
+
+```text
+FUNCTION rotateRight(head, k):
+    IF head == null OR head.next == null OR k == 0:
+        RETURN head
+
+    // Step 1: Compute length and find existing tail
+    len = 1
+    tail = head
+    WHILE tail.next != null:
+        tail = tail.next
+        len = len + 1
+
+    // Step 2: Form circular list
+    tail.next = head
+
+    // Step 3: Modulo reduction
+    k = k MOD len
+    IF k != 0:
+        FOR i FROM 0 TO len - k - 1:
+            tail = tail.next
+
+    // Step 4: Break ring at new seam
+    newHead = tail.next
+    tail.next = null
+
+    RETURN newHead
+```
+
+- Time: O(N) where N is the number of nodes (at most $2N$ steps: $N$ to find tail + at most $N$ to find new seam).
+- Space: O(1) auxiliary pointer operations in-place.
+
+```mermaid
+flowchart TD
+    Init["Walk to tail, len = N"] --> Close["Close ring: tail.next = head"]
+    Close --> Mod["k = k % len"]
+    Mod --> Step["Advance tail by (len - k) steps"]
+    Step --> Break["newHead = tail.next<br>tail.next = null"]
+    Break --> Ret["Return newHead"]
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [1,2,3,4,5], k = 2`)
+
+- `len = 5`, `tail = Node(5)`.
+- Connect `5.next = 1` (Ring: `1 -> 2 -> 3 -> 4 -> 5 -> 1...`).
+- `k = 2 % 5 = 2`.
+- Steps to advance: `len - k = 5 - 2 = 3` steps from `tail(5)`:
+  - Step 1: `Node(1)`
+  - Step 2: `Node(2)`
+  - Step 3: `Node(3)` (new tail)
+- Break ring: `newHead = 3.next = 4`, `3.next = null`.
+- Resulting list: `4 -> 5 -> 1 -> 2 -> 3`.
+
+### C. Why Ring Closure Beats Separate Sublist Splicing
+
+- **Eliminates Null Checking:** In a circular list, navigation never encounters `null`, making stepping operations uniform.
+- **Direct Offset Formula:** Advancing `len - k` steps from `tail` arrives at the new tail without needing complex index math or separate fast/slow pointers.
+
+### D. Pitfalls from comments
+
+- **Excessive $k$ values:** $k$ can be up to $2 \times 10^9$. Failing to apply `k = k % len` leads to massive redundant loops or integer timeout.
+- **Zero effective rotation ($k \% len == 0$):** If $k$ is an exact multiple of `len`, the list remains unchanged. The ring must be broken (`tail.next = null`) before returning `head`.
+- **Empty list or single node:** `len = 1` causes division by zero if `head == null` is not checked upfront.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Amazon, Apple, Bloomberg, Google, Meta, Microsoft, Oracle, etc.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Google.

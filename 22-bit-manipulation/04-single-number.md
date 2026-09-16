@@ -243,3 +243,78 @@ async function streamSingleNumber(numberStream) {
   return acc;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Dead Inside —
+`https://leetcode.com/problems/single-number/solutions/1771720/c-easy-solutions-sorting-xor-maps-or-fre-z7gp/`
+— 235.1K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Bitwise XOR Self-Cancellation Property)
+
+Extract the unique solitary number in a single pass using the algebraic properties of bitwise XOR:
+
+1. **Algebraic Invariants of XOR ($\oplus$):**
+   - **Identity:** $X \oplus 0 = X$
+   - **Self-Annihilation:** $X \oplus X = 0$
+   - **Commutativity & Associativity:** Order and grouping do not alter the outcome:
+     $$(A \oplus B \oplus A) = (A \oplus A) \oplus B = 0 \oplus B = B$$
+2. **Single Pass Reduction:**
+   - Initialize an accumulator `ans = 0`.
+   - Traverse through every integer $x$ in `nums` and compute `ans = ans ^ x`.
+   - Every paired element occurs an even number of times ($2$), annihilating itself into $0$.
+   - The solitary element occurs an odd number of times ($1$), surviving as the final value of `ans`.
+
+```text
+FUNCTION singleNumber(nums):
+    ans = 0
+    FOR EACH x IN nums:
+        ans = ans XOR x
+    RETURN ans
+```
+
+- Time: O(N) — traverses the array once, executing an $O(1)$ bitwise XOR instruction per element.
+- Space: O(1) — requires only a single scalar integer accumulator.
+
+```mermaid
+flowchart TD
+    Init["ans = 0"] --> Loop["For each num in nums:<br>ans = ans XOR num"]
+    Loop --> DoneCheck{"Array exhausted?"}
+    DoneCheck -->|"No"| Loop
+    DoneCheck -->|"Yes"| ReturnAns["RETURN ans<br>(Paired numbers cancel to 0)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [4, 1, 2, 1, 2]`)
+
+- Initial state: `ans = 0`.
+- Process 4: `ans = 0 ^ 4 = 4`.
+- Process 1: `ans = 4 ^ 1`.
+- Process 2: `ans = 4 ^ 1 ^ 2`.
+- Process 1: `ans = (4 ^ 2) ^ (1 ^ 1) = 4 ^ 2 ^ 0 = 4 ^ 2`.
+- Process 2: `ans = 4 ^ (2 ^ 2) = 4 ^ 0 = 4`.
+- Final value: `4`.
+
+### C. Why XOR Outclasses Maps and Sorting
+
+- Hash sets and frequency tables satisfy the $O(N)$ time requirement but demand $O(N)$ additional memory, violating the problem's $O(1)$ space constraint.
+- Sorting arrays satisfies $O(1)$ auxiliary space but incurs an $O(N \log N)$ sorting time penalty.
+- XOR fulfills both constraints simultaneously in $O(N)$ time and $O(1)$ space without mutating the input.
+
+### D. Pitfalls from comments
+
+- **Non-Zero Initialization:** Starting `ans` with any value other than `0` alters the cancellation product ($C \oplus X \ne X$ when $C \ne 0$).
+- **Applicability Boundary:** The XOR self-cancellation property relies strictly on duplicates appearing an even number of times. When elements appear three times, standard XOR is insufficient (requiring modular bit-counting instead).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (18): Accenture, Adobe, Airbnb, Amazon, Amdocs, Bloomberg, Cisco, Cognizant, Goldman Sachs, Google, Huawei, Meta, Microsoft, Oracle, Qualcomm, Siemens, tcs, Zomato.
+- Recent: 30 days — Amazon, Bloomberg, Google, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

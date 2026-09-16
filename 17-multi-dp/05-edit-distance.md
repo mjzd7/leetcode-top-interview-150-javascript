@@ -273,3 +273,110 @@ function spellSuggest(trie, typo, limit = 5) {
   return trieWalkWithDPCutoff(trie, typo, limit); // column-pruned traversal
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Jianchao Li —
+`https://leetcode.com/problems/edit-distance/solutions/25846/c-on-space-dp-by-jianchao-li-7fkd/`
+— 129.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (1D Rolling Array DP with Diagonal Variable)
+
+Compress the classic Wagner-Fischer 2D alignment matrix into a single 1D array by caching the diagonal state:
+
+1. **Recurrence Invariants:**
+   - To transform prefix `word1[0...i-1]` to `word2[0...j-1]`:
+     - **Match:** If characters match (`word1[i-1] == word2[j-1]`), cost is unchanged: $dp[i][j] = dp[i-1][j-1]$.
+     - **Mismatch:** Take the minimum of three elementary edits plus 1:
+       - **Replace:** $dp[i-1][j-1] + 1$ (diagonal).
+       - **Delete from word1:** $dp[i-1][j] + 1$ (vertical / top).
+       - **Insert into word1:** $dp[i][j-1] + 1$ (horizontal / left).
+2. **Space Compression via `prevDiag`:**
+   - Evaluating cell $(i, j)$ requires:
+     - Diagonal $dp[i-1][j-1]$ (cached in a scalar register `prevDiag`).
+     - Top $dp[i-1][j]$ (the pre-update value in `dp[j]`).
+     - Left $dp[i][j-1]$ (the updated value in `dp[j-1]`).
+   - By preserving `dp[j]` into a temporary variable before each column write, a single 1D array of length $N + 1$ suffices.
+
+```text
+FUNCTION minDistance(word1, word2):
+    m = LENGTH(word1)
+    n = LENGTH(word2)
+
+    dp = ARRAY OF SIZE (n + 1)
+    FOR j FROM 0 TO n:
+        dp[j] = j
+
+    FOR i FROM 1 TO m:
+        prevDiag = dp[0]
+        dp[0] = i
+
+        FOR j FROM 1 TO n:
+            temp = dp[j]
+            IF word1[i - 1] == word2[j - 1]:
+                dp[j] = prevDiag
+            ELSE:
+                dp[j] = 1 + MIN(prevDiag, MIN(dp[j], dp[j - 1]))
+            prevDiag = temp
+
+    RETURN dp[n]
+```
+
+- Time: O(M * N) — each character pair is evaluated in constant time.
+- Space: O(min(M, N)) auxiliary space by orienting the 1D buffer along the shorter string.
+
+```mermaid
+flowchart TD
+    Init["dp[j] = j for j = 0..n (word2 insertion costs)"] --> Outer["For i from 1 to m"]
+    Outer --> SetupRow["prevDiag = dp[0]<br>dp[0] = i (word1 deletion costs)"]
+    SetupRow --> Inner["For j from 1 to n"]
+    Inner --> Save["temp = dp[j]"]
+    Save --> MatchCheck{"word1[i-1] == word2[j-1]?"}
+    MatchCheck -->|"Yes"| CopyDiag["dp[j] = prevDiag"]
+    MatchCheck -->|"No"| PickMin["dp[j] = 1 + min(prevDiag, dp[j], dp[j-1])"]
+    CopyDiag --> Shift["prevDiag = temp"]
+    PickMin --> Shift
+    Shift --> Inner
+    Inner --> Outer
+    Outer --> Ret["RETURN dp[n]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`word1 = "horse"`, `word2 = "ros"`)
+
+- $m = 5, n = 3$.
+- Initial row: `dp = [0, 1, 2, 3]`.
+- $i = 1$ ('h'):
+  - `prevDiag = 0`, `dp[0] = 1`.
+  - $j = 1$ ('r'): 'h' $\ne$ 'r' $\implies 1 + \min(0, 1, 1) = 1$. `prevDiag = 1`.
+  - $j = 2$ ('o'): 'h' $\ne$ 'o' $\implies 1 + \min(1, 2, 1) = 2$. `prevDiag = 2`.
+  - $j = 3$ ('s'): 'h' $\ne$ 's' $\implies 1 + \min(2, 3, 2) = 3$. `prevDiag = 3`.
+  - `dp = [1, 1, 2, 3]`.
+- Continuing for remaining rows transforms `horse` into `ros` in exactly 3 operations:
+  - Replace 'h' with 'r' $\to$ "rorse"
+  - Delete 'r' $\to$ "rose"
+  - Delete 'e' $\to$ "ros"
+- Final result: `3`.
+
+### C. Why Diagonal Caching Slashes Matrix Footprint to $O(N)$
+
+- The classic 2D formulation consumes $O(M \times N)$ space, generating high cache miss penalties on large strings.
+- Storing only one row and using the scalar `prevDiag` register preserves the top-left diagonal while slashing space to $O(N)$.
+
+### D. Pitfalls from comments
+
+- **Premature Diagonal Overwrite:** Overwriting `dp[j]` before capturing its original value into `temp` destroys the diagonal prerequisite needed for column $j + 1$.
+- **Base Cost Misalignment:** Failing to initialize `dp[0] = i` at the start of each row iteration causes deletion operations from prefix `word1[0...i-1]` to be miscounted.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (28): Amazon, Apple, Axon, Bloomberg, Cisco, Deloitte, EPAM Systems, Flipkart, Google, HashedIn, IBM, Infosys, LinkedIn, Meta, Microsoft, Qualcomm, Samsung, Snap, Sprinklr, Stripe, Swiggy, TikTok, Uber, Visa, Walmart Labs, X, Yandex, Zoho.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Apple, Google, Infosys.

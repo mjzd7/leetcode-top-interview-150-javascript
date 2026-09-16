@@ -350,3 +350,196 @@ function countHappyNumbers(N) {
   return count;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Freezen —
+`https://leetcode.com/problems/happy-number/solutions/56917/my-solution-in-c-o1-space-and-no-magic-m-yj8u/`
+— 2.2K votes / 194.6K views / 213 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Record every seen value in a set.
+Repeat means loop, 1 means happy.
+
+```text
+FUNCTION happyNaive(n):
+    seen = EMPTY SET
+    WHILE n != 1 AND n NOT IN seen:
+        ADD n TO seen
+        n = DIGIT SQUARE SUM(n)
+    RETURN n == 1
+```
+
+- Time: O(log n) steps
+- Space: O(log n) set
+
+### B. Post's way: Floyd cycle race
+
+Slow walks one transform per turn,
+fast walks two. They meet iff a
+loop exists. Then check the
+meeting value: 1 means happy.
+
+```text
+FUNCTION digitSquareSum(n):
+    sum = 0
+    WHILE n > 0:
+        d = n MOD 10
+        sum += d * d
+        n = FLOOR(n / 10)
+    RETURN sum
+FUNCTION happyOptimal(n):
+    slow = n; fast = n
+    REPEAT:
+        slow = digitSquareSum(slow)
+        fast = digitSquareSum(digitSquareSum(fast))
+    UNTIL slow == fast
+    RETURN slow == 1
+```
+
+- Time: O(log n)
+- Space: O(1)
+
+```mermaid
+flowchart TD
+    Init["slow=n, fast=n"] --> Step["slow=1x, fast=2x"]
+    Step --> Meet{"slow==fast?"}
+    Meet -->|No| Step
+    Meet -->|Yes| One{"==1?"}
+    One -->|Yes| Happy["True"]
+    One -->|No| Sad["False"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`n = 19`: 19 → 82 → 68 → 100 → 1.
+Happy → True.
+
+`n = 2`: 2 → 4 → 16 → 37 → 58 →
+89 → 145 → 42 → 20 → 4 (loop).
+Meets at 4, not 1 → False.
+
+### D. Why B beats A
+
+- No set, two variables only.
+- Same chain logic as Linked
+  List Cycle (post's own framing).
+- 1 is a fixed point, so a meet
+  at 1 still reads True.
+
+### E. Pitfalls from comments
+
+- Explainer thread (279): the
+  chain IS a linked list, 1 is
+  a self-loop node.
+- Fast hits 1 first on happy
+  inputs — one extra lap is
+  fine (368).
+- digitSquareSum(0) = 0 guard
+  for n = 0 edge.
+- No math magic needed: cycle
+  or 1 are the only endings.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (24): Accenture, Agoda,
+  Airbnb, Amazon, Apple, Audible,
+  BlackRock, Bloomberg, Cisco,
+  Google, Jump Trading, Meta,
+  Microsoft, Nike, Oracle, PayPal,
+  Snowflake, Swiggy, TCS, Tesla,
+  TikTok, Uber, Visa, X.
+- Recent: 30 days — Amazon,
+  Bloomberg, Google.
+- Recent: 3 months — Amazon,
+  Bloomberg, Google, Meta,
+  Snowflake.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Freezen —
+`https://leetcode.com/problems/happy-number/solutions/56917/my-solution-in-c-o1-space-and-no-magic-math-property-involved/`
+— 194.6K views / 2.2K votes / 213 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Floyd's Cycle Detection)
+
+The standard way to solve this is using a Hash Set to store previously seen numbers, returning `false` if a cycle is detected. This takes $O(\log N)$ space (since the numbers quickly drop down to under 243).
+However, a brilliant $O(1)$ space solution borrows from linked lists: **Floyd's Cycle Detection Algorithm (Tortoise and Hare)**. Because generating the next sum of squares acts exactly like traversing a `next` pointer in a linked list, we can use a `slow` pointer that moves one step and a `fast` pointer that moves two steps. If they ever meet, there is a cycle.
+
+```text
+FUNCTION getNext(n):
+    sum = 0
+    WHILE n > 0:
+        digit = n % 10
+        sum += digit * digit
+        n = n / 10
+    RETURN sum
+
+FUNCTION isHappy(n):
+    slow = n
+    fast = getNext(n)
+    
+    // If fast reaches 1, it's a happy number.
+    // If slow == fast, a cycle is detected and it's not 1.
+    WHILE fast != 1 AND slow != fast:
+        slow = getNext(slow)
+        fast = getNext(getNext(fast))
+        
+    RETURN fast == 1
+```
+
+- Time: O(log N) to find the next number, and it takes a constant number of steps to either reach 1 or fall into the cycle. So the overall time is bounded by $O(\log N)$.
+- Space: O(1) as we only need two integer variables to track the cycle.
+
+```mermaid
+flowchart TD
+    Init["slow = n, fast = getNext(n)"] --> LoopCondition{"fast != 1 AND slow != fast?"}
+    LoopCondition -->|"Yes"| Advance["slow = getNext(slow)<br>fast = getNext(getNext(fast))"]
+    Advance --> LoopCondition
+    LoopCondition -->|"No"| FinalCheck{"fast == 1?"}
+    FinalCheck -->|"Yes"| ReturnTrue["Return true"]
+    FinalCheck -->|"No"| ReturnFalse["Return false (Cycle detected)"]
+```
+
+### B. Dry run on LeetCode Example 1 (n = 19)
+
+$getNext(19) \rightarrow 1^2 + 9^2 = 82$
+$getNext(82) \rightarrow 8^2 + 2^2 = 68$
+$getNext(68) \rightarrow 6^2 + 8^2 = 100$
+$getNext(100) \rightarrow 1^2 + 0^2 + 0^2 = 1$
+
+| Step | `slow` | `fast` | Notes |
+| :--- | :--- | :--- | :--- |
+| Init | 19 | `getNext(19)` = 82 | - |
+| 1 | `getNext(19)` = 82 | `getNext(getNext(82))` = 100 | `fast` != 1, `slow` != `fast` |
+| 2 | `getNext(82)` = 68 | `getNext(getNext(100))` = 1 | `fast` is 1! Loop terminates. |
+
+Since `fast == 1`, return `true`.
+
+### C. Pitfalls from comments
+
+- **The Math Shortcut:** An alternative $O(1)$ space solution relies on a hardcoded "magic math property": the only cycle that doesn't reach 1 is the cycle containing `4` (4 $\rightarrow$ 16 $\rightarrow$ 37 $\rightarrow$ ... $\rightarrow$ 4). You could just write a loop `while n != 1 and n != 4:` and you wouldn't need a hash set or slow/fast pointers. However, interviewers *hate* this because it requires prior domain knowledge of number theory. The Floyd Cycle Detection approach is the universally preferred answer because it generalizes to any cycle.
+- **Is `fast` skipping over 1?** A common doubt is: what if `fast` hits 1, but then jumps over it on its second step (`getNext(getNext(fast))`)? This isn't an issue. If a number hits 1, its next transformation is $1^2 = 1$. It acts as an infinite cycle of 1s. So if `fast` hits 1, it stays 1 forever until `slow` catches up, but the loop terminates immediately anyway because of the `fast != 1` check.
+- **Optimizing the loop check:** Originally the post had `while (slow != fast)`. A commenter `rancho wang` noted that `fast` might hit 1 before `slow` catches up. The loop condition `fast != 1 && slow != fast` safely early-exits, saving unnecessary computations.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (24): Accenture, Agoda, Airbnb, Amazon, Apple, Audible, BlackRock, Bloomberg, Cisco, Google, Jump Trading, Meta, Microsoft, Nike, Oracle, PayPal, Snowflake, Swiggy, TCS, Tesla, TikTok, Uber, Visa, X.
+- Recent: 30 days — Amazon, Bloomberg, Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Snowflake.

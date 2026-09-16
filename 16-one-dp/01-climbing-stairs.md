@@ -235,3 +235,86 @@ function climbStairsLogN(n) {
   return matPow([[1, 1], [1, 0]], n)[0][1]; // Fib(n+1)... adjusted for ways framing
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Rahul Varma —
+`https://leetcode.com/problems/climbing-stairs/solutions/3708750/4-methods-beats-100-c-java-python-beginn-bvot/`
+— 461.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Space-Optimized Fibonacci DP)
+
+Reduce the recurrence relation to two rolling scalar state variables without allocating array buffers:
+
+1. **Recurrence Invariant:**
+   - Reaching stair $n$ is possible only by a single step from $n - 1$ or a double step from $n - 2$.
+   - Because these choices are mutually exclusive, total ways satisfy the Fibonacci transition:
+     $$\text{ways}(n) = \text{ways}(n - 1) + \text{ways}(n - 2)$$
+2. **Base Cases:**
+   - If $n \le 2$, return $n$ directly ($\text{ways}(1) = 1, \text{ways}(2) = 2$).
+3. **Space Compression:**
+   - Retain only the previous two computed values (`prev2` for $n-2$ and `prev1` for $n-1$).
+   - Advance sequentially from 3 up to $n$, accumulating into `curr` and rotating the two registers forward.
+
+```text
+FUNCTION climbStairs(n):
+    IF n <= 2:
+        RETURN n
+
+    prev2 = 1
+    prev1 = 2
+
+    FOR i FROM 3 TO n:
+        curr = prev1 + prev2
+        prev2 = prev1
+        prev1 = curr
+
+    RETURN prev1
+```
+
+- Time: O(n) — single linear pass through $n$ iterations.
+- Space: O(1) auxiliary space — only two integer registers are used.
+
+```mermaid
+flowchart LR
+    prev2["prev2 (step i - 2)"] --> Sum["+"]
+    prev1["prev1 (step i - 1)"] --> Sum
+    Sum --> curr["curr (step i)"]
+    curr -.->|"Shift: prev2 = prev1, prev1 = curr"| prev1
+```
+
+### B. Dry run on LeetCode Example 2 and Step 4
+
+- **Example 2 ($n = 3$):**
+  - $n > 2 \implies prev2 = 1, prev1 = 2$.
+  - $i = 3$: $curr = 2 + 1 = 3$. Rotate: $prev2 = 2, prev1 = 3$.
+  - Loop terminates. Return $prev1 = 3$.
+- **Step 4 ($n = 4$):**
+  - $i = 4$: $curr = 3 + 2 = 5$. Rotate: $prev2 = 3, prev1 = 5$.
+  - Return $prev1 = 5$.
+
+Final result: `5` distinct ways.
+
+### C. Why Space Optimization Eliminates GC and Memory Overhead
+
+- Naive recursion explores overlapping subproblems in $O(2^n)$ exponential time, causing call stack overflow.
+- Full tabulation creates an array of size $n + 1$, adding memory allocations and garbage collection overhead. Compressing state into two primitives achieves $O(1)$ memory without sacrificing the $O(n)$ linear runtime.
+
+### D. Pitfalls from comments
+
+- **Integer Overflow on $n \ge 46$:** The 45th Fibonacci number is $1,836,311,903$, fitting within 32-bit signed limits ($2^{31} - 1$). At $n = 46$, the sum overflows 32-bit integers, requiring 64-bit integer types in languages like C++ or Java.
+- **Base Offset Off-by-One:** Aligning index 0 vs index 1 can confuse initial states; verifying small inputs ($n=1 \to 1, n=2 \to 2$) avoids offset errors.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (36): Accenture, Accolite, Adobe, Agoda, Amazon, AMD, Apple, BlackRock, Bloomberg, ByteDance, Citadel, Cognizant, Deloitte, Goldman Sachs, Google, Grammarly, HPE, HSBC, IBM, Infosys, Intuit, josh technology, Media.net, Meta, Microsoft, Nvidia, Oracle, PayPal, Qualcomm, Rakuten, Societe Generale, Squarepoint Capital, tcs, TikTok, Walmart Labs, Zoho.
+- Recent: 30 days — Amazon, Bloomberg, Google, Infosys, Intuit, Meta, Ola Cabs.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, Intuit, Meta, Microsoft, tcs.

@@ -389,3 +389,108 @@ async function distributedCalculate(segments) {
   return partials.reduce((acc, v, i) => acc + segments[i].sign * v, 0);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by southpenguin —
+`https://leetcode.com/problems/basic-calculator/solutions/62361/iterative-java-solution-with-stack-by-so-7qs7/`
+— 154K views / 1K votes / 67 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Iterative Stack with Running Sum & Sign)
+
+Because Basic Calculator only includes addition, subtraction, and parentheses (no multiplication or division precedence), a full Shunting-Yard parser is unnecessary. 
+
+An iterative stack tracks the accumulated sum and outer sign whenever parentheses nest:
+1. **Digit:** Accumulate multi-digit numbers: `number = number * 10 + digit`.
+2. **`+` or `-`:** Commit the accumulated number into the running `result`: `result += sign * number`. Reset `number = 0` and update `sign` to `+1` or `-1`.
+3. **`(` (Open paren):** Save current state. Push `result` then `sign` onto the stack. Reset `result = 0` and `sign = 1` for the nested scope.
+4. **`)` (Close paren):** Commit the inner number into `result`. Pop the parenthesis's multiplier sign, then pop the outer base result and add them: `result = prevResult + (prevSign * result)`.
+
+```text
+FUNCTION calculate(s):
+    stack = empty Stack
+    result = 0
+    number = 0
+    sign = 1
+
+    FOR EACH char c IN s:
+        IF IS_DIGIT(c):
+            number = number * 10 + (c - '0')
+        ELSE IF c == '+':
+            result += sign * number
+            number = 0
+            sign = 1
+        ELSE IF c == '-':
+            result += sign * number
+            number = 0
+            sign = -1
+        ELSE IF c == '(':
+            stack.push(result)
+            stack.push(sign)
+            result = 0
+            sign = 1
+        ELSE IF c == ')':
+            result += sign * number
+            number = 0
+            result *= stack.pop()  // sign before parenthesis
+            result += stack.pop()  // result before parenthesis
+            
+    IF number != 0:
+        result += sign * number
+        
+    RETURN result
+```
+
+- Time: O(N) where N is the length of `s`. Each character is visited once.
+- Space: O(N) stack depth bounded by maximum parenthesis nesting depth.
+
+```mermaid
+flowchart TD
+    Init["result = 0, num = 0, sign = 1, stack = []"] --> Loop{"More chars?"}
+    Loop -->|"Yes"| Char{"Character type?"}
+    Char -->|"Digit"| Num["num = num * 10 + digit"]
+    Char -->|"+ or -"| FlushSign["result += sign * num<br>num = 0<br>sign = (+1 or -1)"]
+    Char -->|"'('"| EnterScope["stack.push(result)<br>stack.push(sign)<br>result = 0, sign = 1"]
+    Char -->|"')'"| ExitScope["result += sign * num<br>num = 0<br>result *= stack.pop()<br>result += stack.pop()"]
+    Num --> Loop
+    FlushSign --> Loop
+    EnterScope --> Loop
+    ExitScope --> Loop
+    Loop -->|"No"| FinalFlush["result += sign * num"]
+    FinalFlush --> Return["Return result"]
+```
+
+### B. Dry run on LeetCode Example 3 (`s = "(1+(4+5+2)-3)+(6+8)"`)
+
+Tracing inner sub-expression `(4+5+2)`:
+1. `c = '('`: Push outer `result = 1` and `sign = 1`. Reset `result = 0, sign = 1`. Stack: `[1, 1]`.
+2. Digits & operators `4+5+2`: Inner `result` becomes $4 + 5 + 2 = 11$.
+3. `c = ')'`:
+   - Pop outer sign: $1 \rightarrow 11 \times 1 = 11$.
+   - Pop outer result: $1 \rightarrow 1 + 11 = 12$.
+4. Next token `-3`: `result = 12 - 3 = 9`.
+
+### C. Why This Beats Shunting-Yard AST Parsers
+
+- **Zero grammar overhead:** Avoids token stream tokenization, AST node allocation, and operator precedence tables.
+- **Immediate evaluation:** Computes intermediate values in-flight.
+
+### D. Pitfalls from comments
+
+- **Trailing unflushed number:** If the expression ends with a number (e.g. `"1 + 1"`), no operator or closing parenthesis follows. A post-loop check `if (number != 0) result += sign * number` is required.
+- **Unary negative numbers at start or after `(`:** In cases like `"- (3 + 2)"`, the first token is `'-'`. Because `number` starts at 0, `result += sign * 0` safely does nothing while setting `sign = -1`.
+- **Space characters:** Blank spaces between numbers and operators must simply be ignored without resetting state.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (38): Adobe, Airbnb, Amazon, Apple, Bloomberg, ByteDance, Coupang, DE Shaw, DoorDash, Expedia, Google, Highspot, Houzz, Hulu, Infosys, Intuit, IXL, Meta, Microsoft, Oracle, Palo Alto Networks, Pocket Gems, Ripple, Rivian, Roblox, Rokt, Salesforce, Snap, Snowflake, Squarepoint Capital, Tesla, TikTok, Uber, Verkada, Walmart Labs, Yandex, Zoho, Zoox.
+- Recent: 30 days — none.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft.

@@ -348,3 +348,127 @@ async function parallelSortList(head, workers) {
   return tournamentMerge(sorted);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Knockcat —
+`https://leetcode.com/problems/sort-list/solutions/1795126/c-merge-sort-2-pointer-easy-to-understan-ytpy/`
+— 114.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Top-Down Merge Sort with Fast & Slow Pointer Bisection)
+
+Sort singly linked lists in $O(N \log N)$ time by recursive bisection and in-place pointer merging:
+
+1. **Base Case:**
+   - If `head == NULL` or `head.next == NULL`, the list contains at most one element and is already sorted; return `head`.
+2. **Tortoise & Hare Midpoint Bisection:**
+   - Initialize two runners `slow = head`, `fast = head`, and trailing tracker `temp = NULL`.
+   - While `fast != NULL` and `fast.next != NULL`:
+     - `temp = slow`
+     - `slow = slow.next`
+     - `fast = fast.next.next`
+   - **Sever the List:** Execute `temp.next = NULL`. The list is now split cleanly into two independent sublists:
+     - Left half: `head ... temp`
+     - Right half: `slow ... end`
+3. **Divide & Conquer Recursion:**
+   - Recursively sort each partition: `l1 = sortList(head)` and `l2 = sortList(slow)`.
+4. **In-Place Pointer Merging:**
+   - Merge `l1` and `l2` by comparing values and weaving `next` references using a sentinel `dummy` node without allocating fresh elements.
+
+```text
+FUNCTION sortList(head):
+    IF head == NULL OR head.next == NULL:
+        RETURN head
+
+    temp = NULL
+    slow = head
+    fast = head
+
+    WHILE fast != NULL AND fast.next != NULL:
+        temp = slow
+        slow = slow.next
+        fast = fast.next.next
+
+    temp.next = NULL  // sever left half
+
+    l1 = sortList(head)
+    l2 = sortList(slow)
+
+    RETURN merge(l1, l2)
+
+FUNCTION merge(l1, l2):
+    dummy = NEW ListNode(0)
+    tail = dummy
+
+    WHILE l1 != NULL AND l2 != NULL:
+        IF l1.val <= l2.val:
+            tail.next = l1
+            l1 = l1.next
+        ELSE:
+            tail.next = l2
+            l2 = l2.next
+        tail = tail.next
+
+    IF l1 != NULL:
+        tail.next = l1
+    ELSE:
+        tail.next = l2
+
+    RETURN dummy.next
+```
+
+- Time: O(N log N) — follows the classic recurrence $T(N) = 2T(N/2) + O(N)$ across $\log_2 N$ levels of recursion.
+- Space: O(log N) — recursion stack memory depth for top-down divide-and-conquer.
+
+```mermaid
+flowchart TD
+    Start["sortList(head)"] --> BaseCheck{"head == null OR<br>head.next == null?"}
+    BaseCheck -->|"Yes"| RetHead["RETURN head"]
+    BaseCheck -->|"No"| Split["Tortoise & Hare (slow/fast)<br>Sever: temp.next = null"]
+    Split --> Recurse["l1 = sortList(head)<br>l2 = sortList(slow)"]
+    Recurse --> Merge["merge(l1, l2):<br>Weave pointers in ascending order"]
+    Merge --> RetSorted["RETURN merged head"]
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [4, 2, 1, 3]`)
+
+- Round 1:
+  - Initial list: `4 -> 2 -> 1 -> 3`.
+  - Runners advance: `slow` stops at `1`, `temp` at `2`.
+  - Sever link: `4 -> 2 -> null` and `1 -> 3 -> null`.
+- Recursion on Left (`4 -> 2`):
+  - Split: `4 -> null` and `2 -> null`.
+  - Merge yields: `2 -> 4 -> null`.
+- Recursion on Right (`1 -> 3`):
+  - Split: `1 -> null` and `3 -> null`.
+  - Merge yields: `1 -> 3 -> null`.
+- Final Merge (`2 -> 4` and `1 -> 3`):
+  - Compare 2 and 1 $\implies$ append 1.
+  - Compare 2 and 3 $\implies$ append 2.
+  - Compare 4 and 3 $\implies$ append 3.
+  - Append remaining 4.
+  - Result: `1 -> 2 -> 3 -> 4 -> null`.
+
+### C. Why Merge Sort Dominates Linked List Sorting
+
+- Singly linked lists lack random indexing, rendering quicksort partitioning slow and cache-unfriendly.
+- Merge sort requires only sequential forward iteration, which maps directly to singly linked pointers. Furthermore, the merge step requires zero buffer allocation—it merely restructures pointers in place.
+
+### D. Pitfalls from comments
+
+- **Missing Link Disconnection (`temp.next = null`):** Forgetting to sever the connection causes the left half to still retain the right half in its tail, resulting in infinite recursion and StackOverflow.
+- **Two-Element Termination:** In a list of two nodes (`[2, 1]`), `temp` points to `2` and `slow` points to `1`. Disconnecting `temp.next` produces two single-node sublists, terminating cleanly.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Amazon, Bloomberg, ByteDance, Google, Lyft, Meta, Microsoft, Oracle, TikTok.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta.

@@ -323,3 +323,93 @@ function isValidRomanNumeral(s) {
 ### Follow-Up 2: Integer to Roman Conversion (LeetCode 12)
 - **Scenario**: Convert an integer $1 \le \text{num} \le 3999$ back into a Roman numeral.
 - **Solution Strategy**: Greedy subtraction using descending value-symbol pairs.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by lexitron —
+`https://leetcode.com/problems/roman-to-integer/solutions/6333315/beats-100cjavapy3js-easy-n-clean-explana-l3c8/`
+— 127.4K views / 475 votes / 24 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Forward Traversal)
+
+Map Roman numerals to values. Traverse the string left to right. If a smaller numeral comes before a larger one, subtract it. Otherwise, add it.
+
+```text
+FUNCTION romanToInt(s):
+    result = 0
+    map = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 }
+    
+    FOR i = 0 TO length(s) - 1:
+        current = map[s[i]]
+        IF i < length(s) - 1 AND current < map[s[i+1]]:
+            result = result - current
+        ELSE:
+            result = result + current
+            
+    RETURN result
+```
+
+- Time: O(N)
+- Space: O(1)
+
+```mermaid
+flowchart TD
+    Init["result = 0, i = 0"] --> Loop{"i < length(s)?"}
+    Loop -->|"Yes"| Comp{"current < next?"}
+    Comp -->|Yes| Sub["result -= current"]
+    Comp -->|No| Add["result += current"]
+    Sub --> Next["i++"]
+    Add --> Next
+    Next --> Loop
+```
+
+### B. Dry run on LeetCode Example 3 (MCMXCIV)
+
+| Step | `i` | `s[i]` | `current` | `next` | Action | `result` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | M | 1000 | 100 | current >= next, Add | 1000 |
+| 2 | 1 | C | 100 | 1000 | current < next, Subtract | 900 |
+| 3 | 2 | M | 1000 | 10 | current >= next, Add | 1900 |
+| 4 | 3 | X | 10 | 100 | current < next, Subtract | 1890 |
+| 5 | 4 | C | 100 | 1 | current >= next, Add | 1990 |
+| 6 | 5 | I | 1 | 5 | current < next, Subtract | 1989 |
+| 7 | 6 | V | 5 | (none) | next is out of bounds, Add | 1994 |
+
+### C. Alternative approach from comments (Backward Traversal)
+
+Traversing backwards avoids the out-of-bounds `i+1` check. You just keep track of the previously seen value.
+
+```text
+FUNCTION romanToIntBackward(s):
+    result = 0
+    prev = 0
+    FOR i = length(s) - 1 DOWN TO 0:
+        current = map[s[i]]
+        IF current < prev:
+            result = result - current
+        ELSE:
+            result = result + current
+        prev = current
+        
+    RETURN result
+```
+
+### D. Pitfalls from comments
+
+- **Out of bounds check:** When doing forward traversal, forgetting to check `i < length(s) - 1` before accessing `s[i+1]` can lead to errors.
+- **Switch statements:** In languages like C++ or Java, using a `switch` statement or a dedicated helper function instead of a Hash Map / Dictionary is much faster and avoids hashing overhead.
+- **Hardcoding pairs:** Some solutions attempt to hardcode specific pair replacements (e.g., replace `IV` with `IIII`), which is slower due to multiple string passes and memory allocations.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (36): Accenture, Adobe, Amazon, AMD, Apple, Bloomberg, Booking.com, Capgemini, Cashfree, Cognizant, Deloitte, DeltaX, DoorDash, EPAM Systems, Expedia, Goldman Sachs, Google, IBM, Infosys, Meta, Microsoft, Oracle, PwC, Salesforce, Snowflake, TCS, TikTok, Tinkoff, Uber, Virtusa, Walmart Labs, Warnermedia, Wix, Yahoo, Yandex, Zoho.
+- Recent: 30 days — Amazon, Google, Meta, TCS.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft, TCS.

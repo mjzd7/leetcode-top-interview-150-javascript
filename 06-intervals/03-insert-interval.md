@@ -383,3 +383,107 @@ function removeInterval(intervals, toBeRemoved) {
   return result;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Andrey Timoshpolsky —
+`https://leetcode.com/problems/insert-interval/solutions/21602/short-and-straight-forward-java-solution-h749/`
+— 1.1K votes / 188.5K views / 101 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Insert, re-sort, run full merge
+(Q56). Works, re-sorts sorted input.
+
+```text
+FUNCTION insertNaive(intervals, newInt):
+    APPEND newInt TO intervals
+    SORT BY start
+    RETURN MERGE ALL (Q56 sweep)
+```
+
+- Time: O(n log n)
+- Space: O(n)
+
+### B. Post's way: three phases, one pass
+
+Sorted + disjoint input splits the
+work: ends before new start pass
+through; overlapping stretch the
+new interval; the rest appends.
+
+```text
+FUNCTION insertOptimal(intervals, newInt):
+    out = []; i = 0
+    WHILE i < n AND intervals[i][1] < newInt[0]:
+        PUSH intervals[i]; i++
+    WHILE i < n AND intervals[i][0] <= newInt[1]:
+        newInt = [MIN(starts), MAX(ends)]
+        i++
+    PUSH newInt
+    WHILE i < n:
+        PUSH intervals[i]; i++
+    RETURN out
+```
+
+- Time: O(n)
+- Space: O(n) output
+
+```mermaid
+flowchart TD
+    L["Pass left non-overlap"] --> M["Absorb overlap into new"]
+    M --> P["Push merged"]
+    P --> R["Pass right rest"]
+    R --> Done["Return out"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`intervals = [[1,3],[6,9]]`
+`newInterval = [2,5]`
+
+| Phase | Check | out |
+| :--- | :--- | :--- |
+| Left | [1,3]: 3<2? No | [] |
+| Merge | [1,3]: 1<=5 → [1,5] | [] |
+| Merge | [6,9]: 6<=5? No | [] |
+| Push | - | [[1,5]] |
+| Right | [6,9] | [[1,5],[6,9]] |
+
+### D. Why B beats A
+
+- No re-sort of sorted input.
+- Merge-while-scanning replaces
+  the second Q56 pass.
+- Q57 IS Q56 with a head start
+  (top thread, 63).
+
+### E. Pitfalls from comments
+
+- `<=` on the merge test: [1,4]
+  and [4,5] touch → merge.
+- Mutate newInt in place instead
+  of allocating (24).
+- In-place variant exists (183)
+  but complicates the 3 phases.
+- Signature changed to arrays
+  (244) — old Interval code rots.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Apple,
+  Bloomberg, Google, LinkedIn,
+  Meta, Microsoft, MongoDB, Oracle,
+  PayPal, PhonePe, TCS, Tesco,
+  TikTok, Uber, Walmart Labs.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon,
+  Google.
+

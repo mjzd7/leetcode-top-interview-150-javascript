@@ -307,3 +307,103 @@ function deleteDuplicatesVersioned(head, versionOf) {
   return out;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by xue —
+`https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/solutions/28335/my-accepted-java-code-by-snowfish-zi64/`
+— 84.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sentinel with Inner Lookahead Run)
+
+The most elegant and robust Discuss solution uses a sentinel node `dummy` with a comparison between `pre.next` and `cur`:
+
+1. Prepend a sentinel node `dummy` before `head` (`dummy.next = head`), with `pre = dummy` and `cur = head`.
+2. While `cur` is not null:
+   - Walk `cur` to the last element of the identical contiguous run: `while cur.next != null and cur.val == cur.next.val: cur = cur.next`.
+   - **Identity check:** If `pre.next == cur`, `cur` never advanced in the inner loop, meaning the value appeared only once. Safely advance `pre = pre.next`.
+   - Otherwise, duplicate values were detected. Bypass all instances in one pointer update: `pre.next = cur.next` (do NOT advance `pre`, because the next node might itself start another duplicate run).
+   - Move `cur = cur.next`.
+3. Return `dummy.next`.
+
+```text
+FUNCTION deleteDuplicates(head):
+    IF head == null:
+        RETURN null
+
+    dummy = new ListNode(0)
+    dummy.next = head
+    pre = dummy
+    cur = head
+
+    WHILE cur != null:
+        // Advance cur to end of duplicate cluster
+        WHILE cur.next != null AND cur.val == cur.next.val:
+            cur = cur.next
+
+        // If cur didn't move, the element was unique
+        IF pre.next == cur:
+            pre = pre.next
+        ELSE:
+            // Bypass the entire duplicate sequence
+            pre.next = cur.next
+
+        cur = cur.next
+
+    RETURN dummy.next
+```
+
+- Time: O(N) linear time; every node is visited at most twice (once by inner loop, once by outer loop).
+- Space: O(1) auxiliary pointer operations without allocating maps or sets.
+
+```mermaid
+flowchart TD
+    Init["dummy.next = head<br>pre = dummy, cur = head"] --> Loop{"cur != null?"}
+    Loop -->|"No"| Done["Return dummy.next"]
+    Loop -->|"Yes"| Scan["Advance cur while<br>cur.val == cur.next.val"]
+    Scan --> Check{"pre.next == cur?"}
+    Check -->|"Yes (Unique)"| AdvPre["pre = pre.next<br>(Keep node)"]
+    Check -->|"No (Duplicates)"| Bypass["pre.next = cur.next<br>(Delete whole cluster)"]
+    AdvPre --> AdvCur["cur = cur.next"]
+    Bypass --> AdvCur
+    AdvCur --> Loop
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [1,2,3,3,4,4,5]`)
+
+Nodes: `dummy -> 1 -> 2 -> 3 -> 3 -> 4 -> 4 -> 5`
+
+| Outer Iteration | `cur` initial | `cur` after inner scan | `pre.next == cur`? | Action Taken | Current List State |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 1 | 1 | Yes | `pre` moves to 1 | `dummy -> 1 -> 2 -> ...` |
+| 2 | 2 | 2 | Yes | `pre` moves to 2 | `dummy -> 1 -> 2 -> ...` |
+| 3 | 3 | 3 (second 3) | No | `pre.next = 4` (bypasses 3s) | `dummy -> 1 -> 2 -> 4 -> ...` |
+| 4 | 4 | 4 (second 4) | No | `pre.next = 5` (bypasses 4s) | `dummy -> 1 -> 2 -> 5` |
+| 5 | 5 | 5 | Yes | `pre` moves to 5 | `dummy -> 1 -> 2 -> 5` |
+
+Final output: `[1, 2, 5]`.
+
+### C. Why `pre.next == cur` Identity Check Beats Status Flags
+
+- Eliminates boolean state variables (`isDuplicate = true/false`).
+- Self-recovering: leaving `pre` untouched after a bypass ensures adjacent duplicate clusters (e.g. `[1, 1, 2, 2]`) are handled seamlessly one after another.
+
+### D. Pitfalls from comments
+
+- **Prematurely advancing `pre` after deletion:** Writing `pre = pre.next` immediately after bypassing a duplicate cluster breaks if the subsequent node is also duplicate. `pre` must only advance when confirmed unique.
+- **Handling head deletions:** If the first $k$ nodes are duplicates (e.g. `[1, 1, 1, 2]`), `pre` remains at `dummy` and safely links to the first unique node `2`.
+- **Dereferencing `cur.next.val` without null check:** Always verify `cur.next != null` before reading `cur.next.val`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (10): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, etc.
+- Recent: 30 days — None reported.
+- Recent: 3 months — Amazon, Google.

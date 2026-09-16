@@ -266,3 +266,92 @@ async function minOfStream(numberStream) {
   return best;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by water1111 —
+`https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/solutions/158940/beat-100-very-simple-python-very-detaile-pzak/`
+— 103.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Right-Endpoint Comparison Invariant)
+
+By comparing `nums[mid]` against the rightmost element `nums[right]`, we can definitively determine which side contains the rotation inflection (minimum) point:
+
+1. **Window Setup:** Initialize `left = 0`, `right = length - 1`.
+2. **Convergence Loop:** While `left < right`:
+   - Compute `mid = left + (right - left) / 2`.
+   - **Case 1 (`nums[mid] > nums[right]`):**
+     The values wrapped around to the right of `mid`, meaning the pivot/minimum must reside strictly to the right -> set `left = mid + 1` (`mid` itself is disqualified because `nums[right] < nums[mid]`).
+   - **Case 2 (`nums[mid] <= nums[right]`):**
+     The right subarray `[mid, right]` is sorted. The minimum could be `nums[mid]` itself, or somewhere to its left -> set `right = mid`.
+3. **Termination:** When `left == right`, the search window has collapsed directly onto the minimum element. Return `nums[left]`.
+
+```text
+FUNCTION findMin(nums):
+    left = 0
+    right = length(nums) - 1
+
+    WHILE left < right:
+        mid = left + (right - left) / 2
+
+        IF nums[mid] > nums[right]:
+            // Inflection point is strictly right of mid
+            left = mid + 1
+        ELSE:
+            // Right half is sorted; min is at mid or left of mid
+            right = mid
+
+    RETURN nums[left]
+```
+
+- Time: O(log N) where N is array length, halving the search space each step.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Compare{"nums[mid] > nums[right]?"}
+    Compare -->|"Yes: Wrap-around occurs to right"| GoRight["left = mid + 1 (mid disqualified)"]
+    Compare -->|"No: Right half sorted"| GoLeft["right = mid (mid remains candidate)"]
+    GoRight --> Loop{"left < right?"}
+    GoLeft --> Loop
+    Loop -->|"No (converged)"| Ans["Return nums[left]"]
+    Loop -->|"Yes"| Compare
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [3,4,5,1,2]`)
+
+- Iteration 1: `left = 0`, `right = 4`.
+  - `mid = 2`. `nums[2] = 5`, `nums[4] = 2`.
+  - $5 > 2$: Inflection is strictly right of `mid` -> `left = 2 + 1 = 3`.
+- Iteration 2: `left = 3`, `right = 4`.
+  - `mid = 3`. `nums[3] = 1`, `nums[4] = 2`.
+  - $1 \le 2$: Right half is sorted -> `right = mid = 3`.
+- Loop ends as `left == right == 3`.
+- Return `nums[3] = 1`.
+
+Final result: `1`.
+
+### C. Why Right-Endpoint Comparison Works (and Left-Endpoint Fails)
+
+- Comparing `nums[mid]` against `nums[left]` is ambiguous when the subarray is already sorted (`nums[left] < nums[mid]` occurs both in unrotated arrays and in the left half of rotated arrays), making it impossible to know whether the minimum is at `left` or in the right half.
+- Comparing against `nums[right]` eliminates this ambiguity: `nums[mid] > nums[right]` strictly occurs if and only if the inflection point lies between `mid` and `right`.
+
+### D. Pitfalls from comments
+
+- **Prematurely pruning with `right = mid - 1`:** Because `nums[mid]` could be the minimum element itself, setting `right = mid - 1` can discard the answer. One must retain `mid` using `right = mid`.
+- **Infinite loop hazard with `left <= right`:** When using `right = mid`, a `while (left <= right)` condition will never terminate when `left == right`. The condition must strictly be `while (left < right)`.
+- **Handling Duplicates (LeetCode 154):** If duplicates are allowed and `nums[mid] == nums[right]`, it is undecidable which half contains the inflection; one must decrement `right--` sequentially, degrading worst-case time to $O(N)$.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Flipkart, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Meta, Microsoft, Oracle, tcs, TikTok, Uber, Walmart Labs, Yandex.
+- Recent: 30 days — Amazon, Google, Ola Cabs.
+- Recent: 3 months — Amazon, Google.
