@@ -242,3 +242,87 @@ function parity32(n) {
   return (0x6996 >> n) & 1; // nibble-parity lookup in a constant
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/number-of-1-bits/solutions/6750171/video-use-bitwise-and-1-1-by-niits-rao6/`
+— 31.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Brian Kernighan's Bit-Clearing Optimization vs. Logical Right Shift)
+
+Count the population of set bits (Hamming weight) by selectively extinguishing 1-bits:
+
+1. **Brian Kernighan's Algebraic Property:**
+   - Subtracting 1 from an integer inverts the lowest set bit and all trailing zeros:
+     $$n = \dots 100\dots 0 \implies n - 1 = \dots 011\dots 1$$
+   - Performing a bitwise AND between $n$ and $n - 1$ flips the lowest set bit to 0 while leaving all higher bits unchanged:
+     $$n \ \& \ (n - 1) = \dots 000\dots 0$$
+   - Every execution of $n = n \ \& \ (n - 1)$ strips exactly one set bit from $n$, skipping over arbitrary sequences of 0-bits.
+2. **Algorithm Execution:**
+   - Initialize `count = 0`.
+   - While $n \ne 0$:
+     - Clear rightmost set bit: $n = n \ \& \ (n - 1)$.
+     - Increment `count`.
+   - Return `count`.
+
+```text
+FUNCTION hammingWeight(n):
+    count = 0
+    WHILE n != 0:
+        n = n AND (n - 1)
+        count = count + 1
+    RETURN count
+```
+
+- Time: O(K) where $K$ is the number of set bits ($0 \le K \le 32$). Requires only $K$ operations rather than 32 fixed iterations.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Init["count = 0"] --> CondCheck{"n != 0?"}
+    CondCheck -->|"Yes"| ClearBit["n = n AND (n - 1)<br>count = count + 1"]
+    ClearBit --> CondCheck
+    CondCheck -->|"No (n == 0)"| Done["RETURN count"]
+```
+
+### B. Dry run on LeetCode Example 1 (`n = 11 = 1011_2`)
+
+- Initial state: `count = 0`, `n = 1011_2`.
+- **Iteration 1:**
+  - $n - 1 = 1010_2$.
+  - $n = 1011_2 \ \& \ 1010_2 = 1010_2$.
+  - `count = 1`.
+- **Iteration 2:**
+  - $n - 1 = 1001_2$.
+  - $n = 1010_2 \ \& \ 1001_2 = 1000_2$.
+  - `count = 2`.
+- **Iteration 3:**
+  - $n - 1 = 0111_2$.
+  - $n = 1000_2 \ \& \ 0111_2 = 0000_2$.
+  - `count = 3`.
+- **Termination:** $n == 0$. Loop exits in 3 iterations. Return 3.
+
+### C. Why Kernighan's Algorithm Beats Fixed 32-Bit Scans
+
+- A standard bit-shift loop evaluates all 32 positions regardless of whether the word contains a single set bit or thirty.
+- Kernighan's formulation scales strictly with the density of set bits. For sparse inputs (e.g., powers of 2 or typical word flags), it completes in $1$ to $3$ processor cycles.
+
+### D. Pitfalls from comments
+
+- **Infinite Loops from Arithmetic Shift:** Using arithmetic shift `n >>= 1` fills the MSB with 1 when bit 31 is set, causing numbers to never reach 0 and creating an infinite loop. Logical right shift `>>>` or subtraction `n & (n - 1)` avoids this completely.
+- **String Conversion Inefficiency:** Calling `.toString(2)` and splitting into an array creates heap garbage and introduces high latency compared to register bitwise manipulation.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Amazon, Apple, Bloomberg, Box, Google, IBM, Mapbox, Meta, Microsoft, Nvidia, Qualcomm, Verkada.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google.

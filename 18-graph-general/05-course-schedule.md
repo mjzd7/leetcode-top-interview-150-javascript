@@ -305,3 +305,114 @@ async function distributedKahn(shards) {
   return pregelDrain(shards); // superstep decrements + quiet-round detection
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Ishita Joshi —
+`https://leetcode.com/problems/course-schedule/solutions/7298103/bfs-dfs-approach-explained-kahns-algorit-so9p/`
+— 34.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Kahn's Algorithm for Topological Sort / Cycle Detection)
+
+Map course prerequisites into a directed graph and eliminate zero-in-degree nodes iteratively:
+
+1. **Graph Direction Invariant:**
+   - Prerequisite pair `[a, b]` dictates that course $b$ must be mastered before course $a$ can be attempted. This corresponds strictly to directed edge $b \to a$.
+   - A schedule is achievable if and only if the directed graph contains zero directed cycles (i.e. is a Directed Acyclic Graph / DAG).
+2. **Kahn's BFS In-Degree Processing:**
+   - Construct adjacency list where each course points to its dependents: `adj[b]` contains `a`.
+   - Maintain an array `inDegree` of size $numCourses$ counting incoming prerequisite dependencies.
+   - Seed a BFS queue with all courses having `inDegree[u] == 0` (courses that can be taken immediately).
+   - Maintain a running counter `taken = 0`.
+   - While the queue contains ready courses:
+     - Dequeue course $u$, increment `taken`.
+     - For each course $v$ dependent on $u$:
+       - Decrement `inDegree[v]`.
+       - If `inDegree[v]` reaches 0 (all prerequisites satisfied), enqueue $v$.
+   - If `taken == numCourses`, all courses can be successfully scheduled. Otherwise, a cycle deadlocked remaining courses.
+
+```text
+FUNCTION canFinish(numCourses, prerequisites):
+    adj = ARRAY OF SIZE numCourses WITH EMPTY LISTS
+    inDegree = ARRAY OF SIZE numCourses FILLED WITH 0
+
+    FOR EACH pair IN prerequisites:
+        course = pair[0]
+        prereq = pair[1]
+        adj[prereq].APPEND(course)
+        inDegree[course] = inDegree[course] + 1
+
+    queue = QUEUE()
+    FOR i FROM 0 TO numCourses - 1:
+        IF inDegree[i] == 0:
+            queue.ENQUEUE(i)
+
+    taken = 0
+    WHILE queue IS NOT EMPTY:
+        u = queue.DEQUEUE()
+        taken = taken + 1
+
+        FOR EACH v IN adj[u]:
+            inDegree[v] = inDegree[v] - 1
+            IF inDegree[v] == 0:
+                queue.ENQUEUE(v)
+
+    RETURN taken == numCourses
+```
+
+- Time: O(V + E) — graph construction takes $O(E)$; each vertex is enqueued/dequeued once, and each edge is traversed once.
+- Space: O(V + E) — adjacency lists, in-degree array, and queue storage.
+
+```mermaid
+flowchart TD
+    Build["Build adj graph b -> a<br>Count incoming inDegrees"] --> Seed["Enqueue courses with inDegree == 0"]
+    Seed --> QueueLoop{"Queue empty?"}
+    QueueLoop -->|"No"| Pop["u = queue.dequeue()<br>taken += 1"]
+    Pop --> Nbrs["For each dependent v in adj[u]:<br>inDegree[v] -= 1"]
+    Nbrs --> CheckZero{"inDegree[v] == 0?"}
+    CheckZero -->|"Yes"| PushV["queue.enqueue(v)"] --> QueueLoop
+    CheckZero -->|"No"| QueueLoop
+    QueueLoop -->|"Yes"| Result{"taken == numCourses?"}
+    Result -->|"Yes"| RetTrue["RETURN true (DAG confirmed)"]
+    Result -->|"No"| RetFalse["RETURN false (Cycle detected)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`numCourses = 2, prerequisites = [[1, 0]]`)
+
+- $numCourses = 2$.
+- Prerequisite `[1, 0]` creates edge $0 \to 1$.
+- In-degrees: `inDegree[0] = 0`, `inDegree[1] = 1`.
+- Initial queue: `[0]`. `taken = 0`.
+- Dequeue 0:
+  - `taken` increments to 1.
+  - Neighbor 1: decrement `inDegree[1]` from 1 to 0.
+  - `inDegree[1] == 0` $\implies$ enqueue 1.
+- Dequeue 1:
+  - `taken` increments to 2.
+  - No neighbors.
+- Queue is now empty.
+- Evaluation: `taken == numCourses` ($2 == 2$) $\implies$ returns `true`.
+
+### C. Why Cycle Detection Via In-Degrees is Bulletproof
+
+- In any directed cycle (e.g. $A \to B \to A$), every participating node has an in-degree of at least 1 that can only be decremented by another node in the cycle.
+- Because no cyclic node ever reaches an in-degree of 0, none can enter the queue, guaranteeing that `taken` strictly falls short of `numCourses`.
+
+### D. Pitfalls from comments
+
+- **Reversed Edge Orientation:** Storing edge $a \to b$ models courses pointing to their prerequisites, which inverts the topological dependency flow and causes incorrect determinations.
+- **Handling Independent Disconnected Components:** Multiple disjoint DAGs are completely valid; Kahn's algorithm handles them naturally by seeding all independent source nodes into the initial queue.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (58): Adobe, Akamai, Amazon, Anduril, Apple, Arista Networks, Audible, Aurora, BitGo, Bloomberg, Booking.com, ByteDance, Cisco, Citadel, Cloudflare, Coinbase, Coupang, CrowdStrike, Cruise, DoorDash, eBay, Flipkart, Goldman Sachs, Google, IBM, Infosys, instabase, Intuit, IXL, LinkedIn, LiveRamp, Meta, Microsoft, Moloco, MongoDB, Netflix, Nordstrom, Nutanix, Nvidia, Oracle, PayPal, Qualcomm, Remitly, Roblox, Salesforce, Snap, Snowflake, Swiggy, Tesla, TikTok, Uber, Visa, Walmart Labs, Works Applications, Yelp, Zenefits, Zoho, Zomato.
+- Recent: 30 days — Amazon, Google, Salesforce, Walmart Labs.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google, Meta, Salesforce, TikTok, Walmart Labs.

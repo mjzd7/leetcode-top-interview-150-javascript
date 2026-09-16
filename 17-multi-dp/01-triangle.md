@@ -255,3 +255,91 @@ async function minTotalStreamed(rowStream) {
   return minimumTotal(rows);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by stellari —
+`https://leetcode.com/problems/triangle/solutions/38730/dp-solution-for-triangle-by-stellari-g195/`
+— 153.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Bottom-Up 1D Dynamic Programming)
+
+Invert the traversal direction to fold the triangle from the bottom base up to the apex without boundary edge cases:
+
+1. **Directional Inversion:**
+   - In a top-down formulation, boundary elements ($c = 0$ and $c = r$) have only one parent, requiring conditional edge checks, and the final minimum must be scanned across the entire bottom row.
+   - Moving bottom-up, every internal cell $(r, c)$ has exactly two children below it: $(r + 1, c)$ and $(r + 1, c + 1)$. The minimum path sums converge automatically onto the single apex cell $(0, 0)$.
+2. **Space Compression to 1D:**
+   - Initialize a 1D DP array of size $N$ with the triangle's bottom row: `dp[c] = triangle[n - 1][c]`.
+   - Iterate row index $r$ from $n - 2$ down to $0$:
+     - For each column $c$ from $0$ up to $r$:
+       `dp[c] = triangle[r][c] + MIN(dp[c], dp[c + 1])`
+   - Return `dp[0]`.
+
+```text
+FUNCTION minimumTotal(triangle):
+    n = length(triangle)
+    dp = COPY_OF(triangle[n - 1])
+
+    FOR r FROM n - 2 DOWNTO 0:
+        FOR c FROM 0 TO r:
+            dp[c] = triangle[r][c] + MIN(dp[c], dp[c + 1])
+
+    RETURN dp[0]
+```
+
+- Time: O(N^2) where $N$ is the number of rows (total elements processed = $N(N + 1) / 2$).
+- Space: O(N) auxiliary space using a single 1D array of size $N$ (or O(1) if mutating input in place).
+
+```mermaid
+flowchart TD
+    Base["Initialize dp with bottom row (size n)"] --> Outer["For r from n - 2 down to 0"]
+    Outer --> Inner["For c from 0 to r"]
+    Inner --> Fold["dp[c] = triangle[r][c] + min(dp[c], dp[c + 1])"]
+    Fold --> Inner
+    Inner --> Outer
+    Outer --> Ret["RETURN dp[0] (Apex minimum)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]`)
+
+- $n = 4$.
+- Initial `dp` from bottom row: `[4, 1, 8, 3]`.
+- Row $r = 2$ (`[6, 5, 7]`):
+  - $c = 0$: $6 + \min(4, 1) = 7$
+  - $c = 1$: $5 + \min(1, 8) = 6$
+  - $c = 2$: $7 + \min(8, 3) = 10$
+  - `dp` becomes: `[7, 6, 10, 3]`.
+- Row $r = 1$ (`[3, 4]`):
+  - $c = 0$: $3 + \min(7, 6) = 9$
+  - $c = 1$: $4 + \min(6, 10) = 10$
+  - `dp` becomes: `[9, 10, 10, 3]`.
+- Row $r = 0$ (`[2]`):
+  - $c = 0$: $2 + \min(9, 10) = 11$.
+  - `dp[0] = 11`.
+
+Final result: `11` (path $2 \to 3 \to 5 \to 1$).
+
+### C. Why Bottom-Up Eliminates Boundary Edge Cases
+
+- Top-down traversals require branching for column index $0$ (no top-left parent) and column index $r$ (no top-right parent).
+- Bottom-up folding guarantees that both child positions $(r+1, c)$ and $(r+1, c+1)$ always exist for every column $0 \le c \le r$, executing with zero boundary checks.
+
+### D. Pitfalls from comments
+
+- **Destructive In-Place Mutation:** Mutating the input triangle directly saves allocating a 1D array, but violates immutability and mutates the caller's data structure. A single 1D array of size $N$ balances safety and minimal memory.
+- **Top-Down Table Overhead:** Allocating a full 2D $N \times N$ matrix for top-down memoization wastes $O(N^2)$ memory when only adjacent rows are needed.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (24): Accenture, Amazon, Aon, Apple, Bloomberg, Deutsche Bank, Docusign, Expedia, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Meta, Microsoft, Mitsogo, Oracle, Salesforce, tcs, Upstart, Walmart Labs, Wipro, X, Zoho.
+- Recent: 30 days — Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

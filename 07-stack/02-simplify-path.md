@@ -416,3 +416,95 @@ function simplifyWindowsPath(path) {
   return drive ? `${drive}${simplified}` : simplified;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Andrey Timoshpolsky —
+`https://leetcode.com/problems/simplify-path/solutions/25686/java-10-lines-solution-with-stack-by-shp-u6t2/`
+— 85.3K views / 452 votes / 50 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Split-by-Slash and Filter Set)
+
+Splitting the input path by `'/'` handles redundant consecutive slashes (`//`) automatically by producing empty tokens. Every token falls into one of three classifications:
+1. `""` (empty) or `"."` (current directory): Skip completely.
+2. `".."` (parent directory): Pop the top directory if the stack is non-empty. If already at the root, do nothing.
+3. Any other string (e.g., directory names or `"...\"`): Push onto the stack.
+
+Reconstruct the final path by joining remaining directories with `'/'` and prepending a root `'/'`.
+
+```text
+FUNCTION simplifyPath(path):
+    tokens = split(path, "/")
+    stack = empty Stack
+    skip = Set {"", ".", ".."}
+    
+    FOR EACH token IN tokens:
+        IF token == ".." AND NOT stack.isEmpty():
+            stack.pop()
+        ELSE IF NOT skip.contains(token):
+            stack.push(token)
+            
+    result = "/" + join(stack, "/")
+    RETURN result
+```
+
+- Time: O(N) where N is the length of `path`. Splitting, processing tokens, and joining each run in linear time.
+- Space: O(N) to store directory tokens in the stack and output.
+
+```mermaid
+flowchart TD
+    Start["Split path by '/'"] --> Loop{"More tokens?"}
+    Loop -->|"Yes"| Token{"Token value?"}
+    Token -->|"token == '..' "| CheckPop{"stack not empty?"}
+    CheckPop -->|"Yes"| Pop["stack.pop()"]
+    CheckPop -->|"No"| Loop
+    Pop --> Loop
+    Token -->|"token in {'', '.'} "| Skip["Ignore"]
+    Skip --> Loop
+    Token -->|"Other directory"| Push["stack.push(token)"]
+    Push --> Loop
+    Loop -->|"No"| Join["Join stack with '/'<br>Prepend '/'"]
+    Join --> Done["Return canonical path"]
+```
+
+### B. Dry run on LeetCode Example 3 (`path = "/a/./b/../../c/"`)
+
+Tokens after split: `["", "a", ".", "b", "..", "..", "c", ""]`
+
+| Token | Condition | Action | Stack State |
+| :--- | :--- | :--- | :--- |
+| `""` | In skip set | Ignore | `[]` |
+| `"a"` | Valid dir | Push `"a"` | `["a"]` |
+| `"."` | In skip set | Ignore | `["a"]` |
+| `"b"` | Valid dir | Push `"b"` | `["a", "b"]` |
+| `".."` | Matches `".."`, stack has `"b"` | Pop `"b"` | `["a"]` |
+| `".."` | Matches `".."`, stack has `"a"` | Pop `"a"` | `[]` |
+| `"c"` | Valid dir | Push `"c"` | `["c"]` |
+| `""` | In skip set | Ignore | `["c"]` |
+
+Output: `"/" + "c" = "/c"`.
+
+### C. Why Set-Based Filtering Beats Manual Character Scanning
+
+- **Conciseness:** Manual two-pointer scanning requires tracking boundary indices and edge conditions for multiple slashes.
+- **Robustness:** Tokenization isolates directory components cleanly regardless of leading, trailing, or double slashes.
+
+### D. Pitfalls from comments
+
+- **Valid names with dots (e.g. `"...\"`):** Three or more consecutive dots (`"..."`) represent a legitimate file/directory name in Unix filesystems, NOT a navigation command. Only exact `".."` triggers a pop.
+- **Popping beyond root:** Encountering `".."` when the stack is empty must be safely ignored without raising underflow errors.
+- **Root-only output:** If all directories are popped (or path was `"/"`), the output must be `"/"`, never `""`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (22): Amazon, Apple, Arista Networks, Bloomberg, Capital One, Google, Grab, IBM, Meta, Microsoft, Nvidia, OpenAI, Oracle, Patreon, ServiceNow, Snowflake, TikTok, Tinkoff, Uber, Upstart, Visa, Yandex.
+- Recent: 30 days — Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg, Google.

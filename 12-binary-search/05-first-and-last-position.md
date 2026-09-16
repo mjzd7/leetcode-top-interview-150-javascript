@@ -289,3 +289,107 @@ function rangeSnapshot(arr, target, versionOf) {
   return res;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by srxbinary —
+`https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/solutions/8516475/beats-100-java-olog-n-binary-search-two-pgexd/`
+— 541 views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two-Pass Directional Binary Search)
+
+To guarantee $O(\log N)$ even when the entire array consists of duplicates, perform two independent binary search passes: one biased leftward for the first occurrence, and one biased rightward for the last:
+
+1. **Find First (Left Boundary):**
+   - When `nums[mid] == target`, record candidate `first = mid`.
+   - Shrink search space leftward (`right = mid - 1`) to check for earlier matches.
+2. **Find Last (Right Boundary):**
+   - When `nums[mid] == target`, record candidate `last = mid`.
+   - Shrink search space rightward (`left = mid + 1`) to check for later matches.
+3. **Combine:** If `first == -1`, return `[-1, -1]`. Otherwise return `[first, last]`.
+
+```text
+FUNCTION searchRange(nums, target):
+    first = findBound(nums, target, isFirst=true)
+    IF first == -1:
+        RETURN [-1, -1]
+
+    last = findBound(nums, target, isFirst=false)
+    RETURN [first, last]
+
+FUNCTION findBound(nums, target, isFirst):
+    left = 0
+    right = length(nums) - 1
+    ans = -1
+
+    WHILE left <= right:
+        mid = left + (right - left) / 2
+
+        IF nums[mid] == target:
+            ans = mid
+            IF isFirst:
+                right = mid - 1  // Look further left
+            ELSE:
+                left = mid + 1   // Look further right
+        ELSE IF nums[mid] < target:
+            left = mid + 1
+        ELSE:
+            right = mid - 1
+
+    RETURN ans
+```
+
+- Time: O(log N) — two strict binary searches each running in $O(\log N)$.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    subgraph Pass 1: Find First
+        P1["nums[mid] == target -> save ans, right = mid - 1"]
+    end
+    subgraph Pass 2: Find Last
+        P2["nums[mid] == target -> save ans, left = mid + 1"]
+    end
+    P1 -->|first == -1?| Check{"Found?"}
+    Check -->|"No"| RetNone["Return [-1, -1]"]
+    Check -->|"Yes"| P2 --> RetBoth["Return [first, last]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [5,7,7,8,8,10], target = 8`)
+
+- **Pass 1 (findFirst):** `[0, 5]`
+  - `mid = 2`. `nums[2] = 7 < 8` -> `left = 3`.
+  - `mid = 4`. `nums[4] = 8 == target` -> `first = 4`, `right = 3`.
+  - `mid = 3`. `nums[3] = 8 == target` -> `first = 3`, `right = 2`.
+  - `left > right` (3 > 2), loop ends. `first = 3`.
+- **Pass 2 (findLast):** `[0, 5]`
+  - `mid = 2`. `nums[2] = 7 < 8` -> `left = 3`.
+  - `mid = 4`. `nums[4] = 8 == target` -> `last = 4`, `left = 5`.
+  - `mid = 5`. `nums[5] = 10 > 8` -> `right = 4`.
+  - `left > right` (5 > 4), loop ends. `last = 4`.
+
+Final result: `[3, 4]`.
+
+### C. Why Directional Binary Search Beats Midpoint Linear Expansion
+
+- Finding any one match and linearly expanding outward (`while nums[i] == target i++`) degrades to $O(N)$ when the target frequency is large (e.g. $[8, 8, \dots, 8]$).
+- Continuing the binary search logarithmically cuts the search space in half on every step, strictly adhering to the problem's $O(\log N)$ requirement.
+
+### D. Pitfalls from comments
+
+- **Premature Break on Match:** Typical binary search stops immediately on `nums[mid] == target`. Here, the match must be recorded while shifting the pointer to continue narrowing the bound.
+- **Skipping Second Pass:** If `findFirst` returns `-1`, skipping the second search pass avoids wasted CPU cycles.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (29): Accenture, Airtel, Amazon, Apple, Applied Intuition, Atlassian, Attentive, Bloomberg, Capgemini, Citadel, DE Shaw, Goldman Sachs, Google, Infosys, Instacart, LinkedIn, Meta, Microsoft, Oracle, PayPal, Pinterest, Splunk, tcs, Tekion, TikTok, Tinkoff, Turing, Uber, Zoho.
+- Recent: 30 days — Amazon, Google, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft, tcs, TikTok.

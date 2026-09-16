@@ -309,3 +309,74 @@ function maxDepthVersioned(root, versionOf) {
   return d;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Sukhseerat Kaur —
+`https://leetcode.com/problems/maximum-depth-of-binary-tree/solutions/1770060/c-recursive-dfs-example-dry-run-well-exp-072d/`
+— 158.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Divide-and-Conquer Postorder DFS)
+
+The community-standard recursive approach decomposes the tree depth into independent subproblems:
+
+1. **Base Case:** If `root == null`, the depth is 0.
+2. **Recursive Step:** Compute the maximum depth of the left subtree and the right subtree.
+3. **Combine:** The depth at the current root is $1 + \max(\text{leftDepth}, \text{rightDepth})$.
+
+```text
+FUNCTION maxDepth(root):
+    IF root == null:
+        RETURN 0
+
+    leftDepth = maxDepth(root.left)
+    rightDepth = maxDepth(root.right)
+
+    RETURN 1 + MAX(leftDepth, rightDepth)
+```
+
+- Time: O(N) where N is the total number of nodes, visiting each node exactly once.
+- Space: O(H) call stack frames, where H is the height of the tree ($O(\log N)$ average for balanced trees, $O(N)$ worst-case for degenerate linked chains).
+
+```mermaid
+flowchart TD
+    Root["Node(val)"] --> Left["maxDepth(left)"]
+    Root --> Right["maxDepth(right)"]
+    Left --> Combine["1 + MAX(leftDepth, rightDepth)"]
+    Right --> Combine
+    Combine --> Result["Return to parent"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [3,9,20,null,null,15,7]`)
+
+- Subtree at 9: left = 0, right = 0 -> depth = $1 + \max(0, 0) = 1$.
+- Subtree at 15: leaf -> depth = 1.
+- Subtree at 7: leaf -> depth = 1.
+- Subtree at 20: left = 1 (15), right = 1 (7) -> depth = $1 + \max(1, 1) = 2$.
+- Root at 3: left = 1 (9), right = 2 (20) -> depth = $1 + \max(1, 2) = 3$.
+
+Result: `3`.
+
+### C. Why Postorder DFS Beats BFS Queue Memory on Balanced Trees
+
+- **Memory Footprint:** In a balanced binary tree of $N$ nodes, BFS queue must hold the entire bottom leaf level ($N/2$ nodes, e.g., 5,000 nodes for $N = 10,000$).
+- DFS call stack holds at most $\lceil \log_2 N \rceil$ frames (only $\sim 14$ activation records for $N = 10,000$).
+
+### D. Pitfalls from comments
+
+- **Call stack overflow on skewed trees:** Degenerate trees with all nodes along one spine hit $O(N)$ recursion depth. When recursion depth limits are tight, an iterative DFS with an explicit stack or iterative BFS queue avoids engine call-stack limits.
+- **Empty tree:** Ensure `root == null` returns 0 immediately before inspecting child properties.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft.

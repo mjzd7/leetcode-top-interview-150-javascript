@@ -288,3 +288,90 @@ async function* streamingMaxSubarray(numberStream) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Abhishek —
+`https://leetcode.com/problems/maximum-subarray/solutions/1595195/cpython-7-simple-solutions-w-explanation-kb6j/`
+— 360.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Kadane's Dynamic Programming Algorithm)
+
+Find the maximum sum contiguous subarray in a single linear pass by discarding negative running prefixes:
+
+1. **Dynamic Programming Recurrence:**
+   - Define $dp[i]$ as the maximum subarray sum that strictly terminates at index $i$.
+   - At each element $nums[i]$, we decide between:
+     - Extending the prefix ending at $i - 1$: $dp[i - 1] + nums[i]$
+     - Starting a fresh subarray at $i$: $nums[i]$
+   - Transition equation:
+     $$dp[i] = \max(nums[i], dp[i - 1] + nums[i])$$
+2. **Space Optimization to $O(1)$:**
+   - Because $dp[i]$ depends only on $dp[i - 1]$, maintain two scalar variables:
+     - `curMax`: maximum subarray sum ending at the current position.
+     - `maxSoFar`: global maximum subarray sum observed across all positions so far.
+   - For every element $x \in nums$:
+     - `curMax = max(x, curMax + x)`
+     - `maxSoFar = max(maxSoFar, curMax)`
+   - Return `maxSoFar`.
+
+```text
+FUNCTION maxSubArray(nums):
+    curMax = 0
+    maxSoFar = nums[0]
+
+    FOR EACH x IN nums:
+        curMax = MAX(x, curMax + x)
+        maxSoFar = MAX(maxSoFar, curMax)
+
+    RETURN maxSoFar
+```
+
+- Time: O(N) — single pass scanning through the array of length $N$.
+- Space: O(1) — requires only two scalar variables for running accumulator state.
+
+```mermaid
+flowchart TD
+    Init["curMax = 0, maxSoFar = nums[0]"] --> Loop["For each x in nums:<br>curMax = MAX(x, curMax + x)<br>maxSoFar = MAX(maxSoFar, curMax)"]
+    Loop --> CheckDone{"All elements visited?"}
+    CheckDone -->|"No"| Loop
+    CheckDone -->|"Yes"| RetAns["RETURN maxSoFar"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]`)
+
+- Initial state: `curMax = 0, maxSoFar = -2`.
+- Step 0 ($x = -2$): `curMax = max(-2, -2) = -2`, `maxSoFar = -2`.
+- Step 1 ($x = 1$): `curMax = max(1, -1) = 1`, `maxSoFar = 1`.
+- Step 2 ($x = -3$): `curMax = max(-3, -2) = -2`, `maxSoFar = 1`.
+- Step 3 ($x = 4$): `curMax = max(4, 2) = 4`, `maxSoFar = 4`.
+- Step 4 ($x = -1$): `curMax = max(-1, 3) = 3`, `maxSoFar = 4`.
+- Step 5 ($x = 2$): `curMax = max(2, 5) = 5`, `maxSoFar = 5`.
+- Step 6 ($x = 1$): `curMax = max(1, 6) = 6`, `maxSoFar = 6`.
+- Step 7 ($x = -5$): `curMax = max(-5, 1) = 1`, `maxSoFar = 6`.
+- Step 8 ($x = 4$): `curMax = max(4, 5) = 5`, `maxSoFar = 6`.
+- Result: `6` (corresponding to contiguous slice `[4, -1, 2, 1]`).
+
+### C. Why Negative Prefix Resetting Is Mathematically Optimal
+
+- If a prefix has a strictly negative sum ($\sum < 0$), attaching it to any subsequent subarray strictly degrades that subarray's sum.
+- Discarding negative prefixes and restarting accumulation immediately at the next element guarantees that no suboptimal drag is carried forward.
+
+### D. Pitfalls from comments
+
+- **All-Negative Arrays Trap:** Initializing `maxSoFar = 0` causes the function to return 0 when the entire input array is negative (e.g. `[-3, -2, -5]`). Because the problem requires a non-empty subarray, initializing `maxSoFar = nums[0]` or `-Infinity` is strictly required.
+- **Premature Reset:** Resetting before updating `maxSoFar` on single negative values will produce incorrect maximums.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (61): Accenture, Accolite, Amazon, Apple, Arista Networks, Atlassian, Autodesk, Bloomberg, ByteDance, Cisco, Citadel, Cognizant, Coupang, Criteo, Dell, Deloitte, EPAM Systems, Goldman Sachs, Google, HCL, Huawei, IBM, Infosys, Intel, LinkedIn, Media.net, Meesho, Meta, Microsoft, Morgan Stanley, Nike, Nvidia, Oracle, PayPal, PhonePe, Salesforce, Samsung, SAP, ServiceNow, Sprinklr, Squarepoint Capital, Swiggy, Target, tcs, Tech Mahindra, Tekion, Tesla, TikTok, Turing, Two Sigma, Uber, Upstart, Vimeo, Visa, Walmart Labs, Wells Fargo, Wix, Yandex, Zeta, Zoho, Zomato.
+- Recent: 30 days — Amazon, Infosys, Microsoft, Upstart.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, tcs, Upstart.

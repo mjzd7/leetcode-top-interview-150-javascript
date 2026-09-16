@@ -320,3 +320,104 @@ function partitionSnapshot(head, x, tailSnapshot) {
   return partitionBounded(head, x, tailSnapshot);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Shichao —
+`https://leetcode.com/problems/partition-list/solutions/29185/very-concise-one-pass-solution-by-shicha-wabx/`
+— 74.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Sentinel Chains & Cycle Prevention)
+
+The most concise and standard solution separates nodes into two sublists using sentinel nodes, preserving relative ordering naturally:
+
+1. Create two sentinels: `beforeHead = new ListNode(0)` (for nodes $< x$) and `afterHead = new ListNode(0)` (for nodes $\ge x$).
+2. Maintain tracking pointers `before = beforeHead` and `after = afterHead`.
+3. Iterate through `head`:
+   - If `head.val < x`: link `before.next = head` and step `before`.
+   - Else: link `after.next = head` and step `after`.
+   - Step `head = head.next`.
+4. **Critical step:** Set `after.next = null`. (Without this, the last node in `after` might still point to a node reassigned to `before`, creating an infinite cycle).
+5. Splice the two lists: `before.next = afterHead.next`.
+6. Return `beforeHead.next`.
+
+```text
+FUNCTION partition(head, x):
+    beforeHead = new ListNode(0)
+    afterHead = new ListNode(0)
+    before = beforeHead
+    after = afterHead
+
+    WHILE head != null:
+        IF head.val < x:
+            before.next = head
+            before = before.next
+        ELSE:
+            after.next = head
+            after = after.next
+        head = head.next
+
+    // Cut trailing cycle
+    after.next = null
+
+    // Concatenate chains
+    before.next = afterHead.next
+
+    RETURN beforeHead.next
+```
+
+- Time: O(N) single linear pass through the list.
+- Space: O(1) auxiliary pointer operations in-place.
+
+```mermaid
+flowchart TD
+    Init["beforeHead, afterHead sentinels"] --> Check{"head != null?"}
+    Check -->|"Yes"| Comp{"head.val < x?"}
+    Comp -->|"Yes"| AddB["before.next = head<br>before = before.next"]
+    Comp -->|"No"| AddA["after.next = head<br>after = after.next"]
+    AddB --> Adv["head = head.next"]
+    AddA --> Adv
+    Adv --> Check
+    Check -->|"No (Done)"| Terminate["after.next = null (Cut cycle)"]
+    Terminate --> Concat["before.next = afterHead.next"]
+    Concat --> Ret["Return beforeHead.next"]
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [1,4,3,2,5,2], x = 3`)
+
+| Node Inspected | Condition (`< 3`?) | Attached Chain | Resulting Chains |
+| :--- | :--- | :--- | :--- |
+| 1 | Yes | `before` | `before: 1` |
+| 4 | No | `after` | `after: 4` |
+| 3 | No | `after` | `after: 4 -> 3` |
+| 2 | Yes | `before` | `before: 1 -> 2` |
+| 5 | No | `after` | `after: 4 -> 3 -> 5` |
+| 2 | Yes | `before` | `before: 1 -> 2 -> 2` |
+
+- Cut cycle: `after.next = 5.next = null`.
+- Concatenate: `before.next = 1 -> 2 -> 2 -> 4 -> 3 -> 5`.
+- Final output: `[1, 2, 2, 4, 3, 5]`.
+
+### C. Why Two-Chain Splitting Beats In-Place Insertion
+
+- **Stability Guarantee:** Directly appending to two distinct queues guarantees preservation of the original relative order without auxiliary sorting.
+- **Zero In-Place Shifting Overhead:** No need to search backwards for insertion points.
+
+### D. Pitfalls from comments
+
+- **The infinite cycle bug:** Failing to write `after.next = null` is the single most common mistake on this problem. If the original list ended with a node whose value was $< x$, the final node placed into `after` still points to it, causing an infinite loop.
+- **All nodes on one side:** If all nodes are $< x$ (or all $\ge x$), sentinels ensure `before.next` or `after.next` cleanly connect to `null` without throwing errors.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (5): Amazon, Apple, Bloomberg, Google, Microsoft.
+- Recent: 30 days — None reported.
+- Recent: 3 months — Amazon, Google, Microsoft.

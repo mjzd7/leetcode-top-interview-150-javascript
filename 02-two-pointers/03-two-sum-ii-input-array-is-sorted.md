@@ -287,3 +287,74 @@ function twoSum(numbers, target) {
 ### Follow-Up 2: Streaming Pair Sum on Infinite Sorted Feed
 - **Scenario**: What if numbers arrive continuously as an infinite sorted stream?
 - **Solution**: Maintain a bounded window buffer and hash map with expiration timestamps.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Shashikant Pandey —
+`https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/solutions/51249/best-optimal-solution-beats-100-java-c-python-javascript/`
+— 24.6K views / 122 votes / 2 comments. (Note: Many older identical solutions exist with 500K+ views, sharing the same logic).
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two Pointers)
+
+Because the array is already sorted, we can avoid the typical $O(N)$ space Hash Map approach used in standard Two Sum. Instead, place one pointer at the start and one at the end. Check the sum of the values. If the sum is too small, move the start pointer up to get a larger value. If it's too big, move the end pointer down.
+
+```text
+FUNCTION twoSum(numbers, target):
+    start = 0
+    end = length(numbers) - 1
+    
+    WHILE start < end:
+        sum = numbers[start] + numbers[end]
+        
+        IF sum == target:
+            RETURN [start + 1, end + 1] // 1-based indexing
+        ELSE IF sum < target:
+            start++
+        ELSE:
+            end--
+```
+
+- Time: O(N) where N is length of numbers. We process each element at most once.
+- Space: O(1) using only two integer pointers.
+
+```mermaid
+flowchart TD
+    Init["start = 0, end = N - 1"] --> Loop{"start < end?"}
+    Loop -->|"Yes"| CalcSum["sum = nums[start] + nums[end]"]
+    CalcSum --> CheckSum{"sum == target?"}
+    CheckSum -->|"Yes"| Found["Return [start + 1, end + 1]"]
+    CheckSum -->|"No, sum < target"| IncStart["start++"]
+    CheckSum -->|"No, sum > target"| DecEnd["end--"]
+    IncStart --> Loop
+    DecEnd --> Loop
+```
+
+### B. Dry run on LeetCode Example 1 ([2, 7, 11, 15], target = 9)
+
+| Step | `start` | `end` | `nums[start]` | `nums[end]` | Sum | Action |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0 | 3 | 2 | 15 | 17 | 17 > 9. Move `end` down (`end--`). |
+| 2 | 0 | 2 | 2 | 11 | 13 | 13 > 9. Move `end` down (`end--`). |
+| 3 | 0 | 1 | 2 | 7 | 9 | 9 == 9. Match found. |
+
+Returns `[0 + 1, 1 + 1]` = `[1, 2]`.
+
+### C. Pitfalls from comments
+
+- **Using a HashMap:** In a regular Two Sum problem, you use a HashMap ($O(N)$ space). Many people reflexively use a HashMap here. While it will pass the time constraints, it fails the problem's explicit requirement: *Your solution must use only constant extra space.*
+- **Binary Search Approach:** Since the array is sorted, you *could* pick a number and do a binary search for the complement. However, that takes $O(N \log N)$ time, which is worse than the Two Pointers $O(N)$ approach.
+- **1-based Indexing:** A very common mistake is returning `[start, end]`. The problem statement explicitly requires returning the indices as a 1-indexed array, so you must return `[start + 1, end + 1]`.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (15): Adobe, Amazon, Apple, Bloomberg, EPAM Systems, Google, Infosys, Meta, Microsoft, Oracle, TCS, TikTok, Visa, Yandex, Zoho.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft, TCS.

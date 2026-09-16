@@ -274,3 +274,109 @@ function kthSmallestSortedMatrix(matrix, k) {
   return lo;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by vaputa —
+`https://leetcode.com/problems/search-a-2d-matrix/solutions/26220/dont-treat-it-as-a-2d-matrix-just-treat-u8vgk/`
+— 182.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Virtual 1D Array Binary Search)
+
+Because each row is sorted and the first element of row $i+1$ is strictly greater than the last element of row $i$, the entire $M \times N$ matrix behaves as a single contiguous sorted array of length $M \times N$:
+
+1. **Virtual Index Range:** Initialize `left = 0`, `right = (M * N) - 1`.
+2. **Coordinate Transformation:**
+   For any virtual 1D index `mid`:
+   - `row = mid / N` (integer division)
+   - `col = mid % N` (modulo)
+3. **Standard Binary Search:**
+   - Sample `val = matrix[row][col]`.
+   - If `val == target`: return `true`.
+   - If `val < target`: search right half (`left = mid + 1`).
+   - If `val > target`: search left half (`right = mid - 1`).
+4. If `left > right`, return `false`.
+
+```text
+FUNCTION searchMatrix(matrix, target):
+    IF matrix is empty OR matrix[0] is empty:
+        RETURN false
+
+    m = length(matrix)
+    n = length(matrix[0])
+    left = 0
+    right = (m * n) - 1
+
+    WHILE left <= right:
+        mid = left + (right - left) / 2
+        row = mid / n
+        col = mid % n
+        val = matrix[row][col]
+
+        IF val == target:
+            RETURN true
+        ELSE IF val < target:
+            left = mid + 1
+        ELSE:
+            right = mid - 1
+
+    RETURN false
+```
+
+- Time: O(log(M * N)) = O(log M + log N), optimal single-pass binary search.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Virtual["Virtual 1D Array of size M * N"] --> Index["mid in [0, M*N - 1]"]
+    Index -->|"mid / N"| Row["Row Coordinate"]
+    Index -->|"mid % N"| Col["Col Coordinate"]
+    Row & Col --> Access["matrix[row][col]"]
+    Access --> Check{"Compare with target"}
+    Check -->|"=="| Found["Return true"]
+    Check -->|"<"| Right["left = mid + 1"]
+    Check -->|">"| Left["right = mid - 1"]
+```
+
+### B. Dry run on LeetCode Example 1 (`matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3`)
+
+- Dimensions: $m = 3, n = 4$. Virtual range: `[0, 11]`.
+- Iteration 1: `left = 0`, `right = 11`.
+  - `mid = 5`. `row = 5 / 4 = 1`, `col = 5 % 4 = 1`.
+  - `matrix[1][1] = 11`. Since $11 > 3$, `right = 5 - 1 = 4`.
+- Iteration 2: `left = 0`, `right = 4`.
+  - `mid = 2`. `row = 2 / 4 = 0`, `col = 2 % 4 = 2`.
+  - `matrix[0][2] = 5`. Since $5 > 3$, `right = 2 - 1 = 1`.
+- Iteration 3: `left = 0`, `right = 1`.
+  - `mid = 0`. `row = 0 / 4 = 0`, `col = 0 % 4 = 0`.
+  - `matrix[0][0] = 1`. Since $1 < 3$, `left = 0 + 1 = 1`.
+- Iteration 4: `left = 1`, `right = 1`.
+  - `mid = 1`. `row = 1 / 4 = 0`, `col = 1 % 4 = 1`.
+  - `matrix[0][1] = 3`. Equal to target -> return `true`!
+
+Final result: `true`.
+
+### C. Why Virtual 1D Flattening Outperforms Two-Phase Binary Search
+
+- A two-phase search executes two distinct binary searches: one over the first column to identify the bounding row, and a second binary search within that row.
+- Virtual 1D search combines both into a single loop, executing fewer conditionals and instructions while maintaining identical $O(\log(MN))$ asymptotic complexity.
+
+### D. Pitfalls from comments
+
+- **Integer Overflow on Total Cells:** If matrix dimensions are large, `m * n` can overflow a 32-bit signed integer. In typed languages (C++, Java), define `left`, `right`, and `mid` as 64-bit integers (`long long`).
+- **Modulo by Zero Guard:** If `matrix[0]` is empty, `mid % n` produces a division-by-zero crash. Always validate matrix dimensions upfront.
+- **Contrast with Search a 2D Matrix II (LC 240):** In LC 240, row ends do not necessarily precede subsequent row starts, which breaks the strict monotonic 1D ordering. Virtual 1D indexing only applies when `matrix[i][n-1] < matrix[i+1][0]`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (23): Adobe, Amazon, Apple, Baidu, Bloomberg, DE Shaw, Goldman Sachs, Google, Meta, Microsoft, Nutanix, Oracle, PayPal, Paytm, SAP, tcs, TikTok, Uber, Walmart Labs, Whatnot, Wissen Technology, Yandex, Zomato.
+- Recent: 30 days — Amazon, Goldman Sachs.
+- Recent: 3 months — Amazon, Bloomberg, Goldman Sachs, Google, Meta, Microsoft.

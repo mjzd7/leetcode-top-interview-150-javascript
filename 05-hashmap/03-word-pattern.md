@@ -437,3 +437,97 @@ function wordPatternStreaming(pattern, s) {
   return sIdx === s.length;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/word-pattern/solutions/3431613/video-no-need-for-two-hashmap-one-hashmap-solution/`
+— (views omitted) / upvotes: ~200 / comments: 7.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Bidirectional Mapping / Single Map)
+
+This problem is almost identical to *Isomorphic Strings*. We need to establish a bidirectional mapping (bijection) between characters in `pattern` and words in `s`.
+If we just map `char -> word`, we fail on inputs like `pattern = "abba", s = "dog dog dog dog"`. 'a' maps to "dog" and 'b' maps to "dog", which violates the requirement that no two letters map to the same word. 
+We can use a single map by storing unique composite keys (like prefixing `"char_a"` for pattern chars and `"word_dog"` for words), or, simpler for statically typed languages, use two maps: one for `char -> word` and one for `word -> char` (or `word -> boolean` to check if a word is already used).
+
+```text
+FUNCTION wordPattern(pattern, s):
+    words = split s by " "
+    
+    IF length(pattern) != length(words):
+        RETURN false
+        
+    charToWord = empty Hash Map
+    wordUsed = empty Hash Set
+    
+    FOR i = 0 TO length(pattern) - 1:
+        char = pattern[i]
+        word = words[i]
+        
+        IF char is in charToWord:
+            // The mapping must remain consistent
+            IF charToWord[char] != word:
+                RETURN false
+        ELSE:
+            // This is a new character. Ensure the word isn't already taken by another char.
+            IF word is in wordUsed:
+                RETURN false
+                
+            charToWord[char] = word
+            wordUsed.add(word)
+            
+    RETURN true
+```
+
+- Time: O(N) where N is the length of `s`. Splitting the string and doing hash map lookups take linear time.
+- Space: O(M) where M is the number of unique words in `s`, for storing the words in the Hash Map and Hash Set.
+
+```mermaid
+flowchart TD
+    Split["words = split(s, ' ')"] --> CheckLen{"len(pattern) == len(words)?"}
+    CheckLen -->|"No"| ReturnFalse["Return false"]
+    CheckLen -->|"Yes"| InitMaps["charToWord = {}, wordUsed = Set()"]
+    InitMaps --> Loop{"For i = 0 to N-1"}
+    Loop -->|"Next i"| CheckInMap{"char in charToWord?"}
+    CheckInMap -->|"Yes"| Match{"charToWord[char] == word?"}
+    Match -->|"Yes"| Loop
+    Match -->|"No"| ReturnFalse
+    CheckInMap -->|"No"| CheckUsed{"word in wordUsed?"}
+    CheckUsed -->|"Yes"| ReturnFalse
+    CheckUsed -->|"No"| AddMaps["charToWord[char] = word, wordUsed.add(word)"]
+    AddMaps --> Loop
+    Loop -->|"Done"| ReturnTrue["Return true"]
+```
+
+### B. Dry run on LeetCode Example 2 (pattern = "abba", s = "dog cat cat fish")
+
+`words` = `["dog", "cat", "cat", "fish"]`. Both lengths are 4.
+
+| `i` | `char` | `word` | Map/Set check | Action |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 'a' | "dog" | 'a' not in map, "dog" not in set | Map `a`->`dog`, Set adds `dog` |
+| 1 | 'b' | "cat" | 'b' not in map, "cat" not in set | Map `b`->`cat`, Set adds `cat` |
+| 2 | 'b' | "cat" | 'b' is in map. Maps to "cat" | Match! Continue. |
+| 3 | 'a' | "fish"| 'a' is in map. Maps to "dog" | **"dog" != "fish"** |
+
+Since "dog" != "fish", return `false`.
+
+### C. Pitfalls from comments
+
+- **Failing the initial length check:** The number of characters in `pattern` and the number of words in `s` must be identical. If you forget to check this at the beginning, your loop might crash with an `IndexOutOfBounds` exception, or quietly return `true` on trailing unmatched items.
+- **The "one hashmap" trick with strings:** The video solution proposes adding a prefix, like putting `("p", "a") : "dog"` and `("w", "dog") : "a"` into the same hash map. While clever, this is generally frowned upon in typed languages compared to just using two strongly-typed maps (`Map<Character, String>` and `Map<String, Character>`).
+- **Python Zip Trick:** Similar to isomorphic strings, Python developers can one-line this: `len(set(pattern)) == len(set(words)) == len(set(zip(pattern, words)))`. If all three sets have the same size, it's a bijection!
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Bloomberg, Dropbox, Google, Meta, Microsoft, Nvidia, TikTok, Uber.
+- Recent: 30 days — (none).
+- Recent: 3 months — Google.

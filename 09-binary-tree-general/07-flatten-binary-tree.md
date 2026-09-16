@@ -339,3 +339,91 @@ function readFlattenedVersioned(root, versionOf) {
   return out;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by tusizi tiger —
+`https://leetcode.com/problems/flatten-binary-tree-to-linked-list/solutions/36977/my-short-post-order-traversal-java-solut-nsg6/`
+— 183.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Reverse Post-Order Traversal — Right -> Left -> Root)
+
+The desired linked list matches preorder traversal (`Root -> Left -> Right`). Reversing preorder produces **`Right -> Left -> Root`**:
+
+1. **Reverse Order Traversal:** Recurse into `root.right` first, then `root.left`. This visits nodes in exact reverse sequence of the final list.
+2. **Backbone Stitching:** Maintain a pointer `prev` initialized to `null` tracking the head of the already processed chain.
+3. **In-Place Rewiring:** When at `root`:
+   - Point `root.right = prev` (linking current root to the rest of the flattened list).
+   - Clear `root.left = null` (ensuring singly-linked rightward structure).
+   - Advance `prev = root`.
+
+```text
+CLASS Solution:
+    prev = null
+
+    FUNCTION flatten(root):
+        IF root == null:
+            RETURN
+
+        // Traverse right subtree first, then left subtree
+        flatten(root.right)
+        flatten(root.left)
+
+        // Rewire pointers
+        root.right = prev
+        root.left = null
+        prev = root
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node exactly once.
+- Space: O(H) auxiliary space on the recursion call stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    subgraph Reverse Postorder Order
+        Step1["1. Visit 6 (prev=null -> 6.right=null, prev=6)"]
+        Step2["2. Visit 5 (5.right=6, prev=5)"]
+        Step3["3. Visit 4 (4.right=5, prev=4)"]
+        Step4["4. Visit 3 (3.right=4, prev=3)"]
+        Step5["5. Visit 2 (2.right=3, prev=2)"]
+        Step6["6. Visit 1 (1.right=2, prev=1)"]
+    end
+    Step1 --> Step2 --> Step3 --> Step4 --> Step5 --> Step6
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [1,2,5,3,4,null,6]`)
+
+| Current Node | `prev` Before Call | Actions Taken | `prev` After Call |
+| :--- | :--- | :--- | :--- |
+| `6` | `null` | `6.right = null`, `6.left = null` | `Node(6)` |
+| `5` | `Node(6)` | `5.right = 6`, `5.left = null` | `Node(5 -> 6)` |
+| `4` | `Node(5)` | `4.right = 5`, `4.left = null` | `Node(4 -> 5 -> 6)` |
+| `3` | `Node(4)` | `3.right = 4`, `3.left = null` | `Node(3 -> 4 -> 5 -> 6)` |
+| `2` | `Node(3)` | `2.right = 3`, `2.left = null` | `Node(2 -> 3 -> 4 -> 5 -> 6)` |
+| `1` | `Node(2)` | `1.right = 2`, `1.left = null` | `Node(1 -> 2 -> 3 -> 4 -> 5 -> 6)` |
+
+Result: Linked list `1 -> 2 -> 3 -> 4 -> 5 -> 6`.
+
+### C. Why Reverse Post-Order Eliminates Temporary Pointer Stashing
+
+- **Forward Preorder Dilemma:** Traversing `Root -> Left -> Right` overwrites `root.right` with the flattened left subtree, destroying access to the original right subtree unless cached in a stack or found via Morris traversal.
+- **Reverse Post-Order Elegance:** The right subtree is completely processed and packed into `prev` BEFORE the left subtree or root is touched. Rewiring `root.right = prev` is 100% safe without auxiliary buffers.
+
+### D. Pitfalls from comments
+
+- **Failing to set `root.left = null`:** LeetCode tests verify that all `left` pointers are nullified. Omitting `root.left = null` leaves dangling branches.
+- **Global state persistence:** In test harnesses that reuse solution class instances across multiple test cases, remember to reset `prev = null` prior to flattening each tree.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (26): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — Amazon, Bloomberg, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Meta, Microsoft.

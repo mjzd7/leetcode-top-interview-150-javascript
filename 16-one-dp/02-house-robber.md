@@ -241,3 +241,91 @@ function robPeriodic(periodValues, repetitions) {
   return applyMatrixPower(T, repetitions);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Max Manzhos —
+`https://leetcode.com/problems/house-robber/solutions/156523/from-good-to-great-how-to-approach-most-ie2yi/`
+— 459.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (From Good to Great: 2-Variable Bottom-Up Dynamic Programming)
+
+Formulate the decision boundary as an optimal substructure problem and eliminate array overhead:
+
+1. **Recurrence Relation:**
+   - At each house $i$, the robber evaluates two mutually exclusive choices:
+     - **Rob house $i$:** Yields $nums[i]$ plus the maximum loot obtainable up to house $i - 2$ (adjacent house $i - 1$ cannot be touched).
+     - **Skip house $i$:** Carries forward the maximum loot obtainable up to house $i - 1$.
+   $$\text{rob}(i) = \max(\text{rob}(i - 1), \text{rob}(i - 2) + nums[i])$$
+2. **State Compression:**
+   - Because the state at step $i$ depends only on steps $i - 1$ and $i - 2$, the $O(N)$ DP table collapses into two scalar accumulators: `prev2` and `prev1`.
+   - Iterating through each house value updates the running optimum in place.
+
+```text
+FUNCTION rob(nums):
+    prev2 = 0
+    prev1 = 0
+
+    FOR EACH num IN nums:
+        curr = MAX(prev1, prev2 + num)
+        prev2 = prev1
+        prev1 = curr
+
+    RETURN prev1
+```
+
+- Time: O(N) — single linear pass through the array.
+- Space: O(1) auxiliary space — two scalar registers maintain historical states.
+
+```mermaid
+flowchart TD
+    House["House i with value num"] --> Choice{"Take or Skip?"}
+    Choice -->|"Take"| Rob["prev2 + num"]
+    Choice -->|"Skip"| Skip["prev1"]
+    Rob --> Max["curr = MAX(prev1, prev2 + num)"]
+    Skip --> Max
+    Max --> Shift["prev2 = prev1<br>prev1 = curr"]
+```
+
+### B. Dry run on LeetCode Example 1 and Example 2
+
+- **Example 1 (`nums = [1, 2, 3, 1]`):**
+  - Start: `prev2 = 0, prev1 = 0`.
+  - $num = 1$: `curr = max(0, 0 + 1) = 1` $\to$ `prev2 = 0, prev1 = 1`.
+  - $num = 2$: `curr = max(1, 0 + 2) = 2` $\to$ `prev2 = 1, prev1 = 2`.
+  - $num = 3$: `curr = max(2, 1 + 3) = 4` $\to$ `prev2 = 2, prev1 = 4`.
+  - $num = 1$: `curr = max(4, 2 + 1) = 4` $\to$ `prev2 = 4, prev1 = 4`.
+  - Return `4`.
+- **Example 2 (`nums = [2, 7, 9, 3, 1]`):**
+  - $num = 2 \implies prev1 = 2$.
+  - $num = 7 \implies curr = \max(2, 0 + 7) = 7, prev2 = 2, prev1 = 7$.
+  - $num = 9 \implies curr = \max(7, 2 + 9) = 11, prev2 = 7, prev1 = 11$.
+  - $num = 3 \implies curr = \max(11, 7 + 3) = 11, prev2 = 11, prev1 = 11$.
+  - $num = 1 \implies curr = \max(11, 11 + 1) = 12, prev2 = 11, prev1 = 12$.
+  - Return `12`.
+
+Final result: `12`.
+
+### C. Why Dynamic Programming Outperforms Greedy Heuristics
+
+- A naive greedy strategy (such as summing only even-indexed or odd-indexed houses) fails on inputs like `[2, 1, 1, 2]`. The greedy sum yields 3, whereas skipping both middle houses to rob indices 0 and 3 yields $2 + 2 = 4$.
+- The dynamic programming transition evaluates whether skipping consecutive houses is globally superior at every step.
+
+### D. Pitfalls from comments
+
+- **Greedy Parity Assumption:** Summing even vs odd houses misses optimal configurations where skipping two houses in a row yields a higher total.
+- **Recursion Stack Exhaustion:** Unmemoized top-down recursion runs in $O(2^N)$ time and blows the call stack. Two-variable bottom-up DP requires zero heap or stack allocation.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (46): Adobe, Agoda, Airbnb, Amazon, Anduril, Apple, Arcesium, Bloomberg, ByteDance, CARS24, Cashfree, Cisco, Databricks, Datadog, DE Shaw, Docusign, EPAM Systems, Expedia, Freecharge, Goldman Sachs, Google, Grab, Gusto, Hotstar, Infosys, Intuit, LinkedIn, MakeMyTrip, Meta, Microsoft, Nutanix, Nvidia, Oracle, oyo, PayPal, PhonePe, Salesforce, ServiceNow, Sprinklr, tcs, TikTok, Two Sigma, Uber, Visa, Walmart Labs, Zoho.
+- Recent: 30 days — Amazon, Bloomberg, Google, Infosys, Ola Cabs.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, tcs.

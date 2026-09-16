@@ -325,3 +325,118 @@ function* mergeSortedGenerators(gen1, gen2) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Aman —
+`https://leetcode.com/problems/merge-sorted-array/solutions/3436053/beats-100-best-cjavapython-and-javascrip-ftpu/`
+— 955.4K views / 5.9K votes / 210 comments.
+Language-independent summary. No new JS here.
+
+### A. Brute way from Discuss
+
+Copy tail, then sort.
+
+```text
+FUNCTION mergeBrute(nums1, m, nums2, n):
+    FOR j FROM 0 TO n - 1:
+        nums1[m + j] = nums2[j]
+    SORT nums1 ascending
+```
+
+- Time: O((m + n) log(m + n))
+- Space: O(1)
+
+### B. Optimal way from Discuss
+
+Reverse 3-pointer. Fill from the back.
+Back slots are free, so no overwrite.
+
+```text
+FUNCTION mergeOptimal(nums1, m, nums2, n):
+    i = m - 1
+    j = n - 1
+    k = m + n - 1
+    WHILE j >= 0:
+        IF i >= 0 AND nums1[i] > nums2[j]:
+            nums1[k] = nums1[i]
+            i--
+        ELSE:
+            nums1[k] = nums2[j]
+            j--
+        k--
+```
+
+- Time: O(m + n)
+- Space: O(1)
+- Leftover nums1 needs no work.
+- Loop guard is p2 >= 0 (here j >= 0).
+
+```mermaid
+flowchart TD
+    Init["i=m-1, j=n-1, k=m+n-1"] --> Loop{"j >= 0?"}
+    Loop -->|"Yes"| Comp{"i>=0 and nums1[i]>nums2[j]?"}
+    Comp -->|Yes/No| Write["Write one, i-- or j--, k--"]
+    Write --> Loop
+    Loop -->|"No"| Done["Done"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums1 = [1, 2, 3, 0, 0, 0]`, `m = 3`
+`nums2 = [2, 5, 6]`, `n = 3`
+
+| Step | i | j | k | Action | nums1 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 2 | 2 | 5 | Start | [1, 2, 3, 0, 0, 6] |
+| 1 | 2 | 2 | 5 | 3 > 6? No, write 6 | [1, 2, 3, 0, 0, 6] |
+| 2 | 2 | 1 | 4 | 3 > 5? No, write 5 | [1, 2, 3, 0, 5, 6] |
+| 3 | 2 | 0 | 3 | 3 > 2? Yes, write 3 | [1, 2, 3, 3, 5, 6] |
+| 4 | 1 | 0 | 2 | 2 > 2? No, write 2 | [1, 2, 2, 3, 5, 6] |
+| 5 | 1 | -1 | - | j < 0, stop | [1, 2, 2, 3, 5, 6] |
+
+### D. Why B beats A
+
+- No sort() call.
+- No extra buffer.
+- One back-to-front pass.
+- Safe for m = 0 or n = 0.
+
+### E. Pitfalls from comments
+
+- `sort()` questioned: why call
+  sort() in a sorting question?
+- Guard confusion: loop while
+  j >= 0 (p2 >= 0), not i >= 0.
+- Decrement confusion: k-- (p--)
+  every step, i-- or j-- once.
+- m = 0: copy all of nums2.
+- n = 0: do nothing.
+
+### F. Companies
+
+- Discuss post itself names none.
+- Companies tab on LeetCode is
+  premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (34): Accenture, Amazon,
+  AMD, Apple, Avito, Bloomberg,
+  Cisco, Cognizant, DE Shaw,
+  EPAM Systems, Goldman Sachs,
+  Google, HCL, Hubspot, IBM,
+  Infosys, LinkedIn, Meta,
+  Microsoft, Nvidia, Oracle,
+  Palo Alto Networks,
+  persistent systems, Qualcomm,
+  Samsung, Squarespace, Swiggy,
+  TCS, TikTok, Verkada, Visa,
+  Wipro, Yandex, Zoho.
+- Recent: 30 days — Amazon,
+  Google, TCS.
+- Recent: 3 months — Amazon,
+  Bloomberg, EPAM Systems,
+  Google, Meta, Microsoft, TCS.

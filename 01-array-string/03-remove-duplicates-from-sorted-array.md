@@ -284,3 +284,109 @@ async function* deduplicateStream(asyncIterable) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Raunak dinesh kodwani —
+`https://leetcode.com/problems/remove-duplicates-from-sorted-array/solutions/3496619/simplest-4-line-sol-with-proper-explanat-ffmq/`
+— 1K votes / 191.2K views / 49 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Use a Set to track seen values and
+rebuild the array. Costs extra space.
+
+```text
+FUNCTION dedupNaive(nums):
+    seen = EMPTY SET
+    out = EMPTY LIST
+    FOR x IN nums:
+        IF x NOT IN seen:
+            ADD x TO seen
+            APPEND x TO out
+    COPY out INTO nums
+    RETURN LENGTH(out)
+```
+
+- Time: O(n)
+- Space: O(n)
+
+### B. Post's way: slow-fast dedup
+
+Slow pointer `i` marks the last kept
+slot. Fast pointer `j` scans from 1.
+On a new value, advance `i` and copy.
+
+```text
+FUNCTION dedupOptimal(nums):
+    i = 0
+    FOR j FROM 1 TO LENGTH(nums) - 1:
+        IF nums[j] != nums[i]:
+            i++
+            nums[i] = nums[j]
+    RETURN i + 1
+```
+
+- Time: O(n)
+- Space: O(1)
+- Return is length k, not the array.
+
+```mermaid
+flowchart TD
+    Init["i=0, j=1"] --> Loop{"j < n?"}
+    Loop -->|"Yes"| New{"nums[j] != nums[i]?"}
+    New -->|Yes| Copy["i++, nums[i]=nums[j], j++"]
+    New -->|No| Skip["j++"]
+    Copy --> Loop
+    Skip --> Loop
+    Loop -->|"No"| Done["Return i+1"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [1, 1, 2]`
+
+| Step | i | j | Action | nums |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 0 | 1 | 1 == 1, skip | [1, 1, 2] |
+| 1 | 0 | 2 | 2 != 1, i=1, copy | [1, 2, 2] |
+| 2 | - | - | Return 2 | [1, 2, _] |
+
+### D. Why B beats A
+
+- No Set, no second array.
+- One pass, in place.
+- Sorted input makes equality
+  check enough — no hashing.
+
+### E. Pitfalls from comments
+
+- Returning the int k confuses
+  beginners: the judge checks the
+  first k slots only.
+- Off-by-one: return i + 1, not i.
+- j starts at 1, not 0.
+- Empty array: return 0 guard.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (23): Accenture, Amazon,
+  Apple, Bloomberg, Capgemini,
+  Cisco, Cognizant, Deloitte,
+  Goldman Sachs, Google, Infosys,
+  Meta, Microsoft, Morgan Stanley,
+  Myntra, Oracle, Siemens, TCS,
+  Uber, Walmart Labs,
+  Wissen Technology, Yandex, Zoho.
+- Recent: 30 days — Amazon,
+  Google, Meta, Microsoft, TCS.
+- Recent: 3 months — Amazon,
+  Bloomberg, Google, Infosys,
+  Meta, Microsoft, TCS.

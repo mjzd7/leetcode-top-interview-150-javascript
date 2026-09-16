@@ -237,3 +237,85 @@ function fftBitReversePermute(arr) {
   return arr.map((_, i) => arr[reverseBits(i) >>> (32 - LOG_N)]);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Akshaya Amar —
+`https://leetcode.com/problems/reverse-bits/solutions/1232842/java-c-0ms-o1-time-complexity-in-place-d-nyvr/`
+— 91K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Divide & Conquer Bit Permutation / Mask Swapping)
+
+Reverse a 32-bit word in $\log_2(32) = 5$ constant-time instruction steps via hierarchical mask swaps:
+
+1. **Divide & Conquer Principle:**
+   - Instead of 32 sequential single-bit extractions, partition the 32 bits into successively smaller powers-of-two blocks and swap alternating chunks in parallel:
+     - **Round 1 (16-bit halves):** Swap upper and lower 16 bits.
+     - **Round 2 (8-bit bytes):** Swap odd and even 8-bit bytes using mask `0x00FF00FF`.
+     - **Round 3 (4-bit nibbles):** Swap odd and even 4-bit nibbles using mask `0x0F0F0F0F`.
+     - **Round 4 (2-bit pairs):** Swap odd and even 2-bit pairs using mask `0x33333333`.
+     - **Round 5 (1-bit pairs):** Swap adjacent bits using mask `0x55555555`.
+2. **Unsigned Normalization:**
+   - Execute a logical shift `>>> 0` to ensure the final representation evaluates as an unsigned 32-bit integer.
+
+```text
+FUNCTION reverseBits(n):
+    n = (n >>> 16) | (n << 16)
+    n = ((n & 0xFF00FF00) >>> 8) | ((n & 0x00FF00FF) << 8)
+    n = ((n & 0xF0F0F0F0) >>> 4) | ((n & 0x0F0F0F0F) << 4)
+    n = ((n & 0xCCCCCCCC) >>> 2) | ((n & 0x33333333) << 2)
+    n = ((n & 0xAAAAAAAA) >>> 1) | ((n & 0x55555555) << 1)
+    RETURN n >>> 0
+```
+
+- Time: O(1) — executes in exactly 5 bitwise swap operations without loops or branches.
+- Space: O(1) — operates directly inside CPU registers with zero allocation.
+
+```mermaid
+flowchart TD
+    Input["Input 32-bit Integer N"] --> Step1["Swap 16-bit blocks:<br>(n >>> 16) | (n << 16)"]
+    Step1 --> Step2["Swap 8-bit bytes:<br>Masks 0xFF00FF00 / 0x00FF00FF"]
+    Step2 --> Step3["Swap 4-bit nibbles:<br>Masks 0xF0F0F0F0 / 0x0F0F0F0F"]
+    Step3 --> Step4["Swap 2-bit pairs:<br>Masks 0xCCCCCCCC / 0x33333333"]
+    Step4 --> Step5["Swap 1-bit adjacent:<br>Masks 0xAAAAAAAA / 0x55555555"]
+    Step5 --> Output["RETURN n >>> 0 (Unsigned result)"]
+```
+
+### B. Dry run on 8-bit Microcosm (`n = 00010111`)
+
+- Original byte: `0001 0111` (decimal 23)
+- Step 1 (Swap 4-bit halves):
+  - Left half `0001` shifts right 4 $\to$ `0000 0001`
+  - Right half `0111` shifts left 4 $\to$ `0111 0000`
+  - Combined: `0111 0001`
+- Step 2 (Swap 2-bit pairs):
+  - Masks isolate pairs `01`, `11`, `00`, `01`
+  - Swapping pairs yields: `11 01 00 01` $\implies$ `1101 0001`
+- Step 3 (Swap 1-bit pairs):
+  - Masks isolate alternating single bits
+  - Swapping adjacent bits yields: `11 10 00 10` $\implies$ `1110 1000`
+- Result `1110 1000` is the exact bitwise mirror of `0001 0111`.
+
+### C. Why Divide & Conquer Masking Outperforms Iteration
+
+- A 32-iteration loop requires 32 iterations of test, branch, shift, and bitwise OR instructions.
+- The 5-step mask sequence is branchless, executing in a fixed pipelined CPU cycle burst with zero branch misprediction penalties.
+
+### D. Pitfalls from comments
+
+- **Arithmetic vs. Logical Shift:** Using arithmetic right shift `>>` sign-extends the highest bit, filling newly introduced leftmost bits with 1s instead of 0s when the MSB is set. Always use logical right shift `>>>`.
+- **Signed 32-bit Integer Overflow:** In JavaScript, bitwise operators cast operands to signed 32-bit integers. If bit 31 becomes 1, the result evaluates as negative unless coerced back to unsigned via `>>> 0`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (10): Airbnb, Amazon, Anduril, Apple, Bloomberg, Google, Meta, Microsoft, Nvidia, Qualcomm.
+- Recent: 30 days — None.
+- Recent: 3 months — Google.

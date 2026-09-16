@@ -339,3 +339,98 @@ function addChunkSpeculative(digitsA, digitsB) {
   return [0, 1].map((carryIn) => addChunk(digitsA, digitsB, carryIn));
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Himanshu Malik —
+`https://leetcode.com/problems/add-two-numbers/solutions/1835535/javac-a-very-beautiful-explanation-ever-szom9/`
+— 174.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Unified Carry Traversal)
+
+The digits are stored in reverse order (least significant digit first), perfectly matching column-wise schoolbook arithmetic. 
+
+A single pointer loop advances while *either* list has nodes remaining **or** a non-zero `carry` persists:
+1. Initialize `dummy` head, `curr = dummy`, and `carry = 0`.
+2. In each iteration, start `sum = carry`. Add `l1.val` if `l1` exists, and add `l2.val` if `l2` exists.
+3. Compute `carry = sum / 10` and digit `sum % 10`.
+4. Append `new ListNode(sum % 10)` to `curr.next` and step forward.
+5. Return `dummy.next`.
+
+```text
+FUNCTION addTwoNumbers(l1, l2):
+    dummy = new ListNode(0)
+    curr = dummy
+    carry = 0
+    
+    WHILE l1 != null OR l2 != null OR carry != 0:
+        sum = carry
+        
+        IF l1 != null:
+            sum += l1.val
+            l1 = l1.next
+            
+        IF l2 != null:
+            sum += l2.val
+            l2 = l2.next
+            
+        carry = sum / 10
+        curr.next = new ListNode(sum MOD 10)
+        curr = curr.next
+        
+    RETURN dummy.next
+```
+
+- Time: O(max(N, M)) where N and M are the lengths of `l1` and `l2`.
+- Space: O(max(N, M)) to hold the resulting linked list nodes.
+
+```mermaid
+flowchart TD
+    Init["dummy = Node(0), curr = dummy, carry = 0"] --> Cond{"l1 != null OR<br>l2 != null OR<br>carry != 0?"}
+    Cond -->|"No"| Done["Return dummy.next"]
+    Cond -->|"Yes"| Sum["sum = carry"]
+    Sum --> AddL1{"l1 != null?"}
+    AddL1 -->|"Yes"| IncL1["sum += l1.val<br>l1 = l1.next"]
+    AddL1 -->|"No"| AddL2
+    IncL1 --> AddL2{"l2 != null?"}
+    AddL2 -->|"Yes"| IncL2["sum += l2.val<br>l2 = l2.next"]
+    AddL2 -->|"No"| Calc
+    IncL2 --> Calc["carry = sum / 10<br>curr.next = Node(sum % 10)<br>curr = curr.next"]
+    Calc --> Cond
+```
+
+### B. Dry run on LeetCode Example 1 (`l1 = [2,4,3], l2 = [5,6,4]`)
+
+| Step | `l1.val` | `l2.val` | `carry` (in) | `sum` | Node Created (`sum % 10`) | `carry` (out) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 2 | 5 | 0 | 7 | 7 | 0 |
+| 2 | 4 | 6 | 0 | 10 | 0 | 1 |
+| 3 | 3 | 4 | 1 | 8 | 8 | 0 |
+| 4 | null | null | 0 | Loop terminates | - | - |
+
+Output list: `7 -> 0 -> 8` (representing $342 + 465 = 807$).
+
+### C. Why Unified While Loop Beats Post-Loop Branching
+
+- Including `carry != 0` in the loop condition automatically handles edge cases like `[5] + [5] = [0, 1]` without needing an awkward `if (carry > 0) curr.next = new ListNode(carry)` trailing clause.
+- Seamlessly tolerates lists of uneven length by substituting missing operands with 0.
+
+### D. Pitfalls from comments
+
+- **Integer overflow via conversion:** Converting lists to numbers (e.g. `parseInt`) completely fails because lists can have up to 100 digits, exceeding the 64-bit IEEE-754 / integer limit ($2^{53} - 1$). Direct node-by-node digit manipulation is mandatory.
+- **Lost final carry:** Failing to process remaining carry when both lists reach `null` drops the leading 1 in sums like $99 + 1 = 100$.
+- **Floating-point division:** `carry = sum / 10` must be truncated to an integer (`Math.floor(sum / 10)` in JS, integer division in Java/C++).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (37): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — Amazon, Bloomberg, Google, Meta, Microsoft, Ola Cabs.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft, Pinterest.

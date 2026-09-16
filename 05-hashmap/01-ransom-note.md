@@ -370,3 +370,91 @@ async function canConstructStreaming(ransomNote, readableStream) {
   return remaining === 0;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Binay Shaw —
+`https://leetcode.com/problems/ransom-note/solutions/1671569/1ms-100-easy-explanation-java-solution/`
+— 109.7K views / 1.1K votes / 68 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Frequency Array)
+
+Instead of using a generic Hash Map which has extra overhead for hashing and object creation, the optimal strategy takes advantage of the fact that the input only contains lowercase English letters.
+We can map each letter to an integer index `0-25` (e.g., `char - 'a'`) and use a simple fixed-size integer array of length 26 to store the frequencies.
+
+```text
+FUNCTION canConstruct(ransomNote, magazine):
+    // Optimization: if ransomNote is longer than magazine, it's impossible
+    IF length(ransomNote) > length(magazine):
+        RETURN false
+        
+    counts = Array of 26 integers, initialized to 0
+    
+    // Count available letters from magazine
+    FOR each char c in magazine:
+        index = c - 'a'
+        counts[index]++
+        
+    // Consume letters for ransomNote
+    FOR each char c in ransomNote:
+        index = c - 'a'
+        IF counts[index] == 0:
+            RETURN false
+        counts[index]--
+        
+    RETURN true
+```
+
+- Time: O(M + N) where M is the length of `magazine` and N is the length of `ransomNote`.
+- Space: O(1) since the frequency array is always exactly size 26 regardless of the input sizes.
+
+```mermaid
+flowchart TD
+    CheckLen{"len(ransomNote) > len(magazine)?"}
+    CheckLen -->|"Yes"| ReturnFalseEarly["Return false"]
+    CheckLen -->|"No"| InitArray["counts = Array(26).fill(0)"]
+    InitArray --> LoopMag{"For each c in magazine"}
+    LoopMag -->|"Next c"| IncCount["counts[c - 'a']++"]
+    IncCount --> LoopMag
+    LoopMag -->|"Done"| LoopNote{"For each c in ransomNote"}
+    LoopNote -->|"Next c"| CheckZero{"counts[c - 'a'] == 0?"}
+    CheckZero -->|"Yes"| ReturnFalse["Return false"]
+    CheckZero -->|"No"| DecCount["counts[c - 'a']--"]
+    DecCount --> LoopNote
+    LoopNote -->|"Done"| ReturnTrue["Return true"]
+```
+
+### B. Dry run on LeetCode Example 3 (ransomNote = "aa", magazine = "aab")
+
+`counts` = `[0, 0, 0, ..., 0]` (size 26)
+
+**Step 1: Count `magazine` ("aab")**
+- 'a': `counts[0]++` $\rightarrow$ `counts[0] = 1`
+- 'a': `counts[0]++` $\rightarrow$ `counts[0] = 2`
+- 'b': `counts[1]++` $\rightarrow$ `counts[1] = 1`
+`counts` = `[2, 1, 0, ..., 0]`
+
+**Step 2: Consume `ransomNote` ("aa")**
+- 'a': `counts[0] == 0?` No (it's 2). `counts[0]--` $\rightarrow$ `counts[0] = 1`
+- 'a': `counts[0] == 0?` No (it's 1). `counts[0]--` $\rightarrow$ `counts[0] = 0`
+Successfully processed all characters. Return `true`.
+
+### C. Pitfalls from comments
+
+- **Using a generic Dictionary/HashMap:** While technically still $O(M+N)$ time and $O(1)$ space (since the alphabet is fixed at 26), using a language's built-in Hash Map structure carries significant performance overhead compared to a primitive array. Array lookups are direct memory access, while Hash Maps require computing a hash code and resolving potential collisions. The `char - 'a'` trick is universally considered the best practice for lowercase-only string problems.
+- **Not doing the initial length check:** If `ransomNote` is 10,000 characters long and `magazine` is 2 characters long, iterating through the entire string to build the array is a waste of time. The check `if (ransomNote.length > magazine.length) return false;` instantly saves execution time.
+- **Typo in "z - a":** An older comment pointed out a typo in the original post's explanation claiming `z` corresponds to index 26. Since arrays are 0-indexed, `'a' - 'a' = 0` and `'z' - 'a' = 25`.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Anduril, Apple, Bloomberg, Criteo, Google, Karat, Meta, Microsoft, SAP, Spotify, TCS, Tripadvisor.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Anduril, Bloomberg, Google, Microsoft.

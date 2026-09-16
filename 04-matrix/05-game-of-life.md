@@ -476,3 +476,126 @@ async function* processGameOfLifeStreaming(rowStream, n) {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by yavinci —
+`https://leetcode.com/problems/game-of-life/solutions/73223/easiest-java-solution-with-explanation/`
+— 155.5K views / 1.5K votes / 165 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (In-place Bit Manipulation / State Transition)
+
+The challenge is to update the board simultaneously (in-place) without overwriting the previous states that are still needed to compute the next states of adjacent cells. Since the values are only `0` and `1`, we can use the bits of the integer to store both the *current state* and the *next state*.
+- **Bit 0 (least significant bit):** stores the current state.
+- **Bit 1 (second least significant bit):** will store the next state.
+
+Transitions:
+- `01 -> 11` (currently 1, becomes 1): 2 or 3 live neighbors.
+- `00 -> 10` (currently 0, becomes 1): exactly 3 live neighbors.
+- Other states remain `00` or `01` because their next state is 0.
+
+```text
+FUNCTION gameOfLife(board):
+    ROWS = length(board)
+    COLS = length(board[0])
+    
+    // Step 1: Calculate the next state and store it in the 2nd bit
+    FOR r = 0 TO ROWS - 1:
+        FOR c = 0 TO COLS - 1:
+            liveNeighbors = 0
+            
+            // Count live neighbors using the 1st bit only
+            FOR each neighbor in 8 directions (nr, nc):
+                IF nr >= 0 AND nr < ROWS AND nc >= 0 AND nc < COLS:
+                    liveNeighbors += (board[nr][nc] & 1)
+                    
+            // Apply Game of Life rules
+            // If cell is currently alive
+            IF (board[r][c] & 1) == 1:
+                IF liveNeighbors == 2 OR liveNeighbors == 3:
+                    // 01 -> 11 (binary 3)
+                    board[r][c] = 3
+            // If cell is currently dead
+            ELSE:
+                IF liveNeighbors == 3:
+                    // 00 -> 10 (binary 2)
+                    board[r][c] = 2
+                    
+    // Step 2: Shift out the 1st bit to fully transition to the next state
+    FOR r = 0 TO ROWS - 1:
+        FOR c = 0 TO COLS - 1:
+            board[r][c] = board[r][c] >> 1
+```
+
+- Time: O(M * N) where M is rows and N is columns. For each cell, we check exactly 8 neighbors, meaning $O(8 \cdot M \cdot N)$ operations, which simplifies to $O(M \cdot N)$.
+- Space: O(1). We use the existing integer matrix to hold two states via bitwise operations.
+
+```mermaid
+flowchart TD
+    Init["Loop over all cells (r, c)"] --> Count["Count neighbors using board[nr][nc] & 1"]
+    Count --> IsAlive{"(board[r][c] & 1) == 1?"}
+    IsAlive -->|"Yes"| AliveRule{"Neighbors == 2 OR 3?"}
+    AliveRule -->|"Yes"| SetState11["board[r][c] = 3 (binary 11)"]
+    AliveRule -->|"No"| NextCell1["Leave as 1 (binary 01)"]
+    IsAlive -->|"No"| DeadRule{"Neighbors == 3?"}
+    DeadRule -->|"Yes"| SetState10["board[r][c] = 2 (binary 10)"]
+    DeadRule -->|"No"| NextCell2["Leave as 0 (binary 00)"]
+    SetState11 --> NextIter["Next Cell"]
+    NextCell1 --> NextIter
+    SetState10 --> NextIter
+    NextCell2 --> NextIter
+    NextIter --> UpdatePass["Loop over all cells again"]
+    UpdatePass --> ShiftRight["board[r][c] = board[r][c] >> 1"]
+    ShiftRight --> End["Return"]
+```
+
+### B. Dry run on LeetCode Example 1
+
+Subset of board:
+```text
+[0, 1, 0]
+[0, 0, 1]
+[1, 1, 1]
+```
+Let's process the middle cell `board[1][1]` which is `0` (binary `00`).
+Live neighbors (reading only `& 1`):
+Top-mid: 1
+Mid-right: 1
+Bot-left: 1
+Bot-mid: 1
+Bot-right: 1
+Total live neighbors = 5.
+Rule for dead cell: Needs exactly 3 to live. Has 5.
+Remains dead. Stays `0` (`00`).
+
+Let's process the bot-mid cell `board[2][1]` which is `1` (binary `01`).
+Live neighbors:
+Mid-left: 0
+Mid: 0
+Mid-right: 1
+Bot-left: 1
+Bot-right: 1
+Total live neighbors = 3.
+Rule for live cell: Needs 2 or 3 to live. Has 3.
+Becomes alive next turn. `board[2][1] = 3` (`11`).
+
+In the second pass, `board[1][1] >> 1` becomes 0. `board[2][1] >> 1` becomes 1.
+
+### C. Pitfalls from comments
+
+- **Magic Numbers Alternative:** If you are uncomfortable with bitwise operations, a highly upvoted comment by `masiwei` suggests just assigning dummy values like `2` (was dead, now live) and `3` (was live, now dead). Later, you replace `2` with `1`, `3` with `0`. Since the matrix only contains 0 and 1, using integers outside that range is a perfectly valid constant-space solution.
+- **Infinite Board Follow-Up:** This question usually comes with a follow-up: "What if the board is infinite?". You cannot iterate over an infinite grid. The solution is to use a Hash Map of only the live coordinates (e.g., `Set<(int, int)> liveCells`). For every live cell, you add +1 to the neighbor count of all 8 of its neighbors in a Hash Map. Then you iterate through the Hash Map to determine who lives and dies.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Adobe, Amazon, Anduril, Applied Intuition, Bloomberg, Dropbox, Google, Meta, Microsoft, Riot Games, Salesforce, Snap, Two Sigma.
+- Recent: 30 days — (none).
+- Recent: 3 months — (none).

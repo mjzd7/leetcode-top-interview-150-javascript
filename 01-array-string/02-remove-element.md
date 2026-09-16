@@ -289,3 +289,103 @@ function removeMultipleElements(nums, targets) {
 }
 ```
 - **Complexity**: $O(N + M)$ time, $O(M)$ auxiliary space.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Rahul Varma —
+`https://leetcode.com/problems/remove-element/solutions/3670940/best-100-c-java-python-beginner-friendly-2ve8/`
+— 3.4K votes / 619K views / 111 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Erase each `val` in place and shift
+the tail left. Each erase costs O(n).
+
+```text
+FUNCTION removeNaive(nums, val):
+    i = 0
+    WHILE i < LENGTH(nums):
+        IF nums[i] == val:
+            ERASE nums[i] (shift tail left)
+        ELSE:
+            i++
+```
+
+- Time: O(n squared)
+- Space: O(1)
+
+### B. Post's way: two-pointer overwrite
+
+Reader `i` scans all. Writer `index`
+keeps the next slot for a keeper.
+Overwrites targets instead of erasing.
+
+```text
+FUNCTION removeOptimal(nums, val):
+    index = 0
+    FOR i FROM 0 TO LENGTH(nums) - 1:
+        IF nums[i] != val:
+            nums[index] = nums[i]
+            index++
+    RETURN index
+```
+
+- Time: O(n)
+- Space: O(1)
+- Return is length k, not the array.
+
+```mermaid
+flowchart TD
+    Init["index=0, i=0"] --> Loop{"i < n?"}
+    Loop -->|"Yes"| Keep{"nums[i] != val?"}
+    Keep -->|Yes| Write["nums[index]=nums[i], index++, i++"]
+    Keep -->|No| Skip["i++"]
+    Write --> Loop
+    Skip --> Loop
+    Loop -->|"No"| Done["Return index"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [3, 2, 2, 3]`, `val = 3`
+
+| Step | i | index | Action | nums |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 0 | 0 | 3 == 3, skip | [3, 2, 2, 3] |
+| 1 | 1 | 0 | Write 2 | [2, 2, 2, 3] |
+| 2 | 2 | 1 | Write 2 | [2, 2, 2, 3] |
+| 3 | 3 | 2 | 3 == 3, skip | [2, 2, 2, 3] |
+| 4 | - | 2 | Return 2 | [2, 2, _, _] |
+
+### D. Why B beats A
+
+- One pass, no shifting.
+- Order of keepers preserved.
+- O(1) extra space.
+
+### E. Pitfalls from comments
+
+- Tail past k keeps old values
+  (e.g. `[2, 2, 2, 3]`). The judge
+  checks the first k only — fine.
+- All-target input like `[3, 3]`
+  returns 0. Memory still holds
+  `[3, 3]` — also fine per statement.
+- Forgetting to return k.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (11): Adobe, Amazon,
+  Apple, Bloomberg, Google,
+  Infosys, Meta, Microsoft,
+  TCS, Uber, Yandex.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon,
+  Bloomberg, Google, Meta.

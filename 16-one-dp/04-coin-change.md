@@ -276,3 +276,105 @@ function greedyCanonical(coinsDesc, amount) {
   return count;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Giacomo Sorbi —
+`https://leetcode.com/problems/coin-change/solutions/778548/c-dp-solution-explained-100-time-100-spa-yjm8/`
+— 125.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Bottom-Up Unbounded Knapsack DP with Sorted Pruning)
+
+Compute the fewest coins to form every intermediate sum using an unbounded knapsack table:
+
+1. **State Definition:**
+   - Let `dp[i]` store the minimum coins needed to make amount $i$.
+2. **Sentinel Initialization:**
+   - `dp[0] = 0` (0 coins produce an amount of 0).
+   - Set all `dp[1...amount] = amount + 1` (a sentinel safely smaller than `INT_MAX`, avoiding arithmetic overflow upon addition while strictly exceeding any achievable answer).
+3. **Sorted Pruning:**
+   - Sort the coin denominations in ascending order.
+   - For any sub-amount $i$, once a coin $c > i$, break immediately from inner evaluation.
+4. **Transition Invariant:**
+   - For every amount $i$ from 1 to `amount`:
+     - For each coin $c$ in sorted `coins`:
+       - If $c > i$, break.
+       - If `dp[i - c] != amount + 1`, update:
+         `dp[i] = MIN(dp[i], dp[i - c] + 1)`.
+5. **Execution:** Return `-1` if `dp[amount] > amount`, otherwise return `dp[amount]`.
+
+```text
+FUNCTION coinChange(coins, amount):
+    IF amount == 0:
+        RETURN 0
+
+    SORT_ASCENDING(coins)
+    dp = ARRAY OF SIZE (amount + 1) FILLED WITH (amount + 1)
+    dp[0] = 0
+
+    FOR i FROM 1 TO amount:
+        FOR EACH c IN coins:
+            IF c > i:
+                BREAK
+            IF dp[i - c] != amount + 1:
+                dp[i] = MIN(dp[i], dp[i - c] + 1)
+
+    IF dp[amount] > amount:
+        RETURN -1
+    RETURN dp[amount]
+```
+
+- Time: O(C * log C + amount * C) where $C$ is the number of coins.
+- Space: O(amount) auxiliary space for the 1D DP array.
+
+```mermaid
+flowchart TD
+    Start["dp[0] = 0, dp[1..amount] = amount + 1<br>Sort coins ascending"] --> LoopI["Iterate target amount i from 1 to amount"]
+    LoopI --> LoopC["Iterate coin c in coins"]
+    LoopC --> Exceed{"c > i?"}
+    Exceed -->|"Yes"| BreakInner["Break coin loop"] --> LoopI
+    Exceed -->|"No"| Relax["dp[i] = MIN(dp[i], dp[i - c] + 1)"] --> LoopC
+    LoopI --> CheckAns{"dp[amount] > amount?"}
+    CheckAns -->|"Yes"| RetMinus["RETURN -1"]
+    CheckAns -->|"No"| RetAns["RETURN dp[amount]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`coins = [1, 2, 5], amount = 11`)
+
+- `dp` initialized with size 12 filled with 12, `dp[0] = 0`.
+- $i = 1$: $dp[1] = dp[0] + 1 = 1$.
+- $i = 2$: coins 1, 2 $\implies dp[2] = \min(dp[1]+1, dp[0]+1) = 1$.
+- $i = 5$: coin 5 $\implies dp[5] = dp[0] + 1 = 1$.
+- $i = 6$: $dp[6] = \min(dp[5]+1, dp[4]+1, dp[1]+1) = 2$ ($5 + 1$).
+- $i = 10$: $dp[10] = dp[5] + 1 = 2$ ($5 + 5$).
+- $i = 11$: coin 5 $\implies dp[11] = dp[6] + 1 = 3$ ($5 + 5 + 1$).
+- Return `3`.
+
+Final result: `3` coins.
+
+### C. Why Greedy Heuristics Fail on Non-Canonical Systems
+
+- Standard greedy approaches (picking largest coin first) fail when coin systems are not canonical.
+- For example, with `coins = [1, 3, 4]` and `amount = 6`:
+  - Greedy selects $4 + 1 + 1$ (3 coins).
+  - Optimal dynamic programming identifies $3 + 3 = 6$ (2 coins).
+- DP explores all overlapping substructures in linear time relative to amount.
+
+### D. Pitfalls from comments
+
+- **Integer Overflow with `INT_MAX`:** Initializing cells to `INT_MAX` causes signed 32-bit arithmetic overflow to negative numbers on `INT_MAX + 1`. Using `amount + 1` acts as a safe, overflow-proof sentinel.
+- **Missing Sort Pruning:** For large amounts with large coin values, iterating over all coins without sorting evaluates dead branches where $c > i$ unnecessarily.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (39): Accenture, Accolite, Adobe, Affirm, Agoda, Airbnb, Amazon, Apple, Bloomberg, Capgemini, Datadog, DE Shaw, Deloitte, Deutsche Bank, Geico, Goldman Sachs, Google, HashedIn, IBM, Infosys, Intuit, Mastercard, Meta, Microsoft, Morgan Stanley, Oracle, PayPal, PhonePe, Pinterest, PornHub, Salesforce, SAP, ServiceNow, Sigmoid, TikTok, Uber, Walmart Labs, Yandex, Zoho.
+- Recent: 30 days — Google, Mastercard, Meta, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Mastercard, Meta, Microsoft.

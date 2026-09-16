@@ -325,3 +325,92 @@ function reverseKGroupVersioned(head, k, versionOf) {
   return out;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Andrey Timoshpolsky —
+`https://leetcode.com/problems/reverse-nodes-in-k-group/solutions/11423/short-but-recursive-java-code-with-comme-qefm/`
+— 142.4K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (K-Lookahead with Group Reversal)
+
+The consensus approach checks eligibility on the fly before reversing each block of size $k$:
+
+1. **Lookahead Probe:** Advance a pointer $k$ steps from the start of the current segment. If fewer than $k$ nodes remain before reaching `null`, stop immediately and return `head` as-is (preserving the short tail).
+2. **Reverse Current Block:** If $k$ nodes exist, recursively (or iteratively) reverse the current group of $k$ nodes, connecting its tail to the reversed result of the subsequent segment.
+3. **Return New Segment Head:** The $k$-th node becomes the new head of the current group.
+
+```text
+FUNCTION reverseKGroup(head, k):
+    curr = head
+    count = 0
+
+    // Probe if at least k nodes exist
+    WHILE curr != null AND count != k:
+        curr = curr.next
+        count = count + 1
+
+    // If a full group of k is found
+    IF count == k:
+        // Reverse subsequent groups first
+        curr = reverseKGroup(curr, k)
+
+        // Reverse current k nodes and attach to curr
+        WHILE count > 0:
+            count = count - 1
+            tmp = head.next
+            head.next = curr
+            curr = head
+            head = tmp
+
+        head = curr
+
+    RETURN head
+```
+
+- Time: O(N) where each node is probed once and reversed once (at most $2N$ pointer hops).
+- Space: O(N / k) recursive call stack space, or O(1) when implemented iteratively with an explicit `groupPrev` sentinel.
+
+```mermaid
+flowchart TD
+    Start["Probe k nodes ahead"] --> Check{"Count == k?"}
+    Check -->|"No (Fewer than k)"| RetHead["Leave tail untouched<br>Return head"]
+    Check -->|"Yes"| Recurse["curr = reverseKGroup(curr, k)"]
+    Recurse --> Reverse["Reverse current k nodes<br>Prepend onto curr"]
+    Reverse --> RetNewHead["Return new group head"]
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [1,2,3,4,5], k = 2`)
+
+| Group Index | Candidate Nodes | Count Reached? | Action Taken | Resulting Segment |
+| :--- | :--- | :--- | :--- | :--- |
+| Group 1 | `[1, 2]` | Yes ($k=2$) | Reverse `1 -> 2` to `2 -> 1` | `2 -> 1 -> ...` |
+| Group 2 | `[3, 4]` | Yes ($k=2$) | Reverse `3 -> 4` to `4 -> 3` | `... 4 -> 3 -> ...` |
+| Group 3 | `[5]` | No ($count=1 < k$) | Leave intact | `... -> 5` |
+
+Final list: `[2, 1, 4, 3, 5]`.
+
+### C. Why Lookahead Probe Beats Measuring Total Length
+
+- **On-the-Fly Processing:** Pre-counting total list length requires an entire separate pass over all $N$ nodes. Probing ahead by $k$ only inspects what is needed to validate the next immediate chunk.
+- **Natural Termination:** As soon as a lookahead probe hits `null`, the algorithm finishes without touching the remaining tail.
+
+### D. Pitfalls from comments
+
+- **Reversing partial tail:** Problems explicitly demand that leftover nodes fewer than $k$ remain untouched. Forgetting to verify $k$ nodes ahead before reversing corrupts the final segment.
+- **Dangling next pointers:** Failing to rewire the tail of the current reversed group to the head of the next group causes list truncation or cycles.
+- **Iterative vs Recursive space:** In environments with strict $O(1)$ auxiliary space requirements, use an iterative pointer loop with `dummy` and `groupPrev` rather than call stack recursion.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (27): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — Amazon, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft, Palo Alto Networks, TikTok, Zopsmart.

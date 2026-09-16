@@ -261,3 +261,103 @@ function fastIsqrtSeed(x) {
   return 1 << (Math.floor(Math.log2(x)) >> 1); // bit-length halving seed
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Deepank Yadav —
+`https://leetcode.com/problems/sqrtx/solutions/3706594/easy-explained-solution-beats-100-by-dee-6cez/`
+— 283K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Integer Binary Search with Overflow-Proof Division)
+
+Compute the floor of the square root via monotonic binary search on the integer range $[1, \lfloor x / 2 \rfloor]$ using quotient comparison:
+
+1. **Base Cases:**
+   - If $x < 2$, return $x$ immediately ($\sqrt{0} = 0, \sqrt{1} = 1$).
+2. **Search Bounds:**
+   - For any integer $x \ge 4$, $\sqrt{x} \le \lfloor x / 2 \rfloor$.
+   - Initialize `lo = 1` and `hi = INT_DIV(x, 2)`.
+3. **Binary Search Invariant:**
+   - Compute midpoint: `mid = lo + INT_DIV(hi - lo, 2)`.
+   - To guard against 32-bit integer overflow, evaluate `mid <= INT_DIV(x, mid)` instead of `mid * mid <= x`.
+   - If `mid <= INT_DIV(x, mid)`:
+     - `mid` is a valid square root candidate. Save `ans = mid`.
+     - Advance rightward (`lo = mid + 1`) to search for larger viable integers.
+   - Else:
+     - `mid` is strictly too large. Narrow search leftward (`hi = mid - 1`).
+4. **Execution:** Return `ans` (or `hi` upon loop exit).
+
+```text
+FUNCTION mySqrt(x):
+    IF x < 2:
+        RETURN x
+
+    lo = 1
+    hi = INT_DIV(x, 2)
+    ans = 1
+
+    WHILE lo <= hi:
+        mid = lo + INT_DIV(hi - lo, 2)
+        IF mid <= INT_DIV(x, mid):
+            ans = mid
+            lo = mid + 1
+        ELSE:
+            hi = mid - 1
+
+    RETURN ans
+```
+
+- Time: O(log x) — binary search cuts search range by half on each iteration.
+- Space: O(1) auxiliary space using primitive integer registers.
+
+```mermaid
+flowchart TD
+    Start["mySqrt(x)"] --> BaseCheck{"x < 2?"}
+    BaseCheck -->|"Yes"| RetX["RETURN x"]
+    BaseCheck -->|"No"| Init["lo = 1, hi = x / 2, ans = 1"]
+    Init --> Loop{"lo <= hi?"}
+    Loop -->|"Yes"| Mid["mid = lo + (hi - lo) / 2"]
+    Mid --> Compare{"mid <= x / mid?"}
+    Compare -->|"Yes"| SaveRight["ans = mid<br>lo = mid + 1"] --> Loop
+    Compare -->|"No"| MoveLeft["hi = mid - 1"] --> Loop
+    Loop -->|"No"| RetAns["RETURN ans"]
+```
+
+### B. Dry run on LeetCode Example 1 and Example 2
+
+- **Example 1 ($x = 4$):**
+  - $x \ge 2$, so `lo = 1, hi = 2`.
+  - Iteration 1: `mid = 1`. $1 \le \lfloor 4 / 1 \rfloor = 4$ -> `ans = 1, lo = 2`.
+  - Iteration 2: `mid = 2`. $2 \le \lfloor 4 / 2 \rfloor = 2$ -> `ans = 2, lo = 3`.
+  - `lo > hi` terminates. Return `ans = 2`.
+- **Example 2 ($x = 8$):**
+  - $x \ge 2$, so `lo = 1, hi = 4`.
+  - Iteration 1: `mid = 2`. $2 \le \lfloor 8 / 2 \rfloor = 4$ -> `ans = 2, lo = 3`.
+  - Iteration 2: `mid = 3`. $3 \le \lfloor 8 / 3 \rfloor = 2$ (false) -> `hi = 2`.
+  - `lo > hi` terminates. Return `ans = 2`.
+
+Final result: `2`.
+
+### C. Why Division Comparison `mid <= x / mid` Prevents Overflow
+
+- In standard 32-bit architectures, evaluating `mid * mid` when $mid \approx 2^{16}$ overflows signed integer range, producing negative values and breaking the ordering relation.
+- Using division `mid <= INT_DIV(x, mid)` guarantees that no value exceeds $x$, keeping calculations entirely within standard word sizes without 64-bit casting.
+
+### D. Pitfalls from comments
+
+- **Squaring Overflow:** In languages with fixed integer sizes, `mid * mid` causes undefined integer overflow on inputs near $2^{31} - 1$.
+- **Boundary for $x = 0$ or $x = 1$:** When $x = 0$ or $1$, setting `hi = INT_DIV(x, 2)` gives $hi = 0 < lo = 1$, which skips the loop and would return uninitialized values unless handled in the base guard.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Citadel, Goldman Sachs, Google, Grammarly, Infosys, LinkedIn, Meta, Microsoft, Nvidia, Oracle, tcs, TikTok, Uber, Zoho.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta.

@@ -268,3 +268,92 @@ async function robustLessThan(a, b, samples = 11) {
   return votes > samples / 2;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by WhileOmSleeps —
+`https://leetcode.com/problems/find-peak-element/solutions/8523445/c-100-beats-olog-n-binary-search-mountai-1eic/`
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Gradient Ascent Mountain Slope Binary Search)
+
+Given that `nums[-1] = nums[n] = -∞` and adjacent elements are strictly distinct (`nums[i] != nums[i+1]`), walking in the direction of increasing slope guarantees finding a local peak:
+
+1. **Boundary Initialization:** Set `low = 0`, `high = length - 1`.
+2. **Slope Evaluation:** While `low < high`:
+   - Compute `mid = low + (high - low) / 2`.
+   - Compare `nums[mid]` with `nums[mid + 1]`:
+     - If `nums[mid] > nums[mid + 1]`, we are on a descending slope. A peak exists at `mid` or to its left -> set `high = mid`.
+     - If `nums[mid] < nums[mid + 1]`, we are on an ascending slope. A peak exists to the right -> set `low = mid + 1`.
+3. **Termination:** When `low == high`, the search space has converged onto a peak index. Return `low`.
+
+```text
+FUNCTION findPeakElement(nums):
+    low = 0
+    high = length(nums) - 1
+
+    WHILE low < high:
+        mid = low + (high - low) / 2
+
+        IF nums[mid] > nums[mid + 1]:
+            // Descending slope: peak is at mid or left of mid
+            high = mid
+        ELSE:
+            // Ascending slope: peak is right of mid
+            low = mid + 1
+
+    RETURN low
+```
+
+- Time: O(log N) where N is array length, halving the range each step.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Compare{"nums[mid] vs nums[mid + 1]"}
+    Compare -->|"nums[mid] > nums[mid + 1] (Downward)"| LeftSide["high = mid (peak at or left of mid)"]
+    Compare -->|"nums[mid] < nums[mid + 1] (Upward)"| RightSide["low = mid + 1 (peak strictly right of mid)"]
+    LeftSide --> Check{"low == high?"}
+    RightSide --> Check
+    Check -->|"Yes"| Done["Return low (peak index)"]
+    Check -->|"No"| Compare
+```
+
+### B. Dry run on LeetCode Example 2 (`nums = [1,2,1,3,5,6,4]`)
+
+- `low = 0`, `high = 6`.
+- Iteration 1:
+  - `mid = 3`. `nums[3] = 3`, `nums[4] = 5`.
+  - Since $3 < 5$ (ascending slope), peak lies to the right: `low = mid + 1 = 4`.
+- Iteration 2: `low = 4`, `high = 6`.
+  - `mid = 5`. `nums[5] = 6`, `nums[6] = 4`.
+  - Since $6 > 4$ (descending slope), peak lies at `mid` or left: `high = mid = 5`.
+- Iteration 3: `low = 4`, `high = 5`.
+  - `mid = 4`. `nums[4] = 5`, `nums[5] = 6`.
+  - Since $5 < 6$ (ascending slope): `low = mid + 1 = 5`.
+- Loop ends as `low == high == 5`. Return index 5 (value 6).
+
+Final result: `5` (or any valid peak index).
+
+### C. Why Binary Search Applies to an Unsorted Array
+
+- Binary search does not strictly require global ordering; it only requires a directional decision rule that safely discards half of the search domain.
+- Because boundaries fall off to $-\infty$, walking uphill guarantees arriving at a local peak without ever dropping below the starting value.
+
+### D. Pitfalls from comments
+
+- **Checking both neighbors:** Testing `nums[mid - 1] < nums[mid] > nums[mid + 1]` requires handling edge boundary guards (`mid == 0` and `mid == n - 1`). Comparing solely against `nums[mid + 1]` with `while (low < high)` avoids all out-of-bounds checks since `mid < high` ensures `mid + 1` is always a valid index.
+- **Infinite loop hazard:** Combining `while (low <= high)` with `high = mid` causes an infinite loop when `low == high`. The loop condition MUST be `while (low < high)`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (31): Accenture, Akamai, Amazon, Apple, Bloomberg, ByteDance, Commvault, Docusign, eBay, Goldman Sachs, Google, Infosys, IXL, Meta, Microsoft, Netflix, Nvidia, Oracle, PayPal, Samsung, ServiceNow, tcs, TikTok, Uber, Urban Company, Visa, Walmart Labs, Waymo, Wix, Yahoo, Zepto.
+- Recent: 30 days — Google, Infosys, tcs.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, tcs.

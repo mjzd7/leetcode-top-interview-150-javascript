@@ -360,3 +360,86 @@ function convert(s, numRows) {
 ### Follow-Up 2: Memory-Constrained Streaming Zigzag on Ultra-Large Text
 - **Scenario**: What if `s` is a $10\text{GB}$ stream and cannot fit in memory?
 - **Solution Strategy**: Compute total character count $N$. In pass $r \in [0, \text{numRows}-1]$, read chunks directly from disk at offsets $r + k \times \text{cycleLen}$ and stream directly to standard output without holding the file in memory.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/zigzag-conversion/solutions/2903429/video-two-points-to-solve-the-question/`
+— 145.1K views / 921 votes / 15 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Row Simulation with Direction)
+
+Instead of calculating mathematical formulas for the exact index offsets (which is error-prone), simulate placing each character into its corresponding row. You only need a `direction` flag that flips from `1` (down) to `-1` (up) when you hit the top or bottom row.
+
+```text
+FUNCTION convert(s, numRows):
+    IF numRows == 1 OR numRows >= length(s):
+        RETURN s
+        
+    rows = array of numRows empty strings
+    idx = 0
+    direction = 1
+    
+    FOR EACH char IN s:
+        rows[idx] = rows[idx] + char
+        
+        IF idx == 0:
+            direction = 1
+        ELSE IF idx == numRows - 1:
+            direction = -1
+            
+        idx = idx + direction
+        
+    RETURN Join(rows)
+```
+
+- Time: O(N) where N is length of string
+- Space: O(N) to hold the array of row strings
+
+```mermaid
+flowchart TD
+    Init["Create array of rows, idx=0, dir=1"] --> Loop{"For each char in s"}
+    Loop -->|"Next char"| Append["rows[idx] += char"]
+    Append --> CheckTop{"idx == 0?"}
+    CheckTop -->|"Yes"| DirDown["dir = 1"]
+    CheckTop -->|"No"| CheckBottom{"idx == numRows - 1?"}
+    CheckBottom -->|"Yes"| DirUp["dir = -1"]
+    CheckBottom -->|"No"| Move["idx += dir"]
+    DirDown --> Move
+    DirUp --> Move
+    Move --> Loop
+    Loop -->|"Done"| Return["Join rows array and return"]
+```
+
+### B. Dry run on LeetCode Example 1 ("PAYPALISHIRING", numRows = 3)
+
+| char | `idx` | `direction` | Action | State of `rows` |
+| :--- | :--- | :--- | :--- | :--- |
+| P | 0 | 1 | Appended to rows[0], `idx=0` so `dir=1` | `["P", "", ""]` |
+| A | 1 | 1 | Appended to rows[1], move down | `["P", "A", ""]` |
+| Y | 2 | 1 | Appended to rows[2], `idx=2` so `dir=-1` | `["P", "A", "Y"]` |
+| P | 1 | -1 | Appended to rows[1], move up | `["P", "AP", "Y"]` |
+| A | 0 | -1 | Appended to rows[0], `idx=0` so `dir=1` | `["PA", "AP", "Y"]` |
+| L | 1 | 1 | Appended to rows[1], move down | `["PA", "APL", "Y"]` |
+
+Final joined result: `rows[0] + rows[1] + rows[2]` = `"PA" + "APL..." + "Y..."`
+
+### C. Pitfalls from comments
+
+- **Using 1D Array/String:** Using a single string and calculating gaps mathematically (e.g., $2 \cdot \text{numRows} - 2$) is mathematically elegant but far harder to write bug-free in a 45-minute interview. Row simulation is safer, faster to type, and still $O(N)$.
+- **String Concatenation in Loop:** Using `rows[idx] += char` in Java or C# creates new string objects and kills performance ($O(N^2)$). Always use `StringBuilder[]` or a list of character arrays, joining them only at the very end.
+- **Edge Case numRows = 1:** If `numRows == 1`, the bouncing logic throws an OutOfBounds error because `idx == 0` and `idx == numRows - 1` are both true instantly. The initial $O(1)$ check prevents this.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Google, Infosys, Meta, Microsoft, Microstrategy, Mitsogo, Oracle, PayPal, PayPay, Salesforce, TCS, Walmart Labs, Zoho, Zopsmart.
+- Recent: 30 days — Bloomberg, Google, PayPal.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft, PayPal, Zopsmart.

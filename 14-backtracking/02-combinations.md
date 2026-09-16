@@ -268,3 +268,103 @@ async function combineParallel(n, k, workers) {
   return parts.flat();
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/combinations/solutions/5418489/video-simple-backtracking-solution-by-ni-ug0h/`
+— 51.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Combinatorial Backtracking with Bound Pruning)
+
+Enumerate all subsets of size $k$ from $[1, n]$ using depth-first search with upper-bound branch pruning:
+
+1. **State & Result Storage:** Maintain a dynamic list `comb` for the path and `results` for valid combinations.
+2. **Backtracking Invariant:** At state `backtrack(start)`:
+   - **Base Case:** If `comb.length == k`, record a snapshot copy of `comb` into `results` and return.
+   - **Upper Bound Pruning:** We currently need `needed = k - length(comb)` additional numbers. If we pick starting at `num`, the interval $[num, n]$ must contain at least `needed` integers ($n - num + 1 \ge needed \implies num \le n - needed + 1$).
+   - Loop `num` from `start` to $n - needed + 1$:
+     - Push `num` into `comb`.
+     - Recurse: `backtrack(num + 1)`.
+     - Pop `num` from `comb` (undo choice).
+3. **Execution:** Invoke `backtrack(1)` and return `results`.
+
+```text
+FUNCTION combine(n, k):
+    results = []
+    comb = []
+
+    FUNCTION backtrack(start):
+        IF length(comb) == k:
+            results.append(CLONE(comb))
+            RETURN
+
+        needed = k - length(comb)
+        limit = n - needed + 1
+
+        FOR num FROM start TO limit:
+            comb.push(num)
+            backtrack(num + 1)
+            comb.pop()
+
+    backtrack(1)
+    RETURN results
+```
+
+- Time: O(C(n, k) * k), where $C(n, k) = \frac{n!}{k!(n-k)!}$ combinations are generated, each requiring $O(k)$ copy time.
+- Space: O(k) auxiliary stack space for recursion and current path buffer.
+
+```mermaid
+flowchart TD
+    Start["backtrack(start=1, comb=[])"] --> L1{"num in 1..(4 - 2 + 1) = 1..3"}
+    L1 -->|"num=1"| B1["comb=[1], backtrack(2)"]
+    L1 -->|"num=2"| B2["comb=[2], backtrack(3)"]
+    L1 -->|"num=3"| B3["comb=[3], backtrack(4)"]
+    B1 -->|"num in 2..4"| Leaf1["comb size 2: [1,2], [1,3], [1,4]"]
+    B2 -->|"num in 3..4"| Leaf2["comb size 2: [2,3], [2,4]"]
+    B3 -->|"num in 4..4"| Leaf3["comb size 2: [3,4]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`n = 4, k = 2`)
+
+- `needed = 2 - 0 = 2`, `limit = 4 - 2 + 1 = 3`.
+- `num = 1`: `comb = [1]`.
+  - Next call: `needed = 1`, `limit = 4 - 1 + 1 = 4`.
+  - `num = 2`: `comb = [1, 2]` -> size 2 reached -> save `[1, 2]`.
+  - `num = 3`: `comb = [1, 3]` -> save `[1, 3]`.
+  - `num = 4`: `comb = [1, 4]` -> save `[1, 4]`.
+  - Backtrack to root.
+- `num = 2`: `comb = [2]`.
+  - `num = 3`: `comb = [2, 3]` -> save `[2, 3]`.
+  - `num = 4`: `comb = [2, 4]` -> save `[2, 4]`.
+  - Backtrack to root.
+- `num = 3`: `comb = [3]`.
+  - `num = 4`: `comb = [3, 4]` -> save `[3, 4]`.
+  - Backtrack to root.
+- Loop terminates at limit 3.
+
+Final result: `[[1,2], [1,3], [1,4], [2,3], [2,4], [3,4]]`.
+
+### C. Why Upper Bound Pruning ($n - needed + 1$) Drastically Accelerates DFS
+
+- Without pruning, the loop iterates all the way to $n$. When `comb` has size $k-1$ and reaches $num = n$, the next recursive call will see `start = n + 1` with an empty remaining pool, wasting unnecessary function calls.
+- Setting the loop ceiling directly to $n - (k - |comb|) + 1$ prevents exploring subtrees that can never complete a size-$k$ combination.
+
+### D. Pitfalls from comments
+
+- **Reference Aliasing:** Adding `comb` directly into the result array without cloning stores a reference to a mutable buffer that empties out to `[]` when the backtracking stack finishes popping.
+- **Off-by-One in Pruning Bound:** Omitting the `+ 1` in `n - needed + 1` prematurely prunes valid single-element branches.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (38): Accenture, Amazon, Apple, Bloomberg, Capital One, Cisco, Citadel, DE Shaw, Dropbox, Epic Systems, Expedia, Flexport, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Lyft, Meta, Microsoft, Nvidia, Oracle, PayPal, PhonePe, Pinterest, ServiceNow, Snap, Societe Generale, tcs, Tekion, Tesla, TikTok, Trexquant, Uber, Visa, Walmart Labs, Yandex, Zoho, Zopsmart.
+- Recent: 30 days — Amazon, Google, Infosys, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, LinkedIn, Meta, Microsoft.

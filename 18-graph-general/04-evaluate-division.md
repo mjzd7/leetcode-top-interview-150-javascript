@@ -374,3 +374,126 @@ async function distributedFind(shardOf, x) {
   return jumpToRoot(shardOf, x); // pointer-jumping across shard RPCs
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by GraceMeng —
+`https://leetcode.com/problems/evaluate-division/solutions/171649/1ms-dfs-with-explanations-by-gracemeng-podz/`
+— 88.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Directed Weighted Graph DFS with Multiplicative Paths)
+
+Formulate the equation system as a directed, weighted graph where divisions represent edge weights:
+
+1. **Graph Construction:**
+   - For every equation $A / B = v$:
+     - Insert directed edge $A \xrightarrow{v} B$ (since $A = v \times B$).
+     - Insert reciprocal directed edge $B \xrightarrow{1/v} A$ (since $B = \frac{1}{v} \times A$).
+   - The graph stores adjacency lists mapping source variables to `(target, weight)` pairs.
+2. **Query Processing:**
+   For each query $C / D$:
+   - **Precheck & Rejection:** If either variable $C$ or $D$ is absent from the graph, return $-1.0$.
+   - **Identity Condition:** If $C == D$, return $1.0$.
+   - **Direct Edge Shortcut:** If $D$ is an immediate neighbor of $C$, return the edge weight directly.
+   - **Path Traversal (DFS):**
+     - Maintain a `visited` set per query to prevent cycles.
+     - Explore reachable neighbors: if neighbor $N$ leads to target $D$ with cumulative path product $P$, the total ratio is $weight(C \to N) \times P$.
+     - If all paths from $C$ terminate without encountering $D$, return $-1.0$.
+
+```text
+FUNCTION calcEquation(equations, values, queries):
+    graph = MAP()  // string -> map(string -> double)
+
+    FOR i FROM 0 TO LENGTH(equations) - 1:
+        u = equations[i][0]
+        v = equations[i][1]
+        val = values[i]
+
+        graph[u][v] = val
+        graph[v][u] = 1.0 / val
+
+    FUNCTION dfs(start, target, visited):
+        IF start == target:
+            RETURN 1.0
+        visited.ADD(start)
+
+        FOR EACH (neighbor, weight) IN graph[start]:
+            IF neighbor NOT IN visited:
+                subProduct = dfs(neighbor, target, visited)
+                IF subProduct != -1.0:
+                    RETURN weight * subProduct
+
+        RETURN -1.0
+
+    results = []
+    FOR EACH (c, d) IN queries:
+        IF c NOT IN graph OR d NOT IN graph:
+            results.APPEND(-1.0)
+        ELSE IF c == d:
+            results.APPEND(1.0)
+        ELSE:
+            visited = SET()
+            results.APPEND(dfs(c, d, visited))
+
+    RETURN results
+```
+
+- Time: O(E + Q * (V + E)) — building graph takes $O(E)$; each of the $Q$ queries executes a DFS taking at most $O(V + E)$ time.
+- Space: O(V + E) — graph adjacency structures and per-query visited sets.
+
+```mermaid
+flowchart TD
+    Build["Build directed graph:<br>u -> v (val)<br>v -> u (1 / val)"] --> ProcessQuery["For each query (C, D)"]
+    ProcessQuery --> ExistCheck{"C in graph AND D in graph?"}
+    ExistCheck -->|"No"| EmNeg["Return -1.0"]
+    ExistCheck -->|"Yes"| SameCheck{"C == D?"}
+    SameCheck -->|"Yes"| EmOne["Return 1.0"]
+    SameCheck -->|"No"| LaunchDFS["Launch dfs(C, D, visited)"]
+    LaunchDFS --> PathFound{"Path to D found?"}
+    PathFound -->|"Yes"| EmProd["Return edge product"]
+    PathFound -->|"No"| EmNeg
+    EmNeg --> NextQuery["Next query"]
+    EmOne --> NextQuery
+    EmProd --> NextQuery
+```
+
+### B. Dry run on LeetCode Example 1 (`equations = [["a","b"],["b","c"]], values = [2.0,3.0]`, `queries = [["a","c"],["b","a"],["a","e"],["a","a"],["x","x"]]`)
+
+- Graph:
+  - $a \to b: 2.0$, $b \to a: 0.5$
+  - $b \to c: 3.0$, $c \to b: 0.3333$
+- Query $a / c$:
+  - $a \to b$ ($2.0$) $\to c$ ($3.0$) $\implies 2.0 \times 3.0 = 6.0$.
+- Query $b / a$:
+  - Direct edge $b \to a = 0.5$.
+- Query $a / e$:
+  - $e$ absent from graph $\implies -1.0$.
+- Query $a / a$:
+  - $a$ exists in graph $\implies 1.0$.
+- Query $x / x$:
+  - $x$ absent from graph $\implies -1.0$.
+- Final results: `[6.0, 0.5, -1.0, 1.0, -1.0]`.
+
+### C. Why Edge Traversal Computes Division Products
+
+- Transitive division satisfies $\frac{A}{C} = \frac{A}{B} \times \frac{B}{C}$.
+- In a directed graph where edge $(u, v)$ carries ratio $\frac{u}{v}$, multiplying edge weights along any simple directed path algebraically cancels intermediate variables, computing the exact mathematical quotient.
+
+### D. Pitfalls from comments
+
+- **Querying Unknown Identical Variables:** If a query asks for $x / x$ where $x$ never appeared in any equation, the answer must be $-1.0$, not $1.0$. The variable existence check must strictly precede the self-identity comparison.
+- **Floating-Point Division by Zero:** Test inputs guarantee positive real values, but if non-positive values were possible, zero divisions would need explicit guards.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (22): Amazon, Apple, Bloomberg, Citadel, DP world, Flipkart, GE Healthcare, Goldman Sachs, Google, Meta, Microsoft, Nuro, PhonePe, Rippling, Snap, Stripe, Tesla, TikTok, Tower Research Capital, Uber, Urban Company, Yahoo.
+- Recent: 30 days — Amazon, Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg.

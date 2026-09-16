@@ -253,3 +253,90 @@ function lockFreeSearch(arr, target, versionOf) {
   return idx;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/search-insert-position/solutions/5361984/video-return-middle-or-left-pointer-by-n-dj1y/`
+— 163.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Closed-Interval Binary Search Lower-Bound Invariant)
+
+The problem reduces to finding the index of the first element greater than or equal to `target` (standard `lower_bound`). Using a closed search interval `[left, right]`:
+
+1. **Initialization:** Set `left = 0`, `right = length - 1`.
+2. **Binary Search Loop:** While `left <= right`:
+   - Compute midpoint: `mid = left + (right - left) / 2`.
+   - If `nums[mid] == target`, the element is found; return `mid`.
+   - If `nums[mid] < target`, discard the left half: `left = mid + 1`.
+   - If `nums[mid] > target`, discard the right half: `right = mid - 1`.
+3. **Insertion Point Guarantee:** If the loop terminates without finding `target`, `left` exceeds `right`. By mathematical induction, `left` lands precisely on the index where `target` should be inserted.
+4. Return `left`.
+
+```text
+FUNCTION searchInsert(nums, target):
+    left = 0
+    right = length(nums) - 1
+
+    WHILE left <= right:
+        mid = left + (right - left) / 2
+
+        IF nums[mid] == target:
+            RETURN mid
+        ELSE IF nums[mid] < target:
+            left = mid + 1
+        ELSE:
+            right = mid - 1
+
+    RETURN left
+```
+
+- Time: O(log N) where N is array length, halving the search space each step.
+- Space: O(1) auxiliary memory.
+
+```mermaid
+flowchart TD
+    Init["nums = [1, 3, 5, 6], target = 2<br>left = 0, right = 3"] --> Step1["mid = 1: nums[1] = 3 > 2<br>right = mid - 1 = 0"]
+    Step1 --> Step2["mid = 0: nums[0] = 1 < 2<br>left = mid + 1 = 1"]
+    Step2 --> Term["left = 1, right = 0 (left > right)<br>Loop terminates -> return left = 1"]
+```
+
+### B. Dry run on LeetCode Example 2 (`nums = [1,3,5,6], target = 2`)
+
+- Iteration 1: `left = 0`, `right = 3`.
+  - `mid = 0 + (3 - 0) / 2 = 1`. `nums[1] = 3`.
+  - $3 > 2$ -> target is to the left: `right = 1 - 1 = 0`.
+- Iteration 2: `left = 0`, `right = 0`.
+  - `mid = 0 + (0 - 0) / 2 = 0`. `nums[0] = 1`.
+  - $1 < 2$ -> target is to the right: `left = 0 + 1 = 1`.
+- Iteration 3: `left = 1`, `right = 0`.
+  - `left <= right` is false ($1 \le 0$ false). Loop terminates.
+- Return `left = 1`. (Inserting 2 at index 1 produces `[1, 2, 3, 5, 6]`, preserving sorted order).
+
+Final result: `1`.
+
+### C. Why `left` Always Represents the Exact Insertion Index
+
+- When the target is absent, the search interval inevitably collapses to a single cell where `left == right == mid`.
+- If `nums[mid] < target`, `left` shifts to `mid + 1` (immediately following the smaller element).
+- If `nums[mid] > target`, `right` shifts to `mid - 1`, leaving `left` anchored at `mid` (the element that must shift right).
+- In both outcomes, `left` lands on the exact destination index without requiring boundary post-processing.
+
+### D. Pitfalls from comments
+
+- **Integer Overflow in Midpoint:** Writing `(left + right) / 2` risks 32-bit signed integer overflow in languages like C++ or Java when `left + right > 2^{31} - 1`. Always compute `left + (right - left) / 2`.
+- **Open vs Closed Interval Off-by-One:** Using `while (left < right)` without carefully matching update steps (`right = mid` vs `right = mid - 1`) can cause infinite loops or incorrect terminations on 1-element arrays. The standard closed interval `while (left <= right)` with `mid ± 1` adjustments avoids these edge cases.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (12): Accenture, Amazon, Bloomberg, Google, Grammarly, IBM, Infosys, Meta, Microsoft, tcs, Yandex, Zoho.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Grammarly, Meta, Microsoft, tcs.

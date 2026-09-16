@@ -278,3 +278,104 @@ function rotateCyclic(nums, k) {
 ### Follow-Up 2: Left Rotation vs Right Rotation
 - **Scenario**: What if the interviewer asks for rotating **left** by $k$ instead of right?
 - **Solution Strategy**: Rotating left by $k$ is mathematically identical to rotating right by $n - (k \pmod n)$.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Danny Yang —
+`https://leetcode.com/problems/rotate-array/solutions/54250/easy-to-read-java-solution-by-danny6514-ymlv/`
+— 1.7K votes / 237.9K views / 174 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Copy into a helper array with
+shifted indices. Simple, costs space.
+
+```text
+FUNCTION rotateNaive(nums, k):
+    n = LENGTH(nums)
+    k = k MOD n
+    copy = nums CLONE
+    FOR i FROM 0 TO n - 1:
+        nums[(i + k) MOD n] = copy[i]
+```
+
+- Time: O(n)
+- Space: O(n)
+
+### B. Post's way: three reversals
+
+Reverse all, reverse the first k,
+reverse the rest. Readable version
+of the classic trick (the post
+rejects golfed one-liners).
+
+```text
+FUNCTION rotateOptimal(nums, k):
+    n = LENGTH(nums)
+    k = k MOD n
+    REVERSE nums[0 .. n-1]
+    REVERSE nums[0 .. k-1]
+    REVERSE nums[k .. n-1]
+```
+
+- Time: O(n)
+- Space: O(1)
+- `k MOD n` first: k can exceed n.
+
+```mermaid
+flowchart TD
+    Init["k = k MOD n"] --> R1["Reverse all"]
+    R1 --> R2["Reverse first k"]
+    R2 --> R3["Reverse rest"]
+    R3 --> Done["Done"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [1, 2, 3, 4, 5, 6, 7]`, `k = 3`
+
+| Step | Action | nums |
+| :--- | :--- | :--- |
+| 0 | Start | [1, 2, 3, 4, 5, 6, 7] |
+| 1 | Reverse all | [7, 6, 5, 4, 3, 2, 1] |
+| 2 | Reverse first 3 | [5, 6, 7, 4, 3, 2, 1] |
+| 3 | Reverse rest | [5, 6, 7, 1, 2, 3, 4] |
+
+### D. Why B beats A
+
+- No helper array.
+- Each element moves twice.
+- Same code reads as the proof.
+
+### E. Pitfalls from comments
+
+- Forgetting `k MOD n` when k > n.
+- Arrow visual (top comment, 1.1K):
+  `----->--` + k=3 shows the 3 cuts.
+- Reversing wrong segment bounds
+  (0..k-1 vs k..n-1).
+- k = 0 or k = n: no-op guard.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (27): Accenture, Amazon,
+  American Express, Apple,
+  Bloomberg, Box, Capgemini,
+  Cognizant, Deloitte, EPAM Systems,
+  Fiverr, Google, IBM, Infosys,
+  Meta, Microsoft, Nutanix, Oracle,
+  razorpay, Samsung, Siemens, TCS,
+  TikTok, Virtusa, Visa,
+  Walmart Labs, Zoho.
+- Recent: 30 days — Amazon,
+  Bloomberg, Google, Microsoft.
+- Recent: 3 months — Amazon,
+  Bloomberg, Google, Infosys,
+  Meta, Microsoft, TCS.

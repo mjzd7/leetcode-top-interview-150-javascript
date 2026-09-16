@@ -343,3 +343,102 @@ function buildNDTree(grid, dims) {
   return recursivePartition(grid, dims); // 2^N children, agree-collapse
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Tarun Nayak —
+`https://leetcode.com/problems/construct-quad-tree/solutions/3234703/clean-codes-full-explanation-helper-meth-oifr/`
+— 22K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Divide & Conquer 4-Quadrant Spatial Decomposition)
+
+Construct a compressed spatial QuadTree representation of a 2D binary matrix:
+
+1. **QuadTree Node Representation:**
+   - `val`: boolean representation of the cell values ($1 \implies \text{true}, 0 \implies \text{false}$).
+   - `isLeaf`: boolean flag indicating whether all cells within the quadrant share the exact same value.
+   - Pointers to four child quadrants: `topLeft`, `topRight`, `bottomLeft`, `bottomRight` (null if `isLeaf == true`).
+2. **Recursive Partition & Bottom-Up Collapse:**
+   - Define recursive helper `build(r, c, size)`:
+     - **Base Case ($1 \times 1$ cell):** When $size == 1$, return a leaf node: `NEW Node(grid[r][c] == 1, true)`.
+     - **Quadrant Bisection:** Compute $half = size / 2$. Recursively build all 4 quadrants:
+       - `tl = build(r, c, half)`
+       - `tr = build(r, c + half, half)`
+       - `bl = build(r + half, c, half)`
+       - `br = build(r + half, c + half, half)`
+     - **Post-Order Leaf Consolidation:**
+       - If all 4 children are leaves and all 4 share the exact same value:
+         `tl.isLeaf AND tr.isLeaf AND bl.isLeaf AND br.isLeaf AND tl.val == tr.val == bl.val == br.val`
+       - Collapse the quadrant into a single leaf node: `RETURN NEW Node(tl.val, true)`.
+       - Otherwise, return an internal composite node: `RETURN NEW Node(true, false, tl, tr, bl, br)`.
+
+```text
+FUNCTION construct(grid):
+    n = LENGTH(grid)
+
+    FUNCTION build(r, c, size):
+        IF size == 1:
+            RETURN NEW Node(grid[r][c] == 1, TRUE)
+
+        half = size / 2
+        tl = build(r, c, half)
+        tr = build(r, c + half, half)
+        bl = build(r + half, c, half)
+        br = build(r + half, c + half, half)
+
+        IF tl.isLeaf AND tr.isLeaf AND bl.isLeaf AND br.isLeaf:
+            IF tl.val == tr.val AND tl.val == bl.val AND tl.val == br.val:
+                RETURN NEW Node(tl.val, TRUE)
+
+        RETURN NEW Node(TRUE, FALSE, tl, tr, bl, br)
+
+    RETURN build(0, 0, n)
+```
+
+- Time: O(N^2) — each cell is visited in $O(1)$ bottom-up aggregation without redundant area scans.
+- Space: O(log N) — recursion depth bounded by the logarithmic quadrant bisection stack.
+
+```mermaid
+flowchart TD
+    Build["build(r, c, size)"] --> SizeOne{"size == 1?"}
+    SizeOne -->|"Yes"| RetLeaf["RETURN new Node(grid[r][c] == 1, true)"]
+    SizeOne -->|"No"| Recurse4["Recursively build 4 quadrants:<br>tl, tr, bl, br of size/2"]
+    Recurse4 --> CheckCollapse{"All 4 are leaves AND<br>all 4 have equal val?"}
+    CheckCollapse -->|"Yes (Collapse)"| CollapsedLeaf["RETURN new Node(tl.val, true)"]
+    CheckCollapse -->|"No"| InternalNode["RETURN new Node(true, false, tl, tr, bl, br)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`grid = [[0,1],[1,0]]`)
+
+- Matrix dimension $2 \times 2$.
+- $half = 1$. Evaluates four $1 \times 1$ leaves:
+  - `tl`: cell $(0, 0) = 0 \implies \text{Node}(false, true)$
+  - `tr`: cell $(0, 1) = 1 \implies \text{Node}(true, true)$
+  - `bl`: cell $(1, 0) = 1 \implies \text{Node}(true, true)$
+  - `br`: cell $(1, 1) = 0 \implies \text{Node}(false, true)$
+- Check consolidation: Values differ ($0 \ne 1$).
+- Emits root non-leaf node: `Node(true, false, tl, tr, bl, br)`.
+
+### C. Why Bottom-Up Collapse Beats Top-Down Scanning
+
+- Top-down approaches check if all cells in an $S \times S$ area match before deciding whether to recurse, requiring $O(S^2)$ work at each level and yielding $O(N^2 \log N)$ total runtime.
+- Bottom-up divide-and-conquer defers leaf determination to the return unwinding step, touching every matrix cell once and executing in strict $O(N^2)$ time.
+
+### D. Pitfalls from comments
+
+- **Integer vs. Boolean Conversion:** Input grid stores integers `0` and `1`, whereas the TreeNode definition requires booleans (`grid[r][c] == 1`).
+- **Misaligned Offsets:** Inverting `c + half` and `r + half` swaps the spatial quadrants (e.g. placing `bottomLeft` where `topRight` belongs), failing LeetCode's canonical serialization.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (7): Amazon, Bloomberg, Google, Meta, Microsoft, Snowflake, Uber.
+- Recent: 30 days — None.
+- Recent: 3 months — Google, Uber.

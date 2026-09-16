@@ -295,3 +295,104 @@ function letterCombinationsVersioned(digits, mapSnapshot = PHONE_MAP) {
   return enumerateWith(digits, mapSnapshot); // Level 3 body over the snapshot
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Ayush Bansal —
+`https://leetcode.com/problems/letter-combinations-of-a-phone-number/solutions/5601412/easy-and-simple-c-solution-detailed-expl-oe7i/`
+— 51.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Backtracking DFS Tree Generation)
+
+Generate combinations using depth-first search with explicit state restoration (backtracking):
+
+1. **Empty String Guard:** If `digits` is empty, immediately return `[]`.
+2. **Keypad Lookup Table:** Maintain a mapping from digit characters `'2'` through `'9'` to their respective letters (`'2'` -> `"abc"`, ..., `'7'` -> `"pqrs"`, ..., `'9'` -> `"wxyz"`).
+3. **Recursive DFS Formulation:**
+   - **Base Case:** If `index == length(digits)`, copy the accumulated combination buffer into the result list and return.
+   - **Recursive Step:** Retrieve the letter set for `digits[index]`. For each candidate letter:
+     - Push the letter onto the path buffer.
+     - Recurse to `index + 1`.
+     - Pop the letter from the path buffer (backtrack) to restore state for alternative choices.
+4. Return collected combinations.
+
+```text
+FUNCTION letterCombinations(digits):
+    IF length(digits) == 0:
+        RETURN []
+
+    MAPPING = {
+        '2': "abc", '3': "def", '4': "ghi", '5': "jkl",
+        '6': "mno", '7': "pqrs", '8': "tuv", '9': "wxyz"
+    }
+
+    results = []
+    path = []
+
+    FUNCTION backtrack(index):
+        IF index == length(digits):
+            results.append(JOIN(path, ""))
+            RETURN
+
+        letters = MAPPING[digits[index]]
+        FOR EACH char IN letters:
+            path.push(char)
+            backtrack(index + 1)
+            path.pop()  // Undo choice
+
+    backtrack(0)
+    RETURN results
+```
+
+- Time: O(4^N * N), where N is the length of digits. At most $4^N$ combinations are formed, each taking $O(N)$ string construction time.
+- Space: O(N) recursion stack and path buffer space.
+
+```mermaid
+flowchart TD
+    Start["backtrack(index=0, path=[])"] --> D1{"Digit 0: '2' -> a, b, c"}
+    D1 -->|"Choose 'a'"| D2a["backtrack(index=1, path=['a'])"]
+    D1 -->|"Choose 'b'"| D2b["backtrack(index=1, path=['b'])"]
+    D1 -->|"Choose 'c'"| D2c["backtrack(index=1, path=['c'])"]
+    D2a -->|"Choose 'd','e','f'"| Leaf["index == 2: Append combination, Backtrack"]
+```
+
+### B. Dry run on LeetCode Example 1 (`digits = "23"`)
+
+- Digits: `'2'` maps to `"abc"`, `'3'` maps to `"def"`.
+- `backtrack(0)`:
+  - Choose `'a'`, path `['a']`:
+    - `backtrack(1)`:
+      - Choose `'d'`, path `['a', 'd']` -> `index == 2` -> emit `"ad"`, backtrack.
+      - Choose `'e'`, path `['a', 'e']` -> `index == 2` -> emit `"ae"`, backtrack.
+      - Choose `'f'`, path `['a', 'f']` -> `index == 2` -> emit `"af"`, backtrack.
+    - Backtrack, pop `'a'`.
+  - Choose `'b'`, path `['b']`:
+    - Emits `"bd"`, `"be"`, `"bf"`, then backtracks.
+  - Choose `'c'`, path `['c']`:
+    - Emits `"cd"`, `"ce"`, `"cf"`, then backtracks.
+
+Final result: `["ad","ae","af","bd","be","bf","cd","ce","cf"]`.
+
+### C. Backtracking vs Iterative Queue / Cartesian Product
+
+- An iterative BFS queue or functional fold (`reduce`) creates and destroys intermediate string arrays at every step, causing high garbage collection overhead and $O(3^N)$ temporary memory spikes.
+- DFS backtracking maintains a single mutable array of length $N$, reusing memory allocations and descending cleanly to leaf solutions.
+
+### D. Pitfalls from comments
+
+- **Empty String Trap:** If `digits == ""`, returning `[""]` instead of `[]` is the single most common bug. An empty digit string must produce an empty array.
+- **Variable Digit Lengths:** Digits `'7'` and `'9'` have 4 characters, while others have 3. Hardcoding branch sizes to 3 causes silent truncation.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (37): Accenture, Amazon, Apple, Bloomberg, Capital One, Cisco, Citadel, DE Shaw, Dropbox, Epic Systems, Expedia, Flexport, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Lyft, Meta, Microsoft, Nvidia, Oracle, PhonePe, Pinterest, ServiceNow, Snap, Societe Generale, tcs, Tekion, Tesla, Trexquant, Uber, Visa, Walmart Labs, Yandex, Zoho, Zopsmart.
+- Recent: 30 days — Amazon, Google, Infosys, Microsoft.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, LinkedIn, Meta, Microsoft.

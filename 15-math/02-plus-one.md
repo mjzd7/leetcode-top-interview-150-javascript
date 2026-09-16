@@ -249,3 +249,89 @@ function casIncrement(shared, versionOf) {
   return publish(shared, result);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/plus-one/solutions/5564037/video-iterate-through-the-array-from-the-7h3q/`
+— 150.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Reverse Scan with In-Place Carry Absorption)
+
+Avoid string conversion and numerical parsing by directly propagating addition from the least-significant digit:
+
+1. **Reverse Scan Invariant:**
+   - Iterate index $i$ backwards from $N - 1$ down to $0$:
+     - If `digits[i] < 9`: increment `digits[i]` by 1 and return `digits` immediately. The addition is fully absorbed without affecting higher digits.
+     - Else (`digits[i] == 9`): set `digits[i] = 0` and continue leftward, carrying 1 into the next position.
+2. **All-Nines Overflow Handling:**
+   - If the loop terminates without returning, every digit was 9 (e.g., `[9, 9, 9]` became `[0, 0, 0]`).
+   - Create a new array of size $N + 1$ with leading element `1` followed by zeros (or prepend `1` to `digits`): return `[1, 0, 0, ..., 0]`.
+
+```text
+FUNCTION plusOne(digits):
+    n = length(digits)
+
+    FOR i FROM n - 1 DOWNTO 0:
+        IF digits[i] < 9:
+            digits[i] = digits[i] + 1
+            RETURN digits
+
+        digits[i] = 0
+
+    // Reached only when all digits were 9
+    newDigits = ARRAY OF SIZE (n + 1) FILLED WITH 0
+    newDigits[0] = 1
+    RETURN newDigits
+```
+
+- Time: O(N) worst-case (all 9s), O(1) expected time (90% of integers terminate on the first step).
+- Space: O(1) auxiliary space when modifying in-place; O(N) only in the all-nines edge case to allocate the resized array.
+
+```mermaid
+flowchart TD
+    Start["Iterate i from n - 1 down to 0"] --> Check{"digits[i] < 9?"}
+    Check -->|"Yes"| Add["digits[i] += 1"]
+    Add --> RetFast["RETURN digits (Carry absorbed)"]
+    Check -->|"No (digit == 9)"| Zero["digits[i] = 0"]
+    Zero --> LoopCheck{"i > 0?"}
+    LoopCheck -->|"Yes"| Decr["i--"] --> Check
+    LoopCheck -->|"No"| Prepend["Allocate [1, 0, ..., 0]<br>size n + 1"] --> RetOverflow["RETURN new array"]
+```
+
+### B. Dry run on LeetCode Example 1 and All-9s Boundary Case
+
+- **Example 1 (`digits = [1, 2, 3]`):**
+  - $i = 2$: `digits[2] = 3 < 9` -> increment to 4.
+  - Return `[1, 2, 4]` immediately.
+- **Edge Case (`digits = [9, 9]`):**
+  - $i = 1$: `digits[1] = 9` -> set to 0. Current: `[9, 0]`.
+  - $i = 0$: `digits[0] = 9` -> set to 0. Current: `[0, 0]`.
+  - Loop exhausts. All digits were 9.
+  - Allocate new array of size 3: `[1, 0, 0]`.
+
+Final result: `[1, 0, 0]`.
+
+### C. Why Direct Iteration Outperforms Parsing to Integers
+
+- Parsing the digits into a number (e.g. `parseInt(digits.join(''))`) causes integer overflow for large inputs exceeding IEEE 754 float limits ($2^{53} - 1 \approx 9 \times 10^{15}$).
+- Direct array iteration performs addition in $O(1)$ expected time with zero string serialization overhead.
+
+### D. Pitfalls from comments
+
+- **Integer Precision Overflow:** Converting to number primitives (`Number(digits.join(''))`) causes precision loss for inputs with dozens of digits.
+- **Memory Reallocations:** Reallocating a new array on every carry propagation step creates $O(N^2)$ memory churn. Mutating `digits[i]` directly in-place runs in $O(1)$ space.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Accenture, Amazon, Bloomberg, Capgemini, Google, IBM, Intuit, Meta, Microsoft, tcs, TikTok, Visa, Zoho.
+- Recent: 30 days — Google, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta.

@@ -307,3 +307,107 @@ function meetInMiddle(candidates, target) {
   return leftSums(left).filter((s) => rightSums.has(target - s));
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Issac Chua —
+`https://leetcode.com/problems/combination-sum/solutions/18239/a-general-approach-to-backtracking-quest-e6b1/`
+— 741.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sorted Pruning Backtracking with Unbounded Element Reuse)
+
+Enumerate unique combinations summing to `target` using depth-first search with loop-level early termination:
+
+1. **Sort Input Candidates:** Sort `candidates` ascending. This ensures monotonic branch sums and enables early loop termination.
+2. **Backtracking Invariant:** Maintain path accumulator `path` and remaining balance `remain`:
+   - **Base Case:** If `remain == 0`, a valid combination is formed. Append a cloned snapshot of `path` to `results` and return.
+   - **Loop-Level Pruning:** Iterate $i$ from `start` to `length(candidates) - 1`:
+     - If `candidates[i] > remain`, `break` immediately. Because the array is sorted, every subsequent candidate will also exceed `remain`.
+     - Append `candidates[i]` to `path`.
+     - Recurse: `backtrack(i, remain - candidates[i])`. Passing `i` (rather than `i + 1`) allows the same number to be reused multiple times.
+     - Pop `candidates[i]` from `path` (backtrack state restoration).
+3. **Execution:** Call `backtrack(0, target)` and return `results`.
+
+```text
+FUNCTION combinationSum(candidates, target):
+    SORT candidates ASCENDING
+    results = []
+    path = []
+
+    FUNCTION backtrack(start, remain):
+        IF remain == 0:
+            results.append(CLONE(path))
+            RETURN
+
+        FOR i FROM start TO length(candidates) - 1:
+            IF candidates[i] > remain:
+                BREAK  // Prune all further candidates
+
+            path.push(candidates[i])
+            backtrack(i, remain - candidates[i])  // Reuse candidate at index i
+            path.pop()
+
+    backtrack(0, target)
+    RETURN results
+```
+
+- Time: O(N^(T/M + 1)), where N is candidates length, T is target, and M is the minimal candidate value (loose tree bound). Sorting prunes dead subtrees heavily.
+- Space: O(T/M) recursion stack depth and path buffer storage.
+
+```mermaid
+flowchart TD
+    Root["backtrack(start=0, remain=7)"]
+    Root -->|"Pick 2"| N2["remain=5, start=0"]
+    Root -->|"Pick 3"| N3["remain=4, start=1"]
+    Root -->|"Pick 6"| N6["remain=1, start=2"]
+    Root -->|"Pick 7"| N7["remain=0 -> emit [7]"]
+
+    N2 -->|"Pick 2"| N22["remain=3, start=0"]
+    N22 -->|"Pick 2"| N222["remain=1, start=0"]
+    N222 -->|"candidates[i] > 1"| Break1["Break loop"]
+    N22 -->|"Pick 3"| N223["remain=0 -> emit [2, 2, 3]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`candidates = [2, 3, 6, 7], target = 7`)
+
+- Sorted: `[2, 3, 6, 7]`.
+- Start with `remain = 7, start = 0`:
+  - `i = 0 (2)`: path `[2]`, `remain = 5`.
+    - `i = 0 (2)`: path `[2, 2]`, `remain = 3`.
+      - `i = 0 (2)`: path `[2, 2, 2]`, `remain = 1`.
+        - `candidates[0] = 2 > 1` -> break.
+      - `i = 1 (3)`: path `[2, 2, 3]`, `remain = 0` -> emit `[2, 2, 3]`.
+    - `i = 1 (3)`: path `[2, 3]`, `remain = 2`.
+      - `candidates[1] = 3 > 2` -> break.
+  - `i = 1 (3)`: path `[3]`, `remain = 4`.
+    - `i = 1 (3)`: path `[3, 3]`, `remain = 1`.
+      - `candidates[1] = 3 > 1` -> break.
+  - `i = 2 (6)`: path `[6]`, `remain = 1`.
+    - `candidates[2] = 6 > 1` -> break.
+  - `i = 3 (7)`: path `[7]`, `remain = 0` -> emit `[7]`.
+
+Final result: `[[2, 2, 3], [7]]`.
+
+### C. Why Sorting + `break` is Exponentially Faster than Filtering in Base Case
+
+- Without sorting and `break`, the loop runs through every candidate even when `remain` is already exhausted, spawning recursive frames just to return on `if (remain < 0)`.
+- Pre-sorting allows terminating the loop on the first number exceeding `remain`, eliminating hundreds of doomed child calls per subtree.
+
+### D. Pitfalls from comments
+
+- **Permutations vs Combinations:** Resetting the loop counter to `0` instead of `start` explores previously evaluated elements, generating duplicate permutations (e.g. `[2, 3, 2]` alongside `[2, 2, 3]`).
+- **Missing Snapshot Clone:** Storing `path` directly without slicing/cloning stores a mutable reference that reverts to `[]` when unwound.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (28): Adobe, Airbnb, Amazon, Apple, Bloomberg, ByteDance, Citadel, Confluent, Google, HPE, Juniper Networks, LinkedIn, Meta, Microsoft, NetApp, Oracle, PayPal, Pinterest, Rakuten, Salesforce, ServiceNow, Snap, TikTok, Uber, Walmart Labs, Yahoo, Zoho, Zomato.
+- Recent: 30 days — Bloomberg.
+- Recent: 3 months — Bloomberg, Google, Meta, Microsoft.

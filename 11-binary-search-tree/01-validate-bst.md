@@ -321,3 +321,90 @@ function insertValidated(sortedKeys, val) {
   return true;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Issac Chua —
+`https://leetcode.com/problems/validate-binary-search-tree/solutions/32112/learn-one-iterative-inorder-traversal-ap-o766/`
+— 335.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Iterative Inorder Monotonicity Check)
+
+In a valid Binary Search Tree, an in-order traversal (`Left -> Root -> Right`) visits keys in strictly increasing order ($k_1 < k_2 < \dots < k_n$). By maintaining a pointer to the previously visited node (`pre`), validity can be confirmed without range bounds:
+
+1. **Descent:** Push current node and all its left descendants onto an explicit stack.
+2. **Visit & Check Invariant:** Pop the top node `curr`.
+   - If `pre != null` and `curr.val <= pre.val`, a monotonicity violation has occurred — return `false` immediately.
+   - Update `pre = curr`.
+3. **Traverse Right:** Shift focus to `curr.right` and repeat.
+4. If traversal finishes with no violations, return `true`.
+
+```text
+FUNCTION isValidBST(root):
+    IF root == null:
+        RETURN true
+
+    stack = []
+    pre = null
+    curr = root
+
+    WHILE curr != null OR length(stack) > 0:
+        WHILE curr != null:
+            stack.push(curr)
+            curr = curr.left
+
+        curr = stack.pop()
+
+        // Strict monotonicity check
+        IF pre != null AND curr.val <= pre.val:
+            RETURN false
+
+        pre = curr
+        curr = curr.right
+
+    RETURN true
+```
+
+- Time: O(N) where N is the number of nodes, stopping early on the first violation.
+- Space: O(H) auxiliary space on the stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Pre["pre: Node(1)"] -->|"inorder step"| Curr["curr: Node(5)"]
+    Curr -->|"inorder step: 4 <= 5 -> FALSE!"| Viol["Violation: Node(4) <= Node(5)"]
+```
+
+### B. Dry run on LeetCode Example 2 (`root = [5,1,4,null,null,3,6]`)
+
+- Push 5, then 1 onto stack.
+- Pop 1: `pre = null` -> valid. `pre = 1`. `1.right == null`.
+- Pop 5: `pre = 1`. Check: $5 > 1$ -> valid. `pre = 5`.
+- Move to `5.right` (4): push 4, then push `4.left` (3).
+- Pop 3: `pre = 5`. Check: $3 \le 5$ holds (monotonicity violation!).
+- Return `false` immediately without visiting node 6.
+
+Final result: `false`.
+
+### C. Why Inorder Comparison Sidesteps Integer Min/Max Overflow
+
+- The traditional recursive bounds check `isValid(node, min, max)` requires boundary sentinels ($-\infty, +\infty$). In 32-bit compiled environments, node values of `Integer.MIN_VALUE` or `Integer.MAX_VALUE` trigger arithmetic overflow bugs unless promoted to 64-bit types.
+- The inorder `curr.val <= pre.val` check compares only actual tree node values against each other, eliminating artificial sentinels entirely.
+
+### D. Pitfalls from comments
+
+- **Local vs Global validity:** Checking only `node.left.val < node.val` and `node.right.val > node.val` is fatally flawed (e.g. node 3 is a valid left child of 4, but invalid as a descendant of 5). Inorder traversal inherently verifies global ordering across all ancestors.
+- **Duplicate handling:** BSTs on LeetCode require strict inequality. Using `<` instead of `<=` erroneously accepts duplicate keys.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (20): Amazon, Apple, Asana, Bloomberg, Citadel, Expedia, Goldman Sachs, Google, IBM, LinkedIn, Lyft, Meta, Microsoft, Millennium, Oracle, Salesforce, Wix, Yahoo, Yandex.
+- Recent: 30 days — Ola Cabs.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

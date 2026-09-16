@@ -322,3 +322,85 @@ function lengthOfLongestSubstringASCII(s) {
   return maxLen;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Rahul Varma —
+`https://leetcode.com/problems/longest-substring-without-repeating-characters/solutions/3655186/3-method-s-c-java-python-beginner-friendly/`
+— 727.5K views / 2.7K votes / 93 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sliding Window + Hash Map)
+
+The problem asks for the longest substring without *repeating characters*. We can use a Sliding Window approach. We maintain a `left` pointer, a `right` pointer, and a Hash Map (or array) storing the *most recent index* of each character we've seen. 
+As we move `right`, if we see a character that is already in our map **and** its recorded index is $\ge$ `left`, we know there's a repeat inside our current window. We must instantly jump `left` to `last_seen_index + 1`.
+
+```text
+FUNCTION lengthOfLongestSubstring(s):
+    charMap = empty Hash Map  // maps character -> its most recent index
+    left = 0
+    maxLength = 0
+    
+    FOR right = 0 TO length(s) - 1:
+        currentChar = s[right]
+        
+        IF currentChar IN charMap AND charMap[currentChar] >= left:
+            // Jump left pointer right past the previous occurrence
+            left = charMap[currentChar] + 1
+            
+        charMap[currentChar] = right
+        
+        currentLength = right - left + 1
+        maxLength = max(maxLength, currentLength)
+        
+    RETURN maxLength
+```
+
+- Time: O(N) where N is the length of string `s`. Both pointers only move forward.
+- Space: O(min(M, N)) where M is the character set size (e.g., 128 for ASCII or 26 for letters).
+
+```mermaid
+flowchart TD
+    Init["left = 0, maxLen = 0, map = {}"] --> Loop{"right < len(s)?"}
+    Loop -->|"Yes"| GetChar["char = s[right]"]
+    GetChar --> CheckMap{"char in map AND map[char] >= left?"}
+    CheckMap -->|"Yes"| UpdateLeft["left = map[char] + 1"]
+    UpdateLeft --> UpdateMap["map[char] = right"]
+    CheckMap -->|"No"| UpdateMap
+    UpdateMap --> CalcLen["maxLen = max(maxLen, right - left + 1)"]
+    CalcLen --> IncRight["right++"]
+    IncRight --> Loop
+    Loop -->|"No"| Return["Return maxLen"]
+```
+
+### B. Dry run on LeetCode Example 1 ("abcabcbb")
+
+| `right` | `char` | `map` before | `map[char] >= left`? | `left` new | `map` updated | Window | `maxLen` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 'a' | {} | No | 0 | `{'a':0}` | "a" | 1 |
+| 1 | 'b' | `{'a':0}` | No | 0 | `{'a':0, 'b':1}` | "ab" | 2 |
+| 2 | 'c' | `{'a':0, 'b':1}` | No | 0 | `{'a':0, 'b':1, 'c':2}` | "abc" | 3 |
+| 3 | 'a' | `{a:0, b:1, c:2}` | Yes (0 $\ge$ 0) | 0 + 1 = 1 | `{a:3, b:1, c:2}` | "bca" | 3 |
+| 4 | 'b' | `{a:3, b:1, c:2}` | Yes (1 $\ge$ 1) | 1 + 1 = 2 | `{a:3, b:4, c:2}` | "cab" | 3 |
+| 5 | 'c' | `{a:3, b:4, c:2}` | Yes (2 $\ge$ 2) | 2 + 1 = 3 | `{a:3, b:4, c:5}` | "abc" | 3 |
+| 6 | 'b' | `{a:3, b:4, c:5}` | Yes (4 $\ge$ 3) | 4 + 1 = 5 | `{a:3, b:6, c:5}` | "cb" | 3 |
+| 7 | 'b' | `{a:3, b:6, c:5}` | Yes (6 $\ge$ 5) | 6 + 1 = 7 | `{a:3, b:7, c:5}` | "b" | 3 |
+
+### C. Pitfalls from comments
+
+- **The `map[char] >= left` check:** The most common bug in this problem is updating `left` without checking if the previous occurrence of `char` is *actually inside* the current window. If you see a character that appeared way back before the `left` pointer, it is outside your current window and therefore doesn't count as a repeat. You must only jump `left` if `charMap[currentChar] >= left`.
+- **Set vs Map (O(2N) vs O(N)):** You can solve this using a Hash Set by moving `left` one step at a time and deleting elements from the set until the duplicate is gone. However, the Hash Map approach is an optimized $O(N)$ because it instantly jumps `left` past the duplicate in one step, rather than inching forward.
+- **Using arrays instead of maps:** Since the input constraints specify English letters, digits, symbols, and spaces, the character set is just the standard ASCII table. Using a fixed integer array of size 128 (e.g., `int[128]`) is significantly faster than a Hash Map structure because array lookups are instant.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (97): Accenture, Accolite, Adobe, Agoda, Airtel, Akamai, Amazon, AMD, American Express, Apple, Arista Networks, athenahealth, Atlassian, BitGo, Bloomberg, BNY Mellon, Capgemini, Cisco, Citigroup, Cognizant, Comcast, Coupang, DE Shaw, Dell, Deloitte, Docusign, DP world, Dream11, eBay, EPAM Systems, Expedia, Flipkart, Freecharge, FreshWorks, Goldman Sachs, Google, HashedIn, HCL, IBM, Infosys, Intel, Juspay, LinkedIn, Lyft, MakeMyTrip, MAQ Software, Media.net, Meta, Microsoft, Morgan Stanley, Myntra, Nagarro, NetApp, Netflix, Netskope, Nike, Nutanix, Nvidia, Optum, Oracle, Ozon, Palo Alto Networks, PayPal, Paytm, persistent systems, PornHub, Publicis Sapient, Qualcomm, Rippling, Roblox, Salesforce, SAP, ServiceNow, Snap, Splunk, Spotify, Swiggy, TCS, Tekion, Tesla, TikTok, Tinkoff, Turing, Twilio, Uber, Virtusa, Visa, VK, Walmart Labs, Wipro, Wissen Technology, Yandex, Yelp, Zepto, Zeta, Zoho, Zomato.
+- Recent: 30 days — Amazon, Bloomberg, Google, Meta, Microsoft, Ola Cabs, TCS, Visa.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Cognizant, Deloitte, Goldman Sachs, Google, Infosys, Meta, Microsoft, Optum, Spotify, TCS, Visa.

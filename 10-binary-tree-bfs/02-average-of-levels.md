@@ -313,3 +313,97 @@ function liveInsertAggregate(state, val, depth) {
   state.counts[depth] = (state.counts[depth] ?? 0) + 1;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pradhuman Gupta —
+`https://leetcode.com/problems/average-of-levels-in-binary-tree/solutions/6894465/using-bfs-easiest-solution-and-code-java-h5ex/`
+— 7.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Level-Order Queue Sizing with 64-Bit Float Accumulator)
+
+The canonical BFS approach processes trees level by level using the queue's snapshot size:
+
+1. **Queue Snapshot:** For each level, record `levelSize = queue.size()`.
+2. **Level Aggregation:** Loop exactly `levelSize` times:
+   - Dequeue the front node.
+   - Accumulate its value into a 64-bit floating point accumulator `levelSum`.
+   - Enqueue its non-null left and right children.
+3. **Compute Average:** Append `levelSum / levelSize` to the result list.
+4. Continue until the queue is exhausted.
+
+```text
+FUNCTION averageOfLevels(root):
+    IF root == null:
+        RETURN []
+
+    result = []
+    queue = new Queue()
+    queue.push(root)
+
+    WHILE NOT queue.isEmpty():
+        levelSize = queue.size()
+        levelSum = 0.0
+
+        FOR i FROM 0 TO levelSize - 1:
+            curr = queue.pop()
+            levelSum = levelSum + curr.val
+
+            IF curr.left != null:
+                queue.push(curr.left)
+            IF curr.right != null:
+                queue.push(curr.right)
+
+        result.push(levelSum / levelSize)
+
+    RETURN result
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node once.
+- Space: O(W) where W is the maximum tree width (up to $O(N)$ for the queue).
+
+```mermaid
+flowchart TD
+    subgraph Level 0
+        Q0["Queue: [3] -> size: 1, sum: 3.0 -> avg: 3.00000"]
+    end
+    subgraph Level 1
+        Q1["Queue: [9, 20] -> size: 2, sum: 29.0 -> avg: 14.50000"]
+    end
+    subgraph Level 2
+        Q2["Queue: [15, 7] -> size: 2, sum: 22.0 -> avg: 11.00000"]
+    end
+    Q0 --> Q1 --> Q2
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [3,9,20,null,null,15,7]`)
+
+- Level 0: `queue = [3]`, `levelSize = 1`. Sum = 3. Children added: 9, 20. Average = $3 / 1 = 3.0$. Result: `[3.0]`.
+- Level 1: `queue = [9, 20]`, `levelSize = 2`. Sum = $9 + 20 = 29$. Children added: 15, 7. Average = $29 / 2 = 14.5$. Result: `[3.0, 14.5]`.
+- Level 2: `queue = [15, 7]`, `levelSize = 2`. Sum = $15 + 7 = 22$. No children. Average = $22 / 2 = 11.0$. Result: `[3.0, 14.5, 11.0]`.
+
+Final result: `[3.00000, 14.50000, 11.00000]`.
+
+### C. Why Dynamic Queue Sizing Outperforms 2-Pass Traversal
+
+- **Single-Pass Isolation:** Sizing the queue at the start of each level processes each level as a hermetic unit.
+- Avoids allocating auxiliary depth arrays, hash maps, or running a secondary pass to match nodes with their vertical coordinates.
+
+### D. Pitfalls from comments
+
+- **32-Bit Integer Overflow:** In typed languages (C++, Java), summing node values into a standard 32-bit signed `int` overflows when node values reach $2^{31} - 1$ or across wide levels. The accumulator MUST be declared as a 64-bit float (`double`) or 64-bit integer (`long long`) before dividing.
+- **Empty Tree:** Ensure `root == null` returns an empty array immediately to avoid division by zero or null pointer exceptions.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (4): Amazon, Google, Meta, Microsoft.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

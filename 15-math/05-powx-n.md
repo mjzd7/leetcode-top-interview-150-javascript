@@ -267,3 +267,99 @@ function windowedPow(x, n, width = 4) {
   return squareAndMultiplyWindowed(n, table);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Akshaya Amar —
+`https://leetcode.com/problems/powx-n/solutions/1337794/java-c-simple-o-logn-easy-faster-than-10-tr07/`
+— 217.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Iterative Binary Exponentiation / Exponentiation by Squaring)
+
+Decompose the exponent $n$ into its binary place values to compute $x^n$ in logarithmic time:
+
+1. **Binary Representation Principle:**
+   - Any exponent $n$ decomposes into binary powers: $n = \sum b_i 2^i$.
+   - Consequently, $x^n = \prod_{b_i = 1} x^{2^i}$.
+   - By repeatedly squaring the base ($x, x^2, x^4, x^8, \dots$), we only multiply into the accumulator when the current bit $b_i = 1$.
+2. **Negative Exponent & Integer Range Handling:**
+   - If $n < 0$, $x^n = 1 / x^{|n|}$.
+   - To prevent 32-bit signed integer overflow when $n = -2^{31}$ (since $-(-2^{31})$ overflows signed 32-bit limits), store the absolute exponent $N$ in a 64-bit integer.
+3. **Execution Loop:**
+   - Initialize `ans = 1.0`, `curr = x`, and $N = |n|$.
+   - While $N > 0$:
+     - If $N \pmod 2 == 1$, accumulate: `ans = ans * curr`.
+     - Square base: `curr = curr * curr`.
+     - Shift exponent: $N = \lfloor N / 2 \rfloor$.
+   - If original $n < 0$, return `1.0 / ans`, otherwise return `ans`.
+
+```text
+FUNCTION myPow(x, n):
+    N = n
+    IF N < 0:
+        N = -N
+
+    ans = 1.0
+    curr = x
+
+    WHILE N > 0:
+        IF N % 2 == 1:
+            ans = ans * curr
+        curr = curr * curr
+        N = INT_DIV(N, 2)
+
+    IF n < 0:
+        RETURN 1.0 / ans
+    RETURN ans
+```
+
+- Time: O(log n) — halving the exponent at each step takes at most 32 loop iterations.
+- Space: O(1) auxiliary space using scalar floating-point registers.
+
+```mermaid
+flowchart TD
+    Start["myPow(x, n)"] --> Sign["N = |n| (cast to 64-bit)<br>ans = 1.0, curr = x"]
+    Sign --> Loop{"N > 0?"}
+    Loop -->|"Yes"| Odd{"N % 2 == 1?"}
+    Odd -->|"Yes"| Mul["ans = ans * curr"] --> Sqr
+    Odd -->|"No"| Sqr["curr = curr * curr<br>N = N / 2"]
+    Sqr --> Loop
+    Loop -->|"No"| NegCheck{"Original n < 0?"}
+    NegCheck -->|"Yes"| Inv["RETURN 1.0 / ans"]
+    NegCheck -->|"No"| Ret["RETURN ans"]
+```
+
+### B. Dry run on LeetCode Example 1 ($x = 2.0, n = 10$)
+
+- $N = 10 = (1010)_2, ans = 1.0, curr = 2.0$:
+  - Iteration 1 ($N = 10$, even): `curr = 2^2 = 4.0`, $N = 5$.
+  - Iteration 2 ($N = 5$, odd): `ans = 1.0 * 4.0 = 4.0`, `curr = 4^2 = 16.0`, $N = 2$.
+  - Iteration 3 ($N = 2$, even): `curr = 16^2 = 256.0`, $N = 1$.
+  - Iteration 4 ($N = 1$, odd): `ans = 4.0 * 256.0 = 1024.0`, `curr = 256^2`, $N = 0$.
+- Loop terminates. $n > 0$, so return `ans = 1024.0`.
+
+Final result: `1024.0`.
+
+### C. Why Binary Exponentiation Prevents TLE and Precision Loss
+
+- A linear loop multiplying $x$ by itself $n$ times requires up to $2 \times 10^9$ multiplications when $n = 2^{31} - 1$, resulting in guaranteed TLE.
+- Binary exponentiation calculates the answer in at most 32 squarings. Inverting once at the end (`1.0 / ans`) preserves floating-point precision better than iteratively multiplying by `1/x`.
+
+### D. Pitfalls from comments
+
+- **32-bit `INT_MIN` Negation:** In languages with fixed signed integer sizes, `-(-2147483648)` causes integer overflow. Casting to a 64-bit signed integer or unsigned representation prior to negation is required.
+- **Base Cases for $x = 0$ or $x = 1$:** If $x = 1.0$, the result is always $1.0$; if $x = 0.0$ and $n > 0$, the result is $0.0$. Handling these implicitly or explicitly prevents unnecessary cycles.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (21): Adobe, Amazon, Bloomberg, Cisco, Citadel, eBay, EPAM Systems, Goldman Sachs, Google, Infosys, LinkedIn, Meta, Microsoft, Nvidia, Oracle, Qualcomm, ServiceNow, tcs, TikTok, Walmart Labs, Wix.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft.

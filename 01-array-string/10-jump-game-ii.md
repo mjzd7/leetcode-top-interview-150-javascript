@@ -315,3 +315,121 @@ function getOptimalJumpPath(nums) {
 
 ### Follow-Up 2: Bidirectional BFS for Massive Sparse Jump Graphs
 - **Scenario**: When $N = 10^9$ with scattered teleport nodes, use bidirectional BFS meeting in the middle to reduce explored state space from $O(b^d)$ to $O(b^{d/2})$.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by StefanGryczka —
+`https://leetcode.com/problems/jump-game-ii/solutions/39039/sharing-my-simple-and-clear-c-solution-b-hopi/`
+— 1.7K votes / 191.2K views / 23 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+BFS: for each position, try all reachable indices
+level by level. Returns the minimum number of jumps
+to reach the last index.
+
+```text
+FUNCTION jumpNaive(nums):
+    IF LENGTH(nums) <= 1:
+        RETURN 0
+    queue = [0]
+    visited = {0}
+    jumps = 0
+    WHILE queue is not empty:
+        size = LENGTH(queue)
+        FOR each pos in queue:
+            IF pos == LENGTH(nums) - 1:
+                RETURN jumps
+            FOR next FROM pos + 1 TO MIN(pos + nums[pos], n - 1):
+                IF next NOT in visited:
+                    visited.add(next)
+                    queue.add(next)
+        jumps = jumps + 1
+    RETURN jumps
+```
+
+- Time: O(n^2) worst case
+- Space: O(n) for queue and visited set
+
+### B. Post's way: greedy window expansion
+
+Track the farthest reachable index and the end of
+the current jump window. Increment jumps when
+crossing the window boundary.
+
+```text
+FUNCTION jumpOptimal(nums):
+    jumps = 0
+    curEnd = 0
+    farthest = 0
+    FOR i FROM 0 TO LENGTH(nums) - 2:
+        farthest = MAX(farthest, i + nums[i])
+        IF i == curEnd:
+            jumps = jumps + 1
+            curEnd = farthest
+            IF curEnd >= LENGTH(nums) - 1:
+                BREAK
+    RETURN jumps
+```
+
+- Time: O(n)
+- Space: O(1)
+- Single pass: only increment jumps at window edges.
+
+```mermaid
+flowchart TD
+    Start["jumps = 0, curEnd = 0, farthest = 0"]
+    Start --> Loop["FOR i = 0 to n-2"]
+    Loop --> Update["farthest = MAX(farthest, i + nums[i])"]
+    Update --> Check{"i == curEnd?"}
+    Check --> |Yes| Inc["jumps += 1, curEnd = farthest"]
+    Check --> |No| Continue["Continue"]
+    Inc --> Done{"curEnd >= n-1?"}
+    Done --> |Yes| ReturnJ["Return jumps"]
+    Done --> |No| Continue
+    Continue --> Next{"i == n-2?"}
+    Next --> |No| Loop
+    Next --> |Yes| ReturnJ
+    ReturnJ --> End
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [2, 3, 1, 1, 4]`
+
+| Step | i | nums[i] | farthest | curEnd | jumps |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 0 | 2 | 2 | 0 | 0 |
+| 1 | 0 == curEnd | - | 2 | 2 → 2 | 1 |
+| 2 | 1 | 3 | 4 | 2 | 1 |
+| 3 | 2 == curEnd | - | 4 | 4 → 4 | 2 |
+| 4 | - | - | - | - | 2 |
+
+Minimum jumps = 2. Matches.
+
+### D. Why B beats A
+
+- A: BFS explores all positions level by level,
+  O(n^2) in worst case.
+- B: Greedy window expansion, O(n) single pass.
+- Both guarantee minimum jumps but B is far simpler.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Loop only to n-2, not n-1. The last index is the target.
+- Must update farthest before checking window boundary.
+- curEnd == farthest at window edge means one jump consumed.
+- Edge case: single element returns 0 immediately.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

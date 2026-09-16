@@ -322,3 +322,100 @@ function* streamParentheses(n) {
   yield* build(0, 0);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Yuvaraj —
+`https://leetcode.com/problems/generate-parentheses/solutions/2542620/python-java-w-explanation-faster-than-96-lq3a/`
+— 271.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Guided Backtracking with Open/Close Invariants)
+
+Rather than enumerating all $2^{2n}$ permutations and validating balanced parentheses post-hoc, construct only valid prefixes by enforcing structural balance invariants during depth-first search:
+
+1. **State Tracking:** Maintain counters `open` (number of `'('` placed) and `close` (number of `')'` placed), along with the path buffer `current`.
+2. **Branching Invariants:**
+   - **Add Open Parenthesis:** Permitted if and only if `open < n`.
+   - **Add Close Parenthesis:** Permitted if and only if `close < open` (ensures every closing bracket is matched to an unclosed opening bracket).
+3. **Base Case:** When `current.length == 2 * n`, all pairs are placed and strictly balanced. Append the assembled string to `results` and return.
+4. **Execution:** Invoke `backtrack(0, 0)` and return `results`.
+
+```text
+FUNCTION generateParenthesis(n):
+    results = []
+    current = []
+
+    FUNCTION backtrack(open, close):
+        IF length(current) == 2 * n:
+            results.append(JOIN(current, ""))
+            RETURN
+
+        IF open < n:
+            current.push('(')
+            backtrack(open + 1, close)
+            current.pop()
+
+        IF close < open:
+            current.push(')')
+            backtrack(open, close + 1)
+            current.pop()
+
+    backtrack(0, 0)
+    RETURN results
+```
+
+- Time: O(4^n / sqrt(n)) — exactly the $n$-th Catalan number $C_n = \frac{1}{n+1}\binom{2n}{n}$, with $O(n)$ string building per leaf.
+- Space: O(n) auxiliary space for recursion stack and string buffer of length $2n$.
+
+```mermaid
+flowchart TD
+    Root["(open=0, close=0)"] -->|"open < 3: add ("| O1["(open=1, close=0, '(')"]
+    O1 -->|"open < 3: add ("| O2["(open=2, close=0, '((')"]
+    O1 -->|"close < open: add )"| C1["(open=1, close=1, '()')"]
+    O2 -->|"open < 3: add ("| O3["(open=3, close=0, '(((')"]
+    O2 -->|"close < open: add )"| C2["(open=2, close=1, '(()')"]
+    O3 -->|"close < open: add )"| C3["'((()))' -> emit"]
+    C2 -->|"open < 3: add ("| O4["'(()()'"]
+    C2 -->|"close < open: add )"| C4["'(())' -> '((()))' / '(())()'"]
+```
+
+### B. Dry run on LeetCode Example 1 (`n = 3`)
+
+- Start `(0, 0, "")`:
+  - `open < 3` -> push `'('`, state `(1, 0)`:
+    - push `'('` -> `(2, 0)`:
+      - push `'('` -> `(3, 0)`:
+        - must push `')'` three times -> emits `"((()))"`.
+      - push `')'` -> `(2, 1)`:
+        - push `'('` -> `(3, 1)` -> push `')'` twice -> emits `"(()())"`.
+        - push `')'` -> `(2, 2)` -> push `'('` -> `(3, 2)` -> push `')'` -> emits `"(())()"`.
+    - push `')'` -> `(1, 1)`:
+      - push `'('` -> `(2, 1)`:
+        - push `'('` -> `(3, 1)` -> push `')'` twice -> emits `"()(())"`.
+        - push `')'` -> `(2, 2)` -> push `'('` -> `(3, 2)` -> push `')'` -> emits `"()()()"`.
+
+Total generated: 5 valid expressions ($C_3 = 5$).
+
+### C. Why Guided Backtracking Eliminates Stack Validation
+
+- Generating all combinations blindly yields $2^{2n}$ candidate strings ($4^n$), each requiring an $O(n)$ stack check, yielding $O(n \cdot 4^n)$ operations with high failure rates.
+- Enforcing `close < open <= n` ensures every partial string is guaranteed to be extendable into a valid balanced expression. Zero invalid paths are ever constructed.
+
+### D. Pitfalls from comments
+
+- **Permitting Unbalanced Closures:** Allowing `close < n` instead of `close < open` generates strings like `")("` that violate well-formed parenthesization.
+- **Buffer Mutation Across Calls:** In recursive backtracking, forgetting to pop the added parenthesis causes dirty states to bleed across sibling recursions.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (35): Adobe, Amazon, Apple, Avito, Bloomberg, Dell, Disney, eBay, EPAM Systems, Expedia, Flipkart, Goldman Sachs, Google, Grammarly, Huawei, IBM, Infosys, Intuit, MakeMyTrip, Meta, Microsoft, Morgan Stanley, Myntra, Oracle, Qualcomm, Salesforce, Samsung, ServiceNow, tcs, TikTok, Uber, Walmart Labs, Yandex, Zenefits, Zoho.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft.

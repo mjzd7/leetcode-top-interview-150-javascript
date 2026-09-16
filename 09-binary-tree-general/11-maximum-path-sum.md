@@ -340,3 +340,98 @@ async function maxPathDistributed(shardRoots) {
   return reports.reduce((best, r) => Math.max(best, r.internalBest, combineGains(r)), -Infinity);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Wei-Bung Wang —
+`https://leetcode.com/problems/binary-tree-maximum-path-sum/solutions/39775/accepted-short-solution-in-java/`
+— 184.1K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Apex Arch vs Upward Extension Invariant)
+
+Every simple path in a binary tree has a unique highest node (the "apex" or LCA of the path), from which it extends down into at most two branches:
+
+1. **Global Maximum vs Return Value Separation:**
+   - **Apex Path (Arch):** At `node`, a complete path can bridge across both children: `node.val + leftGain + rightGain`. This candidate updates the global maximum.
+   - **Upward Extension:** To extend upward into `node`'s parent, the path can only continue along **one** child branch: `node.val + max(leftGain, rightGain)`.
+2. **Negative Gain Pruning:** If a child's contribution is negative, discard it by clamping with `max(0, gain)`.
+3. **Initialization:** Initialize global maximum to $-\infty$ to handle trees with exclusively negative values.
+
+```text
+CLASS Solution:
+    maxSum = -INFINITY
+
+    FUNCTION maxPathSum(root):
+        maxSum = -INFINITY
+        maxGain(root)
+        RETURN maxSum
+
+    FUNCTION maxGain(node):
+        IF node == null:
+            RETURN 0
+
+        // Discard negative branch contributions
+        leftGain = max(0, maxGain(node.left))
+        rightGain = max(0, maxGain(node.right))
+
+        // Peak path through this node (candidate for global max)
+        currentArch = node.val + leftGain + rightGain
+        maxSum = max(maxSum, currentArch)
+
+        // Return single maximum arm extendable to parent
+        RETURN node.val + max(leftGain, rightGain)
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node once during postorder traversal.
+- Space: O(H) auxiliary space on the recursion stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Root["Node 20 (val: 20)"]
+    L["15 (returns 15)"] -->|"leftGain = 15"| Root
+    R["7 (returns 7)"] -->|"rightGain = 7"| Root
+    Root -.->|"Arch Candidate: 15 + 20 + 7 = 42"| Apex["Global Max Update = 42"]
+    Root ==>|"Upward Return: 20 + max(15, 7) = 35"| Parent["Parent -10"]
+```
+
+### B. Dry run on LeetCode Example 2 (`root = [-10,9,20,null,null,15,7]`)
+
+- Postorder descent reaches leaf 9: returns $9 + 0 = 9$, `maxSum` = 9.
+- Subtree at 20:
+  - Leaf 15: returns $15 + 0 = 15$, `maxSum` = 15.
+  - Leaf 7: returns $7 + 0 = 7$, `maxSum` remains 15.
+  - At node 20:
+    - `leftGain = max(0, 15) = 15`
+    - `rightGain = max(0, 7) = 7`
+    - Arch candidate: $20 + 15 + 7 = 42$ -> `maxSum` becomes **42**.
+    - Returns upward to parent: $20 + \max(15, 7) = 35$.
+- At root -10:
+  - `leftGain = max(0, 9) = 9`
+  - `rightGain = max(0, 35) = 35`
+  - Arch candidate: $-10 + 9 + 35 = 34$ ($34 < 42$, `maxSum` stays 42).
+  - Returns upward: $-10 + 35 = 25$.
+
+Final result: `42`.
+
+### C. Why Clamping with max(0, ...) Prevents Combinatorial Explosion
+
+- Instead of evaluating whether to include or exclude each branch across multiple conditionals, clamping with `max(0, gain)` inherently isolates optimal subpaths: negative subtree sums contribute 0 (effectively cutting the branch off).
+
+### D. Pitfalls from comments
+
+- **Initializing `maxSum = 0`:** If the tree contains only negative numbers (e.g. `[-3]`), starting with 0 returns 0 instead of -3. Always initialize to negative infinity.
+- **Returning the arch sum:** Returning `node.val + left + right` to the parent creates a path that branches twice, which violates the definition of a simple graph path. Only a single child branch can be returned upward.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (67): Adobe, Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, Uber, etc.
+- Recent: 30 days — Amazon, Bloomberg, Meta.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google, Meta, Microsoft.

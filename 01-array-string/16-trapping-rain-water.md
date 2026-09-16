@@ -380,3 +380,137 @@ function trapMonotonicStack(height) {
 ### Follow-Up 2: Trapping Rain Water II (3D Elevation Grid)
 - **Scenario**: Given an $M \times N$ 2D matrix of heights, calculate water trapped after raining (LeetCode 407).
 - **Solution Strategy**: Use a **Min-Heap (Priority Queue)**. Push all outer boundary cells into the MinHeap. Pop the lowest boundary cell, explore its 4 neighbors, trap water if neighbor height is lower, update boundary height to $\max(\text{neighbor}, \text{currHeight})$, and push to heap. Runs in $O(MN \log(MN))$ time.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by arjunav —
+`https://leetcode.com/problems/trapping-rain-water/solutions/127540/trapping-rain-water-32ms-c-2-pointer-o-n-space-o-1-2g0s/`
+— 1.7K votes / 191.2K views / 27 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+For each position, compute water as min(left_max, right_max) - height.
+Two precomputed arrays for left and right max.
+
+```text
+FUNCTION trapNaive(height):
+    n = LENGTH(height)
+    leftMax = ARRAY of size n
+    rightMax = ARRAY of size n
+    leftMax[0] = height[0]
+    FOR i FROM 1 TO n - 1:
+        leftMax[i] = MAX(leftMax[i-1], height[i])
+    rightMax[n-1] = height[n-1]
+    FOR i FROM n - 2 DOWN TO 0:
+        rightMax[i] = MAX(rightMax[i+1], height[i])
+    water = 0
+    FOR i FROM 0 TO n - 1:
+        water = water + MIN(leftMax[i], rightMax[i]) - height[i]
+    RETURN water
+```
+
+- Time: O(n)
+- Space: O(n) for two arrays
+
+### B. Post's way: two-pointer single-pass
+
+Move the pointer with the smaller max inward.
+Water at each step is min(leftMax, rightMax) - height.
+
+```text
+FUNCTION trapOptimal(height):
+    IF LENGTH(height) == 0:
+        RETURN 0
+    left = 0
+    right = LENGTH(height) - 1
+    leftMax = 0
+    rightMax = 0
+    water = 0
+    WHILE left < right:
+        IF height[left] < height[right]:
+            IF height[left] >= leftMax:
+                leftMax = height[left]
+            ELSE:
+                water = water + leftMax - height[left]
+            left = left + 1
+        ELSE:
+            IF height[right] >= rightMax:
+                rightMax = height[right]
+            ELSE:
+                water = water + rightMax - height[right]
+            right = right - 1
+    RETURN water
+```
+
+- Time: O(n)
+- Space: O(1)
+- Single pass: move smaller side, update max or add water.
+
+```mermaid
+flowchart TD
+    Start["left=0, right=n-1, leftMax=0, rightMax=0, water=0"]
+    Start --> Check{"left < right?"}
+    Check --> |No| Return["RETURN water"]
+    Check --> |Yes| Compare{"height[left] < height[right]?"}
+    Compare --> |Yes| CheckL{"height[left] >= leftMax?"}
+    CheckL --> |Yes| UpdateL["leftMax = height[left]"]
+    CheckL --> |No| AddL["water += leftMax - height[left]"]
+    UpdateL --> MoveL["left += 1"]
+    AddL --> MoveL
+    MoveL --> Check
+    Compare --> |No| CheckR{"height[right] >= rightMax?"}
+    CheckR --> |Yes| UpdateR["rightMax = height[right]"]
+    CheckR --> |No| AddR["water += rightMax - height[right]"]
+    UpdateR --> MoveR["right -= 1"]
+    AddR --> MoveR
+    MoveR --> Check
+```
+
+### C. Dry run on LeetCode Example 1
+
+`height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]`
+
+| Step | left | right | height[l] | height[r] | leftMax | rightMax | water |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 0 | 11 | 0 | 1 | 0 | 0 | 0 |
+| 1 | 1 | 11 | 1 | 1 | 1 | 0 | 0 |
+| 2 | 1 | 10 | 1 | 2 | 1 | 0 | 0 |
+| 3 | 1 | 9 | 1 | 1 | 1 | 2 | 0 |
+| 4 | 1 | 8 | 1 | 2 | 1 | 2 | 0 |
+| 5 | 1 | 7 | 1 | 3 | 1 | 2 | 0 |
+| 6 | 1 | 6 | 1 | 1 | 1 | 3 | 0 |
+| 7 | 1 | 5 | 1 | 0 | 1 | 3 | 0 |
+| 8 | 1 | 4 | 1 | 1 | 1 | 3 | 0 |
+| 9 | 1 | 3 | 1 | 2 | 1 | 3 | 0 |
+| 10 | 1 | 2 | 1 | 0 | 1 | 3 | 0 |
+| 11 | 2 | 2 | 0 | 0 | 1 | 3 | 1 |
+| - | - | - | - | - | - | - | Total = 6 |
+
+Matches.
+
+### D. Why B beats A
+
+- A: O(n) space for two arrays.
+- B: O(1) space, single pass.
+- Invariant: moving the smaller side guarantees water
+  is bounded by the known max on that side.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Move the side with the smaller height.
+- Update max BEFORE adding water (first occurrence).
+- Empty array returns 0 immediately.
+- Single element returns 0 (no water trapped).
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

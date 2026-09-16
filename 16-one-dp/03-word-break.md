@@ -294,3 +294,94 @@ function minCostSegmentation(s, wordCost) {
   return dp[s.length];
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by niits —
+`https://leetcode.com/problems/word-break/solutions/6743981/video-using-dynamic-programming-by-niits-838u/`
+— 48.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Prefix Reachability Dynamic Programming)
+
+Formulate sentence segmentation as a 1D boolean reachability problem over prefix lengths:
+
+1. **State Definition:**
+   - Let `dp[i]` denote whether the prefix of length $i$ (`s[0...i-1]`) can be segmented into words from the dictionary.
+2. **Base Case:**
+   - `dp[0] = true` (an empty string is vacuously segmentable).
+3. **Transition Invariant:**
+   - For each prefix ending at index $i$ from 1 to $N$:
+     - Check previous split positions $j$ where `dp[j] == true`.
+     - To optimize, restrict $j$ such that the length $i - j \le \text{maxWordLength}$.
+     - If `s[j...i-1]` exists in the dictionary hash set, mark `dp[i] = true` and break early (reachability of prefix $i$ is confirmed).
+4. **Execution:** Return `dp[N]`.
+
+```text
+FUNCTION wordBreak(s, wordDict):
+    wordSet = CONVERT_TO_SET(wordDict)
+    maxLen = MAX_LENGTH_IN(wordDict)
+    n = LENGTH(s)
+
+    dp = ARRAY OF SIZE (n + 1) FILLED WITH false
+    dp[0] = true
+
+    FOR i FROM 1 TO n:
+        startJ = MAX(0, i - maxLen)
+        FOR j FROM startJ TO i - 1:
+            IF dp[j] AND wordSet.CONTAINS(SUBSTRING(s, j, i)):
+                dp[i] = true
+                BREAK
+
+    RETURN dp[n]
+```
+
+- Time: O(N * L^2) where $N$ is string length and $L$ is the maximum word length in the dictionary.
+- Space: O(N + M) where $N$ is DP table size and $M$ is total dictionary size stored in the hash set.
+
+```mermaid
+flowchart TD
+    Start["dp[0] = true (empty prefix)"] --> LoopI["Iterate prefix length i from 1 to n"]
+    LoopI --> LoopJ["Iterate split boundary j from max(0, i - maxLen) to i - 1"]
+    LoopJ --> Check{"dp[j] == true AND<br>s[j..i] in wordSet?"}
+    Check -->|"Yes"| SetTrue["dp[i] = true<br>Break inner loop"] --> LoopI
+    Check -->|"No"| LoopJ
+    LoopI --> Ret["RETURN dp[n]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`s = "leetcode"`, `wordDict = ["leet", "code"]`)
+
+- $N = 8, \text{maxLen} = 4$.
+- Base: `dp[0] = true`, all others `false`.
+- $i = 1, 2, 3$: No valid matches found.
+- $i = 4$: $j = 0 \implies dp[0]$ is true and $s[0...4] = \text{"leet"} \in wordSet$.
+  - Set `dp[4] = true`. Break.
+- $i = 5, 6, 7$: No matches extending from $dp[4]$.
+- $i = 8$: $j = 4 \implies dp[4]$ is true and $s[4...8] = \text{"code"} \in wordSet$.
+  - Set `dp[8] = true`. Break.
+- Return `dp[8] = true`.
+
+Final result: `true`.
+
+### C. Why Prefix DP Beats Backtracking
+
+- Unmemoized recursive backtracking suffers from worst-case $O(2^N)$ time complexity on inputs with high branch ambiguity (e.g. $s = \text{"aaaaab"}$ with dictionary `["a", "aa", "aaa"]`), causing catastrophic TLE.
+- Prefix reachability DP caches boolean cut points, ensuring each substring window is evaluated at most once per prefix.
+
+### D. Pitfalls from comments
+
+- **List Search Overhead:** Scanning an array `wordDict` takes $O(W \cdot L)$ time per candidate. Pre-converting `wordDict` into a HashSet makes word lookup $O(L)$ average time.
+- **Unbounded Inner Loops:** Scanning $j$ from $0$ up to $i$ rather than bounding by $\max(0, i - \text{maxWordLength})$ causes redundant substring slicing and quadratic comparisons for very long strings.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (33): Amazon, Anduril, Apple, Arista Networks, Autodesk, Bloomberg, Compass, Coupang, Dropbox, Google, Grammarly, Intuit, LinkedIn, Meta, Microsoft, Millennium, MongoDB, Moveworks, Netflix, Nutanix, Oracle, Otter.ai, Palo Alto Networks, Pocket Gems, ServiceNow, Snap, TikTok, Uber, Visa, Walmart Labs, X, Yahoo, Zeta.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Google, Moveworks, ServiceNow.

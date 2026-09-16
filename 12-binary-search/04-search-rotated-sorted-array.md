@@ -287,3 +287,108 @@ function searchVersioned(arr, target, versionOf) {
   return idx;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by aayushroopchandani —
+`https://leetcode.com/problems/search-in-rotated-sorted-array/solutions/7364936/explained-super-simply-beats-100-best-so-zzt6/`
+— 59.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sorted-Half Invariant Bisection)
+
+In any rotated sorted array, splitting at any index `mid` partitions the array such that at least one of the two halves (`[low, mid]` or `[mid, high]`) is monotonically sorted. We can leverage the sorted half to decide where `target` resides:
+
+1. **Boundary Initialization:** Set `low = 0`, `high = length - 1`.
+2. **Bisection Loop:** While `low <= high`:
+   - Compute `mid = low + (high - low) / 2`.
+   - If `nums[mid] == target`, return `mid`.
+   - **Determine Sorted Half:**
+     - **Left Half Sorted (`nums[low] <= nums[mid]`):**
+       - If `nums[low] <= target` AND `target < nums[mid]`, target must lie within the left half -> `high = mid - 1`.
+       - Otherwise, target must lie in the right half -> `low = mid + 1`.
+     - **Right Half Sorted (`nums[low] > nums[mid]`):**
+       - If `nums[mid] < target` AND `target <= nums[high]`, target must lie within the right half -> `low = mid + 1`.
+       - Otherwise, target must lie in the left half -> `high = mid - 1`.
+3. If the loop terminates without a match, return `-1`.
+
+```text
+FUNCTION search(nums, target):
+    low = 0
+    high = length(nums) - 1
+
+    WHILE low <= high:
+        mid = low + (high - low) / 2
+
+        IF nums[mid] == target:
+            RETURN mid
+
+        // Check if left half is sorted
+        IF nums[low] <= nums[mid]:
+            IF nums[low] <= target AND target < nums[mid]:
+                high = mid - 1
+            ELSE:
+                low = mid + 1
+        // Otherwise, right half must be sorted
+        ELSE:
+            IF nums[mid] < target AND target <= nums[high]:
+                low = mid + 1
+            ELSE:
+                high = mid - 1
+
+    RETURN -1
+```
+
+- Time: O(log N) where N is array length, eliminating half the candidates per iteration.
+- Space: O(1) auxiliary space.
+
+```mermaid
+flowchart TD
+    Mid["Examine nums[mid]"] --> SortedCheck{"nums[low] <= nums[mid]?"}
+    SortedCheck -->|"Yes: Left Half Sorted"| LeftScope{"nums[low] <= target < nums[mid]?"}
+    SortedCheck -->|"No: Right Half Sorted"| RightScope{"nums[mid] < target <= nums[high]?"}
+    LeftScope -->|"Yes"| GoLeft["high = mid - 1"]
+    LeftScope -->|"No"| GoRight["low = mid + 1"]
+    RightScope -->|"Yes"| GoRight2["low = mid + 1"]
+    RightScope -->|"No"| GoLeft2["high = mid - 1"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [4,5,6,7,0,1,2], target = 0`)
+
+- Iteration 1: `low = 0`, `high = 6`.
+  - `mid = 3`. `nums[3] = 7`. $7 \neq 0$.
+  - Left half test: `nums[0] <= nums[3]` ($4 \le 7$) -> Left half is sorted.
+  - Range test: Is $4 \le 0 < 7$? False. Target must be in right half -> `low = 3 + 1 = 4`.
+- Iteration 2: `low = 4`, `high = 6`.
+  - `mid = 5`. `nums[5] = 1`. $1 \neq 0$.
+  - Left half test: `nums[4] <= nums[5]` ($0 \le 1$) -> Left half `[0, 1]` is sorted.
+  - Range test: Is $0 \le 0 < 1$? True! Target is in left half -> `high = 5 - 1 = 4`.
+- Iteration 3: `low = 4`, `high = 4`.
+  - `mid = 4`. `nums[4] = 0`. Equal to target!
+  - Return `4`.
+
+Final result: `4`.
+
+### C. Why Single-Pass Invariant Beats Finding Pivot First
+
+- A two-pass approach first binary searches for the minimum element (the rotation pivot), then binary searches the appropriate sorted segment.
+- The sorted-half invariant tests membership directly against the known-monotonic sub-array, eliminating the need to locate the pivot and executing in a single unified loop.
+
+### D. Pitfalls from comments
+
+- **Strict inequality bug (`nums[low] < nums[mid]`):** When `low == mid` (e.g. 2-element sub-arrays like `[3, 1]`), strict `<` causes the single element to be treated as an unsorted segment. Always use `<=` to classify `[low, mid]` as sorted.
+- **Bound interval matching:** The target must be tested inclusively against the outer endpoint (`nums[low] <= target` or `target <= nums[high]`) and strictly against `nums[mid]`, because an exact match with `nums[mid]` is caught at the top of the loop.
+- **Presence of duplicates (LeetCode 81):** If duplicates are allowed (`nums[low] == nums[mid] == nums[high]`), neither half can be verified as sorted without shrinking boundaries (`low++`, `high--`), degrading worst-case time to $O(N)$.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (50): Accenture, Adobe, Amazon, Anduril, Apple, Arista Networks, Autodesk, Bloomberg, ByteDance, Cisco, Cohesity, Criteo, Delhivery, DP world, eBay, Expedia, Flipkart, FreshWorks, Goldman Sachs, Google, Grammarly, IBM, Infosys, josh technology, LinkedIn, Meta, Microsoft, MongoDB, Nutanix, Nvidia, Oracle, Palo Alto Networks, PayPal, Paytm, Salesforce, Samsung, SAP, Snap, tcs, TikTok, Tinkoff, Uber, Visa, Walmart Labs, Wish, Yahoo, Yandex, Zepto, Zoho, ZScaler.
+- Recent: 30 days — Amazon, Google, Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft, Oracle.

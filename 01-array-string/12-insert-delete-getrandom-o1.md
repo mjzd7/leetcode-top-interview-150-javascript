@@ -387,3 +387,137 @@ class RandomizedCollection {
 ### Follow-Up 2: Cryptographically Secure Random Selection
 - **Scenario**: In security-sensitive operations (e.g. lottery or token minting), `Math.random()` is pseudo-random and predictable.
 - **Solution**: Use `crypto.getRandomValues(new Uint32Array(1))[0] / 0xFFFFFFFF`.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by yuhaowang001 —
+`https://leetcode.com/problems/insert-delete-getrandom-o1/solutions/85375/straightforward-java-solution-using-hashmap-and-array-list-yt1v/`
+— 2.1K votes / 327.1K views / 43 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Use array for getRandom, linear search for insert/remove.
+
+```text
+FUNCTION insert(val):
+    IF val IN array:
+        RETURN false
+    APPEND val to array
+    RETURN true
+
+FUNCTION remove(val):
+    FOR i FROM 0 TO LENGTH(array) - 1:
+        IF array[i] == val:
+            array[i] = array[LENGTH(array) - 1]
+            POP last element
+            RETURN true
+    RETURN false
+
+FUNCTION getRandom():
+    RETURN array[RANDOM(0, LENGTH(array) - 1)]
+```
+
+- Time: insert O(n), remove O(n), getRandom O(1)
+- Space: O(n)
+
+### B. Post's way: HashMap + Array swap
+
+HashMap maps value -> array index. Array stores values.
+Remove swaps with last element for O(1).
+
+```text
+CLASS RandomizedSet:
+    map = HASHMAP
+    list = ARRAY
+
+    FUNCTION insert(val):
+        IF val IN map:
+            RETURN false
+        map[val] = LENGTH(list)
+        APPEND val to list
+        RETURN true
+
+    FUNCTION remove(val):
+        IF val NOT IN map:
+            RETURN false
+        index = map[val]
+        last = list[LENGTH(list) - 1]
+        list[index] = last
+        map[last] = index
+        POP last from list
+        DELETE map[val]
+        RETURN true
+
+    FUNCTION getRandom():
+        RETURN list[RANDOM(0, LENGTH(list) - 1)]
+```
+
+- Time: all operations O(1) average
+- Space: O(n) for both map and array
+- Swap-with-last trick avoids shifting.
+
+```mermaid
+flowchart TD
+    Insert["insert(val)"]
+    Insert --> CheckMap{"val in map?"}
+    CheckMap --> |Yes| RetF["return false"]
+    CheckMap --> |No| MapPut["map[val] = list.length"]
+    MapPut --> ListPush["list.push(val)"]
+    ListPush --> RetT["return true"]
+
+    Remove["remove(val)"]
+    Remove --> CheckMap2{"val in map?"}
+    CheckMap2 --> |No| RetF2["return false"]
+    CheckMap2 --> |Yes| Idx["index = map[val]"]
+    Idx --> Last["last = list[list.length - 1]"]
+    Last --> Swap["list[index] = last"]
+    Swap --> MapUpd["map[last] = index"]
+    MapUpd --> Pop["list.pop()"]
+    Pop --> Del["delete map[val]"]
+    Del --> RetT2["return true"]
+
+    GetRandom["getRandom()"]
+    GetRandom --> Rand["list[random(0, len-1)]"]
+    Rand --> Ret["return value"]
+```
+
+### C. Dry run on LeetCode Example
+
+Operations: insert(1), remove(2), insert(2), getRandom(), remove(1), insert(2), getRandom()
+
+| Step | Operation | map | list | Return |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | - | {} | [] | - |
+| 1 | insert(1) | {1:0} | [1] | true |
+| 2 | remove(2) | {1:0} | [1] | false |
+| 3 | insert(2) | {1:0, 2:1} | [1,2] | true |
+| 4 | getRandom() | {1:0, 2:1} | [1,2] | 1 or 2 |
+| 5 | remove(1) | {2:0} | [2] | true |
+| 6 | insert(2) | {2:0} | [2] | false |
+| 7 | getRandom() | {2:0} | [2] | 2 |
+
+### D. Why B beats A
+
+- A: remove is O(n) due to linear search.
+- B: HashMap gives O(1) lookup, swap gives O(1) remove.
+- All three operations O(1) average.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Update map[last] BEFORE popping the list.
+- handle remove of last element (swap with itself works).
+- getRandom requires at least one element (guaranteed).
+- Duplicates not allowed by problem definition.
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

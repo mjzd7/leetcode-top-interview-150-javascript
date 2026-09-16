@@ -314,3 +314,114 @@ async function incrementalTopoBuild(targetStore, newEdges) {
   return affectedRegionReorder(targetStore, newEdges); // durable worklist Kahn
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Loginov Kirill —
+`https://leetcode.com/problems/course-schedule-ii/solutions/6628467/master-course-scheduling-unlock-topologi-m7yi/`
+— 16.2K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Kahn's BFS Topological Sort with Order Extraction)
+
+Construct an exact topological course sequence by progressively consuming zero-in-degree nodes:
+
+1. **Topological Order Contract:**
+   - Prerequisite pair `[a, b]` enforces directed edge $b \to a$ ("course $b$ must precede course $a$").
+   - A valid sequence places all $numCourses$ vertices such that for every directed edge $u \to v$, $u$ strictly precedes $v$.
+   - If cyclical deadlock prevents sequencing all courses, an empty array `[]` must be emitted.
+2. **Kahn's BFS Ordering Process:**
+   - Construct adjacency list where each prerequisite points to its dependent courses: `adj[b]` contains `a`.
+   - Track incoming dependencies in an array `inDegree` of size $numCourses$.
+   - Populate an initial BFS queue with every course possessing `inDegree[i] == 0` (courses with zero prerequisites).
+   - Maintain an accumulator array `order = []`.
+   - While the queue is not empty:
+     - Dequeue course $u$ and append $u$ to `order`.
+     - For each course $v$ depending on $u$:
+       - Decrement `inDegree[v]`.
+       - If `inDegree[v]` reaches 0 (all prerequisite constraints satisfied), enqueue $v$.
+   - If `LENGTH(order) == numCourses`, return `order`. Otherwise, a cycle was encountered; return `[]`.
+
+```text
+FUNCTION findOrder(numCourses, prerequisites):
+    adj = ARRAY OF SIZE numCourses WITH EMPTY LISTS
+    inDegree = ARRAY OF SIZE numCourses FILLED WITH 0
+
+    FOR EACH pair IN prerequisites:
+        course = pair[0]
+        prereq = pair[1]
+        adj[prereq].APPEND(course)
+        inDegree[course] = inDegree[course] + 1
+
+    queue = QUEUE()
+    FOR i FROM 0 TO numCourses - 1:
+        IF inDegree[i] == 0:
+            queue.ENQUEUE(i)
+
+    order = []
+    WHILE queue IS NOT EMPTY:
+        u = queue.DEQUEUE()
+        order.APPEND(u)
+
+        FOR EACH v IN adj[u]:
+            inDegree[v] = inDegree[v] - 1
+            IF inDegree[v] == 0:
+                queue.ENQUEUE(v)
+
+    IF LENGTH(order) == numCourses:
+        RETURN order
+    ELSE:
+        RETURN []
+```
+
+- Time: O(V + E) — graph setup takes $O(E)$; each course is queued and added to the sequence once, traversing each edge once.
+- Space: O(V + E) — adjacency lists, in-degree array, queue, and order buffer.
+
+```mermaid
+flowchart TD
+    Build["Build adj b -> a<br>Count incoming inDegrees"] --> Seed["Enqueue courses with inDegree == 0"]
+    Seed --> QueueLoop{"Queue empty?"}
+    QueueLoop -->|"No"| Pop["u = queue.dequeue()<br>order.append(u)"]
+    Pop --> Nbrs["For each dependent v in adj[u]:<br>inDegree[v] -= 1"]
+    Nbrs --> CheckZero{"inDegree[v] == 0?"}
+    CheckZero -->|"Yes"| PushV["queue.enqueue(v)"] --> QueueLoop
+    CheckZero -->|"No"| QueueLoop
+    QueueLoop -->|"Yes"| LenCheck{"len(order) == numCourses?"}
+    LenCheck -->|"Yes"| RetOrder["RETURN order"]
+    LenCheck -->|"No"| RetEmpty["RETURN [] (Cycle trapped remaining nodes)"]
+```
+
+### B. Dry run on LeetCode Example 2 (`numCourses = 4, prerequisites = [[1,0],[2,0],[3,1],[3,2]]`)
+
+- $numCourses = 4$.
+- Edges: $0 \to 1, 0 \to 2, 1 \to 3, 2 \to 3$.
+- In-degrees: Course 0: 0, Course 1: 1, Course 2: 1, Course 3: 2.
+- Initial queue: `[0]`. `order = []`.
+- Dequeue 0: `order = [0]`. Neighbors 1 and 2 decrement to 0 $\implies$ enqueue 1, 2.
+- Dequeue 1: `order = [0, 1]`. Neighbor 3 decrements from 2 to 1.
+- Dequeue 2: `order = [0, 1, 2]`. Neighbor 3 decrements from 1 to 0 $\implies$ enqueue 3.
+- Dequeue 3: `order = [0, 1, 2, 3]`.
+- Queue empty. `LENGTH(order) == 4 == numCourses` $\implies$ returns `[0, 1, 2, 3]`.
+
+### C. Why Kahn's BFS Directly Emits a Valid Topological Order
+
+- Because a vertex is only dequeued when its in-degree reaches zero, all preceding courses that act as prerequisites have already been satisfied and recorded into the array.
+- This chronological unwinding produces a globally valid prerequisite sequence without requiring recursive post-order reversal.
+
+### D. Pitfalls from comments
+
+- **Multiple Valid Topological Orders:** A graph may permit several distinct valid topological orderings (e.g. `[0, 2, 1, 3]` is equally valid to `[0, 1, 2, 3]`). Any order satisfying edge constraints is accepted by the online judge.
+- **Truthy Array Checks:** In languages like JavaScript, `[]` evaluates to truthy. Returning `order || []` would return a truncated array when cycles occur instead of the required empty array; always check `order.length === numCourses`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (36): Amazon, Anduril, Apple, Arista Networks, Audible, Aurora, Bloomberg, Citadel, Coinbase, DoorDash, Flipkart, Goldman Sachs, Google, IBM, instabase, Intuit, LinkedIn, Meta, Microsoft, Moloco, MongoDB, Netflix, Nutanix, Nvidia, Oracle, Qualcomm, Remitly, Roblox, Salesforce, Snap, Snowflake, TikTok, Uber, Walmart Labs, Works Applications, Zenefits.
+- Recent: 30 days — Salesforce, Walmart Labs.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google, Salesforce, Walmart Labs.

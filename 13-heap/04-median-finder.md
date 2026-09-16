@@ -385,3 +385,111 @@ function tDigestMedian(digest) {
   return digest.quantile(0.5); // epsilon-approximate, O(1/epsilon) memory
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Mai Thanh Hiep —
+`https://leetcode.com/problems/find-median-from-data-stream/solutions/1330646/cjavapython-minheap-maxheap-solution-pic-dhpm/`
+— 74.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Two-Heap Balancing Protocol)
+
+Divide the dynamic data stream into two balanced partitions:
+- **`maxHeap` (Lower Half):** Holds the smaller half of numbers; root provides the maximum of this lower partition.
+- **`minHeap` (Upper Half):** Holds the larger half of numbers; root provides the minimum of this upper partition.
+
+**Two Invariants:**
+1. **Value Ordering:** Every element in `maxHeap` $\le$ every element in `minHeap`.
+2. **Size Parity:** `maxHeap` is either equal in size to `minHeap`, or holds exactly 1 more element ($0 \le |maxHeap| - |minHeap| \le 1$).
+
+**Implementation Protocol:**
+- `addNum(num)`:
+  1. Push `num` into `maxHeap`.
+  2. Pop the maximum from `maxHeap` and push it to `minHeap` (guarantees Value Ordering).
+  3. If `minHeap.size() > maxHeap.size()`, pop the minimum from `minHeap` and push it back to `maxHeap` (re-establishes Size Parity).
+- `findMedian()`:
+  - If `maxHeap.size() > minHeap.size()`, total count is odd: return `maxHeap.peek()`.
+  - Else, total count is even: return `(maxHeap.peek() + minHeap.peek()) / 2.0`.
+
+```text
+CLASS MedianFinder:
+    CONSTRUCTOR():
+        maxHeap = new MaxHeap() // smaller half
+        minHeap = new MinHeap() // larger half
+
+    METHOD addNum(num):
+        maxHeap.push(num)
+        minHeap.push(maxHeap.pop())
+
+        IF minHeap.size() > maxHeap.size():
+            maxHeap.push(minHeap.pop())
+
+    METHOD findMedian():
+        IF maxHeap.size() > minHeap.size():
+            RETURN maxHeap.peek()
+        ELSE:
+            RETURN (maxHeap.peek() + minHeap.peek()) / 2.0
+```
+
+- Time: O(log N) for each `addNum`, O(1) for `findMedian`.
+- Space: O(N) auxiliary space storing stream elements across two heaps.
+
+```mermaid
+flowchart TD
+    Add["addNum(num)"] --> PushLo["maxHeap.push(num)"]
+    PushLo --> SiftUp["minHeap.push(maxHeap.pop())"]
+    SiftUp --> BalanceCheck{"minHeap.size > maxHeap.size?"}
+    BalanceCheck -->|"Yes"| SiftBack["maxHeap.push(minHeap.pop())"]
+    BalanceCheck -->|"No"| Done["Balanced"]
+    SiftBack --> Done
+
+    Query["findMedian()"] --> SizeCheck{"maxHeap.size > minHeap.size?"}
+    SizeCheck -->|"Yes (Odd total)"| RetOdd["Return maxHeap.peek()"]
+    SizeCheck -->|"No (Even total)"| RetEven["Return (maxHeap.peek() + minHeap.peek()) / 2.0"]
+```
+
+### B. Dry run on LeetCode Example 1 (`addNum(1), addNum(2), findMedian(), addNum(3), findMedian()`)
+
+- `addNum(1)`:
+  - `maxHeap.push(1)` -> `[1]`.
+  - `minHeap.push(maxHeap.pop())` -> `minHeap: [1]`, `maxHeap: []`.
+  - `minHeap.size() (1) > maxHeap.size() (0)` -> `maxHeap.push(minHeap.pop())` -> `maxHeap: [1]`, `minHeap: []`.
+- `addNum(2)`:
+  - `maxHeap.push(2)` -> `[2, 1]`.
+  - `minHeap.push(maxHeap.pop())` -> pop 2 to `minHeap`. `maxHeap: [1]`, `minHeap: [2]`.
+  - Sizes equal (1 == 1). Invariants hold.
+- `findMedian()`:
+  - Sizes equal -> `(1 + 2) / 2.0 = 1.5`.
+- `addNum(3)`:
+  - `maxHeap.push(3)` -> `[3, 1]`.
+  - `minHeap.push(maxHeap.pop())` -> pop 3 to `minHeap`. `minHeap: [2, 3]`, `maxHeap: [1]`.
+  - `minHeap.size() (2) > maxHeap.size() (1)` -> pop 2 back to `maxHeap`. `maxHeap: [2, 1]`, `minHeap: [3]`.
+- `findMedian()`:
+  - `maxHeap.size() (2) > minHeap.size() (1)` -> return `maxHeap.peek() = 2.0`.
+
+Final results: `1.5`, `2.0`.
+
+### C. Why Two Balanced Heaps Beat Alternative Approaches
+
+- Keeping a sorted dynamic array incurs $O(N)$ insertion shifting cost per number.
+- Self-balancing binary search trees (AVL / Red-Black) require complex node rotations and subtree size tracking for order statistics.
+- Dual heaps provide direct $O(1)$ access to the two middle elements at the roots with only $O(\log N)$ logarithmic insertion overhead.
+
+### D. Pitfalls from comments
+
+- **Integer Division Truncation:** When computing median for an even number of elements in strongly typed languages, calculating `(a + b) / 2` performs integer division (e.g. $(1+2)/2 = 1$). Use floating-point `2.0`.
+- **Complex Branching Traps:** Trying to decide whether to push to `maxHeap` or `minHeap` first using explicit value comparisons creates complicated rebalancing logic. Pushing unconditionally to `maxHeap`, forwarding to `minHeap`, and conditionally pulling back handles all cases in 4 clean lines.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (43): Adobe, Amazon, Anduril, Apple, Arcesium, Bloomberg, Citadel, Cohesity, Coupang, DE Shaw, Docusign, eBay, Flipkart, Goldman Sachs, Google, Hive, Intuit, IXL, KLA, Meesho, Meta, Microsoft, Okta, Oracle, PayPal, Pinterest, Rippling, Salesforce, SIG, Snowflake, Splunk, Spotify, Sprinklr, StackAdapt, Tekion, TikTok, Tinder, Twitch, Uber, Visa, Walmart Labs, WorldQuant, Yandex.
+- Recent: 30 days — Amazon, Google, Intuit, TikTok.
+- Recent: 3 months — Amazon, Google, Intuit, Spotify, TikTok.

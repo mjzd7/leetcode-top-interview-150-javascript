@@ -303,3 +303,86 @@ function hasCycleBounded(head, maxHops = 200000) {
   return false; // false OR concurrently mutated: caller retries
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Knockcat —
+`https://leetcode.com/problems/linked-list-cycle/solutions/1829489/c-easy-to-understand-2-pointer-fast-slow-rw9u/`
+— 171.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Floyd's Tortoise and Hare)
+
+Instead of storing visited nodes in an auxiliary hash set (which consumes $O(N)$ memory), Floyd's Cycle Detection Algorithm uses two pointers moving at different speeds:
+- A `slow` pointer moving 1 node per step.
+- A `fast` pointer moving 2 nodes per step.
+
+If a cycle exists, the linked list forms a closed circular loop. In each iteration, `fast` closes the gap between itself and `slow` by exactly 1 node ($2 - 1 = 1$). Therefore, `fast` is guaranteed to catch and meet `slow` without looping indefinitely. If `fast` or `fast.next` reaches `null`, the list is acyclic.
+
+```text
+FUNCTION hasCycle(head):
+    IF head == null OR head.next == null:
+        RETURN false
+
+    slow = head
+    fast = head
+
+    WHILE fast != null AND fast.next != null:
+        slow = slow.next
+        fast = fast.next.next
+        
+        IF slow == fast:
+            RETURN true
+
+    RETURN false
+```
+
+- Time: O(N) where N is the number of nodes. Before entering the cycle, `slow` takes at most $N$ steps. Once inside a cycle of length $C$, `fast` catches `slow` in at most $C$ iterations.
+- Space: O(1) auxiliary memory using only two pointer references.
+
+```mermaid
+flowchart TD
+    Init["slow = head, fast = head"] --> Check{"fast != null AND<br>fast.next != null?"}
+    Check -->|"No"| NoCycle["Return false (End of List)"]
+    Check -->|"Yes"| Advance["slow = slow.next<br>fast = fast.next.next"]
+    Advance --> Meet{"slow == fast?"}
+    Meet -->|"Yes"| CycleFound["Return true (Cycle Detected)"]
+    Meet -->|"No"| Check
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [3,2,0,-4], pos = 1`)
+
+Nodes: $Node_0(3) \rightarrow Node_1(2) \rightarrow Node_2(0) \rightarrow Node_3(-4) \rightarrow Node_1(2)$
+
+| Step | `slow` Node (val) | `fast` Node (val) | `slow == fast` |
+| :--- | :--- | :--- | :--- |
+| 0 | $Node_0$ (3) | $Node_0$ (3) | Initial |
+| 1 | $Node_1$ (2) | $Node_2$ (0) | False |
+| 2 | $Node_2$ (0) | $Node_1$ (2) | False |
+| 3 | $Node_3$ (-4) | $Node_3$ (-4) | **True (Meeting point)** |
+
+Result: `true`.
+
+### C. Why $O(1)$ Space Fast/Slow Beats Hash Set
+
+- **Zero Memory Allocation:** Hash sets require allocating hash table buckets and node references ($O(N)$ heap overhead), creating GC pressure on large streams.
+- **Cache Locality:** Traversal only reads consecutive pointer references.
+
+### D. Pitfalls from comments
+
+- **Null dereference on `fast.next`:** Advancing `fast.next.next` without verifying both `fast != null` AND `fast.next != null` causes immediate runtime crashes on odd-length acyclic lists.
+- **Pre-advance check ordering:** If checking `slow == fast` before advancing, the loop terminates immediately since both start at `head`. Pointers must take their step *before* checking equality.
+- **Modifying node values as visited flags:** Overwriting node values with sentinel values (e.g., `0x7fffffff`) mutates caller data and breaks in concurrent or read-only environments.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (26): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Nvidia, Oracle, Salesforce, Uber.
+- Recent: 30 days — Amazon, Google, Meta.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft, Nvidia.

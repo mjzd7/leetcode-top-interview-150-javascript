@@ -308,3 +308,87 @@ function publishInverted(headRef) {
   headRef.current = mirrored; // single store: atomic publish
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Jakub Narloch —
+`https://leetcode.com/problems/invert-binary-tree/solutions/62707/straightforward-dfs-recursive-iterative-t24rg/`
+— 154.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Divide-and-Conquer Child Swap)
+
+The classic inversion algorithm mirrors each node's left and right subtrees recursively:
+
+1. **Base Case:** If `root == null`, return `null`.
+2. **Cache References:** Store pointers to `root.left` and `root.right` before modifying them.
+3. **Cross Assignment:**
+   - Recursively invert the original right subtree and assign to `root.left`.
+   - Recursively invert the original left subtree and assign to `root.right`.
+4. **Return Root:** Return the current `root` node with inverted subtrees.
+
+```text
+FUNCTION invertTree(root):
+    IF root == null:
+        RETURN null
+
+    // Cache child pointers before cross-assignment
+    origLeft = root.left
+    origRight = root.right
+
+    root.left = invertTree(origRight)
+    root.right = invertTree(origLeft)
+
+    RETURN root
+```
+
+- Time: O(N) where N is the total number of nodes, visiting each node once.
+- Space: O(H) auxiliary space on the call stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Root["Node(4)"] -->|"swap & recurse"| L["left = invert(7)"]
+    Root -->|"swap & recurse"| R["right = invert(2)"]
+    L --> ResL["Subtree [7, 9, 6]"]
+    R --> ResR["Subtree [2, 3, 1]"]
+    ResL --> Final["[4, 7, 2, 9, 6, 3, 1]"]
+    ResR --> Final
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [4,2,7,1,3,6,9]`)
+
+| Subtree Inspected | Original Left | Original Right | Action | Inverted Subtree |
+| :--- | :--- | :--- | :--- | :--- |
+| Node(2) | Node(1) | Node(3) | Swap children | `[2, 3, 1]` |
+| Node(7) | Node(6) | Node(9) | Swap children | `[7, 9, 6]` |
+| Node(4) (root) | Subtree(2) | Subtree(7) | Cross attach | `[4, 7, 2, 9, 6, 3, 1]` |
+
+Result: `[4, 7, 2, 9, 6, 3, 1]`.
+
+### C. Why Child Caching Prevents Overwrite Corruption
+
+- **The Overwrite Trap:** A naive sequential rewrite:
+  ```text
+  root.left = invertTree(root.right)
+  root.right = invertTree(root.left) // BUG: reads newly assigned right subtree!
+  ```
+  clobbers the original left child reference, resulting in mirrored duplicates on both sides.
+- Caching references into temporary variables or executing a postorder swap guarantees every branch is inverted without loss.
+
+### D. Pitfalls from comments
+
+- **Destructive in-place mutation:** In concurrent systems, modifying `root.left` and `root.right` directly mutates the shared tree structure. If readers are active, an immutable clone-and-invert pass is required.
+- **Tree height recursion depth:** For deep degenerate trees ($H = N$), recursion may exceed stack limits. An explicit iterative stack or BFS queue should be used when maximum tree height is unbound.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (21): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — Amazon, Google.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft.

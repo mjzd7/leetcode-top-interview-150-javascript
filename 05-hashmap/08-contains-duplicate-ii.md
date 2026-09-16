@@ -370,3 +370,182 @@ class SlidingWindowRateLimiter {
   }
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by southpenguin —
+`https://leetcode.com/problems/contains-duplicate-ii/solutions/61372/simple-java-solution-by-southpenguin-ruxe/`
+— 796 votes / 124.5K views / 81 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+For each pair within distance k,
+compare values. Quadratic.
+
+```text
+FUNCTION dupNaive(nums, k):
+    FOR i FROM 0 TO n - 1:
+        FOR j FROM i + 1 TO MIN(i + k, n - 1):
+            IF nums[i] == nums[j]:
+                RETURN True
+    RETURN False
+```
+
+- Time: O(n * k)
+- Space: O(1)
+
+### B. Post's way: k-sized window set
+
+Slide a window of the last k+1
+values. Set add() failing means
+the value is already inside —
+a duplicate within range.
+
+```text
+FUNCTION dupOptimal(nums, k):
+    window = EMPTY SET
+    FOR i FROM 0 TO n - 1:
+        IF i > k:
+            REMOVE nums[i - k - 1] FROM window
+        IF ADD nums[i] TO window FAILS:
+            RETURN True
+    RETURN False
+```
+
+- Time: O(n)
+- Space: O(min(n, k))
+
+```mermaid
+flowchart TD
+    Init["window={}, i=0"] --> Loop{"i<n?"}
+    Loop -->|"Yes"| Evict["drop nums[i-k-1] if i>k"]
+    Evict --> Add{"add nums[i] fresh?"}
+    Add -->|No| Hit["Return True"]
+    Add -->|Yes| Next["i++"]
+    Next --> Loop
+    Loop -->|"No"| Miss["Return False"]
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [1, 2, 3, 1]`, `k = 3`
+
+| i | Evict | window | Add  | Result |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | - | {} | 1 fresh | - |
+| 1 | - | {1} | 2 fresh | - |
+| 2 | - | {1,2} | 3 fresh | - |
+| 3 | - | {1,2,3} | 1 dup | True |
+
+### D. Why B beats A
+
+- Window caps memory at k+1.
+- add() doubles as membership
+  test — no separate lookup.
+- One pass, evict-as-you-go.
+
+### E. Pitfalls from comments
+
+- add()-returns-false IS the
+  check; no contains() needed.
+- Evict BEFORE add when i > k,
+  or the window holds k+2.
+- Last-index map variant works
+  but costs O(n) space (43).
+- k = 0: window empties at once,
+  always False.
+
+### F. Companies
+
+- Discuss post itself names none.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (14): Accenture, Adobe,
+  Airbnb, Amazon, Apple,
+  Arista Networks, Bloomberg,
+  Flipkart, Google, Meta, Microsoft,
+  Netflix, TCS, Zoho.
+- Recent: 30 days — Bloomberg,
+  Google.
+- Recent: 3 months — Amazon,
+  Bloomberg, Google, Meta,
+  Microsoft, TCS.
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Pradhuman Gupta —
+`https://leetcode.com/problems/contains-duplicate-ii/solutions/3990812/beats-100-sliding-window-with-hashset-java-c-python-javascript/`
+— 38.7K views / 292 votes / 6 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Sliding Window with Hash Set)
+
+The naive way to solve this is checking every pair using a nested loop within distance $k$, which takes $O(N \cdot k)$ time. The optimal way is to use a **sliding window** paired with a **Hash Set**.
+We iterate through the array, maintaining a Hash Set of the numbers seen in the last $k$ elements. If the current number is already in the set, we found a duplicate within distance $k$ and return `true`. If the size of the set exceeds $k$, we remove the oldest element (at index `i - k`) from the set.
+
+```text
+FUNCTION containsNearbyDuplicate(nums, k):
+    seen = empty Hash Set
+    
+    FOR i = 0 TO length(nums) - 1:
+        // Check if the current element is already in the window
+        IF nums[i] is in seen:
+            RETURN true
+            
+        // Add the current element to the set
+        seen.add(nums[i])
+        
+        // If the window size exceeds k, remove the oldest element
+        IF length(seen) > k:
+            seen.remove(nums[i - k])
+            
+    RETURN false
+```
+
+- Time: O(N) where N is the length of `nums`. We traverse the array exactly once, and Hash Set operations (`add`, `remove`, `contains`) are $O(1)$ on average.
+- Space: O(min(N, K)) to store up to $k$ elements in the Hash Set.
+
+```mermaid
+flowchart TD
+    Init["seen = Set()"] --> Loop{"For i = 0 to N-1"}
+    Loop -->|"Next i"| CheckInSet{"nums[i] in seen?"}
+    CheckInSet -->|"Yes"| ReturnTrue["Return true"]
+    CheckInSet -->|"No"| AddToSet["seen.add(nums[i])"]
+    AddToSet --> CheckWindow{"len(seen) > k?"}
+    CheckWindow -->|"Yes"| RemoveOldest["seen.remove(nums[i - k])"]
+    CheckWindow -->|"No"| Loop
+    RemoveOldest --> Loop
+    Loop -->|"Done"| ReturnFalse["Return false"]
+```
+
+### B. Dry run on LeetCode Example 1 (nums = [1,2,3,1], k = 3)
+
+| `i` | `nums[i]` | `seen` Set before check | Action | `seen` Set after action |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 1 | `{}` | `1` not in set. Add `1`. Size 1 $\ngtr$ 3. | `{1}` |
+| 1 | 2 | `{1}` | `2` not in set. Add `2`. Size 2 $\ngtr$ 3. | `{1, 2}` |
+| 2 | 3 | `{1, 2}` | `3` not in set. Add `3`. Size 3 $\ngtr$ 3. | `{1, 2, 3}` |
+| 3 | 1 | `{1, 2, 3}` | **`1` is in set!** | Return `true`. |
+
+### C. Pitfalls from comments
+
+- **Hash Map vs Hash Set:** An alternative solution uses a Hash Map storing the most recent index of each value (`map[nums[i]] = i`). If `map` has `nums[i]` and `i - map[nums[i]] <= k`, return `true`. While both approaches are $O(N)$ time, the Sliding Window Hash Set approach is slightly more space-efficient because it only ever stores $k$ elements, whereas the Hash Map approach will store all $N$ elements if there are no duplicates.
+- **Removing from the set:** A common bug when writing the Sliding Window approach is trying to use `i > k` as the condition instead of checking the actual length of the set, or removing `nums[i - k - 1]` instead of `nums[i - k]`. Checking if `seen.length > k` (or `i >= k` if removing *before* adding) is robust and prevents off-by-one errors.
+- **Handling $k = 0$:** If $k = 0$, a duplicate cannot exist within a distance of 0 (since it means comparing the element to itself). The code handles this: the set immediately exceeds size 0, removes the element, and is always empty for the next iteration. Alternatively, a quick `if k == 0: return false` at the very top is a good micro-optimization.
+
+### D. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (21): Accenture, Adobe, Airbnb, Amazon, Apple, Arista Networks, Bloomberg, Flipkart, Google, Meta, Microsoft, Netflix, TCS, Zoho.
+- Recent: 30 days — Bloomberg, Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Microsoft, TCS.

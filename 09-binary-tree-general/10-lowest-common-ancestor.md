@@ -343,3 +343,91 @@ async function lcaDistributed(shardRoots, p, q) {
   return combineSummaries(hits); // same split/ancestor logic on summaries
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Stefan Pochmann —
+`https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/solutions/65225/4-lines-c-java-python-ruby/`
+— 321.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Generalized Postorder Bubble-Up)
+
+The algorithm generalizes the function's return contract:
+- If both `p` and `q` exist in `root`'s subtree, return their Lowest Common Ancestor.
+- If only one of `p` or `q` is present, return that specific node.
+- If neither is present, return `null`.
+
+1. **Base Case:** If `root == null` or `root == p` or `root == q`, return `root` immediately.
+2. **Recursive Descent:** Query both left and right subtrees:
+   - `left = lowestCommonAncestor(root.left, p, q)`
+   - `right = lowestCommonAncestor(root.right, p, q)`
+3. **Combine / Bubble Up:**
+   - If both `left != null` and `right != null`, `p` resides in one branch and `q` resides in the other — therefore, `root` is their Lowest Common Ancestor.
+   - If only one side returns non-null, bubble that non-null node upward.
+   - If both are null, return `null`.
+
+```text
+FUNCTION lowestCommonAncestor(root, p, q):
+    IF root == null OR root == p OR root == q:
+        RETURN root
+
+    left = lowestCommonAncestor(root.left, p, q)
+    right = lowestCommonAncestor(root.right, p, q)
+
+    IF left != null AND right != null:
+        RETURN root
+
+    IF left != null:
+        RETURN left
+    ELSE:
+        RETURN right
+```
+
+- Time: O(N) where N is the number of nodes, traversing each node at most once.
+- Space: O(H) auxiliary space for recursion call stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    Root["3 (LCA found!)"]
+    Root -->|"left returns Node(5)"| L["5 (matches p -> returns 5)"]
+    Root -->|"right returns Node(1)"| R["1 (matches q -> returns 1)"]
+    L -.-> BothFound["Both left & right non-null -> Root 3 is LCA"]
+    R -.-> BothFound
+```
+
+### B. Dry run on LeetCode Example 1 (`p = 5, q = 1`)
+
+- Root 3 recurses into left child 5.
+- At node 5: `root == p` (5 == 5) -> returns `Node(5)` immediately without searching deeper.
+- Root 3 recurses into right child 1.
+- At node 1: `root == q` (1 == 1) -> returns `Node(1)` immediately.
+- Back at Root 3:
+  - `left = Node(5)` (non-null)
+  - `right = Node(1)` (non-null)
+  - Both non-null condition triggers -> returns `Node(3)`.
+
+Result: `Node(3)`.
+
+### C. Why Tri-State Bubble-Up Beats Explicit Path Tracing
+
+- **Zero Memory Allocation:** Finding path vectors from root to `p` and root to `q` allocates two path arrays and requires finding their divergence index.
+- Postorder bubbling discovers the ancestor dynamically as activation frames unwind, needing only $O(1)$ memory per recursion frame.
+
+### D. Pitfalls from comments
+
+- **The Ancestor-Child Shortcut:** If `p` is the ancestor of `q`, returning `root` immediately when `root == p` skips searching for `q`. This is fully sound on LeetCode because both `p` and `q` are guaranteed to exist. (If a target could be missing, a post-traversal count check is needed).
+- **Identity vs Value comparison:** Check node identity/pointers (`root == p`), not `root.val == p.val`, to avoid collisions if duplicate node values were permitted.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (65): Adobe, Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, Uber, etc.
+- Recent: 30 days — Amazon, Bloomberg, Meta.
+- Recent: 3 months — Amazon, Apple, Bloomberg, Google, Meta, Microsoft.

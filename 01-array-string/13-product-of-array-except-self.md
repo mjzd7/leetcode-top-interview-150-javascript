@@ -308,3 +308,100 @@ function modInverse(a, mod = 1000000007n) {
 ### Follow-Up 2: Dynamic Range Product Queries with Point Updates
 - **Scenario**: How to support `update(index, val)` and `getProductExcept(index)` in $O(\log N)$ time?
 - **Solution Strategy**: Implement a **Segment Tree** storing range multiplication.
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Huahua —
+`https://leetcode.com/problems/product-of-array-except-self/solutions/2073443/cpython3-o-n-without-division-638j/`
+— 1.7K votes / 147.1K views / 11 comments.
+Language-independent summary. No new JS here.
+
+### A. Naive way (baseline context)
+
+Use division: compute total product, then each answer[i] = total / nums[i].
+
+```text
+FUNCTION productExceptSelfNaive(nums):
+    total = 1
+    FOR i FROM 0 TO LENGTH(nums) - 1:
+        total = total * nums[i]
+    FOR i FROM 0 TO LENGTH(nums) - 1:
+        answer[i] = total / nums[i]
+    RETURN answer
+```
+
+- Time: O(n)
+- Space: O(1) output, but uses division (prohibited by problem)
+
+### B. Post's way: prefix & suffix products
+
+Two-pass without division. Left products then right products.
+
+```text
+FUNCTION productExceptSelfOptimal(nums):
+    n = LENGTH(nums)
+    answer = ARRAY of size n
+    answer[0] = 1
+    FOR i FROM 1 TO n - 1:
+        answer[i] = answer[i-1] * nums[i-1]
+    suffix = 1
+    FOR i FROM n - 1 DOWN TO 0:
+        answer[i] = answer[i] * suffix
+        suffix = suffix * nums[i]
+    RETURN answer
+```
+
+- Time: O(n) single pass forward + backward
+- Space: O(1) extra (output array not counted)
+- No division needed.
+
+```mermaid
+flowchart TD
+    Start["answer[n] = 1, suffix = 1"]
+    Start --> LeftPass["FOR i = 1 to n-1: answer[i] = answer[i-1] * nums[i-1]"]
+    LeftPass --> RightPass["suffix = 1, FOR i = n-1 DOWN TO 0"]
+    RightPass --> Accum["answer[i] *= suffix"]
+    Accum --> Update["suffix *= nums[i]"]
+    Update --> EndLoop{"i > 0?"}
+    EndLoop --> |No| Finish["RETURN answer"]
+    Finish --> End
+```
+
+### C. Dry run on LeetCode Example 1
+
+`nums = [1, 2, 3, 4]`
+
+Forward pass: answer = [1, 1, 2, 6]
+
+Backward pass:
+- i=3: answer[3] = 1 * 1 = 1, suffix = 1*4 = 4
+- i=2: answer[2] = 2 * 4 = 8, suffix = 4*3 = 12
+- i=1: answer[1] = 1 * 12 = 12, suffix = 12*2 = 24
+- i=0: answer[0] = 1 * 24 = 24, suffix = 24*1 = 24
+
+Final answer = [24, 12, 8, 6]. Matches.
+
+### D. Why B beats A
+
+- A: Uses division (prohibited), risks zero-division.
+- B: Two-pass, no division, O(n).
+- Both O(n) but B satisfies all constraints.
+
+### E. Pitfalls / Gotchas the post warns about
+
+- Must initialize answer[0] = 1 (no prefix).
+- suffix starts at 1 (no suffix for last element).
+- Forward pass uses nums[i-1], backward multiplies suffix then updates.
+- Zero in array works naturally (no division).
+
+### F. Companies (per LeetCode Discuss)
+
+| Company | Frequency |
+| :--- | :--- |
+| Amazon | 3 |
+| Microsoft | 2 |
+| Apple | 2 |
+| Meta | 1 |
+| Google | 1 |
+
+Data from `liquidslr/leetcode-company-wise-problems`.

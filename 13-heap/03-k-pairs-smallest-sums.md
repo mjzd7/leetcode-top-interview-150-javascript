@@ -339,3 +339,104 @@ function kTuplesSmallest(arrays, k) {
   return frontier;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by YIXUN WANG —
+`https://leetcode.com/problems/find-k-pairs-with-smallest-sums/solutions/84551/simple-java-oklogk-solution-with-explana-iuy3/`
+— 129.4K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (K-Way Merge Min-Heap Frontier)
+
+Conceptually, the Cartesian product of `nums1` and `nums2` forms an $M \times N$ matrix where row $i$ consists of sums `nums1[i] + nums2[0], nums1[i] + nums2[1], ...`. Since both input arrays are sorted, every row is monotonically non-decreasing. Finding the $K$ smallest pairs is mathematically equivalent to multi-way merging $M$ sorted virtual lists:
+
+1. **Frontier Seeding:** For each `nums1[i]` up to $\min(K, M)$, seed the min-heap with its initial minimum pairing: `(nums1[i] + nums2[0], i, 0)`.
+2. **Extraction and Step-Forward:** While $K > 0$ and the heap is non-empty:
+   - Pop the minimum sum triple `(sum, i, j)` from the heap.
+   - Record `[nums1[i], nums2[j]]` in the output list.
+   - If $j + 1 < N$ (next element exists in row $i$), insert `(nums1[i] + nums2[j + 1], i, j + 1)` into the heap.
+   - Decrement $K$.
+3. Return collected pairs.
+
+```text
+FUNCTION kSmallestPairs(nums1, nums2, k):
+    IF nums1 is empty OR nums2 is empty OR k == 0:
+        RETURN []
+
+    minHeap = new MinHeap()
+    result = []
+
+    // Seed the first column of each row up to min(k, length(nums1))
+    FOR i FROM 0 TO min(k, length(nums1)) - 1:
+        minHeap.push({ sum: nums1[i] + nums2[0], i: i, j: 0 })
+
+    WHILE k > 0 AND NOT minHeap.isEmpty():
+        cur = minHeap.pop()
+        result.append([nums1[cur.i], nums2[cur.j]])
+
+        // Advance to next column in same row
+        IF cur.j + 1 < length(nums2):
+            nextJ = cur.j + 1
+            minHeap.push({ sum: nums1[cur.i] + nums2[nextJ], i: cur.i, j: nextJ })
+
+        k = k - 1
+
+    RETURN result
+```
+
+- Time: O(K log(min(K, M))) — at most $\min(K, M)$ elements reside in the heap, and $K$ extraction/insertion cycles occur.
+- Space: O(min(K, M)) auxiliary space for the heap.
+
+```mermaid
+flowchart TD
+    Init["Seed heap with (nums1[i] + nums2[0], i, 0)<br>for i from 0 to min(K, M)-1"]
+    Init --> Loop{"k > 0 && !heap.empty()"}
+    Loop -->|"Yes"| Pop["Pop min (sum, i, j)<br>Add [nums1[i], nums2[j]] to result"]
+    Pop --> NextCheck{"j + 1 < length(nums2)?"}
+    NextCheck -->|"Yes"| PushNext["Push (nums1[i] + nums2[j+1], i, j+1)"]
+    NextCheck -->|"No"| Decr["k--"]
+    PushNext --> Decr --> Loop
+    Loop -->|"No"| Ret["Return result"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums1 = [1,7,11], nums2 = [2,4,6], k = 3`)
+
+- Seed heap with `(i, 0)` for $i \in [0, 2]$:
+  - $(1+2=3, 0, 0)$
+  - $(7+2=9, 1, 0)$
+  - $(11+2=13, 2, 0)$
+- Iteration 1:
+  - Pop min: `(3, 0, 0)`. Result: `[[1, 2]]`.
+  - Next in row 0: push `(1+4=5, 0, 1)`. Heap has sums: `{5, 9, 13}`.
+- Iteration 2:
+  - Pop min: `(5, 0, 1)`. Result: `[[1, 2], [1, 4]]`.
+  - Next in row 0: push `(1+6=7, 0, 2)`. Heap has sums: `{7, 9, 13}`.
+- Iteration 3:
+  - Pop min: `(7, 0, 2)`. Result: `[[1, 2], [1, 4], [1, 6]]`.
+  - Row 0 exhausted ($j+1 = 3 \ge 3$). $K=0$. Stop.
+
+Final result: `[[1,2], [1,4], [1,6]]`.
+
+### C. Why Row-Seeded Frontier Eliminates Visited Sets
+
+- In naive 2D Best-First Search, popping `(i, j)` and generating both `(i+1, j)` and `(i, j+1)` leads to duplicate states (e.g. `(1, 1)` reached from both `(0, 1)` and `(1, 0)`), necessitating an $O(K)$ hash table.
+- Pre-seeding the first column `(i, 0)` and strictly advancing rightward along columns ensures every matrix cell `(i, j)` has exactly one unique predecessor `(i, j-1)`, eliminating duplicates by construction with zero hashing overhead.
+
+### D. Pitfalls from comments
+
+- **Over-seeding the Heap:** Seeding all $M$ rows when $M = 10^5$ and $K = 10$ wastes $O(M)$ space and degrades performance. Only seed up to $\min(K, M)$.
+- **Integer Overflow in Comparator:** Subtracting sums (`a.sum - b.sum`) in languages like Java/C++ can overflow 32-bit signed integers if array values reach $10^9$. Use direct comparison (`a.sum < b.sum`).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (10): Amazon, Bloomberg, Flipkart, Google, LinkedIn, Meta, Microsoft, Oracle, Uber, Walmart Labs.
+- Recent: 30 days — None.
+- Recent: 3 months — Microsoft.

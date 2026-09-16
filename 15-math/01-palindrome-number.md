@@ -249,3 +249,95 @@ async function isPalindromeStream(digitStream) {
   return isPalindromeDigits(buf); // half-reversal over the buffer
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Gourab —
+`https://leetcode.com/problems/palindrome-number/solutions/3213890/fastest-java-solution-by-coding_menance-aph7/`
+— 207.6K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Half-Reversal without String Conversion or Overflow)
+
+Avoid string conversion allocations and eliminate integer overflow by reversing only the trailing half of the integer:
+
+1. **Immediate False Guards:**
+   - Negative numbers ($x < 0$) are never palindromic due to the preceding negative sign (`-121` $\ne$ `121-`).
+   - Numbers ending in zero with $x \ne 0$ (e.g. `10`, `100`) cannot be palindromes because leading zeros do not exist.
+2. **Reversing Lower Half:**
+   - Accumulate digits into `rev` from the least significant side while shifting `x` rightward.
+   - Stop when $x \le rev$, which indicates we have processed exactly half (or slightly more than half for odd lengths) of the digits.
+3. **Equivalence Evaluation:**
+   - **Even digit count:** The two halves must be identical ($x == rev$).
+   - **Odd digit count:** The middle digit is parked at the least significant position of `rev`. Discard it via integer division ($x == \lfloor rev / 10 \rfloor$).
+
+```text
+FUNCTION isPalindrome(x):
+    IF x < 0 OR (x != 0 AND x % 10 == 0):
+        RETURN false
+
+    rev = 0
+    WHILE x > rev:
+        rev = rev * 10 + (x % 10)
+        x = INT_DIV(x, 10)
+
+    RETURN x == rev OR x == INT_DIV(rev, 10)
+```
+
+- Time: O(log10(x)) — processes half the decimal digits of $x$.
+- Space: O(1) auxiliary space using two primitive integer registers.
+
+```mermaid
+flowchart TD
+    Start["isPalindrome(x)"] --> FastCheck{"x < 0 OR (x != 0 && x % 10 == 0)"}
+    FastCheck -->|"Yes"| RetFalse["Return false"]
+    FastCheck -->|"No"| Loop{"x > rev?"}
+    Loop -->|"Yes"| Shift["rev = rev * 10 + (x % 10)<br>x = x / 10"]
+    Shift --> Loop
+    Loop -->|"No"| Match{"x == rev OR x == rev / 10"}
+    Match -->|"Yes"| RetTrue["Return true"]
+    Match -->|"No"| RetFalse2["Return false"]
+```
+
+### B. Dry run on LeetCode Example 1 (`x = 121`)
+
+- Initial: $x = 121, rev = 0$.
+- Guard check: $x > 0$ and $x \pmod{10} = 1 \ne 0$. Passes.
+- Iteration 1:
+  - $121 > 0$ holds.
+  - $rev = 0 \times 10 + 1 = 1$.
+  - $x = \lfloor 121 / 10 \rfloor = 12$.
+- Iteration 2:
+  - $12 > 1$ holds.
+  - $rev = 1 \times 10 + 2 = 12$.
+  - $x = \lfloor 12 / 10 \rfloor = 1$.
+- Iteration 3:
+  - $1 > 12$ is false. Loop terminates.
+- Final comparison:
+  - $x == rev \implies 1 == 12$ (false).
+  - $x == \lfloor rev / 10 \rfloor \implies 1 == \lfloor 12 / 10 \rfloor = 1$ (true).
+
+Final result: `true`.
+
+### C. Why Half-Reversal Eliminates 32-bit Integer Overflow
+
+- Reversing all digits of an arbitrary 32-bit integer can exceed $2^{31} - 1 = 2,147,483,647$, causing runtime integer overflow exceptions in languages like C++, Java, or C#.
+- Halting at the midpoint guarantees that `rev` never exceeds the number of digits in $\sqrt{x}$, keeping all arithmetic strictly within bounded integer registers without requiring 64-bit casting.
+
+### D. Pitfalls from comments
+
+- **The Trailing Zero Edge Case:** Numbers like $x = 10$ have $10 > 0$. In step 1, $rev = 0, x = 1$. Then $1 > 0$, so $rev = 1, x = 0$. Next $x == rev / 10 \implies 0 == 0$, returning `true` erroneously if the initial `x % 10 == 0` guard is omitted.
+- **Converting to String:** While `s = str(x); return s == s[::-1]` is concise, interviewers frequently forbid string conversions to test bitwise and modulo arithmetic principles.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (30): Accenture, Amazon, AMD, Bloomberg, Capgemini, Capital One, Cisco, Cognizant, Deloitte, EPAM Systems, Garmin, Google, HCL, IBM, Infosys, Intel, LTI, Luxoft, Meta, Microsoft, MindTree, Morgan Stanley, Oracle, PornHub, Qualcomm, SAP, tcs, Wipro, Yandex, Zoho.
+- Recent: 30 days — Amazon, Google, tcs.
+- Recent: 3 months — Accenture, Amazon, Bloomberg, Google, Meta, Microsoft, tcs, Yandex.

@@ -311,3 +311,105 @@ async function longestPalindromicStream(charStream) {
   return eertree.longest();
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Gourav Yadav —
+`https://leetcode.com/problems/longest-palindromic-substring/solutions/4212564/beats-9649-5-different-approaches-brute-u46gf/`
+— 586.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Expand Around Center with O(1) Space)
+
+Exploit palindrome mirror symmetry around every candidate midpoint to bypass 2D matrix allocation:
+
+1. **Center Symmetry Invariant:**
+   - Every palindromic substring mirrors around its center. A string of length $N$ contains exactly $2N - 1$ potential centers:
+     - $N$ odd centers centered at character $s[i]$ ($l = i, r = i$).
+     - $N - 1$ even centers centered between characters $s[i]$ and $s[i + 1]$ ($l = i, r = i + 1$).
+2. **Expansion Subroutine:**
+   - From given pointers $(l, r)$, advance outwards ($l--, r++$) while $l \ge 0$, $r < N$, and $s[l] == s[r]$.
+   - When the condition fails, the valid palindromic span is $[l + 1, r - 1]$ with length $(r - 1) - (l + 1) + 1 = r - l - 1$.
+3. **Space Elimination:**
+   - Rather than storing an $O(N^2)$ interval DP table, track only the best start offset `start` and length `maxLen` in scalar variables.
+
+```text
+FUNCTION longestPalindrome(s):
+    n = LENGTH(s)
+    IF n <= 1:
+        RETURN s
+
+    start = 0
+    maxLen = 1
+
+    FUNCTION expand(left, right):
+        WHILE left >= 0 AND right < n AND s[left] == s[right]:
+            left = left - 1
+            right = right + 1
+        RETURN right - left - 1
+
+    FOR i FROM 0 TO n - 1:
+        lenOdd = expand(i, i)
+        lenEven = expand(i, i + 1)
+        currMax = MAX(lenOdd, lenEven)
+
+        IF currMax > maxLen:
+            maxLen = currMax
+            start = i - INT_DIV(currMax - 1, 2)
+
+    RETURN SUBSTRING(s, start, start + maxLen)
+```
+
+- Time: O(N^2) worst-case (e.g. all identical characters "aaaa"), but runs in sub-quadratic average time due to immediate mismatch cutoffs.
+- Space: O(1) auxiliary space — no 2D DP matrix or recursion stack.
+
+```mermaid
+flowchart TD
+    ForI["Iterate center i from 0 to n - 1"] --> ExpandOdd["expand(i, i) (Odd length)"]
+    ForI --> ExpandEven["expand(i, i + 1) (Even length)"]
+    ExpandOdd --> BestLen["currMax = max(lenOdd, lenEven)"]
+    ExpandEven --> BestLen
+    BestLen --> Check{"currMax > maxLen?"}
+    Check -->|"Yes"| Update["maxLen = currMax<br>start = i - (currMax - 1) // 2"] --> Next["Next index"]
+    Check -->|"No"| Next
+    Next --> ForI
+    ForI --> ReturnSlice["RETURN substring(s, start, start + maxLen)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`s = "babad"`)
+
+- $i = 0$: odd `b` (len 1), even `ba` (len 0).
+- $i = 1$:
+  - Odd center `a`: `expand(1, 1)` checks `s[0]=='b'` and `s[2]=='b'`. Match!
+  - Next expansion hits bounds ($l = -1$). Palindrome length = $3 - (-1) - 1 = 3$ (`"bab"`).
+  - Even center: `expand(1, 2)` checks `s[1]=='a'` vs `s[2]=='b'`. No match (len 0).
+  - `currMax = 3 > 1` $\implies maxLen = 3, start = 1 - (3-1)/2 = 0$. Substring = `"bab"`.
+- $i = 2$:
+  - Odd center `b`: `expand(2, 2)` checks `s[1]=='a'` and `s[3]=='a'`. Match! Len 3 (`"aba"`).
+  - Does not strictly exceed `maxLen = 3`.
+- Returns `"bab"` (or `"aba"`).
+
+Final result: `"bab"`.
+
+### C. Why Expand Around Center Beats 2D Tabulation
+
+- 2D interval DP allocates an $N \times N$ matrix ($10^6$ cells for $N = 1000$), triggering significant garbage collection and memory overhead.
+- Center expansion operates directly over existing string buffers in $O(1)$ auxiliary space and prunes immediately on character mismatches.
+
+### D. Pitfalls from comments
+
+- **Expansion Length Indexing:** When `while` exits on mismatch, the valid span is $[l + 1, r - 1]$. The length is $(r - l - 1)$, NOT $(r - l + 1)$.
+- **Even Palindromes Omission:** Omitting `expand(i, i + 1)` causes complete failure on strings like `"cbbd"` or `"abba"`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (74): Accenture, Accolite, Adobe, Amazon, Apple, Arista Networks, athenahealth, Autodesk, BitGo, BlackRock, Bloomberg, ByteDance, Capital One, Cisco, Citadel, Cognizant, Commvault, Deloitte, Disney, DoorDash, DP world, EarnIn, eBay, EPAM Systems, Epic Systems, Flipkart, Goldman Sachs, Google, Grab, HashedIn, HCL, HPE, HSBC, Huawei, IBM, Info Edge, Infosys, LinkedIn, MakeMyTrip, MAQ Software, Meta, Microsoft, Morgan Stanley, Nielsen, Nvidia, opentext, Oracle, Palo Alto Networks, PayPal, Paytm, persistent systems, PhonePe, PornHub, Pure Storage, Salesforce, Samsung, SAP, ServiceNow, Shopee, Softwire, Swiggy, tcs, Tekion, TikTok, Tinkoff, Turing, Uber, Visa, Walmart Labs, Wix, Yandex, Zoho, Zopsmart, ZS Associates.
+- Recent: 30 days — Amazon, Bloomberg, Google, Meta, Microsoft, Ola Cabs, tcs.
+- Recent: 3 months — Amazon, Bloomberg, Google, Infosys, Meta, Microsoft, tcs, Tinkoff, Visa, Yandex.
