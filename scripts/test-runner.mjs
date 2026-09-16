@@ -1191,9 +1191,16 @@ function extractJsBlocks(content) {
 
 function collectProblemFiles() {
   const files = [];
+  // Keep in sync with validate-guide.mjs: study-roadmap guides use their own
+  // template (only their 3 landing pages are skipped by name; any future
+  // problem-track index.md stays covered).
+  const SKIP_DIRS = new Set(['00-foundations', '24-maang-guides', 'modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap']);
+  const SKIP_FILES = new Set(['_TEMPLATE-subpage.md', '00-INDEX.md']);
+  const SKIP_INDEX_PARENTS = new Set(['modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap']);
   function scan(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'scripts' || entry.name === '00-foundations' || entry.name === '24-maang-guides') continue;
+      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'scripts' || SKIP_DIRS.has(entry.name) || SKIP_FILES.has(entry.name)) continue;
+      if (entry.name === 'index.md' && SKIP_INDEX_PARENTS.has(path.basename(dir))) continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) scan(full);
       else if (entry.name.endsWith('.md') && !entry.name.includes('PLAN') && !entry.name.includes('README')) files.push(full);
