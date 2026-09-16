@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="520" rx="18" fill="#fefce8" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Prompt + Constraints → Reliable Output</text>
+<rect x="30" y="70" width="200" height="110" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="100" font-size="16" font-weight="bold">1. Identity</text>
+<text x="45" y="125" font-size="13">You are JS reviewer.</text>
+<text x="45" y="145" font-size="13">Tone: strict + kind.</text>
+<rect x="260" y="70" width="220" height="110" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="275" y="100" font-size="16" font-weight="bold">2. Instructions</text>
+<text x="275" y="125" font-size="13">- Return JSON only</text>
+<text x="275" y="145" font-size="13">- Never invent APIs</text>
+<text x="275" y="165" font-size="13">- Say IDK if unsure</text>
+<rect x="510" y="70" width="210" height="110" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="525" y="100" font-size="16" font-weight="bold">3. Examples</text>
+<text x="525" y="125" font-size="13">1 good + 1 bad</text>
+<text x="525" y="145" font-size="13">few-shot anchors</text>
+<rect x="750" y="70" width="210" height="110" rx="12" fill="#e0f2fe" stroke="#1f2937" stroke-width="3"/>
+<text x="765" y="100" font-size="16" font-weight="bold">4. Context</text>
+<text x="765" y="125" font-size="13">&lt;docs&gt;...&lt;/docs&gt;</text>
+<text x="765" y="145" font-size="13">at END, XML tagged</text>
+<line x1="230" y1="125" x2="260" y2="125" stroke="#1f2937" stroke-width="3" marker-end="url(#a)"/>
+<line x1="480" y1="125" x2="510" y2="125" stroke="#1f2937" stroke-width="3"/>
+<line x1="720" y1="125" x2="750" y2="125" stroke="#1f2937" stroke-width="3"/>
+<rect x="270" y="230" width="460" height="90" rx="40" fill="#1f2937"/>
+<text x="300" y="265" font-size="20" fill="#fff" font-weight="bold">LLM (non-deterministic!)</text>
+<text x="300" y="290" font-size="14" fill="#fde68a">same prompt, slightly different output</text>
+<line x1="500" y1="180" x2="500" y2="230" stroke="#1f2937" stroke-width="3"/>
+<rect x="80" y="350" width="380" height="120" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="100" y="380" font-size="16" font-weight="bold" fill="#14532d">GOOD PATH: constrained</text>
+<text x="100" y="405" font-size="13" fill="#14532d">JSON parses, cites docs,</text>
+<text x="100" y="425" font-size="13" fill="#14532d">temp 0.2, eval passes → ship</text>
+<rect x="540" y="350" width="380" height="120" rx="12" fill="#fee2e2" stroke="#b91c1c" stroke-width="3" stroke-dasharray="8 5"/>
+<text x="560" y="380" font-size="16" font-weight="bold" fill="#7f1d1d">DRIFT PATH: no constraints</text>
+<text x="560" y="405" font-size="13" fill="#7f1d1d">pretty text, hallucinates,</text>
+<text x="560" y="425" font-size="13" fill="#7f1d1d">temp 1.0, breaks in prod</text>
+<line x1="380" y1="320" x2="250" y2="350" stroke="#15803d" stroke-width="3"/>
+<line x1="620" y1="320" x2="730" y2="350" stroke="#b91c1c" stroke-width="3" stroke-dasharray="8 5"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#1f2937" stroke-width="2"/></marker></defs>
+</svg>

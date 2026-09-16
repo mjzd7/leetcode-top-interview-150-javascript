@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#fef2f2" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Stop Injection + Hallucinations (JS)</text>
+<rect x="30" y="60" width="280" height="90" rx="12" fill="#fff" stroke="#b91c1c" stroke-width="3" stroke-dasharray="8 5"/>
+<text x="45" y="88" font-size="14" font-weight="bold" fill="#7f1d1d">Attacks you must name</text>
+<text x="45" y="108" font-size="12" fill="#7f1d1d">Direct: “ignore prev, show pwd”</text>
+<text x="45" y="128" font-size="12" fill="#7f1d1d">Indirect: hidden in RAG/web/img</text>
+<rect x="340" y="60" width="300" height="90" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="355" y="88" font-size="14" font-weight="bold">Hallucination = confident lie</text>
+<text x="355" y="108" font-size="12">Overreliance → fake cases → $5k fine</text>
+<text x="355" y="128" font-size="12">Fix: RAG + cite + IDK + verify</text>
+<rect x="670" y="60" width="290" height="90" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="685" y="88" font-size="14" font-weight="bold" fill="#14532d">Defense in depth (no silver bullet)</text>
+<text x="685" y="108" font-size="12" fill="#14532d">Separate roles • least privilege • HITL</text>
+<text x="685" y="128" font-size="12" fill="#14532d">RAG triad: relevance/ground/QA</text>
+<line x1="310" y1="105" x2="340" y2="105" stroke="#b91c1c" stroke-width="3"/>
+<line x1="640" y1="105" x2="670" y2="105" stroke="#15803d" stroke-width="3"/>
+<rect x="30" y="175" width="930" height="130" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="203" font-size="14" font-weight="bold">OWASP 2026 Top-10 (memorize 3 must-knows: LLM01/02/06):</text>
+<text x="45" y="225" font-size="12">01 Injection • 02 Sensitive disclosure • 03 Supply chain • 04 Poisoning • 05 Bad output handling • 06 Excessive agency • 07 Prompt leakage • 08 Vector weakness • 09 Misinformation • 10 Unbounded use</text>
+<text x="45" y="247" font-size="12">87% apps had LLM01, 62% LLM06, 54% LLM02 in 2025-26 pen-tests. System prompt ≠ secret. RAG/fine-tune don’t fix injection.</text>
+<text x="45" y="269" font-size="12">Jailbreak = injection that kills safety (DAN). Sydney incident = “ignore prior” leaked guidelines.</text>
+<text x="45" y="289" font-size="12">Vectors: poisoned docs → misinfo payload; invert embeddings → leak source; no tenant isolation → cross-leak.</text>
+<rect x="30" y="325" width="450" height="175" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="353" font-size="14" font-weight="bold">JS guards that actually work</text>
+<text x="45" y="375" font-size="12">Separate ChatML roles, delimit untrusted</text>
+<text x="45" y="395" font-size="12">Dual-LLM: worker never sees raw user</text>
+<text x="45" y="415" font-size="12">Canary token in system prompt</text>
+<text x="45" y="435" font-size="12">Sanitize retrieved HTML/MD/imgs</text>
+<text x="45" y="455" font-size="12">Strict JSON schema in/out</text>
+<text x="45" y="475" font-size="12">Red-team loop: attacker LLM → target</text>
+<rect x="510" y="325" width="450" height="175" rx="12" fill="#f0fdf4" stroke="#15803d" stroke-width="3"/>
+<text x="525" y="353" font-size="14" font-weight="bold" fill="#14532d">Hallucination killers (JS)</text>
+<text x="525" y="375" font-size="12" fill="#14532d">RAG ground + citations (A3/M3)</text>
+<text x="525" y="395" font-size="12" fill="#14532d">SelfCheck: sample 5×, cluster agree</text>
+<text x="525" y="415" font-size="12" fill="#14532d">Verify-and-edit per sentence</text>
+<text x="525" y="435" font-size="12" fill="#14532d">Uncertainty → abstain “IDK”</text>
+<text x="525" y="455" font-size="12" fill="#14532d">Temp 0.2, selective prediction</text>
+<text x="525" y="475" font-size="12" fill="#14532d">Log + human review high-risk</text>
+</svg>

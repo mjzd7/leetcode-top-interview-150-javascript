@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#fffbeb" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Enterprise RAG Pipeline (JS)</text>
+<rect x="30" y="60" width="150" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="42" y="88" font-size="13" font-weight="bold">Ingest</text>
+<text x="42" y="108" font-size="11">clean, dedupe,</text>
+<text x="42" y="124" font-size="11">filter, enrich</text>
+<rect x="200" y="60" width="150" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="212" y="88" font-size="13" font-weight="bold">Chunk 256-512</text>
+<text x="212" y="108" font-size="11">recursive/semantic</text>
+<text x="212" y="124" font-size="11">+ overlap, meta</text>
+<rect x="370" y="60" width="150" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="382" y="88" font-size="13" font-weight="bold">Embed+index</text>
+<text x="382" y="108" font-size="11">same model Q+doc</text>
+<text x="382" y="124" font-size="11">vector + BM25</text>
+<rect x="540" y="60" width="200" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="552" y="88" font-size="13" font-weight="bold">Retrieve→rerank</text>
+<text x="552" y="108" font-size="11">top-20 → cross-enc top-4</text>
+<text x="552" y="124" font-size="11">MMR diverse, cite</text>
+<rect x="760" y="60" width="200" height="70" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="772" y="88" font-size="13" font-weight="bold" fill="#14532d">Generate+eval</text>
+<text x="772" y="108" font-size="11" fill="#14532d">grounded, IDK fallback</text>
+<text x="772" y="124" font-size="11" fill="#14532d">hit@k, faithfulness</text>
+<line x1="180" y1="95" x2="200" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="350" y1="95" x2="370" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="520" y1="95" x2="540" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="740" y1="95" x2="760" y2="95" stroke="#15803d" stroke-width="3"/>
+<rect x="30" y="155" width="930" height="120" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="183" font-size="14" font-weight="bold">Chunking is #1 quality lever (not fixed chars!):</text>
+<text x="45" y="205" font-size="12">Fixed 400w fast but incoherent • Paragraph keeps ideas • Recursive hierarchy • Semantic (embedding distance) +8-12% • Late (whole-doc encode) +7-10%</text>
+<text x="45" y="227" font-size="12">Anthropic contextual (+49% recall): prepend doc context to each chunk. Parent-child: small retrieve, big show. Overlap 10-15%.</text>
+<text x="45" y="249" font-size="12">Agentic RAG = plan→retrieve→self-check loop. Worth it multi-hop; overkill FAQ. GraphRAG wins joins (“customers with X AND Sev1”).</text>
+<rect x="30" y="295" width="450" height="205" rx="12" fill="#fefce8" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="323" font-size="14" font-weight="bold">Eval split (don’t eyeball!)</text>
+<text x="45" y="345" font-size="12">Retrieval: hit@k, MRR, recall</text>
+<text x="45" y="365" font-size="12">Grounding: faithfulness, RAG triad</text>
+<text x="45" y="385" font-size="12">(relevance, grounded, Q/A fit)</text>
+<text x="45" y="405" font-size="12">Answer: judge rubric + human cal</text>
+<text x="45" y="425" font-size="12">Log every retrieval → rescore</text>
+<text x="45" y="445" font-size="12">after model change.</text>
+<text x="45" y="467" font-size="12">Tenant isolation: namespaces!</text>
+<rect x="510" y="295" width="450" height="205" rx="12" fill="#e0f2fe" stroke="#1f2937" stroke-width="3"/>
+<text x="525" y="323" font-size="14" font-weight="bold">Multi-agent for RAG ops</text>
+<text x="525" y="345" font-size="12">Router → retriever + critic</text>
+<text x="525" y="365" font-size="12">verifier worth it if wrong = $$$</text>
+<text x="525" y="385" font-size="12">HITL on deletes, per-tenant limits</text>
+<text x="525" y="405" font-size="12">Freshness vs cost: realtime index</text>
+<text x="525" y="425" font-size="12">expensive, batch cheap but stale.</text>
+<text x="525" y="445" font-size="12">JS: LangChain text splitters +</text>
+<text x="525" y="467" font-size="12">vector store + reranker chain.</text>
+</svg>
