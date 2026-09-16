@@ -304,3 +304,111 @@ function sparseMaximalSquare(oneRuns) {
   return maxOverAnchors(oneRuns, verifyBorders); // border checks via runs
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by arkaung —
+`https://leetcode.com/problems/maximal-square/solutions/600149/python-thinking-process-diagrams-dp-appr-5i49/`
+— 81.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (1D Rolling DP with Diagonal Snapshot)
+
+Compress the 2D square-extension DP matrix into a single 1D buffer:
+
+1. **Geometric Extension Condition:**
+   - For cell $(i, j)$ containing `'1'` to form the bottom-right corner of an all-1 square of size $K + 1$, all three surrounding sub-squares of size $K$ must coexist:
+     - Top neighbor $(i - 1, j)$
+     - Left neighbor $(i, j - 1)$
+     - Top-left diagonal neighbor $(i - 1, j - 1)$
+   - Recurrence relation:
+     $$dp[i][j] = \min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1$$
+     If $matrix[i][j] == \text{'0'}$, then $dp[i][j] = 0$.
+2. **Space Compression to 1D:**
+   - Allocate a single 1D array `dp` of size $N + 1$ initialized to 0 (where $N = cols$).
+   - As we scan row-by-row, track the top-left diagonal with a scalar register `prevDiag`.
+   - At each column $j$, save `temp = dp[j]` (the vertical neighbor before write), update `dp[j]`, and assign `prevDiag = temp` for the next column.
+   - Return $maxSide^2$.
+
+```text
+FUNCTION maximalSquare(matrix):
+    IF matrix IS EMPTY:
+        RETURN 0
+
+    m = NUM_ROWS(matrix)
+    n = NUM_COLS(matrix)
+    dp = ARRAY OF SIZE (n + 1) FILLED WITH 0
+    maxSide = 0
+
+    FOR i FROM 1 TO m:
+        prevDiag = 0
+        FOR j FROM 1 TO n:
+            temp = dp[j]
+            IF matrix[i - 1][j - 1] == '1':
+                dp[j] = MIN(dp[j], MIN(dp[j - 1], prevDiag)) + 1
+                maxSide = MAX(maxSide, dp[j])
+            ELSE:
+                dp[j] = 0
+            prevDiag = temp
+
+    RETURN maxSide * maxSide
+```
+
+- Time: O(M * N) — single scan visiting each matrix element once.
+- Space: O(N) auxiliary space using a 1D array of width $cols + 1$.
+
+```mermaid
+flowchart TD
+    Init["dp array of size cols + 1 = [0, ..., 0]"] --> RowLoop["For row i from 1 to m"]
+    RowLoop --> ResetDiag["prevDiag = 0"]
+    ResetDiag --> ColLoop["For col j from 1 to n"]
+    ColLoop --> Save["temp = dp[j]"]
+    Save --> Check{"matrix[i-1][j-1] == '1'?"}
+    Check -->|"Yes"| Update["dp[j] = min(dp[j], dp[j-1], prevDiag) + 1<br>maxSide = max(maxSide, dp[j])"]
+    Check -->|"No"| Zero["dp[j] = 0"]
+    Update --> Shift["prevDiag = temp"]
+    Zero --> Shift
+    Shift --> ColLoop
+    ColLoop --> RowLoop
+    RowLoop --> Ret["RETURN maxSide * maxSide"]
+```
+
+### B. Dry run on LeetCode Example 1 (`matrix = [["1","0","1","0","0"],["1","0","1","1","1"],["1","1","1","1","1"],["1","0","0","1","0"]]`)
+
+- $M = 4, N = 5$. `dp` of size 6 initialized to 0.
+- Row 1: `dp = [0, 1, 0, 1, 0, 0]`. `maxSide = 1`.
+- Row 2: `dp = [0, 1, 0, 1, 1, 1]`. `maxSide = 1`.
+- Row 3:
+  - $j = 1$: $matrix[2][0] = \text{'1'} \implies dp[1] = 1$.
+  - $j = 2$: $matrix[2][1] = \text{'1'} \implies \min(0, 1, 0) + 1 = 1$.
+  - $j = 3$: $matrix[2][2] = \text{'1'} \implies \min(1, 1, 0) + 1 = 1$.
+  - $j = 4$: $matrix[2][3] = \text{'1'} \implies \min(1, 1, 1) + 1 = 2$.
+  - $j = 5$: $matrix[2][4] = \text{'1'} \implies \min(1, 2, 1) + 1 = 2$.
+  - `maxSide = 2`.
+- Row 4: no cell exceeds side length 2.
+- Area = $2 \times 2 = 4$.
+
+Final result: `4`.
+
+### C. Why the 3-Neighbor Minimum Guarantees Solid Squares
+
+- An all-1 square of size $K$ requires that the horizontal bar, vertical bar, and corner sub-square all contain '1's.
+- The 3-way minimum $\min(top, left, diagonal)$ acts as a bottleneck: any missing '1' in any sub-region truncates the minimum, guaranteeing zero hollow cavities.
+
+### D. Pitfalls from comments
+
+- **String Character vs Number Gotcha:** Cells contain `"1"` and `"0"`, not numbers. Truthy comparisons like `if (matrix[i][j])` treat string `"0"` as true, corrupting results.
+- **Forgetting Row Diag Reset:** Failing to reset `prevDiag = 0` at the start of each row allows the previous row's ending state to bleed into column 1.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (28): Airbnb, Amazon, Apple, Bloomberg, Cisco, Citadel, eBay, Facebook/Meta, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Microsoft, Palantir Technologies, PayPal, Pinterest, Salesforce, Samsung, ServiceNow, Snap, Splunk, Square, TikTok, Uber, Visa, Walmart Labs, Yahoo.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

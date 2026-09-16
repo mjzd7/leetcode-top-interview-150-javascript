@@ -293,3 +293,101 @@ function maxEnvelopes(pairs) {
   return lengthOfLIS(pairs.map(([, y]) => y));
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Mai Thanh Hiep —
+`https://leetcode.com/problems/longest-increasing-subsequence/solutions/1326308/cpython-dp-binary-search-bit-segment-tre-wc3w/`
+— 272.1K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Patience Sorting / Greedy with Binary Search)
+
+Track the minimum possible tail for every subsequence length using patience sorting and binary search:
+
+1. **State Invariant:**
+   - Maintain an array `tails` where `tails[k]` stores the smallest ending element among all valid increasing subsequences of length $k + 1$ found so far.
+   - The array `tails` is strictly monotonic increasing at all times.
+2. **Binary Search Replacement Protocol:**
+   - For each number $x$ in `nums`:
+     - Binary search `tails` for the leftmost index `idx` where `tails[idx] >= x` (`lower_bound`).
+     - **Extension:** If no such element exists (`idx == tails.length`), append $x$ to `tails`, extending the maximum LIS length by 1.
+     - **Greedy Optimization:** If `tails[idx] >= x`, set `tails[idx] = x`. This lowers the tail barrier for subsequences of length `idx + 1`, maximizing opportunity for subsequent elements to extend it.
+3. **Execution:** Return `tails.length`.
+
+```text
+FUNCTION lengthOfLIS(nums):
+    IF length(nums) == 0:
+        RETURN 0
+
+    tails = EMPTY_ARRAY
+
+    FOR EACH x IN nums:
+        lo = 0
+        hi = length(tails)
+
+        WHILE lo < hi:
+            mid = lo + INT_DIV(hi - lo, 2)
+            IF tails[mid] < x:
+                lo = mid + 1
+            ELSE:
+                hi = mid
+
+        IF lo == length(tails):
+            APPEND x TO tails
+        ELSE:
+            tails[lo] = x
+
+    RETURN length(tails)
+```
+
+- Time: O(N * log N) — binary search over `tails` (length at most $N$) for each of the $N$ elements.
+- Space: O(N) auxiliary space for the `tails` buffer (can be reduced to O(1) by overwriting the prefix of `nums`).
+
+```mermaid
+flowchart TD
+    Start["Iterate x in nums"] --> BS["Binary search leftmost idx in tails where tails[idx] >= x"]
+    BS --> Check{"idx == tails.length?"}
+    Check -->|"Yes (x exceeds all tails)"| Append["tails.append(x)<br>LIS length grows"] --> Next["Next element"]
+    Check -->|"No (tails[idx] >= x)"| Replace["tails[idx] = x<br>Greedy tail optimization"] --> Next
+    Next --> LoopCheck{"More numbers?"}
+    LoopCheck -->|"Yes"| Start
+    LoopCheck -->|"No"| Ret["RETURN tails.length"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [10, 9, 2, 5, 3, 7, 101, 18]`)
+
+- $x = 10 \implies tails = [10]$.
+- $x = 9 \implies tails = [9]$.
+- $x = 2 \implies tails = [2]$.
+- $x = 5 \implies tails = [2, 5]$.
+- $x = 3 \implies 3 < 5$, replace index 1: $tails = [2, 3]$.
+- $x = 7 \implies 7 > 3$, append: $tails = [2, 3, 7]$.
+- $x = 101 \implies append$: $tails = [2, 3, 7, 101]$.
+- $x = 18 \implies 18 < 101$, replace index 3: $tails = [2, 3, 7, 18]$.
+- Return `tails.length = 4`.
+
+Final result: `4` (e.g. sequence `[2, 3, 7, 18]`).
+
+### C. Why Patience Sorting Beats $O(N^2)$ Tabulation
+
+- Nested loop dynamic programming tests every preceding element $j < i$, taking $O(N^2)$ time.
+- Because `tails` remains strictly sorted, finding the optimal predecessor takes $O(\log N)$ via binary search, reducing runtime by orders of magnitude on large inputs.
+
+### D. Pitfalls from comments
+
+- **`tails` is NOT the LIS Itself:** At the end of the algorithm, `tails` stores optimal boundary values for each length, not necessarily a valid chronological sequence. Its length is exact, but reconstructing the elements requires parent backpointers.
+- **Strictly Increasing vs Non-Decreasing:** To find strictly increasing subsequences, binary search for $\ge x$ (`lower_bound`). For non-decreasing subsequences, search for $> x$ (`upper_bound`).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (28): Accenture, Agoda, Amazon, Atlassian, Bloomberg, ByteDance, Flexport, Goldman Sachs, Google, Huawei, Infosys, Intuit, Meta, Microsoft, Morgan Stanley, Nvidia, Oracle, PayPal, Revolut, Salesforce, Samsung, Splunk, Squarepoint Capital, tcs, TikTok, Visa, Walmart Labs, Yandex.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft, Revolut.

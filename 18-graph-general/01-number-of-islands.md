@@ -296,3 +296,102 @@ function sparseNumIslands(landSet) {
   return floodOverSet(landSet); // same kernel, Set-has instead of grid-read
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by girikuncoro —
+`https://leetcode.com/problems/number-of-islands/solutions/56340/python-simple-dfs-solution-by-girikuncor-7dwm/`
+— 265.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (In-Place Island Sinking via DFS/BFS Traversal)
+
+Treat the binary grid as an implicit undirected graph where each connected component of adjacent `'1'`s constitutes an island:
+
+1. **Component Discovery:**
+   - Iterate through every coordinate $(r, c)$ in the $M \times N$ matrix.
+   - When encountering an unvisited land cell (`grid[r][c] == '1'`), a new component has been identified: increment the island counter.
+2. **Sinking Subroutine:**
+   - Immediately launch a flood fill (DFS or BFS) starting from $(r, c)$.
+   - Mutate the cell to `'0'` (sink the land to water) to neutralize it from triggering future component counts.
+   - Recursively / iteratively visit all four cardinal neighbors $(r+1, c), (r-1, c), (r, c+1), (r, c-1)$, halting whenever bounds are exceeded or water (`'0'`) is reached.
+3. **Termination:**
+   - Once the entire grid has been scanned, return the component count.
+
+```text
+FUNCTION numIslands(grid):
+    IF grid IS EMPTY:
+        RETURN 0
+
+    m = NUM_ROWS(grid)
+    n = NUM_COLS(grid)
+    islandCount = 0
+
+    FUNCTION sink(r, c):
+        IF r < 0 OR r >= m OR c < 0 OR c >= n OR grid[r][c] != '1':
+            RETURN
+        grid[r][c] = '0'  // sink visited land cell
+        sink(r + 1, c)
+        sink(r - 1, c)
+        sink(r, c + 1)
+        sink(r, c - 1)
+
+    FOR r FROM 0 TO m - 1:
+        FOR c FROM 0 TO n - 1:
+            IF grid[r][c] == '1':
+                islandCount = islandCount + 1
+                sink(r, c)
+
+    RETURN islandCount
+```
+
+- Time: O(M * N) — each cell is visited at most 5 times (once by the outer loop, and at most 4 times by neighbor queries).
+- Space: O(M * N) worst-case recursion stack (e.g. grid completely filled with land) or O(min(M, N)) with BFS.
+
+```mermaid
+flowchart TD
+    Scan["Scan grid cell (r, c)"] --> CheckLand{"grid[r][c] == '1'?"}
+    CheckLand -->|"No"| NextCell["Advance to next cell"]
+    CheckLand -->|"Yes"| Inc["islandCount += 1"]
+    Inc --> Flood["Launch sink(r, c):<br>Mutate cell to '0'<br>Recursively sink 4 neighbors"]
+    Flood --> NextCell
+    NextCell --> MoreCells{"More cells to scan?"}
+    MoreCells -->|"Yes"| Scan
+    MoreCells -->|"No"| Ret["RETURN islandCount"]
+```
+
+### B. Dry run on LeetCode Example 1 (`grid = [["1","1","1","1","0"],["1","1","0","1","0"],["1","1","0","0","0"],["0","0","0","0","0"]]`)
+
+- Scan reaches $(0, 0) = \text{'1'}$.
+- `islandCount` increments to 1.
+- `sink(0, 0)` is invoked:
+  - $(0, 0)$ is set to `'0'`.
+  - Traversal sinks all connected land cells: $(0,1), (0,2), (0,3), (1,0), (1,1), (1,3), (2,0), (2,1)$.
+  - All connected land becomes `'0'`.
+- Outer loop resumes scanning from $(0, 1)$ onwards:
+  - Every remaining coordinate now contains `'0'`.
+- Scan completes.
+- Final result: `1`.
+
+### C. Why In-Place Sinking Beats Visited Hash Sets
+
+- Storing visited coordinates in a hash set introduces string serializations (`"${r},${c}"`) and dynamic hash allocations for up to $M \times N$ elements.
+- Mutating land cells to `'0'` directly eliminates secondary tracking collections and enforces cache-friendly memory operations.
+
+### D. Pitfalls from comments
+
+- **Call Stack Exhaustion on Deep Grids:** On an adversarial $300 \times 300$ grid of contiguous land, recursion depth reaches 90,000 frames, triggering a stack overflow in standard runtimes. Using an explicit stack or BFS queue guarantees safety.
+- **Type Inconsistencies:** LeetCode passes characters (`"1"` and `"0"`), not numbers. Checking `grid[r][c] === 1` fails in JavaScript/TypeScript because string `"1"` does not strictly equal number `1`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (81): Accenture, Adobe, Amazon, AMD, Anduril, Aon, Apple, Aurora, Autodesk, Barclays, BitGo, BlackRock, Bloomberg, ByteDance, Capital One, Cisco, Citadel, Cloudflare, Comcast, Coupang, CrowdStrike, DE Shaw, Docusign, DoorDash, eBay, Expedia, Flipkart, Goldman Sachs, Google, Grammarly, HashedIn, Hive, Huawei, IBM, Infosys, Intel, Intuit, LinkedIn, Lucid, Meesho, Meta, Microsoft, Moloco, Nvidia, OKX, Oracle, PayPal, PhonePe, Pinterest, Qualcomm, Rippling, Rivian, Salesforce, Samsung, SAP, ServiceNow, Siemens, Sigmoid, Snap, Snowflake, SoFi, Splunk, Squarepoint Capital, tcs, Tesla, TikTok, Tinkoff, Turing, Two Sigma, Uber, Visa, Walmart Labs, Waymo, Wells Fargo, Whatnot, Wix, Yandex, Zenefits, Zepto, Zoho, Zomato.
+- Recent: 30 days — Amazon, Anduril, Apple, Bloomberg, Google, Ola Cabs.
+- Recent: 3 months — Amazon, Anduril, Apple, Bloomberg, Google, Infosys, Meta, Microsoft, Qualcomm, tcs, TikTok, Uber.

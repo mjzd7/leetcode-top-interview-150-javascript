@@ -378,3 +378,91 @@ function persistentPush(head, val) {
   return { val, min, prev: head };
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by sometimescrazy —
+`https://leetcode.com/problems/min-stack/solutions/49014/java-accepted-solution-using-one-stack-b-coh8/`
+— 220.6K views / 1.4K votes / 165 comments.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Single Stack with Previous-Min Pushing)
+
+Standard solutions maintain two parallel stacks or allocate pairs `[val, currentMin]` on every push. The top-voted post uses a single primitive stack:
+- Whenever a new value $x \le currentMin$ arrives, push the *old* `currentMin` onto the stack immediately before pushing $x$, then update `currentMin = x`.
+- On `pop()`, pop the top element. If the popped element equals `currentMin`, pop *again* to restore the previous minimum from history: `currentMin = stack.pop()`.
+
+```text
+CLASS MinStack:
+    min = +INFINITY
+    stack = empty Stack
+
+    METHOD push(val):
+        IF val <= min:
+            stack.push(min)
+            min = val
+        stack.push(val)
+
+    METHOD pop():
+        popped = stack.pop()
+        IF popped == min:
+            min = stack.pop()
+
+    METHOD top():
+        RETURN stack.peek()
+
+    METHOD getMin():
+        RETURN min
+```
+
+- Time: O(1) for all operations (`push`, `pop`, `top`, `getMin`).
+- Space: O(N) worst-case (strictly decreasing sequence pushes $2N$ items), but $O(1)$ extra space beyond standard stack when values exceed current minimum.
+
+```mermaid
+flowchart TD
+    Push["push(val)"] --> Cond{"val <= min?"}
+    Cond -->|"Yes"| PushOldMin["stack.push(min)<br>min = val"]
+    Cond -->|"No"| PushVal["stack.push(val)"]
+    PushOldMin --> PushVal
+    Pop["pop()"] --> PopVal["popped = stack.pop()"]
+    PopVal --> PopCond{"popped == min?"}
+    PopCond -->|"Yes"| RestoreMin["min = stack.pop()"]
+    PopCond -->|"No"| DonePop["Done"]
+    RestoreMin --> DonePop
+```
+
+### B. Dry run on duplicate minimums (`push(0), push(1), push(0), getMin(), pop(), getMin()`)
+
+| Op | Argument | Condition Check | Stack State (top on right) | `min` |
+| :--- | :--- | :--- | :--- | :--- |
+| Init | - | - | `[]` | $\infty$ |
+| `push(0)` | 0 | $0 \le \infty$ (True) $\rightarrow$ push $\infty$, `min = 0` | `[$\infty$, 0]` | 0 |
+| `push(1)` | 1 | $1 \le 0$ (False) $\rightarrow$ push 1 | `[$\infty$, 0, 1]` | 0 |
+| `push(0)` | 0 | $0 \le 0$ (True) $\rightarrow$ push 0, `min = 0` | `[$\infty$, 0, 1, 0, 0]` | 0 |
+| `getMin()` | - | Return `min` | `[$\infty$, 0, 1, 0, 0]` | 0 |
+| `pop()` | - | Popped 0 == `min` (0) $\rightarrow$ pop again: `min = 0` | `[$\infty$, 0, 1]` | 0 |
+| `getMin()` | - | Return `min` | `[$\infty$, 0, 1]` | 0 |
+
+### C. Why This Beats Two Parallel Stacks
+
+- **Allocation overhead:** No paired objects `{val, min}` or secondary stack arrays allocated.
+- **Cache-friendly:** All elements live contiguously in a single buffer.
+
+### D. Pitfalls from comments
+
+- **The `<=` condition vs `<`:** The check during `push` MUST be `val <= min`, NOT `val < min`. If two identical minimum values are inserted without pushing the previous minimum duplicate, the first `pop()` will restore an older minimum prematurely.
+- **Wrapper object equality in Java:** Comparing `stack.pop() == min` using reference equality with boxed `Integer` objects can fail outside the $-128$ to $127$ cache range. Unboxing or `.intValue()` is mandatory.
+- **Underflow on `top()` or `getMin()`:** Callers must not invoke `top()` or `getMin()` on an empty stack per problem constraints ($1 \le \text{operations}$).
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (37): Adobe, Amazon, Apple, Bloomberg, Citadel, Flipkart, Google, IBM, IMC, Informatica, Infosys, Intel, LinkedIn, Lucid, Lyft, Meta, Microsoft, Nike, Nvidia, Odoo, Oracle, Ozon, Palo Alto Networks, Paytm, Salesforce, Sigmoid, Snap, Snowflake, TCS, Tinkoff, Tripadvisor, Uber, UiPath, Vimeo, Walmart Labs, Yandex, Zenefits.
+- Recent: 30 days — none.
+- Recent: 3 months — Amazon, Google, Meta, Microsoft.

@@ -360,3 +360,120 @@ function liveMergeKLists(heap, newList) {
   if (newList) heap.push(newList); // tournament would re-bracket everything
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by sourabh jadhav —
+`https://leetcode.com/problems/merge-k-sorted-lists/solutions/3285930/100-faster-c-java-python-by-sourabh-jadh-514b/`
+— 135.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Divide & Conquer Binary Tournament Pairwise Merge)
+
+Merge $k$ sorted linked lists by recursively bisecting the collection and combining pairs in a tournament reduction tree:
+
+1. **Quadratic Flaw of Sequential Accumulation:**
+   - Merging list 1 with list 2, then list 3, ..., up to list $k$ reprocesses previously merged nodes repeatedly, degrading performance to $O(k^2 N)$.
+2. **Recursive Divide & Conquer Reduction:**
+   - Define recursive helper `mergeKListsHelper(lists, start, end)`:
+     - **Base Case 1:** If $start == end$, return the solitary list `lists[start]`.
+     - **Base Case 2:** If $start + 1 == end$, directly merge the pair: `RETURN mergeTwo(lists[start], lists[end])`.
+     - **Bisect Collection:** Compute midpoint $mid = start + (end - start) / 2$.
+     - **Recurse:**
+       - Left partition: `left = mergeKListsHelper(lists, start, mid)`
+       - Right partition: `right = mergeKListsHelper(lists, mid + 1, end)`
+     - **Combine:** Return `mergeTwo(left, right)`.
+3. **In-Place Two-List Merge:**
+   - Link nodes sequentially using a `dummy` sentinel node, appending the smaller value pointer in $O(1)$ extra space.
+
+```text
+FUNCTION mergeKLists(lists):
+    IF lists IS EMPTY:
+        RETURN NULL
+
+    FUNCTION mergeKListsHelper(start, end):
+        IF start == end:
+            RETURN lists[start]
+        IF start + 1 == end:
+            RETURN mergeTwo(lists[start], lists[end])
+
+        mid = start + (end - start) / 2
+        left = mergeKListsHelper(start, mid)
+        right = mergeKListsHelper(mid + 1, end)
+
+        RETURN mergeTwo(left, right)
+
+    FUNCTION mergeTwo(l1, l2):
+        dummy = NEW ListNode(0)
+        curr = dummy
+        WHILE l1 != NULL AND l2 != NULL:
+            IF l1.val < l2.val:
+                curr.next = l1
+                l1 = l1.next
+            ELSE:
+                curr.next = l2
+                l2 = l2.next
+            curr = curr.next
+
+        IF l1 != NULL:
+            curr.next = l1
+        ELSE:
+            curr.next = l2
+
+        RETURN dummy.next
+
+    RETURN mergeKListsHelper(0, LENGTH(lists) - 1)
+```
+
+- Time: O(N log k) — where $N$ is total nodes across all $k$ lists. The tree has $\lceil\log_2 k\rceil$ levels, and each level processes every node exactly once ($O(N)$ work per level).
+- Space: O(log k) — call stack frames for recursive divide-and-conquer ($O(1)$ if performed bottom-up iteratively).
+
+```mermaid
+flowchart TD
+    Lists["Array of k sorted lists"] --> CheckEmpty{"lists empty?"}
+    CheckEmpty -->|"Yes"| RetNull["RETURN null"]
+    CheckEmpty -->|"No"| DCReduce["mergeKListsHelper(0, k - 1)"]
+    DCReduce --> MidSplit["mid = start + (end - start) / 2"]
+    MidSplit --> LeftBranch["left = mergeKListsHelper(start, mid)"]
+    MidSplit --> RightBranch["right = mergeKListsHelper(mid + 1, end)"]
+    LeftBranch --> MergeTwo["mergeTwo(left, right):<br>Weave node pointers in-place"]
+    RightBranch --> MergeTwo
+    MergeTwo --> RetFinal["RETURN fully merged list"]
+```
+
+### B. Dry run on LeetCode Example 1 (`lists = [[1,4,5],[1,3,4],[2,6]]`)
+
+- Segment `[0, 2]`: $k = 3$, $mid = 1$.
+- Left half `[0, 1]`:
+  - Triggers pair base case $start + 1 == end$.
+  - Merges `[1, 4, 5]` and `[1, 3, 4]`.
+  - Produces: `1 -> 1 -> 3 -> 4 -> 4 -> 5`.
+- Right half `[2, 2]`:
+  - Triggers single-item base case $start == end$.
+  - Returns `[2, 6]`.
+- Top-level merge:
+  - Merges `[1, 1, 3, 4, 4, 5]` with `[2, 6]`.
+  - Result: `1 -> 1 -> 2 -> 3 -> 4 -> 4 -> 5 -> 6`.
+
+### C. Why Divide & Conquer Outperforms Min-Heap in Practice
+
+- Both Divide & Conquer and Min-Priority Queue approaches share the same theoretical $O(N \log k)$ complexity.
+- In execution, Divide & Conquer avoids heap data structure allocations, pointer wrapping, and continuous push/pop heapify overhead. Sequential list traversals maximize CPU cache locality compared to non-contiguous heap node pointer dereferencing.
+
+### D. Pitfalls from comments
+
+- **Empty Collection / All-Null Lists:** Edge cases such as `lists = []` or `lists = [null, null]` must be intercepted early to prevent null dereference during midpoint computation or node linking.
+- **Midpoint Overflow:** Use `start + (end - start) / 2` rather than `(start + end) / 2`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (49): Airbnb, Amazon, American Express, Anduril, Apple, Bloomberg, ByteDance, Citadel, Cloudflare, CME Group, Cohesity, Coupang, Deloitte, Disney, DoorDash, eBay, Flipkart, FreshWorks, Goldman Sachs, Google, Hubspot, IXL, LinkedIn, Meta, Microsoft, Moloco, MongoDB, Netskope, Nvidia, Oracle, oyo, Pinterest, Qualcomm, Rippling, Rivian, Salesforce, Samsung, Snap, Snowflake, SoFi, tcs, TikTok, Two Sigma, Uber, Verkada, Walmart Labs, Warnermedia, X, Yandex.
+- Recent: 30 days — Amazon.
+- Recent: 3 months — Amazon, Bloomberg, Deloitte, FreshWorks, Google, Meta, Microsoft, Salesforce, Snap.

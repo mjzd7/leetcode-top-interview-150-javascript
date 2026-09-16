@@ -332,3 +332,98 @@ async function minGapPaged(rootId, loadPage) {
   return best;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Shan Gao —
+`https://leetcode.com/problems/minimum-absolute-difference-in-bst/solutions/99905/two-solutions-in-order-traversal-and-a-m-elmf/`
+— 74K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Inorder Predecessor Delta Invariant)
+
+Because an in-order traversal of a Binary Search Tree produces a strictly ascending sequence, the minimum difference between any two nodes must occur between two immediately adjacent elements in that sequence:
+
+1. **State Tracking:** Maintain `minDiff = INFINITY` and `prev = null` (pointer to the previously visited node's value).
+2. **In-Order Traversal:**
+   - Recursively visit `node.left`.
+   - Process `node`:
+     - If `prev != null`, compute delta: `minDiff = min(minDiff, node.val - prev)`.
+     - Update predecessor: `prev = node.val`.
+   - Recursively visit `node.right`.
+3. Return `minDiff`.
+
+```text
+CLASS Solution:
+    minDiff = INFINITY
+    prev = null
+
+    FUNCTION getMinimumDifference(root):
+        minDiff = INFINITY
+        prev = null
+        inorder(root)
+        RETURN minDiff
+
+    FUNCTION inorder(node):
+        IF node == null:
+            RETURN
+
+        inorder(node.left)
+
+        IF prev != null:
+            minDiff = min(minDiff, node.val - prev)
+            // Optional early termination: min integer difference cannot be < 1
+            IF minDiff == 1:
+                RETURN
+
+        prev = node.val
+
+        inorder(node.right)
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node once.
+- Space: O(H) auxiliary space on the call stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart LR
+    N1["Node(1)"] -->|"delta = 2 - 1 = 1"| N2["Node(2)"]
+    N2 -->|"delta = 3 - 2 = 1"| N3["Node(3)"]
+    N3 -->|"delta = 4 - 3 = 1"| N4["Node(4)"]
+    N4 -->|"delta = 6 - 4 = 2"| N6["Node(6)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [4,2,6,1,3]`)
+
+- Inorder sequence: `[1, 2, 3, 4, 6]`.
+- Visit 1: `prev = null` -> `prev = 1`.
+- Visit 2: `minDiff = min(∞, 2 - 1) = 1`. `prev = 2`.
+  - (Early exit triggers since `minDiff == 1` is optimal for integer values).
+- If continued:
+  - Visit 3: `minDiff = min(1, 3 - 2) = 1`. `prev = 3`.
+  - Visit 4: `minDiff = min(1, 4 - 3) = 1`. `prev = 4`.
+  - Visit 6: `minDiff = min(1, 6 - 4) = 1`. `prev = 6`.
+
+Final result: `1`.
+
+### C. Why In-Place Inorder Beats Full Sequence Buffering
+
+- Storing all node values in an array and sorting takes $O(N)$ auxiliary heap memory.
+- Tracking only the single previous visited value `prev` during the inorder recursion reduces memory consumption to $O(H)$ stack frames with zero dynamic heap allocations.
+
+### D. Pitfalls from comments
+
+- **Initializing `prev = 0`:** Node values can be 0 or negative. Initializing `prev = 0` erroneously calculates $node.val - 0$ as a delta against a non-existent node. Always initialize `prev = null`.
+- **General Binary Tree follow-up:** If the tree is an arbitrary binary tree rather than a BST, in-order values are unsorted. In that scenario, maintain a balanced BST / `TreeSet` of already visited values and query `floor` and `ceiling` for each node in $O(\log N)$, achieving $O(N \log N)$ total time.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (3): Amazon, Google, Meta.
+- Recent: 30 days — None.
+- Recent: 3 months — Google.

@@ -287,3 +287,97 @@ async function bstFromStream(sortedStream) {
   return levelOrderBuild(sortedStream); // consume 1, 2, 4, 8... per level
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Dishank Aswal —
+`https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/solutions/6025974/0-ms-runtime-beats-100-user-step-by-step-88p3/`
+— 50.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Divide & Conquer Midpoint Partition)
+
+Construct a strictly height-balanced BST by recursively bisecting the sorted sequence:
+
+1. **Height-Balanced Criterion:**
+   - A binary tree is height-balanced if the depths of the two subtrees of every node differ by no more than 1.
+   - Selecting the exact median of the current subarray as the root partitions the remaining elements into two subsets whose sizes differ by at most 1, guaranteeing optimal subtree balance.
+2. **Recursive Bisection Algorithm:**
+   - Maintain bounding indices `left` and `right` over the input array `nums`.
+   - **Base Case:** If `left > right`, the segment is empty; return `null`.
+   - **Median Selection:** Compute `mid = left + (right - left) / 2`.
+   - **Node Creation & Linkage:**
+     - Instantiate `root = NEW TreeNode(nums[mid])`.
+     - Recursively construct left subtree from `nums[left ... mid - 1]`: `root.left = helper(left, mid - 1)`.
+     - Recursively construct right subtree from `nums[mid + 1 ... right]`: `root.right = helper(mid + 1, right)`.
+     - Return `root`.
+
+```text
+FUNCTION sortedArrayToBST(nums):
+    FUNCTION helper(left, right):
+        IF left > right:
+            RETURN NULL
+
+        mid = left + (right - left) / 2
+        root = NEW TreeNode(nums[mid])
+
+        root.left = helper(left, mid - 1)
+        root.right = helper(mid + 1, right)
+
+        RETURN root
+
+    RETURN helper(0, LENGTH(nums) - 1)
+```
+
+- Time: O(N) — each of the $N$ elements is evaluated and allocated into a tree node exactly once.
+- Space: O(log N) — recursion stack memory consumed by balanced tree depth $\lceil\log_2 N\rceil$.
+
+```mermaid
+flowchart TD
+    Helper["helper(left, right)"] --> BaseCheck{"left > right?"}
+    BaseCheck -->|"Yes"| RetNull["RETURN NULL"]
+    BaseCheck -->|"No"| CalcMid["mid = left + (right - left) / 2<br>root = new TreeNode(nums[mid])"]
+    CalcMid --> RecurseLeft["root.left = helper(left, mid - 1)"]
+    RecurseLeft --> RecurseRight["root.right = helper(mid + 1, right)"]
+    RecurseRight --> RetRoot["RETURN root"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [-10, -3, 0, 5, 9]`)
+
+- Subarray `[0, 4]`:
+  - `mid = 0 + (4 - 0) / 2 = 2`.
+  - `nums[2] = 0` becomes root.
+- Left half `[0, 1]`:
+  - `mid = 0 + (1 - 0) / 2 = 0`.
+  - `nums[0] = -10` becomes `root.left`.
+  - Left subrange `[0, -1]` returns `null`.
+  - Right subrange `[1, 1]` selects `mid = 1` (`nums[1] = -3`).
+- Right half `[3, 4]`:
+  - `mid = 3 + (4 - 3) / 2 = 3`.
+  - `nums[3] = 5` becomes `root.right`.
+  - Left subrange `[3, 2]` returns `null`.
+  - Right subrange `[4, 4]` selects `mid = 4` (`nums[4] = 9`).
+- Output: Balanced BST rooted at `0`, height 3.
+
+### C. Why In-Place Index Pointers Beat Array Slicing
+
+- Passing indices `left` and `right` operates entirely in-place with zero memory allocation for subarrays ($O(1)$ auxiliary work per recursion frame).
+- Copying slices via `.slice()` copies $O(N)$ elements at each tree level, blowing time up to $O(N \log N)$ and flooding garbage collection.
+
+### D. Pitfalls from comments
+
+- **Inclusive Mid Boundaries in Recursive Calls:** Recursing with `helper(left, mid)` or `helper(mid, right)` fails to exclude the pivot, leading to infinite recursion on two-element segments.
+- **Midpoint Arithmetic Overflow:** While negligible in JS numbers, using `left + (right - left) / 2` adheres to standard overflow-safe indexing across languages.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (9): Accenture, Airbnb, Amazon, Apple, Bloomberg, Google, Meta, Microsoft, TikTok.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google, Meta.

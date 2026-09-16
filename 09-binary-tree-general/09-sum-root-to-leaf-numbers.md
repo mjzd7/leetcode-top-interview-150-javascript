@@ -316,3 +316,86 @@ function sumNumbersBig(root) {
   return f(root, 0n);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Abhishek —
+`https://leetcode.com/problems/sum-root-to-leaf-numbers/solutions/1556417/cpython-recursive-iterative-dfs-bfs-morr-wooh/`
+— 28K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Top-Down Preorder Digit Shifting)
+
+Rather than collecting digit lists or string buffers, the standard approach accumulates numbers directly via base-10 arithmetic during DFS descent:
+
+1. **Base Case:** If `node == null`, return `0`.
+2. **Digit Accumulation:** Transition the current prefix integer: `cur = cur * 10 + node.val`.
+3. **Leaf Detection:** If both `node.left == null` and `node.right == null`, the path is complete — return `cur`.
+4. **Subtree Aggregation:** Recurse down both left and right subtrees and return their sum.
+
+```text
+FUNCTION sumNumbers(root):
+    FUNCTION dfs(node, cur):
+        IF node == null:
+            RETURN 0
+
+        cur = cur * 10 + node.val
+
+        IF node.left == null AND node.right == null:
+            RETURN cur
+
+        RETURN dfs(node.left, cur) + dfs(node.right, cur)
+
+    RETURN dfs(root, 0)
+```
+
+- Time: O(N) where N is the number of nodes, visiting each node once.
+- Space: O(H) auxiliary space on the call stack ($O(\log N)$ balanced, $O(N)$ skewed).
+
+```mermaid
+flowchart TD
+    R["Root 4 (cur=4)"] --> L["Node 9 (cur=49)"]
+    R --> R0["Node 0 (cur=40)"]
+    L --> L5["Leaf 5 (cur=495)"]
+    L --> L1["Leaf 1 (cur=491)"]
+    R0 --> Leaf0["Leaf 0 (cur=40)"]
+    L5 -.-> SumL["495 + 491 = 986"]
+    L1 -.-> SumL
+    SumL -.-> Total["986 + 40 = 1026"]
+    Leaf0 -.-> Total
+```
+
+### B. Dry run on LeetCode Example 2 (`root = [4,9,0,5,1]`)
+
+- Root 4: `cur = 0 * 10 + 4 = 4`. Non-leaf.
+  - Left branch to 9: `cur = 4 * 10 + 9 = 49`. Non-leaf.
+    - Left to 5: `cur = 49 * 10 + 5 = 495`. Leaf! Returns `495`.
+    - Right to 1: `cur = 49 * 10 + 1 = 491`. Leaf! Returns `491`.
+    - Subtree 9 returns $495 + 491 = 986$.
+  - Right branch to 0: `cur = 4 * 10 + 0 = 40`. Leaf! Returns `40`.
+- Root returns $986 + 40 = 1026$.
+
+Result: `1026`.
+
+### C. Why Base-10 Arithmetic Beats String Buffering
+
+- **Zero Allocation:** String concatenation (`curStr += node.val`) allocates new strings on every step and demands parsing at each leaf.
+- In-register multiplication (`cur * 10 + node.val`) operates entirely within CPU registers with $O(1)$ auxiliary memory per frame.
+
+### D. Pitfalls from comments
+
+- **Premature leaf accumulation:** Returning or summing `cur` at a non-leaf node corrupts totals with partial prefix numbers.
+- **Null return value:** When a node has only one child, its missing child evaluates `dfs(null, cur)`. That call MUST return `0`, not `cur`, otherwise the missing branch falsely duplicates the parent's value.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google.

@@ -300,3 +300,104 @@ async function permuteParallel(nums, workers) {
   return parts.flat();
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Issac Chua —
+`https://leetcode.com/problems/permutations/solutions/18239/a-general-approach-to-backtracking-quest-e6b1/`
+— 741.3K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Generalized Backtracking Paradigm)
+
+Generate all $N!$ distinct orderings through recursive depth-first path construction with $O(1)$ visited tracking:
+
+1. **Path and Visited State:** Maintain a dynamic list `current` representing the permutation prefix, and a boolean array or bitmask `used` where `used[i]` tracks whether `nums[i]` is already included.
+2. **Backtracking Invariant:**
+   - **Base Case:** When `current.length == nums.length`, a full permutation has been assembled. Append a cloned snapshot of `current` to `results` and return.
+   - **Branching Step:** Iterate $i$ from $0$ to $N - 1$:
+     - If `used[i]` is true, skip (element already placed).
+     - Mark `used[i] = true`, append `nums[i]` to `current`.
+     - Recurse to assemble remaining slots: `backtrack()`.
+     - Unmark `used[i] = false`, pop `nums[i]` from `current` (backtrack state restoration).
+3. Return collected permutations.
+
+```text
+FUNCTION permute(nums):
+    results = []
+    current = []
+    used = ARRAY OF BOOLEAN OF SIZE length(nums) FILLED WITH false
+
+    FUNCTION backtrack():
+        IF length(current) == length(nums):
+            results.append(CLONE(current))
+            RETURN
+
+        FOR i FROM 0 TO length(nums) - 1:
+            IF used[i]:
+                CONTINUE
+
+            used[i] = true
+            current.push(nums[i])
+
+            backtrack()
+
+            current.pop()
+            used[i] = false
+
+    backtrack()
+    RETURN results
+```
+
+- Time: O(N! * N) — exactly $N!$ permutation leaves are generated, each requiring $O(N)$ time to copy into results.
+- Space: O(N) auxiliary space for the recursion call stack, `current` buffer, and `used` lookup table.
+
+```mermaid
+flowchart TD
+    Root["backtrack(current=[], used=[F, F, F])"]
+    Root -->|"Pick 1"| N1["current=[1], used=[T, F, F]"]
+    Root -->|"Pick 2"| N2["current=[2], used=[F, T, F]"]
+    Root -->|"Pick 3"| N3["current=[3], used=[F, F, T]"]
+    N1 -->|"Pick 2"| N12["current=[1, 2]"]
+    N1 -->|"Pick 3"| N13["current=[1, 3]"]
+    N12 -->|"Pick 3"| L1["[1, 2, 3] -> emit snapshot, backtrack"]
+    N13 -->|"Pick 2"| L2["[1, 3, 2] -> emit snapshot, backtrack"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [1, 2, 3]`)
+
+- Root level (`current = []`):
+  - Pick `nums[0] = 1`: `current = [1]`.
+    - Pick `nums[1] = 2`: `current = [1, 2]`.
+      - Pick `nums[2] = 3`: `current = [1, 2, 3]` -> leaf reached, emit `[1, 2, 3]`.
+    - Pick `nums[2] = 3`: `current = [1, 3]`.
+      - Pick `nums[1] = 2`: `current = [1, 3, 2]` -> leaf reached, emit `[1, 3, 2]`.
+  - Pick `nums[1] = 2`: `current = [2]`.
+    - Generates `[2, 1, 3]` and `[2, 3, 1]`.
+  - Pick `nums[2] = 3`: `current = [3]`.
+    - Generates `[3, 1, 2]` and `[3, 2, 1]`.
+
+Total generated: 6 permutations ($3!$).
+
+### C. Bitmask / Boolean Array vs Linear `list.contains()`
+
+- In introductory implementations, using `current.contains(nums[i])` searches the prefix linearly in $O(N)$ time, elevating total runtime from $O(N! \times N)$ to $O(N! \times N^2)$.
+- Using a boolean array `used[i]` or single integer bitmask `(mask & (1 << i))` provides $O(1)$ membership validation.
+
+### D. Pitfalls from comments
+
+- **Reference Sharing Bug:** Appending the mutable buffer `current` directly without cloning causes all entries in `results` to reflect the post-backtracking empty state `[]`.
+- **Handling Duplicates (LeetCode 47):** If input elements are not strictly unique, the array must be pre-sorted and consecutive duplicates skipped via `if (i > 0 && nums[i] == nums[i-1] && !used[i-1]) continue;`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (26): Agoda, Amazon, American Express, Apple, Arista Networks, Bloomberg, Booking.com, Cisco, Citadel, Epic Systems, Goldman Sachs, Google, Infosys, LinkedIn, Meta, Microsoft, Microstrategy, Oracle, Qualcomm, Salesforce, Samsung, tcs, TikTok, Uber, Workday, Zomato.
+- Recent: 30 days — Amazon, Bloomberg.
+- Recent: 3 months — Amazon, Bloomberg, Google, Microsoft.

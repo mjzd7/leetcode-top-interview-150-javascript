@@ -354,3 +354,102 @@ async function* pagedInorder(rootId, loadPage) {
   while (it.hasNext()) yield it.next(); // pages fault on thread crossings
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Yihong Chen —
+`https://leetcode.com/problems/binary-search-tree-iterator/solutions/52525/my-solutions-in-3-languages-with-stack-b-ktax/`
+— 179.9K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Lazy Inorder Spine Stack)
+
+Instead of flattening the entire tree in advance (which wastes $O(N)$ memory), simulate an in-order traversal lazily using an explicit stack bounded by the tree's height $O(H)$:
+
+1. **Left Spine Invariant:** The top of the stack always points to the next smallest unprocessed node.
+2. **Constructor:** Push the root and all its left descendants onto the stack (`pushAll(root)`).
+3. **`hasNext()`:** Returns `true` if the stack contains any nodes (`!stack.isEmpty()`).
+4. **`next()`:**
+   - Pop the smallest element `node = stack.pop()`.
+   - If `node` has a right child, push the right child and all of its left descendants onto the stack (`pushAll(node.right)`).
+   - Return `node.val`.
+
+```text
+CLASS BSTIterator:
+    stack = []
+
+    CONSTRUCTOR(root):
+        pushAll(root)
+
+    FUNCTION hasNext():
+        RETURN length(stack) > 0
+
+    FUNCTION next():
+        node = stack.pop()
+        pushAll(node.right)
+        RETURN node.val
+
+    FUNCTION pushAll(node):
+        WHILE node != null:
+            stack.push(node)
+            node = node.left
+```
+
+- Time: O(1) amortized across all calls. Over the entire iteration of $N$ nodes, every node is pushed onto the stack exactly once and popped exactly once ($2N$ operations for $N$ calls).
+- Space: O(H) auxiliary memory ($O(\log N)$ balanced, $O(N)$ skewed), matching the maximum stack depth.
+
+```mermaid
+flowchart TD
+    subgraph Stack State Progression
+        Init["Init: pushAll(7) -> Stack: [7, 3] (top: 3)"]
+        N1["next() -> pop 3, pushAll(null) -> Return 3, Stack: [7]"]
+        N2["next() -> pop 7, pushAll(15) -> Stack: [15, 9] (top: 9), Return 7"]
+        N3["next() -> pop 9, pushAll(null) -> Return 9, Stack: [15]"]
+        N4["next() -> pop 15, pushAll(20) -> Stack: [20], Return 15"]
+        N5["next() -> pop 20, pushAll(null) -> Return 20, Stack: []"]
+    end
+    Init --> N1 --> N2 --> N3 --> N4 --> N5
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [7, 3, 15, null, null, 9, 20]`)
+
+- Constructor: `pushAll(7)` pushes 7 then 3. `stack = [7, 3]`.
+- `next()`:
+  - Pop 3. `3.right == null`. Stack: `[7]`. Returns **3**.
+- `next()`:
+  - Pop 7. `7.right == 15` -> `pushAll(15)` pushes 15 then 9. Stack: `[15, 9]`. Returns **7**.
+- `hasNext()`: Stack non-empty -> returns `true`.
+- `next()`:
+  - Pop 9. `9.right == null`. Stack: `[15]`. Returns **9**.
+- `hasNext()`: Stack non-empty -> returns `true`.
+- `next()`:
+  - Pop 15. `15.right == 20` -> `pushAll(20)` pushes 20. Stack: `[20]`. Returns **15**.
+- `hasNext()`: Stack non-empty -> returns `true`.
+- `next()`:
+  - Pop 20. `20.right == null`. Stack: `[]`. Returns **20**.
+- `hasNext()`: Stack empty -> returns `false`.
+
+Result: Emits `[3, 7, 9, 15, 20]`.
+
+### C. Why Amortized $O(1)$ Satisfies Strict Interview Constraints
+
+- Flattening the tree into an array in the constructor requires $O(N)$ initialization time and $O(N)$ memory, failing the prompt's $O(H)$ memory requirement.
+- The lazy spine stack consumes only up to $H$ frames at any moment, fulfilling $O(H)$ space with $O(1)$ amortized next() execution.
+
+### D. Pitfalls from comments
+
+- **Full traversal upfront:** A common temptation is to dump all nodes into a pre-computed list. This is disqualified in interviews because it violates the memory constraint.
+- **Pushing right child directly without left spine:** When popping `node`, pushing only `node.right` misses the fact that `node.right` might have its own left subtree smaller than `node.right`. Must always call `pushAll(node.right)`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (25): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — None.
+- Recent: 3 months — Meta.

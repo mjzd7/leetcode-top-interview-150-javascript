@@ -339,3 +339,118 @@ function insertPoint(state, p) {
   state.globalMax = refreshMax(state);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by ShivekGupta0003 —
+`https://leetcode.com/problems/max-points-on-a-line/solutions/8521163/cpython-optimal-on2-gcd-slope-hashing-ex-oz35/`
+— Optimal O(N²) GCD Slope Hashing.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Exact GCD Slope Hashing with Canonical Sign Reduction)
+
+Group pairwise directions by canonical reduced fractions to avoid floating-point imprecision and determine maximum collinearity:
+
+1. **Base Case:**
+   - If the total number of points $N \le 2$, return $N$ directly (any pair of points forms a line).
+2. **Anchor Sweeping:**
+   - Fix point $i$ as an anchor. All points collinear through $i$ share the identical slope vector from $i$.
+   - Maintain a hash table `slopes` mapping reduced slope keys to point counts.
+   - For every subsequent point $j > i$:
+     - Compute coordinate deltas: $\Delta x = x_j - x_i$, $\Delta y = y_j - y_i$.
+     - Find greatest common divisor: $g = \gcd(|\Delta x|, |\Delta y|)$.
+     - Reduce vector to coprime components: $dx = \Delta x / g, dy = \Delta y / g$.
+     - **Sign Normalization:** If $dx < 0$, or if $dx == 0 \land dy < 0$, negate both: $dx = -dx, dy = -dy$. This canonicalizes opposing directional vectors (e.g. $(1, -2)$ and $(-1, 2)$) onto the same unique line.
+     - Increment `slopes[dx + "/" + dy]`.
+     - Track `localMax = max(localMax, slopes[key])`.
+   - Update global maximum: `ans = max(ans, localMax + 1)` (adding 1 for anchor $i$).
+3. **Execution:** Return `ans`.
+
+```text
+FUNCTION gcd(a, b):
+    WHILE b != 0:
+        temp = b
+        b = a % b
+        a = temp
+    RETURN a
+
+FUNCTION maxPoints(points):
+    n = length(points)
+    IF n <= 2:
+        RETURN n
+
+    maxCount = 2
+
+    FOR i FROM 0 TO n - 1:
+        slopes = EMPTY_MAP
+        localMax = 0
+
+        FOR j FROM i + 1 TO n - 1:
+            dx = points[j][0] - points[i][0]
+            dy = points[j][1] - points[i][1]
+
+            g = gcd(ABS(dx), ABS(dy))
+            dx = INT_DIV(dx, g)
+            dy = INT_DIV(dy, g)
+
+            IF dx < 0 OR (dx == 0 AND dy < 0):
+                dx = -dx
+                dy = -dy
+
+            key = dx + "/" + dy
+            slopes[key] = GET(slopes, key, 0) + 1
+            localMax = MAX(localMax, slopes[key])
+
+        maxCount = MAX(maxCount, localMax + 1)
+
+    RETURN maxCount
+```
+
+- Time: O(N^2 * log(min(X, Y))) — checking all pairs $(i, j)$ with Euclidean GCD reduction.
+- Space: O(N) auxiliary space per anchor for slope map storage.
+
+```mermaid
+flowchart TD
+    Anchor["Fix anchor point i"] --> LoopJ["Iterate j from i + 1 to n - 1"]
+    LoopJ --> Deltas["dx = x_j - x_i<br>dy = y_j - y_i"]
+    Deltas --> GCD["g = gcd(|dx|, |dy|)<br>dx /= g, dy /= g"]
+    GCD --> Canonical["Normalize sign: if dx < 0 or (dx==0 && dy<0): flip signs"]
+    Canonical --> Bucket["Increment slopes[dx/dy]"]
+    Bucket --> LoopJ
+    LoopJ --> Max["ans = max(ans, localMax + 1)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`points = [[1,1],[2,2],[3,3]]`)
+
+- $N = 3$. `maxCount = 2`.
+- Anchor $i = 0 ([1, 1])$:
+  - $j = 1 ([2, 2])$: $dx = 1, dy = 1, g = 1 \implies dx = 1, dy = 1$. Key: `"1/1"`, count = 1.
+  - $j = 2 ([3, 3])$: $dx = 2, dy = 2, g = 2 \implies dx = 1, dy = 1$. Key: `"1/1"`, count = 2.
+  - `localMax = 2`.
+  - `maxCount = max(2, 2 + 1) = 3`.
+- Anchors $i = 1$ and $i = 2$ cannot exceed 3.
+
+Final result: `3`.
+
+### C. Why GCD Fraction Reduction Beats Floating-Point Slope Hashing
+
+- Storing float slopes `dy / dx` suffers from IEEE 754 precision loss and round-off discrepancy (e.g. `1 / 3` vs `2 / 6` rounding differently in trailing bits, or `-0.0` vs `+0.0`).
+- Exact coprime fractions $(dx, dy)$ normalized by GCD guarantee zero precision loss, zero division-by-zero crashes, and exact hash lookups.
+
+### D. Pitfalls from comments
+
+- **Sign Discrepancy:** The ray from $(0, 0)$ to $(1, 2)$ has delta $(1, 2)$, while the ray from $(0, 0)$ to $(-1, -2)$ has delta $(-1, -2)$. Both lie on the exact same geometric line; without canonical sign inversion, they hash into separate buckets.
+- **Vertical Lines:** Division by zero occurs if slope is computed as `dy / dx` on vertical lines. Coprime representation encodes vertical lines naturally as $(0, 1)$.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (16): Amazon, Apple, Bloomberg, Cisco, Citadel, Google, LinkedIn, Meesho, Meta, Microsoft, Nvidia, Sprinklr, Waymo, X, Zoho, Zoox.
+- Recent: 30 days — None.
+- Recent: 3 months — Bloomberg.

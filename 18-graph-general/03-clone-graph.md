@@ -332,3 +332,103 @@ function cloneVersioned(node, versionOf) {
   return copy;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Abhay Rautela —
+`https://leetcode.com/problems/clone-graph/solutions/1792834/c-easy-explanation-dfs-by-abhay_rautela-4txw/`
+— 146K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (DFS / BFS Deep Copy with Identity Hash Map)
+
+Perform a complete deep clone of a connected undirected graph using an identity registry to handle cycles:
+
+1. **Cloning Contract:**
+   - Every node in the returned graph must be a newly allocated object with the same scalar payload (`val`) and identical neighbor topology.
+   - No pointers or references to original nodes may survive within the cloned graph.
+2. **Cycle Prevention via Early Registration:**
+   - Maintain a dictionary / hash map `clones` that maps each original node identity to its cloned instance.
+   - Base case: If `node == null`, return `null`.
+   - Cycle detection: If `node` already exists in `clones`, immediately return `clones[node]`.
+   - Allocation: Create `clone = new Node(node.val)`.
+   - **Crucial Invariant:** Insert `clones[node] = clone` immediately into the registry *before* recursing or iterating through neighbors.
+   - Edge Replication: For each neighbor `nbr` in `node.neighbors`, recursively resolve or enqueue `nbr` and append the result to `clone.neighbors`.
+
+```text
+FUNCTION cloneGraph(node):
+    IF node IS NULL:
+        RETURN NULL
+
+    clones = MAP()  // original Node -> cloned Node
+
+    FUNCTION dfs(cur):
+        IF cur IN clones:
+            RETURN clones[cur]
+
+        copy = NEW Node(cur.val)
+        clones[cur] = copy  // register BEFORE exploring neighbors to break cycles
+
+        FOR EACH neighbor IN cur.neighbors:
+            copy.neighbors.APPEND(dfs(neighbor))
+
+        RETURN copy
+
+    RETURN dfs(node)
+```
+
+- Time: O(V + E) — every node is cloned once, and each edge is traversed once per endpoint.
+- Space: O(V) auxiliary space — to store the mapping of all $V$ nodes and support the recursion stack or BFS queue.
+
+```mermaid
+flowchart TD
+    Start["Call cloneGraph(node)"] --> NullCheck{"node is NULL?"}
+    NullCheck -->|"Yes"| RetNull["RETURN NULL"]
+    NullCheck -->|"No"| DFS["dfs(cur)"]
+    DFS --> InClones{"cur in clones map?"}
+    InClones -->|"Yes (Cycle detected)"| RetExisting["RETURN clones[cur]"]
+    InClones -->|"No"| Alloc["copy = new Node(cur.val)<br>clones[cur] = copy"]
+    Alloc --> LoopNbrs["For each neighbor in cur.neighbors"]
+    LoopNbrs --> Recurse["copy.neighbors.append(dfs(neighbor))"]
+    Recurse --> LoopNbrs
+    LoopNbrs --> DoneNbrs["RETURN copy"]
+```
+
+### B. Dry run on LeetCode Example 1 (`adjList = [[2,4],[1,3],[2,4],[1,3]]`)
+
+- Node 1 traversed: `copy1` created. `clones[1] = copy1`.
+  - Inspect neighbor 2: Not in map. `copy2` created. `clones[2] = copy2`.
+    - Neighbor 1 of Node 2: Already in map $\implies$ returns `copy1`.
+    - Neighbor 3 of Node 2: Not in map. `copy3` created. `clones[3] = copy3`.
+      - Neighbor 2 of Node 3: Already in map $\implies$ returns `copy2`.
+      - Neighbor 4 of Node 3: Not in map. `copy4` created. `clones[4] = copy4`.
+        - Neighbor 1 of Node 4: Already in map $\implies$ returns `copy1`.
+        - Neighbor 3 of Node 4: Already in map $\implies$ returns `copy3`.
+        - `copy4.neighbors = [copy1, copy3]`.
+      - `copy3.neighbors = [copy2, copy4]`.
+    - `copy2.neighbors = [copy1, copy3]`.
+  - Inspect neighbor 4: Already in map $\implies$ returns `copy4`.
+  - `copy1.neighbors = [copy2, copy4]`.
+- Return `copy1`. Complete mirror graph created.
+
+### C. Why Registering Before Neighbor Iteration is Mandatory
+
+- If the clone is inserted into the lookup table *after* neighbor traversal, the recursive traversal encountering a cycle back to the starting node fails the cache check, allocates a second replica of the starting node, and loops infinitely until stack overflow.
+
+### D. Pitfalls from comments
+
+- **Value-Keyed Collisions:** If vertices in general graphs share duplicate numerical labels, keying the map by `node.val` collapses distinct vertices into a single instance. Keys must track unique object memory identities.
+- **Null Input Handling:** Passing an empty graph (`null`) must return `null` immediately rather than attempting to access `.val` or `.neighbors`.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (18): Amazon, Apple, Bloomberg, ByteDance, CrowdStrike, eBay, Flexport, Google, Meta, Microsoft, MongoDB, Nutanix, Nvidia, Oracle, Pocket Gems, Siemens, Uber, Wix.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Google.

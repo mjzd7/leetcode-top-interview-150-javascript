@@ -317,3 +317,121 @@ async function searchPaged(rootId, pattern, loadNode) {
   return frontierSearch(rootId, pattern, loadNode); // Level 3 over page faults
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Himanshu Malik —
+`https://leetcode.com/problems/design-add-and-search-words-data-structure/solutions/1725327/javacpython-a-very-well-detailed-explana-rcnm/`
+— 58K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Trie with Backtracking DFS on Wildcard `.` Branches)
+
+Augment a standard Prefix Tree with recursive depth-first backtracking to resolve wildcard characters:
+
+1. **Trie Structure:**
+   - Each node contains a collection of child pointers (size 26 or dictionary) and an `isEndOfWord` boolean.
+   - `addWord(word)` traverses downward, creating character nodes as needed, and flags the terminal node.
+2. **Wildcard Branching Search:**
+   - Define recursive helper `match(index, node)`:
+     - **Base Case:** If `index == LENGTH(word)`, return `node.isEndOfWord`.
+     - **Case 1 (Deterministic char $ch \ne \text{'.'}$):**
+       - If $ch$ is not present in `node.children`, return `false`.
+       - Recurse: `RETURN match(index + 1, node.children[ch])`.
+     - **Case 2 (Wildcard char $ch == \text{'.'}$):**
+       - The dot matches any valid child transition.
+       - Iterate through all available children in `node.children`.
+       - If `match(index + 1, childNode)` returns `true` for any child, immediately return `true` (short-circuit).
+       - If no child branch matches the remaining suffix, return `false`.
+
+```text
+CLASS WordDictionary:
+    root = NEW TrieNode()
+
+    FUNCTION addWord(word):
+        cur = root
+        FOR EACH ch IN word:
+            IF ch NOT IN cur.children:
+                cur.children[ch] = NEW TrieNode()
+            cur = cur.children[ch]
+        cur.isEndOfWord = TRUE
+
+    FUNCTION search(word):
+        RETURN dfs(0, root, word)
+
+    FUNCTION dfs(index, node, word):
+        IF index == LENGTH(word):
+            RETURN node.isEndOfWord
+
+        ch = word[index]
+
+        IF ch == '.':
+            FOR EACH childNode IN node.children.VALUES():
+                IF dfs(index + 1, childNode, word) == TRUE:
+                    RETURN TRUE
+            RETURN FALSE
+        ELSE:
+            IF ch NOT IN node.children:
+                RETURN FALSE
+            RETURN dfs(index + 1, node.children[ch], word)
+```
+
+- Time:
+  - `addWord`: O(L) where $L$ is word length.
+  - `search`: O(L) for exact words without dots; worst-case O(26^D * L) where $D$ is the count of wildcard dots, bounded by total node count in the Trie.
+- Space: O(N * L) total across all words stored in the Trie.
+
+```mermaid
+flowchart TD
+    Search["search(word) -> dfs(index, node)"] --> BaseCheck{"index == len(word)?"}
+    BaseCheck -->|"Yes"| RetEnd["RETURN node.isEndOfWord"]
+    BaseCheck -->|"No"| CharCheck{"word[index] == '.'?"}
+    CharCheck -->|"Yes (Wildcard)"| BranchLoop["For each child in node.children:<br>res = dfs(index + 1, child)"]
+    BranchLoop --> Found{"res == true?"}
+    Found -->|"Yes"| RetTrue["RETURN true"]
+    Found -->|"No"| BranchLoop
+    BranchLoop -->|"All exhausted"| RetFalse1["RETURN false"]
+    CharCheck -->|"No (Literal)"| EdgeCheck{"word[index] in node.children?"}
+    EdgeCheck -->|"Yes"| Recurse["RETURN dfs(index + 1, node.children[char])"]
+    EdgeCheck -->|"No"| RetFalse2["RETURN false"]
+```
+
+### B. Dry run on LeetCode Example
+
+- Insert `"bad"`, `"dad"`, `"mad"`.
+- `search("pad")`:
+  - Root lacks `'p'` edge $\implies$ returns `false`.
+- `search("bad")`:
+  - Deterministic walk: root $\to$ `'b'` $\to$ `'a'` $\to$ `'d'`. Node `'d'` has `isEndOfWord = true` $\implies$ returns `true`.
+- `search(".ad")`:
+  - Root character is `'.'`. Iterates available children: `'b'`, `'d'`, `'m'`.
+  - Tries child `'b'`:
+    - Index 1 matches `'a'`.
+    - Index 2 matches `'d'`.
+    - End of string reached; `'d'` has `isEndOfWord = true`.
+    - Returns `true` immediately without needing to search `'d'` or `'m'` branches.
+- `search("b..")`:
+  - Matches `'b'`, first dot matches `'a'`, second dot matches `'d'` $\implies$ returns `true`.
+
+### C. Why Trie + DFS Outperforms Regex on Word Lists
+
+- Scanning an array of words with dynamic regex requires $O(N \cdot L)$ time per query, evaluating every word independently regardless of common prefixes.
+- A Trie aggregates shared prefixes, terminating search branches as soon as a non-matching character is reached.
+
+### D. Pitfalls from comments
+
+- **Premature Returns on Incomplete Words:** Forgetting to check `node.isEndOfWord` at the base case causes prefix matches (e.g. searching `"ba"` when only `"bad"` exists) to falsely return `true`.
+- **False Negative in Wildcard Loop:** In the `.` loop, returning the result of the first child branch instead of continuing if it returns `false` breaks correct backtracking.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Apple, Atlassian, Bloomberg, Datadog, DoorDash, Google, Meta, Microsoft, Oracle, Snap, Snowflake, TikTok.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon.

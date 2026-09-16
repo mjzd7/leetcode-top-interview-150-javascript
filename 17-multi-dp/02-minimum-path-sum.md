@@ -267,3 +267,103 @@ async function minPathStreamed(rowStream) {
   return prev[prev.length - 1];
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Jianchao Li —
+`https://leetcode.com/problems/minimum-path-sum/solutions/23457/c-dp-by-jianchao-li-miqe/`
+— 110.8K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (1D Rolling Vector Dynamic Programming)
+
+Compress the 2D grid dynamic programming state into a single rolling 1D accumulator:
+
+1. **State Transition Invariant:**
+   - Since moves are restricted to right and down, entering cell $(i, j)$ requires choosing the minimum cumulative sum between its top neighbor $(i - 1, j)$ and left neighbor $(i, j - 1)$:
+     $$dp[i][j] = \min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j]$$
+2. **Space Reduction to a Single Array:**
+   - Notice that computing $dp[i][j]$ references only the left neighbor in the current row (`dp[j - 1]`) and the vertical predecessor from the previous row (`dp[j]` before being overwritten).
+   - A single 1D array `dp` of size $N$ is sufficient.
+3. **Execution Steps:**
+   - Seed row 0: `dp[0] = grid[0][0]`; for $j$ from 1 to $N - 1$, `dp[j] = dp[j - 1] + grid[0][j]`.
+   - For each subsequent row $i$ from 1 to $M - 1$:
+     - `dp[0] = dp[0] + grid[i][0]` (leftmost column can only arrive from above).
+     - For $j$ from 1 to $N - 1$:
+       `dp[j] = MIN(dp[j], dp[j - 1]) + grid[i][j]`.
+   - Return `dp[N - 1]`.
+
+```text
+FUNCTION minPathSum(grid):
+    m = NUM_ROWS(grid)
+    n = NUM_COLS(grid)
+    dp = ARRAY OF SIZE n
+
+    dp[0] = grid[0][0]
+    FOR j FROM 1 TO n - 1:
+        dp[j] = dp[j - 1] + grid[0][j]
+
+    FOR i FROM 1 TO m - 1:
+        dp[0] = dp[0] + grid[i][0]
+        FOR j FROM 1 TO n - 1:
+            dp[j] = MIN(dp[j], dp[j - 1]) + grid[i][j]
+
+    RETURN dp[n - 1]
+```
+
+- Time: O(M * N) — exactly one visit per grid cell.
+- Space: O(N) auxiliary space (or O(min(M, N)) if orienting along the shorter dimension).
+
+```mermaid
+flowchart TD
+    Init["Initialize dp[0..n-1] with row 0 cumulative prefix sums"] --> Outer["For row i from 1 to m - 1"]
+    Outer --> FirstCol["dp[0] += grid[i][0]"]
+    FirstCol --> Inner["For col j from 1 to n - 1"]
+    Inner --> Update["dp[j] = min(dp[j] (top), dp[j-1] (left)) + grid[i][j]"]
+    Update --> Inner
+    Inner --> Outer
+    Outer --> Ret["RETURN dp[n - 1]"]
+```
+
+### B. Dry run on LeetCode Example 1 (`grid = [[1,3,1],[1,5,1],[4,2,1]]`)
+
+- $M = 3, N = 3$.
+- Seed row 0:
+  - `dp[0] = 1`, `dp[1] = 1 + 3 = 4`, `dp[2] = 4 + 1 = 5`.
+  - State: `[1, 4, 5]`.
+- Row $i = 1$ (`[1, 5, 1]`):
+  - $j = 0$: `dp[0] = 1 + 1 = 2`.
+  - $j = 1$: `dp[1] = min(4, 2) + 5 = 7`.
+  - $j = 2$: `dp[2] = min(5, 7) + 1 = 6`.
+  - State: `[2, 7, 6]`.
+- Row $i = 2$ (`[4, 2, 1]`):
+  - $j = 0$: `dp[0] = 2 + 4 = 6`.
+  - $j = 1$: `dp[1] = min(7, 6) + 2 = 8`.
+  - $j = 2$: `dp[2] = min(6, 8) + 1 = 7`.
+  - State: `[6, 8, 7]`.
+- Return `dp[2] = 7`.
+
+Final result: `7` (path $1 \to 3 \to 1 \to 1 \to 1$).
+
+### C. Why Rolling 1D Memory Outperforms Full 2D Tables
+
+- Maintaining a full $M \times N$ array creates heap allocation overhead and increases cache miss rates across pointer boundaries.
+- Compressing the recurrence into a single contiguous array exploits CPU cache locality while matching the asymptotic speed of full matrix tabulation.
+
+### D. Pitfalls from comments
+
+- **Destructive Grid Mutation:** Overwriting `grid` in place achieves $O(1)$ auxiliary space, but creates side-effects in systems where the input grid must remain read-only.
+- **Inner Loop Branch Penalties:** Checking `if (i == 0 || j == 0)` inside the nested loop wastes branch predictor cycles; separating the 0th row and column updates eliminates conditional branch checks.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (15): Amazon, Bloomberg, General Motors, Goldman Sachs, Google, Infosys, Meta, Microsoft, Nvidia, Squarepoint Capital, Texas Instruments, TikTok, Uber, Waymo, Zoho.
+- Recent: 30 days — None.
+- Recent: 3 months — Amazon, Goldman Sachs, Google, Infosys.

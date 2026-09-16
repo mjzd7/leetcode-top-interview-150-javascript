@@ -327,3 +327,105 @@ async function countDistributed(existsRemote, depth) {
   return (1 << depth) - 1 + lo;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by Stefan Pochmann —
+`https://leetcode.com/problems/count-complete-tree-nodes/solutions/61958/concise-java-solutions-o-log-n-2/`
+— 174.7K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Subtree Height Halving via Right-Spine Probe)
+
+In a complete binary tree, the height $h$ can be found in $O(\log N)$ steps by following only the left spine (`node = node.left` until `null`).
+
+Comparing `height(root.right)` against `h - 1` determines which half of the tree is perfectly full:
+
+1. **Calculate Height:** Let `h = height(root)` (where a single root has $h = 0$, null has $h = -1$).
+2. **Subtree Classification:**
+   - **Case 1 (`height(root.right) == h - 1`):**
+     The left subtree is completely full to depth $h - 1$, containing $2^h - 1$ nodes. Together with `root`, they account for $(2^h - 1) + 1 = 2^h = 1 \ll h$ nodes.
+     The irregular frontier must reside in `root.right`. Add $1 \ll h$ to the running total and advance `root = root.right`.
+   - **Case 2 (`height(root.right) == h - 2`):**
+     The right subtree is completely full to depth $h - 2$, containing $2^{h-1} - 1$ nodes. Together with `root`, they account for $1 \ll (h - 1)$ nodes.
+     The irregular frontier must reside in `root.left`. Add $1 \ll (h - 1)$ to the running total and advance `root = root.left`.
+3. Repeat while decrementing $h$ until `root == null`.
+
+```text
+FUNCTION height(node):
+    IF node == null:
+        RETURN -1
+    RETURN 1 + height(node.left)
+
+FUNCTION countNodes(root):
+    nodes = 0
+    h = height(root)
+
+    WHILE root != null:
+        IF height(root.right) == h - 1:
+            // Left subtree is perfect of height h-1; add left + root
+            nodes = nodes + (1 << h)
+            root = root.right
+        ELSE:
+            // Right subtree is perfect of height h-2; add right + root
+            nodes = nodes + (1 << (h - 1))
+            root = root.left
+        h = h - 1
+
+    RETURN nodes
+```
+
+- Time: O(log^2 N). There are $O(\log N)$ loop iterations, and each iteration computes `height` in $O(\log N)$ time.
+- Space: O(1) auxiliary space in the iterative formulation.
+
+```mermaid
+flowchart TD
+    Root["Root: height = 2"]
+    Root -->|"height(root.right) == 1 == 2-1"| Case1["Left subtree is full (2^2 = 4 nodes)"]
+    Case1 --> Step2["nodes += 4, move root = root.right"]
+    Step2 --> Next["Recurse on smaller complete subtree"]
+```
+
+### B. Dry run on LeetCode Example 1 (`root = [1,2,3,4,5,6]`)
+
+- Initial tree height: `h = height(1) = 2`. `nodes = 0`.
+- **Iteration 1 (`h = 2`):**
+  - Check `height(1.right = 3)`: left spine of 3 goes to 6, height = 1.
+  - `height(3) == 2 - 1 = 1` holds!
+  - Left subtree (nodes 2, 4, 5) plus root (1) are fully accounted for: `nodes += 1 << 2 = 4`.
+  - Advance: `root = 3`, `h = 1`.
+- **Iteration 2 (`h = 1`):**
+  - At node 3: `3.right` is null -> `height(null) = -1`.
+  - `height(null) != 1 - 1 = 0`.
+  - Right subtree is full of height 0 - 1 = -1 (0 nodes). Node 3 itself contributes $1 \ll 0 = 1$.
+  - `nodes += 1 << 0 = 1` (`nodes = 4 + 1 = 5`).
+  - Advance: `root = 3.left = 6`, `h = 0`.
+- **Iteration 3 (`h = 0`):**
+  - At node 6: `height(6.right = null) = -1 == 0 - 1`.
+  - `nodes += 1 << 0 = 1` (`nodes = 5 + 1 = 6`).
+  - Advance: `root = 6.right = null`. Loop terminates.
+
+Final count: `6`.
+
+### C. Why Right-Spine Height Testing Beats Pure Binary Search
+
+- Standard binary search requires testing if the $k$-th leaf exists via bit manipulation from the root down to depth $h$ on each probe.
+- Checking `height(root.right)` determines the exact pivot between full and irregular subtrees in one probe down the left spine of the right child, discarding half the tree instantly.
+
+### D. Pitfalls from comments
+
+- **Brute force $O(N)$ DFS:** A simple recursive `1 + count(left) + count(right)` visits all $N$ nodes. While it passes tests, it fails the $O(\log^2 N)$ interview requirement.
+- **Bitwise precedence:** In JavaScript and C++, `1 << h - 1` evaluates subtraction first as `1 << (h - 1)`. In Python, `1 << h - 1` also subtracts first. Always parenthesize `(1 << (h - 1))` and `(1 << h) - 1` explicitly to prevent catastrophic miscalculations.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (13): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Spotify, etc.
+- Recent: 30 days — None.
+- Recent: 3 months — None.

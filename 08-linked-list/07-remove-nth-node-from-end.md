@@ -306,3 +306,95 @@ async function removeNthStream(nodeStream, n) {
   return victim?.val ?? null;
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by SGallivan —
+`https://leetcode.com/problems/remove-nth-node-from-end-of-list/solutions/1164542/js-python-java-c-easy-two-pointer-soluti-souf/`
+— 207.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Staggered Fast/Slow Window)
+
+Instead of counting the list length in a first pass and then making a second pass to find the deletion spot, the optimal Discuss solution staggers two pointers by a gap of $n$ nodes:
+
+1. Attach a sentinel `dummy` node before `head` (`dummy.next = head`).
+2. Advance `fast` by $n$ steps from `head`.
+3. Set `slow = dummy`.
+4. Advance both `fast` and `slow` by 1 node in lockstep until `fast.next == null`.
+5. At this moment, `slow` rests precisely at the node *immediately preceding* the target.
+6. Rewire `slow.next = slow.next.next` to bypass the target node.
+7. Return `dummy.next`.
+
+```text
+FUNCTION removeNthFromEnd(head, n):
+    dummy = new ListNode(0)
+    dummy.next = head
+    fast = head
+    slow = dummy
+
+    // Advance fast by n steps
+    FOR i FROM 0 TO n - 1:
+        fast = fast.next
+
+    // Slide window until fast reaches list tail
+    WHILE fast != null AND fast.next != null:
+        fast = fast.next
+        slow = slow.next
+
+    // Bypass target node
+    slow.next = slow.next.next
+
+    RETURN dummy.next
+```
+
+- Time: O(N) single-pass traversal.
+- Space: O(1) auxiliary memory using two pointers.
+
+```mermaid
+flowchart TD
+    Init["dummy.next = head<br>fast = head, slow = dummy"] --> AdvFast["Advance fast by n steps"]
+    AdvFast --> Slide{"fast.next != null?"}
+    Slide -->|"Yes"| Step["fast = fast.next<br>slow = slow.next"]
+    Step --> Slide
+    Slide -->|"No (fast at tail)"| Bypass["slow.next = slow.next.next"]
+    Bypass --> Ret["Return dummy.next"]
+```
+
+### B. Dry run on LeetCode Example 1 (`head = [1,2,3,4,5], n = 2`)
+
+Nodes: `dummy -> 1 -> 2 -> 3 -> 4 -> 5`
+
+| Step | `fast` Node (val) | `slow` Node (val) | Comment |
+| :--- | :--- | :--- | :--- |
+| Stagger $n=2$ | 2 | dummy | `fast` moved 2 steps ahead |
+| Iteration 1 | 3 | 1 | Both advance 1 step |
+| Iteration 2 | 4 | 2 | Both advance 1 step |
+| Iteration 3 | 5 | 3 | `fast.next == null` (stop) |
+| Bypass | 5 | 3 | `3.next = 3.next.next` (links 3 to 5, removes 4) |
+
+Result: `[1, 2, 3, 5]`.
+
+### C. Why Staggered Two-Pointer with Sentinel Beats Two-Pass Traversal
+
+- **Single Pass:** Deletes the element in a single traversal over the list without computing total length first.
+- **Sentinel Elimination of Head Corner Cases:** When $n = N$ (removing the very first node), `dummy` guarantees that `slow` has a valid predecessor, avoiding branching.
+
+### D. Pitfalls from comments
+
+- **Removing the head node ($n = N$):** Without `dummy`, `fast` advances past the end of the list and causes null dereferencing when attempting to find the predecessor of `head`.
+- **Single-node list (`[1], n = 1`):** `slow` stays at `dummy`, bypassing `1` and leaving `dummy.next = null`, correctly producing an empty list.
+- **Termination condition:** Stopping when `fast.next == null` (rather than `fast == null`) aligns `slow` one node *before* the victim.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (17): Amazon, Apple, Bloomberg, Cisco, Google, Meta, Microsoft, Oracle, Uber, etc.
+- Recent: 30 days — Google.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta.

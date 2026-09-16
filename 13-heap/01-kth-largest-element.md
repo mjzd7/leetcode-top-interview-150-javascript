@@ -311,3 +311,81 @@ async function distributedKthLargest(shards, k) {
   return findKthLargest(candidates.flat(), k);
 }
 ```
+
+---
+
+## 7. What LeetCode Discuss Says (Language-Independent)
+
+Source: top-voted post by vanAmsen —
+`https://leetcode.com/problems/kth-largest-element-in-an-array/solutions/3906260/100-3-approaches-video-heap-quickselect-fh5yr/`
+— 246.5K views.
+Language-independent summary. No new JS here.
+
+### A. Optimal way from Discuss (Fixed-Size Min-Heap of Capacity K)
+
+To find the $K$-th largest element without modifying the input array and with bounded memory:
+
+1. **Min-Heap Initialization:** Maintain a min-heap initialized to store at most $K$ elements.
+2. **Streaming Ingestion:** For each number `num` in the array:
+   - Insert `num` into the min-heap.
+   - If the size of the heap exceeds $K$, evict the root (the smallest element).
+3. **Invariant:** The heap consistently retains the $K$ largest elements processed so far. The root element at the top of the heap is the smallest of these $K$ largest numbers, which corresponds strictly to the $K$-th largest element.
+4. Return the top of the min-heap.
+
+```text
+FUNCTION findKthLargest(nums, k):
+    minHeap = new MinHeap()
+
+    FOR EACH num IN nums:
+        minHeap.push(num)
+        IF minHeap.size() > k:
+            minHeap.pop()
+
+    RETURN minHeap.peek()
+```
+
+- Time: O(N log K), where N is array length and K is heap size.
+- Space: O(K) auxiliary storage for the heap.
+
+```mermaid
+flowchart TD
+    Num["Next Number in nums"] --> Push["Push into Min-Heap"]
+    Push --> Check{"Heap size > K?"}
+    Check -->|"Yes"| Pop["Pop Minimum (Root)"]
+    Check -->|"No"| Cont["Continue"]
+    Pop --> Cont
+    Cont -->|"All elements consumed"| Top["Return minHeap.peek() (K-th largest)"]
+```
+
+### B. Dry run on LeetCode Example 1 (`nums = [3,2,1,5,6,4], k = 2`)
+
+- Number 3: heap `[3]`. Size $\le 2$.
+- Number 2: heap `[2, 3]`. Size $\le 2$.
+- Number 1: heap `[1, 3, 2]`. Size 3 > 2 -> pop min (1). Heap: `[2, 3]`.
+- Number 5: heap `[2, 3, 5]`. Size 3 > 2 -> pop min (2). Heap: `[3, 5]`.
+- Number 6: heap `[3, 5, 6]`. Size 3 > 2 -> pop min (3). Heap: `[5, 6]`.
+- Number 4: heap `[4, 6, 5]`. Size 3 > 2 -> pop min (4). Heap: `[5, 6]`.
+- Top of heap is `5`.
+
+Final result: `5`.
+
+### C. Min-Heap vs QuickSelect Trade-offs
+
+- QuickSelect offers $O(N)$ average runtime, but its worst-case is $O(N^2)$ under adversarial pivot selection, and it mutates the input array in-place.
+- A size-$K$ Min-Heap provides guaranteed $O(N \log K)$ worst-case bounds, operates on read-only inputs, and is naturally suited for online data streams where $N$ is unknown or infinite.
+
+### D. Pitfalls from comments
+
+- **Using a Max-Heap instead of Min-Heap:** Pushing all $N$ elements into a max-heap takes $O(N)$ memory and requires $K$ pops ($O(N + K \log N)$ time). A min-heap capped at $K$ elements requires only $O(K)$ space.
+- **QuickSelect Worst-Case Trap on LeetCode:** LeetCode includes adversarial test cases (e.g. large arrays of identical elements or sorted sequences) specifically structured to trigger $O(N^2)$ execution when using standard deterministic Lomuto or Hoare partitioning.
+
+### E. Companies
+
+- Discuss post itself names none.
+  Companies tab on LeetCode is premium-locked.
+- External source:
+  `https://github.com/liquidslr/leetcode-company-wise-problems`
+  (LeetCode company tags, updated June 2025).
+- All-time (41): Accenture, Adobe, Alibaba, Amazon, Apple, Autodesk, Avito, Bloomberg, BNY Mellon, ByteDance, Coupang, DE Shaw, Deloitte, eBay, EPAM Systems, Flipkart, Goldman Sachs, Google, IBM, Infosys, LinkedIn, Meta, Microsoft, Morgan Stanley, Nvidia, Oracle, PayPal, Pocket Gems, Qualcomm, Salesforce, SAP, ServiceNow, Spotify, tcs, Texas Instruments, TikTok, Turing, Uber, Visa, Walmart Labs, Zoho.
+- Recent: 30 days — Meta.
+- Recent: 3 months — Amazon, Bloomberg, Google, Meta, Spotify.
