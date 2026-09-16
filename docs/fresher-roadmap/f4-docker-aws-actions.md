@@ -177,4 +177,4 @@ Main banks:
 ## 10. Quiz + checklist
 Quiz: 1) Image vs container? 2) Cache trick? 3) Volume why? 4) Actions secrets where? 5) After lab?
 Checklist: [ ] ran app+db compose [ ] deployed EC2 + curled [ ] green Actions run [ ] stopped EC2 + alarm
-Next: [F5 — OpenAI + LangChain JS](./f5-openai-langchain-js.md)
+Next: [F5 — OpenAI + LangChain JS](#docs_fresher-roadmap_f5-openai-langchain-js)

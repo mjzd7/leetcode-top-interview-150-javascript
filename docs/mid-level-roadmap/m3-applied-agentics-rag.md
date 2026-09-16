@@ -149,4 +149,4 @@ More: https://www.w4school.in/interview-questions/rag-interview-questions.php?ca
 ## 10. Quiz + checklist
 Quiz: 1) Chunk size? 2) Same model why? 3) Hybrid why? 4) Rerank what? 5) Agentic when NOT?
 Checklist: [ ] chunked 1 PDF [ ] hybrid top-20→4 [ ] eval split logged
-Next: [M4 — AI Security](./m4-ai-security.md)
+Next: [M4 — AI Security](#docs_mid-level-roadmap_m4-ai-security)

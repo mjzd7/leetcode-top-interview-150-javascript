@@ -14,7 +14,7 @@
 <text x="392" y="124" font-size="12">reverse proxy</text>
 <rect x="580" y="60" width="180" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
 <text x="592" y="88" font-size="14" font-weight="bold">Services</text>
-<text x="592" y="108" font-size="12">stateless,容器</text>
+<text x="592" y="108" font-size="12">stateless,</text>
 <text x="592" y="124" font-size="12">microservices</text>
 <rect x="790" y="60" width="170" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
 <text x="802" y="88" font-size="14" font-weight="bold">Data</text>
