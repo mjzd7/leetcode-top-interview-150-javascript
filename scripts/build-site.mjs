@@ -16,6 +16,20 @@ console.log('🏗️  Building Static Web Portal for GitHub Pages...');
 // Collect all foundations and problem markdown files
 const curriculum = [];
 
+// Study-roadmap guides live under docs/ (not root NN-* dirs) and follow their own
+// ELI15 + Top-50 template. They render in the portal with Guide badges.
+const GUIDE_DIRS = [
+  { dir: 'docs/modern-engineer-skills', category: 'MODERN ENGINEER SKILLS', pattern: 'Modern Engineer Skills' },
+  { dir: 'docs/fresher-roadmap', category: 'FRESHER ROADMAP', pattern: 'Fresher Roadmap' },
+  { dir: 'docs/mid-level-roadmap', category: 'MID-LEVEL ROADMAP', pattern: 'Mid-level Roadmap' },
+];
+// Portal-internal files inside the guide dirs (never curriculum items).
+const GUIDE_SKIP_FILES = new Set(['_TEMPLATE-subpage.md', '00-INDEX.md', '00-IA-PLAN.md']);
+
+function stripFrontmatter(rawContent) {
+  return rawContent.replace(/^---\n[\s\S]*?\n---\n/, '');
+}
+
 function scanDirectory(dir, categoryName) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   const items = [];
@@ -26,21 +40,22 @@ function scanDirectory(dir, categoryName) {
         const subCatName = entry.name.replace(/^\d+-/, '').replace(/-/g, ' ').toUpperCase();
         scanDirectory(path.join(dir, entry.name), subCatName);
       }
-    } else if (entry.name.endsWith('.md') && !entry.name.includes('PLAN') && !entry.name.includes('README')) {
+    } else if (entry.name.endsWith('.md') && !entry.name.includes('PLAN') && !entry.name.includes('README') && !GUIDE_SKIP_FILES.has(entry.name)) {
       const filePath = path.join(dir, entry.name);
-      const rawContent = fs.readFileSync(filePath, 'utf-8');
+      const rawContent = stripFrontmatter(fs.readFileSync(filePath, 'utf-8'));
       const titleMatch = rawContent.match(/^#\s+(.+)$/m);
       const title = titleMatch ? titleMatch[1].trim() : entry.name.replace('.md', '');
       
       const difficultyMatch = rawContent.match(/- \*\*Difficulty\*\*:\s*(\w+)/i);
       const isInterviewGuide = dir.includes('24-maang-guides');
-      const difficulty = isInterviewGuide ? 'Guide' : (difficultyMatch ? difficultyMatch[1] : 'Primer');
+      const guideDir = GUIDE_DIRS.find(g => dir.includes(g.dir));
+      const difficulty = (isInterviewGuide || guideDir) ? 'Guide' : (difficultyMatch ? difficultyMatch[1] : 'Primer');
 
       const leetcodeLinkMatch = rawContent.match(/- \*\*LeetCode Link\*\*:\s*`([^`]+)`/i) || rawContent.match(/- \*\*LeetCode Link\*\*:\s*(https?:\/\/[^\s\)]+)/i);
       const leetcodeLink = leetcodeLinkMatch ? leetcodeLinkMatch[1].trim() : null;
 
       const patternMatch = rawContent.match(/- \*\*Pattern Category\*\*:\s*([^\n]+)/i);
-      const pattern = isInterviewGuide ? 'MAANG Guides' : (patternMatch ? patternMatch[1].trim() : null);
+      const pattern = isInterviewGuide ? 'MAANG Guides' : (guideDir ? guideDir.pattern : (patternMatch ? patternMatch[1].trim() : null));
 
       const relPath = path.relative(ROOT_DIR, filePath);
       items.push({
@@ -75,8 +90,15 @@ for (const catDir of categoryDirs) {
   scanDirectory(path.join(ROOT_DIR, catDir.name), prettyName);
 }
 
-// Structured sidebar order: primers first, then MAANG interview guides, then problem tracks
-const orderKey = (name) => name === 'FOUNDATIONS' ? 0 : name === 'MAANG GUIDES' ? 1 : 2;
+// Study-roadmap guides (docs/ parents) join the bundle after the root tracks.
+for (const g of GUIDE_DIRS) {
+  const full = path.join(ROOT_DIR, g.dir);
+  if (fs.existsSync(full)) scanDirectory(full, g.category);
+}
+
+// Structured sidebar order: primers first, then MAANG interview guides,
+// then study roadmaps, then problem tracks.
+const orderKey = (name) => name === 'FOUNDATIONS' ? 0 : name === 'MAANG GUIDES' ? 1 : (name === 'MODERN ENGINEER SKILLS' || name === 'FRESHER ROADMAP' || name === 'MID-LEVEL ROADMAP' ? 2 : 3);
 curriculum.sort((a, b) => orderKey(a.category) - orderKey(b.category));
 
 // Write data bundle
