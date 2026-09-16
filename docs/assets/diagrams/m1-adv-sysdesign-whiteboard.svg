@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#eff6ff" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: LB + Sharding + LLD (JS)</text>
+<rect x="30" y="60" width="200" height="80" rx="35" fill="#1f2937"/>
+<text x="45" y="88" font-size="14" fill="#fff" font-weight="bold">Clients</text>
+<text x="45" y="108" font-size="12" fill="#fde68a">10k RPS spike</text>
+<rect x="260" y="60" width="200" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="272" y="88" font-size="14" font-weight="bold">ALB (L7) / NLB (L4)</text>
+<text x="272" y="108" font-size="12">RR / least-conn / IP-hash</text>
+<text x="272" y="126" font-size="12">health checks, SSL offload</text>
+<rect x="490" y="60" width="220" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="502" y="88" font-size="14" font-weight="bold">Stateless services ×N</text>
+<text x="502" y="108" font-size="12">horizontal scale, no sticky</text>
+<text x="502" y="126" font-size="12">unless session externalized</text>
+<rect x="740" y="60" width="220" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="752" y="88" font-size="14" font-weight="bold">Sharded Postgres</text>
+<text x="752" y="108" font-size="12">tenant_id key, no hotspots</text>
+<text x="752" y="126" font-size="12">replica + cache + queue</text>
+<line x1="230" y1="100" x2="260" y2="100" stroke="#1f2937" stroke-width="3"/>
+<line x1="460" y1="100" x2="490" y2="100" stroke="#1f2937" stroke-width="3"/>
+<line x1="710" y1="100" x2="740" y2="100" stroke="#1f2937" stroke-width="3"/>
+<rect x="30" y="165" width="930" height="115" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="193" font-size="14" font-weight="bold">Shard-key rules (avoid hotspots): high cardinality, even spread, query-local (tenant_id).</text>
+<text x="45" y="215" font-size="12">Range (A-F/G-M…) simple but skews • Directory lookup flexible, extra hop • Hash/consistent even, hard range scans.</text>
+<text x="45" y="237" font-size="12">One-way door! Add shards at runtime, migrate via DMS, cellular blast-radius. Combine: partition + cache per shard.</text>
+<text x="45" y="259" font-size="12">LLD in JS: class OrderService { place(order) } + Strategy for pricing + Observer for events + Mutex for race (see A4).</text>
+<rect x="30" y="300" width="450" height="200" rx="12" fill="#fefce8" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="328" font-size="14" font-weight="bold">LB deep dive (interview Script)</text>
+<text x="45" y="350" font-size="12">ALB L7: host/path/method route, 100 rules</text>
+<text x="45" y="370" font-size="12">NLB L4: millions conn, sub-ms, static IP</text>
+<text x="45" y="390" font-size="12">Health: dedicated path hits DB/cache,</text>
+<text x="45" y="410" font-size="12">not fake 200. Queuing at LB, not target.</text>
+<text x="45" y="430" font-size="12">Sticky only if session not external.</text>
+<text x="45" y="450" font-size="12">Cross-zone, SSL, idle 350s tune.</text>
+<rect x="510" y="300" width="450" height="200" rx="12" fill="#f0fdf4" stroke="#15803d" stroke-width="3"/>
+<text x="525" y="328" font-size="14" font-weight="bold" fill="#14532d">Consistent hash demo (JS)</text>
+<text x="525" y="350" font-size="12" fill="#14532d">hash(key) % N → shard. Add node?</text>
+<text x="525" y="370" font-size="12" fill="#14532d">Only K/N keys move (not all).</text>
+<text x="525" y="390" font-size="12" fill="#14532d">Virtual nodes smooth skew.</text>
+<text x="525" y="410" font-size="12" fill="#14532d">Hotspot? Split shard, re-hash tenant.</text>
+<text x="525" y="430" font-size="12" fill="#14532d">Monitor per-shard RPS + lag.</text>
+<text x="525" y="450" font-size="12" fill="#14532d">Cache hot keys in Redis first.</text>
+</svg>

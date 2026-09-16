@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#eff6ff" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: How Your System Talks (HLD in one picture)</text>
+<rect x="30" y="60" width="140" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="88" font-size="14" font-weight="bold">Clients</text>
+<text x="45" y="108" font-size="12">web / mobile</text>
+<rect x="200" y="60" width="150" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="212" y="88" font-size="14" font-weight="bold">CDN + LB</text>
+<text x="212" y="108" font-size="12">round-robin,</text>
+<text x="212" y="124" font-size="12">least-conn</text>
+<rect x="380" y="60" width="170" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="392" y="88" font-size="14" font-weight="bold">API Gateway</text>
+<text x="392" y="108" font-size="12">auth, rate limit,</text>
+<text x="392" y="124" font-size="12">reverse proxy</text>
+<rect x="580" y="60" width="180" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="592" y="88" font-size="14" font-weight="bold">Services</text>
+<text x="592" y="108" font-size="12">stateless,</text>
+<text x="592" y="124" font-size="12">microservices</text>
+<rect x="790" y="60" width="170" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="802" y="88" font-size="14" font-weight="bold">Data</text>
+<text x="802" y="108" font-size="12">DB + cache</text>
+<text x="802" y="124" font-size="12">+ queue</text>
+<line x1="170" y1="95" x2="200" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="350" y1="95" x2="380" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="550" y1="95" x2="580" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="760" y1="95" x2="790" y2="95" stroke="#1f2937" stroke-width="3"/>
+<rect x="30" y="160" width="930" height="110" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="188" font-size="14" font-weight="bold">Talk lines (architectural communication = narrate these):</text>
+<text x="45" y="210" font-size="12">sync request-response (fast, tight) vs async events via broker/queue (loose, scalable) • cache aside • DB read-replica • retry + failover</text>
+<text x="45" y="232" font-size="12">Say tradeoffs aloud: consistency vs availability (CAP), latency vs cost, redundancy vs complexity.</text>
+<text x="45" y="254" font-size="12" font-weight="bold">New interview: “Here are 5 AI-generated files with a race + leaked secret. Find them live.” → narrate request path, spot shared mutable state.</text>
+<rect x="30" y="290" width="450" height="210" rx="12" fill="#fefce8" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="318" font-size="14" font-weight="bold">7-step HLD answer frame</text>
+<text x="45" y="340" font-size="12">1 Clarify func + non-func</text>
+<text x="45" y="360" font-size="12">2 Capacity (RPS, storage, BW)</text>
+<text x="45" y="380" font-size="12">3 APIs • 4 DB choice + schema</text>
+<text x="45" y="400" font-size="12">5 Block diagram • 6 Deep dive</text>
+<text x="45" y="420" font-size="12">7 Scale, fault, security</text>
+<text x="45" y="442" font-size="12">+ monitoring, DR, cost</text>
+<text x="45" y="464" font-size="12">+ graceful degradation</text>
+<rect x="510" y="290" width="450" height="210" rx="12" fill="#f0fdf4" stroke="#15803d" stroke-width="3"/>
+<text x="525" y="318" font-size="14" font-weight="bold" fill="#14532d">6 AWS pillars as checklist</text>
+<text x="525" y="340" font-size="12" fill="#14532d">Ops excellence • Security • Reliability</text>
+<text x="525" y="360" font-size="12" fill="#14532d">Performance • Cost • Sustainability</text>
+<text x="525" y="382" font-size="12" fill="#14532d">Never trade security/ops away.</text>
+<text x="525" y="404" font-size="12" fill="#14532d">JS LLD tie-in: classes, Observer,</text>
+<text x="525" y="424" font-size="12" fill="#14532d">Singleton (sparingly), Factory,</text>
+<text x="525" y="444" font-size="12" fill="#14532d">Strategy; auth + logging modules.</text>
+<text x="525" y="466" font-size="12" fill="#14532d">Horizontal &gt; vertical for scale.</text>
+</svg>

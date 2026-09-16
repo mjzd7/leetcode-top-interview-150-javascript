@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="520" rx="18" fill="#fffbeb" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Your First Task Agent (JS)</text>
+<rect x="30" y="60" width="220" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="88" font-size="14" font-weight="bold">npm i openai</text>
+<text x="45" y="108" font-size="12">OPENAI_API_KEY in .env</text>
+<text x="45" y="126" font-size="12">never in repo!</text>
+<rect x="280" y="60" width="220" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="292" y="88" font-size="14" font-weight="bold">responses.create</text>
+<text x="292" y="108" font-size="12">model + instructions</text>
+<text x="292" y="126" font-size="12">+ input → output_text</text>
+<rect x="530" y="60" width="200" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="542" y="88" font-size="14" font-weight="bold">+ tools</text>
+<text x="542" y="108" font-size="12">getWeather(), search</text>
+<text x="542" y="126" font-size="12">zod schema</text>
+<rect x="760" y="60" width="200" height="80" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="772" y="88" font-size="14" font-weight="bold" fill="#14532d">Agent loop</text>
+<text x="772" y="108" font-size="12" fill="#14532d">LangChain / SDK</text>
+<text x="772" y="126" font-size="12" fill="#14532d">trace in LangSmith</text>
+<line x1="250" y1="100" x2="280" y2="100" stroke="#1f2937" stroke-width="3"/>
+<line x1="500" y1="100" x2="530" y2="100" stroke="#1f2937" stroke-width="3"/>
+<line x1="730" y1="100" x2="760" y2="100" stroke="#15803d" stroke-width="3"/>
+<rect x="30" y="165" width="930" height="110" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="193" font-size="14" font-weight="bold">Entry task (video Phase 5): automate ONE boring job end-to-end</text>
+<text x="45" y="215" font-size="12">Example: “Summarize today’s support tickets → JSON → Slack”. Steps: fetch tickets (tool) → summarize (model) → validate JSON → post.</text>
+<text x="45" y="237" font-size="12">Cost guard: start gpt-4o-mini, temp 0.2, cache prompts, log tokens per task. Add credits before prod or calls fail.</text>
+<text x="45" y="259" font-size="12">Safety: key in env, no PII in prompts, human reviews first 50 runs.</text>
+<rect x="30" y="295" width="450" height="185" rx="12" fill="#fefce8" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="323" font-size="14" font-weight="bold">OpenAI path (Responses API)</text>
+<text x="45" y="345" font-size="12">1 key → 2 npm i openai → 3 example.mjs</text>
+<text x="45" y="365" font-size="12">4 responses.create → 5 tools → 6 stream</text>
+<text x="45" y="385" font-size="12">7 images/files → 8 agents SDK</text>
+<text x="45" y="405" font-size="12">Assistants API sunset Aug 2026 —</text>
+<text x="45" y="425" font-size="12">use Responses, not old tutorials.</text>
+<text x="45" y="447" font-size="12">Pin model snapshot for prod.</text>
+<rect x="510" y="295" width="450" height="185" rx="12" fill="#e0f2fe" stroke="#1f2937" stroke-width="3"/>
+<text x="525" y="323" font-size="14" font-weight="bold">LangChain.js path (Node 22+)</text>
+<text x="525" y="345" font-size="12">yarn add langchain @langchain/core</text>
+<text x="525" y="365" font-size="12">basic agent: model + weather tool</text>
+<text x="525" y="385" font-size="12">+ memory → real-world agent</text>
+<text x="525" y="405" font-size="12">deep agents: fs + subagents</text>
+<text x="525" y="425" font-size="12">LangSmith traces every call.</text>
+<text x="525" y="447" font-size="12">create_agent built on LangGraph.</text>
+</svg>
