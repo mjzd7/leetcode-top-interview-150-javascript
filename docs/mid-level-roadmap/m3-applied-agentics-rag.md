@@ -25,7 +25,7 @@ sidebar_position: 33
 5. **Generate grounded:** "answer ONLY from context + cite [Doc:] + IDK if missing". Return sources for trace.
 6. **Eval split:** retrieval (hit@k/MRR), grounding (faithfulness/RAG triad), answer (judge rubric + human cal). Log retrievals to rescore.
 7. **Agentic vs classic:** classic one-shot; agentic loops plan/retrieve/revise. Worth it multi-hop; wrong for low-latency/strict/governed/simple.
-8. **Multi-agent + prod:** router → retriever + critic (worth if wrong $$$), tenant namespaces (never prompt-level isolation), HITL, per-task budgets, freshness (realtime $$ vs batch stale).
+8. **Multi-agent + prod:** router → retriever + critic (worth it when a wrong answer costs far more than 2× inference), tenant namespaces (never prompt-level isolation), HITL, per-task budgets, freshness (realtime indexing costs far more vs cheap-but-stale batch).
 
 ## 4. Detailed JS examples
 

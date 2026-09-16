@@ -73,7 +73,7 @@ const prof = Object.assign(new Person("Rao"), canGrade);
 ```mermaid
 flowchart TD
   A[Shared? → Person] --> B[Extra? → extends child]
-  B --> C[Secret? → #private + method]
+  B --> C["Secret? → #private + method"]
   C --> D[Same call diff behavior? → override]
   D --> E[Multi-behavior? → compose, not deep extends]
 ```
