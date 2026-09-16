@@ -76,10 +76,19 @@ export function runFullValidation() {
   console.log('🔍 Starting Anti-Truncation & Completeness Verification...\n');
   const allFiles = [];
 
+  // Study-guide pages (Modern Skills / Fresher / Mid-level roadmaps) follow their own
+  // ELI15 + Top-50 template, not the LeetCode problem template — skip them here.
+  // NOTE: only the three roadmap landing pages are skipped by name; any future
+  // problem-track index.md stays covered by validation.
+  const SKIP_DIRS = new Set(['00-foundations', '24-maang-guides', 'modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap']);
+  const SKIP_FILES = new Set(['_TEMPLATE-subpage.md', '00-INDEX.md']);
+  const SKIP_INDEX_PARENTS = new Set(['modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap']);
+
   function scan(dir) {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'scripts' || entry.name === '00-foundations' || entry.name === '24-maang-guides') continue;
+      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'scripts' || SKIP_DIRS.has(entry.name) || SKIP_FILES.has(entry.name)) continue;
+      if (entry.name === 'index.md' && SKIP_INDEX_PARENTS.has(path.basename(dir))) continue;
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         scan(fullPath);

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#f5f3ff" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Code → Image → EC2 → Actions Loop</text>
+<rect x="30" y="60" width="200" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="88" font-size="14" font-weight="bold">Dockerfile</text>
+<text x="45" y="108" font-size="12">FROM node:20-alpine</text>
+<text x="45" y="126" font-size="12">COPY + npm ci + CMD</text>
+<rect x="260" y="60" width="180" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="272" y="88" font-size="14" font-weight="bold">Image → Hub</text>
+<text x="272" y="108" font-size="12">layers cached</text>
+<text x="272" y="126" font-size="12">multi-stage = small</text>
+<rect x="470" y="60" width="220" height="80" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="482" y="88" font-size="14" font-weight="bold">AWS EC2 (free tier)</text>
+<text x="482" y="108" font-size="12">t2.micro, SG :3000</text>
+<text x="482" y="126" font-size="12">STOP after lab! $ if left</text>
+<rect x="720" y="60" width="240" height="80" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="732" y="88" font-size="14" font-weight="bold" fill="#14532d">GitHub Actions</text>
+<text x="732" y="108" font-size="12" fill="#14532d">push → test → build → SSH deploy</text>
+<text x="732" y="126" font-size="12" fill="#14532d">secrets, never in repo</text>
+<line x1="230" y1="100" x2="260" y2="100" stroke="#1f2937" stroke-width="3"/>
+<line x1="440" y1="100" x2="470" y2="100" stroke="#1f2937" stroke-width="3"/>
+<line x1="690" y1="100" x2="720" y2="100" stroke="#15803d" stroke-width="3"/>
+<rect x="30" y="165" width="930" height="120" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="193" font-size="14" font-weight="bold">Actually try it (video rule — not just watch):</text>
+<text x="45" y="215" font-size="12">1 docker build -t myapp . → 2 docker run -p 3000:3000 myapp → 3 EC2 SG open 3000 → ssh -i key.pem ec2-user@IP → docker pull/run → 4 curl IP:3000/health</text>
+<text x="45" y="237" font-size="12">Compose for app+db: services app + postgres in docker-compose.yml, isolated net, volume for data (containers die, volumes live).</text>
+<text x="45" y="259" font-size="12" fill="#b91c1c" font-weight="bold">Cost guard: free tier ≠ free forever. Stop/terminate EC2, delete EBS, set billing alarm. Mistake charge? Contact AWS support — they often reverse.</text>
+<rect x="30" y="305" width="450" height="195" rx="12" fill="#fefce8" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="333" font-size="14" font-weight="bold">Docker objects you must know</text>
+<text x="45" y="355" font-size="12">daemon (dockerd) does work • client sends</text>
+<text x="45" y="375" font-size="12">image = read-only template • container = run</text>
+<text x="45" y="395" font-size="12">registry = Hub to share • volumes = persist</text>
+<text x="45" y="415" font-size="12">network = bridge/host/overlay</text>
+<text x="45" y="435" font-size="12">COPY first? No — deps first for cache!</text>
+<text x="45" y="455" font-size="12">HEALTHCHECK + .dockerignore + no secrets</text>
+<rect x="510" y="305" width="450" height="195" rx="12" fill="#e0f2fe" stroke="#1f2937" stroke-width="3"/>
+<text x="525" y="333" font-size="14" font-weight="bold">Actions YAML in 30 sec</text>
+<text x="525" y="355" font-size="12">on: push → jobs: test (npm ci/test)</text>
+<text x="525" y="375" font-size="12">→ build (docker build/push)</text>
+<text x="525" y="395" font-size="12">→ deploy (appleboy/ssh-action)</text>
+<text x="525" y="415" font-size="12">Secrets: DOCKERHUB_TOKEN, EC2_KEY</text>
+<text x="525" y="435" font-size="12">in repo Settings, never in yaml.</text>
+<text x="525" y="455" font-size="12">View runs → green check = shipped.</text>
+</svg>

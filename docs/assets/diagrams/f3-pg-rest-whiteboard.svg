@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Comic Sans MS, Segoe UI, sans-serif">
+<rect x="0" y="0" width="1000" height="540" rx="18" fill="#f0fdf4" stroke="#1f2937" stroke-width="3" stroke-dasharray="10 6"/>
+<text x="30" y="40" font-size="24" font-weight="bold" fill="#1f2937">Whiteboard: Browser → REST → Postgres (JS)</text>
+<rect x="30" y="60" width="160" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="88" font-size="14" font-weight="bold">fetch()</text>
+<text x="45" y="108" font-size="12">GET /v1/todos</text>
+<text x="45" y="124" font-size="12">JWT in header</text>
+<rect x="220" y="60" width="170" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="232" y="88" font-size="14" font-weight="bold">Express route</text>
+<text x="232" y="108" font-size="12">auth → validate</text>
+<text x="232" y="124" font-size="12">→ pg query</text>
+<rect x="420" y="60" width="220" height="70" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="432" y="88" font-size="14" font-weight="bold">Postgres (pg)</text>
+<text x="432" y="108" font-size="12">$1 params, never concat!</text>
+<text x="432" y="124" font-size="12">JOIN + index, EXPLAIN</text>
+<rect x="670" y="60" width="290" height="70" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="682" y="88" font-size="14" font-weight="bold" fill="#14532d">JSON + status</text>
+<text x="682" y="108" font-size="12" fill="#14532d">200/201/400/401/403/404/409/422</text>
+<text x="682" y="124" font-size="12" fill="#14532d">one error envelope</text>
+<line x1="190" y1="95" x2="220" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="390" y1="95" x2="420" y2="95" stroke="#1f2937" stroke-width="3"/>
+<line x1="640" y1="95" x2="670" y2="95" stroke="#15803d" stroke-width="3"/>
+<text x="30" y="165" font-size="15" font-weight="bold">REST nouns, not verbs — /todos not /getTodos:</text>
+<rect x="30" y="178" width="930" height="90" rx="12" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<text x="45" y="205" font-size="13">GET /todos (list) • POST /todos (create 201) • GET /todos/:id • PUT replaces all • PATCH updates some • DELETE removes</text>
+<text x="45" y="227" font-size="13">Idempotent: GET/PUT/DELETE safe to retry. POST not — use Idempotency-Key header for payments.</text>
+<text x="45" y="249" font-size="13">AuthN who? (JWT verify) → AuthZ can? (owner/role). Stateless: every request carries its own token.</text>
+<text x="30" y="285" font-size="15" font-weight="bold">Postgres JOINs + injection guard:</text>
+<rect x="30" y="300" width="450" height="200" rx="12" fill="#fee2e2" stroke="#b91c1c" stroke-width="3" stroke-dasharray="8 5"/>
+<text x="45" y="328" font-size="14" font-weight="bold" fill="#7f1d1d">NEVER: string concat</text>
+<text x="45" y="350" font-size="12" fill="#7f1d1d">`SELECT * WHERE id='${id}'`</text>
+<text x="45" y="370" font-size="12" fill="#7f1d1d">id = "1' OR '1'='1" → leaks all!</text>
+<text x="45" y="392" font-size="12" fill="#7f1d1d">Sort param into SQL = scan + leak.</text>
+<text x="45" y="414" font-size="12" fill="#7f1d1d">Fix: allow-list sorts, $1 params.</text>
+<text x="45" y="436" font-size="12" fill="#7f1d1d">INNER vs LEFT: LEFT keeps all left</text>
+<text x="45" y="458" font-size="12" fill="#7f1d1d">rows + nulls on miss.</text>
+<rect x="510" y="300" width="450" height="200" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="525" y="328" font-size="14" font-weight="bold" fill="#14532d">ALWAYS: parameterized</text>
+<text x="525" y="350" font-size="12" fill="#14532d">pool.query("... WHERE id=$1",[id])</text>
+<text x="525" y="370" font-size="12" fill="#14532d">bcrypt hash, never plain password.</text>
+<text x="525" y="392" font-size="12" fill="#14532d">JWT short expiry + verify each req.</text>
+<text x="525" y="414" font-size="12" fill="#14532d">Index FK + WHERE cols; EXPLAIN.</text>
+<text x="525" y="436" font-size="12" fill="#14532d">Cursor pagination for 10M rows,</text>
+<text x="525" y="458" font-size="12" fill="#14532d">not OFFSET (skips + slows).</text>
+</svg>
