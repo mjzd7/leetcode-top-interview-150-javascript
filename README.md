@@ -10,7 +10,7 @@ Crack MAANG JavaScript interviews with **150 problems, each solved 3 ways** — 
 
 ## What's inside
 
-- **4 MAANG interview guides** (`24-maang-guides/`) — roadmap, core CS fundamentals, system design, behavioral & leadership. Research-backed with top-50 question banks; shown under MAANG GUIDES in the portal sidebar and linked from the homepage.
+- **5 MAANG interview guides** (`24-maang-guides/`) — roadmap, core CS fundamentals, system design, behavioral & leadership, candidate strategies. Research-backed with top-50 question banks; shown under MAANG GUIDES in the portal sidebar and linked from the homepage.
 - **150 problem guides** (`01-array-string/` … `23-kadanes-algorithm/`) — each one a self-contained study session: intuition, flowcharts, pseudocode, step-by-step dry-run tables, commented JS, Big-O, and interviewer-ready explanations.
 - **4 foundation primers** (`00-foundations/`) — JS runtime quirks, zero-dependency data-structure polyfills, core algorithmic patterns, explaining complexity to interviewers. Read these first.
 - **Executable test suite** (`scripts/test-runner.mjs`) — 828 assertions across all guides; solutions are code that runs, not text that rots.
@@ -66,7 +66,7 @@ Every guide follows the same 6-section schema (enforced by `validate-guide.mjs` 
 | `21-divide-conquer` | BST from array, sort list, quad tree, k-lists | 4 |
 | `22-bit-manipulation` | Add/reverse bits, single numbers, AND ranges | 6 |
 | `23-kadanes-algorithm` | Max subarray, circular max | 2 |
-| `24-maang-guides` | MAANG interview guides: roadmap, core CS, system design, behavioral | 4 |
+| `24-maang-guides` | MAANG interview guides: roadmap, core CS, system design, behavioral, candidate strategies | 5 |
 
 ## Quickstart
 

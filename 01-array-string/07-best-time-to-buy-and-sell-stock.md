@@ -368,8 +368,8 @@ flowchart TD
     CheckProfit --> |Yes| UpdateMax["max_profit = prices[i] - min_price"]
     CheckProfit --> |No| Continue
     UpdateMax --> Continue
-    Continue --> "i+1"
-    "i+1" --> End{"i == n?"}
+    Continue --> Increment["i+1"]
+    Increment --> End{"i == n?"}
     End --> |No| Loop
     End --> |Yes| Done["Return max_profit"]
 ```
