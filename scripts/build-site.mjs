@@ -22,6 +22,7 @@ const GUIDE_DIRS = [
   { dir: 'docs/modern-engineer-skills', category: 'MODERN ENGINEER SKILLS', pattern: 'Modern Engineer Skills' },
   { dir: 'docs/fresher-roadmap', category: 'FRESHER ROADMAP', pattern: 'Fresher Roadmap' },
   { dir: 'docs/mid-level-roadmap', category: 'MID-LEVEL ROADMAP', pattern: 'Mid-level Roadmap' },
+  { dir: 'docs/24-maang-guides', category: 'MAANG GUIDES', pattern: 'MAANG Guides' },
 ];
 // Portal-internal files inside the guide dirs (never curriculum items).
 const GUIDE_SKIP_FILES = new Set(['_TEMPLATE-subpage.md', '00-INDEX.md', '00-IA-PLAN.md']);
