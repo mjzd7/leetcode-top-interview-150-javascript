@@ -614,3 +614,58 @@ test('switching guides swaps the thread and the panel label', async ({ page }) =
   await expect(page.locator('#ltcPanelTitle')).not.toBeEmpty();
   expect(await page.evaluate(() => window.LtChat.state.articleId)).not.toBe('05-hashmap_06-two-sum');
 });
+
+/* ------------------------------------------------------------------ *
+ * Layout: the right rail (item B)
+ * ------------------------------------------------------------------ *
+ * The chat used to be a 4th flex column beside <main>, which squeezed the
+ * article on a 1440 screen. Decision B puts the TOC and the chat in ONE
+ * right rail: TOC on top, chat below, sharing a width that item C resizes.
+ */
+
+const rail = '#ltRail';
+
+test('the right rail holds both the table of contents and the assistant', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  await expect(page.locator(rail)).toHaveCount(1);
+  await expect(page.locator(`${rail} #tocNav`)).toHaveCount(1);
+  await expect(page.locator(`${rail} ${panel}`)).toHaveCount(1);
+
+  // Asserted as a negative: a direct child of <body> would mean the chat is
+  // still a 4th flex column rather than a member of the rail.
+  expect(await page.locator(`body > ${panel}`).count()).toBe(0);
+});
+
+test('the assistant sits below the table of contents inside the rail', async ({ page }) => {
+  test.skip(isMobile(page), 'the rail only exists on wide viewports');
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  const toc = await page.locator(`${rail} #tocNav`).boundingBox();
+  const chat = await page.locator(panel).boundingBox();
+
+  expect(toc, 'TOC has a box').not.toBeNull();
+  expect(chat, 'chat has a box').not.toBeNull();
+  expect(chat.y, 'chat starts below the TOC').toBeGreaterThan(toc.y);
+});
+
+test('the article is no longer squeezed by a fourth column', async ({ page }) => {
+  test.skip(isMobile(page), 'measure the desktop grid only');
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  const article = await page.locator('article').boundingBox();
+  // Measured 404px with the TOC as a 224px sibling inside <main>, 660px once it
+  // moved into the rail; 660 is the ceiling (max-w-3xl inside a padded 740px main).
+  expect(article.width, 'article gets real width back').toBeGreaterThan(600);
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow, 'no horizontal page overflow').toBeLessThanOrEqual(0);
+});
