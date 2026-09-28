@@ -41,8 +41,17 @@ jobs:
       - name: Run Judge Subsystem Tests
         run: npm run test:judge
 
+      - name: Run Chat Backend Unit Tests
+        run: npm run test:chat
+
       - name: Build Web Portal Data Bundle
         run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Chat Widget E2E Tests
+        run: npx playwright test
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
