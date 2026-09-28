@@ -35,6 +35,21 @@ const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const TOTAL_BUDGET_MS = (maxDuration - 8) * 1000;
 /** How often to emit an SSE comment while the provider is silent (keeps proxies from cutting us). */
 const HEARTBEAT_MS = 10_000;
+/**
+ * Wall-clock to keep in reserve before starting another tool round.
+ *
+ * A tool round costs one model turn plus the tool itself — and web_search can
+ * spend 8s alone. Starting a round that cannot finish inside maxDuration means
+ * the reader gets "Response exceeded the time limit" instead of an answer, which
+ * is the worst possible outcome: they lose the answer AND the wait. The model
+ * cannot see the remaining budget, so the route has to refuse on its behalf and
+ * spend what is left on prose. Overridable for tests, and read per request
+ * rather than at import so a test can set it after this module is loaded.
+ */
+function toolRoundReserveMs() {
+  const n = Number.parseInt(String(process.env.CHAT_TOOL_RESERVE_MS ?? ''), 10);
+  return Number.isFinite(n) && n >= 0 ? n : 15_000;
+}
 
 let clientPromise;
 
@@ -334,11 +349,17 @@ export default async function handler(req, res) {
       const pending = turn.calls || [];
       if (pending.length === 0) return; // a real answer, already streamed
 
-      // A tool turn we are not allowed to serve. Rather than leaving the reader
-      // with an empty bubble, make one final call that forbids tools so the
-      // model has to answer in prose from what it already has.
-      if (stats.rounds > MAX_TOOL_ROUNDS) {
-        log('chat.tool_loop_capped', { ip, rounds: stats.rounds - 1, calls: stats.toolCalls });
+      // A tool turn we are not allowed to serve, or cannot afford to serve.
+      // Either way the reader is better served by prose from what is already in
+      // hand than by a timeout, so make one final call that forbids tools.
+      if (stats.rounds > MAX_TOOL_ROUNDS || deadline - Date.now() < toolRoundReserveMs()) {
+        log('chat.tool_loop_capped', {
+          ip,
+          rounds: stats.rounds,
+          calls: stats.toolCalls,
+          reason: stats.rounds > MAX_TOOL_ROUNDS ? 'round cap' : 'time reserve',
+          msLeft: deadline - Date.now(),
+        });
         conversation.push({
           role: 'assistant',
           content: 'I have already used my lookup budget for this question; answer from what you have.',

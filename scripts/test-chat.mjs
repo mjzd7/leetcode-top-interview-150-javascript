@@ -1000,6 +1000,41 @@ async function main() {
   check((looped.text.match(/data: \[DONE\]/g) || []).length === 1, 'the cut-off still emits exactly one [DONE]');
   check(!/data: \{"error":/.test(looped.text), 'hitting the budget is not reported as an error', looped.text.slice(-200));
 
+  // --- A turn that cannot afford another tool round must not start one. The
+  // model does not know how much of the request budget is left, so the route has
+  // to: a truncated answer ("Response exceeded the time limit") is far worse
+  // than an answer from what was already retrieved.
+  const reserveRequests = [];
+  const savedReserve = process.env.CHAT_TOOL_RESERVE_MS;
+  process.env.CHAT_TOOL_RESERVE_MS = '60000'; // more than the whole budget
+  try {
+    await withStubbedFetch(
+      async (url, init) => {
+        const body = JSON.parse(init.body);
+        reserveRequests.push(body);
+        if (body.tool_choice === 'none') {
+          return new Response(sseBody([delta('Answering from what I already have.')])(), { status: 200 });
+        }
+        return new Response(sseBody(toolFrames('search_guides', JSON.stringify({ query: 'again' })))(), { status: 200 });
+      },
+      async () => {
+        const res = mockRes();
+        await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'slow question' }] } }), res);
+      },
+    );
+  } finally {
+    if (savedReserve === undefined) delete process.env.CHAT_TOOL_RESERVE_MS;
+    else process.env.CHAT_TOOL_RESERVE_MS = savedReserve;
+  }
+  check(reserveRequests.length === 2, 'with no budget left for tools, exactly one forced answer call is made',
+    `calls=${reserveRequests.length}`);
+  // The system prompt documents search_guides, so its presence in the messages
+  // proves nothing. What matters is that no tool RESULT was ever appended.
+  check(reserveRequests.length === 2 && !reserveRequests[1].messages.some((m) => m.role === 'tool'),
+    'the unaffordable tool is never dispatched',
+    `roles=${reserveRequests[1]?.messages?.map((m) => m.role).join(',')}`);
+  check(reserveRequests.at(-1)?.tool_choice === 'none', 'the final call forbids tools so prose still arrives');
+
   /* ==================== hermeticity ==================== */
   section('hermeticity');
 
