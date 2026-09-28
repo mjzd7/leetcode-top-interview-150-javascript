@@ -160,6 +160,8 @@
       visibility: hidden;
     }
     .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
+    .lt-rail { display: contents; }
+    .lt-rail-toc { display: none; }
     .ltc-backdrop {
       position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
       opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
@@ -167,11 +169,22 @@
     .ltc-backdrop.is-open { opacity: 1; pointer-events: auto; }
     @media (min-width: 1024px) {
       .ltc-backdrop { display: none; }
+      .lt-rail {
+        display: flex; flex-direction: column; min-height: 0;
+        position: sticky; top: 3.5rem; align-self: flex-start;
+        flex: 0 0 var(--lt-rail-w, 380px); width: var(--lt-rail-w, 380px);
+        height: calc(100dvh - 3.5rem);
+        border-left: 1px solid var(--line);
+      }
+      .lt-rail-toc {
+        display: block; flex: 0 1 auto; max-height: 45%;
+        overflow-y: auto; padding: 1.5rem 0 0.75rem 1rem;
+      }
       .ltc-panel {
-        position: sticky; top: 3.5rem; left: auto; right: auto; bottom: auto;
-        flex: 0 0 380px; width: 380px; height: calc(100dvh - 3.5rem);
+        position: static; top: auto; left: auto; right: auto; bottom: auto;
+        flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
         transform: none; visibility: visible; box-shadow: none;
-        border-top: none; border-left: 1px solid var(--line);
+        border-top: 1px solid var(--line); border-left: none;
         background: #0B0D12;
       }
     }
@@ -685,16 +698,21 @@
           <div id="prevNext" class="mt-10 grid grid-cols-2 gap-3"></div>
           <footer class="mt-10 pb-6 text-xs text-slate-600 font-mono">Top Interview 150 · Visual JS Manual · built from executable guides</footer>
         </article>
-        <aside class="hidden xl:block w-56 shrink-0 sticky top-6">
-          <div class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">On this page</div>
-          <nav id="tocNav" class="space-y-1 border-l border-[rgba(148,163,184,0.13)]" aria-label="Table of contents"></nav>
-        </aside>
       </div>
     </main>
 
-    <!-- AI study assistant: flex sibling of <main> on desktop, bottom sheet on mobile. -->
     <div id="ltcBackdrop" class="ltc-backdrop"></div>
-    <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
+
+    <!-- Right rail: table of contents on top, study assistant below. Below
+         1024px the rail is display:contents, so the assistant keeps working
+         as a full-width bottom sheet and the TOC is simply not rendered. -->
+    <aside id="ltRail" class="lt-rail" aria-label="Page tools">
+      <div class="lt-rail-toc">
+        <div class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">On this page</div>
+        <nav id="tocNav" class="space-y-1 border-l border-[rgba(148,163,184,0.13)]" aria-label="Table of contents"></nav>
+      </div>
+
+      <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
       <div class="ltc-head">
         <span class="ltc-head-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
@@ -736,6 +754,7 @@
         </div>
         <p class="ltc-hint">Reads the page you are on · <kbd class="k">Enter</kbd> to send</p>
       </form>
+    </aside>
     </aside>
   </div>
 
