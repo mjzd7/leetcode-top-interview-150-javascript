@@ -4,6 +4,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "docs",
   "installCommand": "npm install",
+  "functions": {
+    "api/chat.mjs": {
+      "includeFiles": "api/_lib/guide-index.json"
+    }
+  },
   "headers": [
     {
       "source": "/api/chat",
