@@ -21,7 +21,8 @@
 
 import { buildChatRequest, DEFAULT_MODEL } from './_lib/chat-prompt.mjs';
 import { checkOrigin, rateLimit, clientIp, allowedOrigins } from './_lib/chat-security.mjs';
-import { MAX_COMPLETION_TOKENS } from './_lib/chat-tokens.mjs';
+import { MAX_COMPLETION_TOKENS, MAX_TOOL_ROUNDS, MAX_TOOL_RESULT_TOKENS } from './_lib/chat-tokens.mjs';
+import { availableTools, createToolBudget, runTool } from './_lib/chat-tools.mjs';
 
 /** Vercel platform limit for this function. Streaming needs headroom. */
 export const maxDuration = 60;
@@ -165,6 +166,7 @@ export default async function handler(req, res) {
   }
 
   let prepared;
+  const tools = availableTools();
   try {
     prepared = await buildChatRequest({
       context: typeof pageContext === 'string' ? pageContext : '',
@@ -172,6 +174,7 @@ export default async function handler(req, res) {
       category: typeof pageCategory === 'string' ? pageCategory : '',
       history: messages,
       model,
+      tools,
     });
   } catch (e) {
     log('chat.prompt_build_failed', { ip, error: String(e?.message || e) });
@@ -191,78 +194,200 @@ export default async function handler(req, res) {
   // If the client walks away (Stop button, tab close), don't keep paying for it.
   req.on?.('close', () => upstreamAbort.abort());
 
-  let upstream;
-  try {
-    upstream = await client.chat.completions.create(
-      {
-        model,
-        temperature: 0.2, // low: coding answers should be reproducible, not creative
-        max_tokens: MAX_COMPLETION_TOKENS, // cost control (improvements-doc §6.3)
-        stream: true,
-        messages: [{ role: 'system', content: prepared.system }, ...prepared.messages],
-      },
-      { signal: upstreamAbort.signal },
-    );
-  } catch (e) {
-    const aborted = upstreamAbort.signal.aborted || e?.name === 'AbortError';
-    // The client is gone: nothing to write to.
-    if (aborted) return;
-    const timedOut = e?.code === 'ETIMEDOUT' || /timeout/i.test(String(e?.message || ''));
-    log('chat.upstream_failed', { ip, error: String(e?.message || e), timedOut });
-    sse(res, { error: timedOut ? 'The assistant took too long to respond. Please retry.' : 'The assistant is unavailable right now. Please retry.' });
-    res.write('data: [DONE]\n\n');
-    return res.end();
-  }
-
   const deadline = Date.now() + TOTAL_BUDGET_MS;
+  const budget = createToolBudget();
+  // The conversation is mutable across rounds: system + history, then assistant
+  // tool_calls turns and tool results appended as they happen. The system prompt
+  // stays at index 0 for the whole exchange, so page scope is retained no matter
+  // how many tools run.
+  const conversation = [{ role: 'system', content: prepared.system }, ...prepared.messages];
+  const stats = { rounds: 0, toolCalls: 0, toolsUsed: [] };
   let lastBeat = Date.now();
 
-  try {
-    const reader = payloadStream(upstream).getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-
-    // read-with-heartbeat: while the provider is silent we must still be able
-    // to emit an SSE comment and notice our own deadline, so race the read
-    // against a timer rather than blocking on read() indefinitely.
-    for (;;) {
-      const remaining = deadline - Date.now();
-      if (remaining <= 0) {
-        sse(res, { error: 'Response exceeded the time limit.' });
-        break;
-      }
-      const step = await Promise.race([
-        reader.read(),
-        new Promise((r) => setTimeout(() => r({ timeout: true }), HEARTBEAT_MS)),
-      ]);
-
-      if (step.timeout) {
-        if (Date.now() - lastBeat >= HEARTBEAT_MS) {
-          if (!res.writableEnded) res.write(': ping\n\n');
-          lastBeat = Date.now();
-        }
-        continue;
-      }
-
-      if (step.done) break;
-      if (upstreamAbort.signal.aborted) break;
-
-      buffer += decoder.decode(step.value, { stream: true });
-      // The SDK hands us newline-terminated SSE *payload* lines with the `data:`
-      // prefix already stripped and [DONE] consumed, so re-frame each complete
-      // line. A partial trailing line stays buffered until its newline arrives.
-      let nl;
-      while ((nl = buffer.indexOf('\n')) !== -1) {
-        const line = buffer.slice(0, nl).trim();
-        buffer = buffer.slice(nl + 1);
-        if (line === '' || res.writableEnded) continue;
-        res.write(line.startsWith(':') ? `${line}\n\n` : `data: ${line}\n\n`);
-      }
+  /**
+   * Read one upstream turn to completion.
+   *
+   * The subtle part is what reaches the browser. Upstream frames are forwarded
+   * byte-for-byte (the client parses deltas), but a tool-call turn must leak
+   * NOTHING: its frames are the model deciding to call a tool, which is internal
+   * machinery, and the arguments are half-written JSON mid-stream. So each
+   * payload is inspected before forwarding:
+   *
+   *   - a `delta.tool_calls` payload is accumulated and never forwarded;
+   *   - a `delta.content` payload releases the turn, then is forwarded verbatim;
+   *   - anything else is forwarded only once the turn is already released.
+   *
+   * A pure tool turn therefore emits no content at all, and the tool loop can
+   * run without the browser ever seeing a fragment of it.
+   */
+  async function runTurn({ toolChoice }) {
+    let upstream;
+    try {
+      upstream = await client.chat.completions.create(
+        {
+          model,
+          temperature: 0.2, // low: coding answers should be reproducible, not creative
+          max_tokens: MAX_COMPLETION_TOKENS, // cost control (improvements-doc §6.3)
+          stream: true,
+          messages: conversation,
+          ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
+        },
+        { signal: upstreamAbort.signal },
+      );
+    } catch (e) {
+      const aborted = upstreamAbort.signal.aborted || e?.name === 'AbortError';
+      // The client is gone: nothing to write to.
+      if (aborted) return { gone: true };
+      const timedOut = e?.code === 'ETIMEDOUT' || /timeout/i.test(String(e?.message || ''));
+      log('chat.upstream_failed', { ip, round: stats.rounds + 1, error: String(e?.message || e), timedOut });
+      sse(res, { error: timedOut ? 'The assistant took too long to respond. Please retry.' : 'The assistant is unavailable right now. Please retry.' });
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return { gone: true };
     }
-  } catch (e) {
-    if (!upstreamAbort.signal.aborted) {
-      log('chat.stream_error', { ip, error: String(e?.message || e) });
-      sse(res, { error: 'The response stream was interrupted.' });
+
+    /** index -> { id, name, args } accumulated across deltas. */
+    const calls = new Map();
+    let released = false;
+
+    try {
+      const reader = payloadStream(upstream).getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      // read-with-heartbeat: while the provider is silent we must still be able
+      // to emit an SSE comment and notice our own deadline, so race the read
+      // against a timer rather than blocking on read() indefinitely.
+      for (;;) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+          sse(res, { error: 'Response exceeded the time limit.' });
+          return { gone: false, cut: true, calls };
+        }
+        const step = await Promise.race([
+          reader.read(),
+          new Promise((r) => setTimeout(() => r({ timeout: true }), HEARTBEAT_MS)),
+        ]);
+
+        if (step.timeout) {
+          if (Date.now() - lastBeat >= HEARTBEAT_MS) {
+            if (!res.writableEnded) res.write(': ping\n\n');
+            lastBeat = Date.now();
+          }
+          continue;
+        }
+
+        if (step.done) break;
+        if (upstreamAbort.signal.aborted) return { gone: true, calls };
+
+        buffer += decoder.decode(step.value, { stream: true });
+        // The SDK hands us newline-terminated SSE *payload* lines with the `data:`
+        // prefix already stripped and [DONE] consumed, so re-frame each complete
+        // line. A partial trailing line stays buffered until its newline arrives.
+        let nl;
+        while ((nl = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (line === '' || res.writableEnded) continue;
+
+          if (line.startsWith(':')) { res.write(`${line}\n\n`); continue; }
+
+          let parsed = null;
+          try { parsed = JSON.parse(line); } catch { parsed = null; }
+          const delta = parsed?.choices?.[0]?.delta;
+
+          if (delta?.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const i = Number.isInteger(tc.index) ? tc.index : 0;
+              const slot = calls.get(i) || { id: null, name: '', args: '' };
+              if (tc.id) slot.id = tc.id;
+              if (tc.function?.name) slot.name = tc.function.name;
+              if (typeof tc.function?.arguments === 'string') slot.args += tc.function.arguments;
+              calls.set(i, slot);
+            }
+            continue; // never forwarded
+          }
+
+          if (typeof delta?.content === 'string' && delta.content) released = true;
+          if (released) res.write(`data: ${line}\n\n`);
+        }
+      }
+    } catch (e) {
+      if (!upstreamAbort.signal.aborted) {
+        log('chat.stream_error', { ip, error: String(e?.message || e) });
+        sse(res, { error: 'The response stream was interrupted.' });
+        return { gone: false, cut: true, calls };
+      }
+      return { gone: true, calls };
+    }
+
+    return { gone: false, cut: false, calls: [...calls.values()].filter((c) => c.name) };
+  }
+
+  try {
+    for (;;) {
+      const turn = await runTurn({ toolChoice: 'auto' });
+      if (turn.gone) return;
+      if (turn.cut) return;
+      stats.rounds++;
+
+      const pending = turn.calls || [];
+      if (pending.length === 0) return; // a real answer, already streamed
+
+      // A tool turn we are not allowed to serve. Rather than leaving the reader
+      // with an empty bubble, make one final call that forbids tools so the
+      // model has to answer in prose from what it already has.
+      if (stats.rounds > MAX_TOOL_ROUNDS) {
+        log('chat.tool_loop_capped', { ip, rounds: stats.rounds - 1, calls: stats.toolCalls });
+        conversation.push({
+          role: 'assistant',
+          content: 'I have already used my lookup budget for this question; answer from what you have.',
+        });
+        await runTurn({ toolChoice: 'none' });
+        return;
+      }
+
+      conversation.push({
+        role: 'assistant',
+        content: null,
+        tool_calls: pending.map((c) => ({
+          id: c.id || `call_${stats.toolCalls}_${Math.random().toString(36).slice(2, 8)}`,
+          type: 'function',
+          function: { name: c.name, arguments: c.args || '{}' },
+        })),
+      });
+
+      for (const call of pending) {
+        if (!budget.spend()) {
+          conversation.push({
+            role: 'tool',
+            tool_call_id: call.id,
+            content: '[tool budget exhausted] No further lookups this turn. Answer now from the results above and your own knowledge.',
+          });
+          continue;
+        }
+        let args = {};
+        try { args = JSON.parse(call.args || '{}'); } catch { args = {}; }
+
+        sse(res, { status: `Looking up ${call.name}…` });
+        lastBeat = Date.now();
+        stats.toolCalls++;
+
+        const result = await runTool(call.name, args, { env: process.env, model, maxTokens: MAX_TOOL_RESULT_TOKENS });
+        if (result.ok) {
+          stats.toolsUsed.push(result.label);
+          log('chat.tool_used', { ip, tool: result.label, ok: true, sources: result.sources?.length || 0 });
+        } else {
+          stats.toolsUsed.push(`${result.label}!`);
+          log('chat.tool_failed', { ip, tool: result.label, reason: result.label });
+        }
+
+        conversation.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: result.content,
+        });
+      }
     }
   } finally {
     if (!res.writableEnded) {
@@ -274,6 +399,10 @@ export default async function handler(req, res) {
       scope: limit.scope,
       model,
       latencyMs: Date.now() - startedAt,
+      tools: tools.map((t) => t.function.name).join(','),
+      rounds: stats.rounds,
+      toolCalls: stats.toolCalls,
+      toolsUsed: stats.toolsUsed.join(','),
       ...prepared.meta,
     });
   }

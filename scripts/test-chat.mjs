@@ -865,6 +865,141 @@ async function main() {
   check(/data: \{"error":/.test(refused.text), 'provider refusal surfaces as an SSE error frame');
   check(!refused.text.includes('bad key'), 'the raw provider error is not leaked to the client');
 
+  /* ==================== tool loop ==================== */
+  // The route used to make exactly ONE upstream call and forward its bytes. A
+  // tool loop must detect a tool-call turn, run the tool, and go back to the
+  // provider — without ever leaking a tool turn's internals to the browser.
+  section('tool loop (stubbed provider)');
+
+  /** Streaming tool_call frames. Arguments arrive as partial JSON, as in reality. */
+  const toolFrames = (name, argsJson) => {
+    const half = Math.floor(argsJson.length / 2);
+    return [
+      JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'call_abc', type: 'function', function: { name, arguments: argsJson.slice(0, half) } }] } }] }),
+      JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, function: { arguments: argsJson.slice(half) } }] } }] }),
+      JSON.stringify({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }),
+    ];
+  };
+
+  // --- S1: no tool needed. The common case must be untouched by any of this.
+  let plainTools = null;
+  const noTool = await withStubbedFetch(
+    async (url, init) => {
+      plainTools = JSON.parse(init.body);
+      return new Response(sseBody([delta('A hash map.')])(), { status: 200 });
+    },
+    async () => {
+      const res = mockRes();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'what is the brute force?' }], pageContext: 'ctx' } }), res);
+      return res;
+    },
+  );
+  check(plainTools?.messages?.length === 2, 'a page-scoped question makes exactly ONE upstream call',
+    `messages=${plainTools?.messages?.length}`);
+  check(plainTools?.tools === undefined || plainTools?.tool_choice === undefined || plainTools?.tool_choice === 'auto',
+    'tools are offered to the model without forcing a call');
+  check(!/"status":/.test(noTool.text), 'no status frame is emitted when no tool runs');
+  check(noTool.text.includes('A hash map.'), 'the answer still reaches the client');
+
+  // --- S2: the model reaches for a guide on another page.
+  const sentRequests = [];
+  const withTool = await withStubbedFetch(
+    async (url, init) => {
+      const body = JSON.parse(init.body);
+      sentRequests.push(body);
+      if (body.messages.length === 2) {
+        return new Response(sseBody(toolFrames('search_guides', JSON.stringify({ query: 'LRU cache' })))(), { status: 200 });
+      }
+      return new Response(sseBody([delta('LRU is a hash map plus a doubly-linked list.')])(), { status: 200 });
+    },
+    async () => {
+      const res = mockRes();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'how does an LRU cache work?' }], pageContext: 'KADANE_CTX' } }), res);
+      return res;
+    },
+  );
+
+  check(sentRequests.length === 2, 'a tool call causes a second upstream call', `calls=${sentRequests.length}`);
+  check(Array.isArray(sentRequests[0]?.tools) && sentRequests[0].tools.length > 0, 'the tool schema is sent upstream');
+  check(/search_guides/.test(JSON.stringify(sentRequests[0]?.tools)), 'search_guides is offered to the model');
+
+  // The whole conversation for round 2, which is where a tool loop usually goes wrong.
+  const round2 = sentRequests[1]?.messages || [];
+  const assistantToolTurn = round2.find((m) => m.role === 'assistant' && Array.isArray(m.tool_calls));
+  const toolTurn = round2.find((m) => m.role === 'tool');
+  check(!!assistantToolTurn, 'round 2 replays the assistant tool_calls turn', JSON.stringify(round2.map((m) => m.role)));
+  check(assistantToolTurn?.tool_calls?.[0]?.function?.name === 'search_guides', 'the tool name is replayed verbatim');
+  check(!!toolTurn, 'round 2 carries the tool result as a tool-role message');
+  check(toolTurn?.tool_call_id === 'call_abc', 'the tool result is bound to the right tool_call_id', `got ${toolTurn?.tool_call_id}`);
+  check(/LRU/.test(toolTurn?.content || ''), 'the tool result really contains retrieved text');
+  check(toolTurn?.content?.includes(WEB_OPEN) && toolTurn?.content?.includes(WEB_CLOSE),
+    'the tool result is fenced in the conversation');
+  check(round2[0]?.role === 'system', 'the system prompt is still first in round 2');
+  check(round2.some((m) => m.role === 'system' && m.content.includes('KADANE_CTX')),
+    'the page context survives the tool round — page scope is kept');
+  check(!round2.some((m) => m.role === 'user' && m.content.includes('KADANE_CTX')),
+    'page context still never enters the messages array');
+
+  // The browser must never see the tool turn's internals.
+  check(withTool.text.includes('LRU is a hash map plus a doubly-linked list.'), 'the final answer reaches the client');
+  check(!/tool_calls/.test(withTool.text), 'raw tool_call frames are never forwarded to the client');
+  check((withTool.text.match(/data: \[DONE\]/g) || []).length === 1, 'a tool round still ends with exactly one [DONE]');
+  check(/data: \{"status":/.test(withTool.text), 'a status frame tells the client a tool is running');
+  check(/search_guides/.test(withTool.text), 'the status frame names the tool');
+
+  // --- Tools are filtered by what is actually configured.
+  let unconfiguredBody = null;
+  const savedTavily = process.env.TAVILY_API_KEY;
+  delete process.env.TAVILY_API_KEY;
+  try {
+    await withStubbedFetch(
+      async (url, init) => {
+        unconfiguredBody = JSON.parse(init.body);
+        return new Response(sseBody([delta('ok')])(), { status: 200 });
+      },
+      async () => {
+        const res = mockRes();
+        await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'hi' }] } }), res);
+      },
+    );
+  } finally {
+    if (savedTavily) process.env.TAVILY_API_KEY = savedTavily;
+  }
+  const offered = (unconfiguredBody?.tools || []).map((t) => t.function?.name);
+  check(unconfiguredBody !== null, 'the unconfigured request was actually captured');
+  check(offered.includes('search_guides'), 'search_guides is always offered — it is free', JSON.stringify(offered));
+  check(!offered.includes('web_search'), 'web_search is NOT offered without TAVILY_API_KEY', JSON.stringify(offered));
+  check(!offered.includes('fetch_page'), 'fetch_page is NOT offered without TAVILY_API_KEY', JSON.stringify(offered));
+
+  // --- A model that never stops calling tools must be stopped by the budget,
+  // and the reader must still get an answer.
+  const loopRequests = [];
+  let loopingCalls = 0;
+  const looped = await withStubbedFetch(
+    async (url, init) => {
+      const body = JSON.parse(init.body);
+      loopRequests.push(body);
+      loopingCalls++;
+      if (body.tool_choice === 'none') {
+        return new Response(sseBody([delta('Here is what I can tell you from the manual.')])(), { status: 200 });
+      }
+      return new Response(sseBody(toolFrames('search_guides', JSON.stringify({ query: 'again' })))(), { status: 200 });
+    },
+    async () => {
+      const res = mockRes();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'loop forever' }] } }), res);
+      return res;
+    },
+  );
+  check(loopingCalls <= 5, 'a model that only ever calls tools is cut off by the budget', `calls=${loopingCalls}`);
+  check(loopRequests.at(-1)?.tool_choice === 'none',
+    'the final call forbids tools, so the reader still gets prose', JSON.stringify(loopRequests.at(-1)?.tool_choice));
+  check(looped.text.includes('Here is what I can tell you from the manual.'),
+    'the reader gets a real answer after the cut-off, not an empty bubble', looped.text.slice(-300));
+  check(looped.writableEnded === true, 'the response still ends cleanly after the budget stops the loop');
+  check((looped.text.match(/data: \[DONE\]/g) || []).length === 1, 'the cut-off still emits exactly one [DONE]');
+  check(!/data: \{"error":/.test(looped.text), 'hitting the budget is not reported as an error', looped.text.slice(-200));
+
   /* ==================== hermeticity ==================== */
   section('hermeticity');
 
