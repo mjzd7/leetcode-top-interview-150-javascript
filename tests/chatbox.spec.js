@@ -861,6 +861,77 @@ test('the rail width survives a reload and resets on double-click', async ({ pag
     .toBeCloseTo(RAIL_DEFAULT, 0);
 });
 
+/* ------------------------------------------------------------------ *
+ * Left nav collapse (item E)
+ * ------------------------------------------------------------------ *
+ * Decision E, read as a two-stage collapse: 320px full, 200px text rail,
+ * 56px icon rail, then back to full. Only the icon rail drops the labels.
+ */
+
+const nav = '#sidebar';
+const navCollapse = '#ltNavCollapse';
+const NAV_WIDTHS = [320, 200, 56];
+
+const navWidth = (page) =>
+  page.locator(nav).evaluate((el) => el.getBoundingClientRect().width);
+
+test('the left nav has a collapse control that cycles three stages', async ({ page }) => {
+  test.skip(isMobile(page), 'the nav is only docked on wide viewports');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector('#curriculumNav .nav-item');
+
+  await expect(page.locator(navCollapse)).toBeVisible();
+  await expect(page.locator(nav)).toHaveAttribute('data-stage', '0');
+  expect(await navWidth(page)).toBeCloseTo(NAV_WIDTHS[0], 0);
+
+  for (const stage of [1, 2, 0]) {
+    await page.locator(navCollapse).click();
+    await expect(page.locator(nav)).toHaveAttribute('data-stage', String(stage));
+    await expect
+      .poll(() => navWidth(page), { timeout: 5000 })
+      .toBeCloseTo(NAV_WIDTHS[stage], 0);
+  }
+});
+
+test('only the icon rail drops the nav labels', async ({ page }) => {
+  test.skip(isMobile(page), 'the nav is only docked on wide viewports');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector('#curriculumNav .nav-item');
+
+  const title = page.locator('#curriculumNav .nav-item .nav-title').first();
+  await expect(title).toBeVisible();
+
+  await page.locator(navCollapse).click();
+  await expect(page.locator(nav)).toHaveAttribute('data-stage', '1');
+  await expect(title, 'text rail keeps the labels').toBeVisible();
+
+  await page.locator(navCollapse).click();
+  await expect(page.locator(nav)).toHaveAttribute('data-stage', '2');
+  await expect(title, 'icon rail drops the labels').toBeHidden();
+  await expect(page.locator('#curriculumNav .nav-item').first()).toBeVisible();
+});
+
+test('the nav stage survives a reload', async ({ page }) => {
+  test.skip(isMobile(page), 'the nav is only docked on wide viewports');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector('#curriculumNav .nav-item');
+
+  await page.locator(navCollapse).click();
+  await page.locator(navCollapse).click();
+  await expect(page.locator(nav)).toHaveAttribute('data-stage', '2');
+
+  await page.reload();
+  await page.waitForSelector('#curriculumNav .nav-item');
+  await expect(page.locator(nav)).toHaveAttribute('data-stage', '2');
+  expect(await navWidth(page)).toBeCloseTo(NAV_WIDTHS[2], 0);
+});
+
 test('the one-liner is operable from the keyboard', async ({ page }) => {
   test.skip(isMobile(page), 'the TOC only exists on wide viewports');
 
