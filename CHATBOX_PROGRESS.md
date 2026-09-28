@@ -942,3 +942,64 @@ restored to 150.
 **Lesson for whoever works here next:** this tree is being written to concurrently. Before
 trusting a red suite, check for a second writer and stale Playwright artifacts, and prefer
 `--workers=1` for a deterministic read.
+
+---
+
+# 🔴 INCIDENT: uncommitted work was reverted, then redone per item
+
+At **13:30:38** an external process restored `docs/index.html`, `tests/chatbox.spec.js`
+and this file to HEAD. `git status` went completely clean and ~500 lines of finished,
+**verified** layout work vanished: the rail, the resizer, the nested TOC and the nav
+collapse, plus 12 tests. No stash, no checkout in the reflog, no new commit — the tree
+was simply made byte-identical to HEAD. Three `opencode` processes were live (39599,
+89723, 90698).
+
+**What survived:** everything already committed — the truncation fix (`truncateRelevant`,
+`findHeadings`, `markerTokenCost`), `api/chat.mjs`, the three `_lib` modules,
+`docs/chat-widget.js`, `scripts/test-chat.mjs`, and this file up to line 944.
+
+**Root cause was mine:** the work existed only in the working tree. The fix was to
+commit per item, so a restore can no longer take it.
+
+| Commit | Item |
+|---|---|
+| `ce214b2` | B — right rail (TOC + chat), article 404px → 660px |
+| `c4321d0` | A — one-liner page navigation |
+| `4dd77c2` | C — resizable rail |
+| `f11c5c7` | E — two-stage nav collapse |
+
+# ✅ Item A, second pass: the one-liner page navigation
+
+"On this page" listed all nine `h2`s with the current one merely highlighted. It is now
+a **single row naming the section in view**, which opens that section's sub-headings.
+
+**Decisions taken (owner-confirmed):** slide track `0fr→1fr` for the section swap plus a
+25ms stagger on expand; a section the reader opened by hand stays open; children hang off
+an indent guide line.
+
+### The conflict that needed resolving
+"Stay expanded until you collapse it" conflicts with "one-liner by default". Resolution:
+the one-liner is *only* the current section; a section explicitly opened is rendered
+open beneath it. The one-liner never takes a second role.
+
+### Side effect worth knowing
+Each `h2` now owns its `h3`s, so the **32 subsections per guide became reachable**. The
+old flat TOC could not link to them at all.
+
+### Three bugs found while building it
+- **`markActive` auto-opened the active section**, carried over from the previous
+  "expand the section in view" design. The one-liner must stay collapsed.
+- **`grid-template-rows: 0fr` only sizes the first explicit row.** With several children
+  the rest became auto rows, so the panel never collapsed. The 0fr trick needs exactly
+  one inner wrapper.
+- **The `-72px` top `rootMargin` was wrong.** The sticky header is a *sibling* of the
+  scroller, not an overlay on it, so the scroller already starts below the header — the
+  offset excluded headings at `y=0`, which is exactly where `scrollIntoView` puts them.
+  Separately, jumping to a subsection never promoted its owning section, so the
+  one-liner went stale. Both fixed; the observer now takes the *topmost* heading of each
+  kind rather than whichever the observer batched last.
+
+### Verification
+`npm run verify` → **exit 0**, 0 outbound calls. 150 files · 828 runtime · 64 judge ·
+153 chat · **90 E2E passed / 16 skipped** · 175 modules. Screenshots in `scratch/qa/`:
+`F1-oneliner-collapsed`, `F2-oneliner-expanded`, `F3-nav56-iconrail`.
