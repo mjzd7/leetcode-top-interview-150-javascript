@@ -137,6 +137,48 @@
     }
     .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
     .toc-link.active { color: var(--accent); border-color: var(--accent); }
+
+    /* One-liner page navigation. Only the section in view, plus any section
+       the reader opened by hand, is painted; everything else is display:none
+       so it drops out of the flow and cannot scroll. */
+    .toc-sec { display: none; }
+    .toc-sec.is-active,
+    .toc-sec[data-user-open="true"] { display: block; }
+    .toc-row { display: flex; align-items: center; gap: 0.25rem; }
+    .toc-sec.is-active .toc-link { color: var(--accent); }
+    .toc-toggle { transition: color 0.15s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
+    .toc-toggle svg { transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
+    .toc-sec[data-collapsed="false"] .toc-toggle svg { transform: rotate(90deg); }
+    .toc-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; border-radius: 3px; }
+
+    /* Children hang off a guide line so they read as children of the heading
+       above them. The row is a 1fr grid so it can animate to auto height. */
+    .toc-sub {
+      display: grid; grid-template-rows: 0fr;
+      transition: grid-template-rows 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+      margin-left: 0.55rem; padding-left: 0.7rem;
+      border-left: 1px solid rgba(148, 163, 184, 0.22);
+    }
+    .toc-sec[data-collapsed="false"] .toc-sub { grid-template-rows: 1fr; }
+    .toc-sub-inner { overflow: hidden; }
+    .toc-sub-link {
+      display: block; padding: 0.2rem 0.25rem 0.2rem 0.4rem;
+      font-size: 12px; color: #7C8699; text-align: left;
+      border-left: 2px solid transparent; transition: color 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
+    }
+    .toc-sub-link:hover { color: var(--accent); }
+    .toc-sub-link.is-current { color: var(--accent); border-left-color: var(--accent); }
+
+    /* Staggered cascade: children rise in sequence once the row has opened. */
+    .toc-sec[data-collapsed="false"] .toc-sub-link { animation: toc-rise 0.22s ease both; }
+    @keyframes toc-rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .toc-sub, .toc-toggle, .toc-toggle svg { transition: none; }
+      .toc-sec[data-collapsed="false"] .toc-sub-link { animation: none; }
+    }
     kbd.k {
       font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
       background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
@@ -938,24 +980,135 @@
       prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
     }
 
+    let tocObserver = null;
+
     function renderTOC() {
       tocNav.innerHTML = '';
-      const heads = contentArea.querySelectorAll('h2');
+      if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
+      const heads = [...contentArea.querySelectorAll('h2')];
+      const sections = [];
+
+      const setOpen = (sec, open) => {
+        sec.dataset.collapsed = open ? 'false' : 'true';
+        sec.querySelector('.toc-toggle').setAttribute('aria-expanded', String(open));
+      };
+
       heads.forEach((h, i) => {
         if (!h.id) h.id = 'sec-' + i;
+        const sec = document.createElement('div');
+        sec.className = 'toc-sec';
+        sec.dataset.sec = h.id;
+        sec.dataset.collapsed = 'true';
+
+        const row = document.createElement('div');
+        row.className = 'toc-row';
+
         const a = document.createElement('a');
         a.href = '#' + h.id;
         a.textContent = h.textContent;
         a.title = h.textContent;
-        a.className = 'toc-link block text-[13px] text-slate-400 hover:text-slate-200 pl-3 py-1 border-l-2 border-transparent truncate';
+        a.className = 'toc-link block text-[13px] pl-3 py-1 truncate min-w-0 flex-1';
         a.onclick = (e) => {
           e.preventDefault();
           h.scrollIntoView({ behavior: 'smooth', block: 'start' });
           history.replaceState(null, '', '#' + h.id);
         };
-        tocNav.appendChild(a);
+
+        const sub = document.createElement('div');
+        sub.className = 'toc-sub';
+        sub.id = 'toc-sub-' + h.id;
+        // Single inner wrapper: the 0fr->1fr row trick only collapses a
+        // container that holds exactly one child.
+        const subInner = document.createElement('div');
+        subInner.className = 'toc-sub-inner';
+        sub.appendChild(subInner);
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'toc-toggle shrink-0 text-slate-600 hover:text-slate-300 px-1';
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-controls', sub.id);
+        toggle.setAttribute('aria-label', 'Subsections of ' + h.textContent);
+        toggle.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+        toggle.onclick = () => {
+          const open = sec.dataset.collapsed === 'true';
+          setOpen(sec, open);
+          // A section the reader opened stays visible when the one-liner moves on.
+          if (open) sec.dataset.userOpen = 'true'; else delete sec.dataset.userOpen;
+        };
+
+        row.append(a, toggle);
+        sec.append(row, sub);
+        tocNav.appendChild(sec);
+
+        let n = h.nextElementSibling;
+        while (n && n.tagName !== 'H2') {
+          if (n.tagName === 'H3') {
+            if (!n.id) n.id = h.id + '-s' + subInner.children.length;
+            const s = document.createElement('a');
+            s.href = '#' + n.id;
+            s.textContent = n.textContent;
+            s.title = n.textContent;
+            s.className = 'toc-sub-link truncate';
+            s.dataset.for = n.id;
+            s.onclick = (e) => {
+              e.preventDefault();
+              n.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + n.id);
+            };
+            subInner.appendChild(s);
+          }
+          n = n.nextElementSibling;
+        }
+
+        sections.push({ sec, h, subs: [...subInner.children] });
       });
-      if (!heads.length) tocNav.innerHTML = '<span class="text-xs text-slate-600 pl-3">No sections</span>';
+
+      if (!heads.length) {
+        tocNav.innerHTML = '<span class="text-xs text-slate-600 pl-3">No sections</span>';
+        return;
+      }
+
+      const markCurrentChild = (id) => {
+        const owner = sections.find((s) => s.subs.some((a) => a.dataset.for === id));
+        sections.forEach((s) => s.subs.forEach((a) =>
+          a.classList.toggle('is-current', a.dataset.for === id)));
+        // Jumping straight to a subsection skips its h2 entirely, so the
+        // owning section is promoted here or the one-liner goes stale.
+        if (owner) markActive(owner.h.id);
+      };
+
+      const markActive = (id) => {
+        const target = sections.find((s) => s.h.id === id) || sections[0];
+        sections.forEach((s) => {
+          s.sec.classList.toggle('is-active', s === target);
+          // The one-liner stays collapsed; only a section the reader opened
+          // by hand survives the one-liner moving to another section.
+          if (s.sec.dataset.userOpen !== 'true') setOpen(s.sec, false);
+        });
+      };
+
+      // A heading counts as "in view" inside the top band of the scroller. The
+      // sticky header is a sibling of the scroller, not an overlay on it, so
+      // the top edge needs no offset: a heading jumped to `start` sits at y=0
+      // and must still count.
+      tocObserver = new IntersectionObserver(
+        (entries) => {
+          // Several headings can share the band at once, so take the topmost
+          // of each kind rather than whichever the observer happened to batch
+          // last. Sections first, then children, so the most specific wins.
+          const top = (tag) => entries
+            .filter((e) => e.isIntersecting && e.target.tagName === tag)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+          const h2 = top('H2'), h3 = top('H3');
+          if (h2) markActive(h2.target.id);
+          if (h3) markCurrentChild(h3.target.id);
+        },
+        { root: contentContainer, rootMargin: '0px 0px -70% 0px', threshold: 0 },
+      );
+      heads.forEach((h) => tocObserver.observe(h));
+      contentArea.querySelectorAll('h3').forEach((h) => tocObserver.observe(h));
+      markActive(heads[0].id);
     }
 
     function enhanceCodeBlocks() {
