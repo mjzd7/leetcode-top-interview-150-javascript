@@ -13,14 +13,38 @@
  * No OpenAI/network calls happen in this module, so it is directly unit-testable.
  */
 
-/** Total prompt budget (system + context + history). */
-export const MAX_TOTAL_TOKENS = 4000;
+/**
+ * Total prompt budget (system + context + history).
+ *
+ * Was 4000, which was sized for "one page of guide text + a short chat". With
+ * tool-calling the prompt now also carries retrieved guide sections and fetched
+ * web text, so a 4000 ceiling silently squeezed the tool results down to
+ * nothing. 12000 is still ~10% of gpt-4o-mini's context window, so this remains
+ * a cost ceiling rather than a technical limit.
+ */
+export const MAX_TOTAL_TOKENS = 12_000;
 /** Ceiling for the pageContext slice, so context can't starve the conversation. */
 export const MAX_CONTEXT_TOKENS = 2000;
-/** Hard cap on completion length — cost control (improvements-doc §6.3). */
-export const MAX_COMPLETION_TOKENS = 1000;
+/**
+ * Hard cap on completion length — cost control (improvements-doc §6.3).
+ *
+ * Was 1000 (~750 words), which truncated mid-explanation on exactly the
+ * cross-question and follow-up discussion this feature exists to enable.
+ */
+export const MAX_COMPLETION_TOKENS = 2000;
 /** Sliding window: how many conversational turns to retain. */
 export const MAX_HISTORY_MESSAGES = 10;
+
+/**
+ * Per-result ceiling for ONE tool call. Every tool result is trimmed to this
+ * before it re-enters the conversation, so one fat scraped page cannot evict the
+ * history or the system prompt.
+ */
+export const MAX_TOOL_RESULT_TOKENS = 1500;
+/** How many tool calls a single user turn may make, in total. */
+export const MAX_TOOL_CALLS = 4;
+/** How many model<->tool round trips one user turn may take. */
+export const MAX_TOOL_ROUNDS = 3;
 
 /** Marker shown to the model where middle content was elided. */
 export const ELISION_MARKER = '\n\n[... guide content elided to fit the context budget ...]\n\n';
@@ -190,7 +214,7 @@ const QUERY_STOPWORDS = new Set([
  * punctuation: "1. Outer loop picks an index." is prose, "1. Problem Overview" is
  * a title.
  */
-function findHeadings(text) {
+export function findHeadings(text) {
   const marks = [];
   let m;
   const markdown = /^##[ \t]+.+$/gm;
@@ -203,8 +227,15 @@ function findHeadings(text) {
   return [...new Set(marks)].sort((a, b) => a - b);
 }
 
-/** Split on section headings, keeping each heading with its own body. */
-function splitSections(text) {
+/**
+ * Split on section headings, keeping each heading with its own body.
+ *
+ * Exported (with `findHeadings` and `words`) so the build-time guide index in
+ * scripts/build-site.mjs splits guides with the *same* logic the runtime uses to
+ * score them. Two implementations would drift, and retrieval would quietly stop
+ * matching the sections it was indexed on.
+ */
+export function splitSections(text) {
   const marks = findHeadings(text);
   if (marks.length < 2) return null;
   const out = [];
@@ -220,8 +251,18 @@ function splitSections(text) {
   return out.length >= 2 ? out : null;
 }
 
-function words(s) {
+export function words(s) {
   return String(s).toLowerCase().match(/[a-z0-9]+/g) || [];
+}
+
+/**
+ * Query terms worth scoring on: lowercased, stopword-free, length > 2.
+ *
+ * The same filter `truncateRelevant` applies, exported so guide retrieval ranks
+ * guides by exactly the terms that section selection would later keep.
+ */
+export function queryTerms(query) {
+  return new Set(words(query || '').filter((w) => w.length > 2 && !QUERY_STOPWORDS.has(w)));
 }
 
 /**
