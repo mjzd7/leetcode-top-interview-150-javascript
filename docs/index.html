@@ -204,6 +204,7 @@
     .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
     .lt-rail { display: contents; }
     .lt-rail-toc { display: none; }
+    #ltRailResizer { display: none; }
     .ltc-backdrop {
       position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
       opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
@@ -218,6 +219,21 @@
         height: calc(100dvh - 3.5rem);
         border-left: 1px solid var(--line);
       }
+      /* Sits entirely left of the rail: overlapping the panel put the chat log
+         on top of it, and z-index did not reliably win. */
+      #ltRailResizer {
+        display: block; position: absolute; left: -9px; top: 0; bottom: 0;
+        width: 9px; cursor: col-resize; touch-action: none; background: none;
+        user-select: none; -webkit-user-select: none;
+      }
+      #ltRailResizer::after {
+        content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+        background: transparent; transition: background 0.15s ease;
+      }
+      #ltRailResizer:hover::after,
+      #ltRailResizer:focus-visible::after,
+      #ltRailResizer.is-dragging::after { background: var(--accent); }
+      #ltRailResizer:focus-visible { outline: none; }
       .lt-rail-toc {
         display: block; flex: 0 1 auto; max-height: 45%;
         overflow-y: auto; padding: 1.5rem 0 0.75rem 1rem;
@@ -749,6 +765,7 @@
          1024px the rail is display:contents, so the assistant keeps working
          as a full-width bottom sheet and the TOC is simply not rendered. -->
     <aside id="ltRail" class="lt-rail" aria-label="Page tools">
+      <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the page tools rail"></div>
       <div class="lt-rail-toc">
         <div class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">On this page</div>
         <nav id="tocNav" class="space-y-1 border-l border-[rgba(148,163,184,0.13)]" aria-label="Table of contents"></nav>
@@ -1491,6 +1508,57 @@
     }
     $('menuBtn').onclick = openSidebar;
     sideOverlay.onclick = closeSidebar;
+
+    /* ---------- rail resize (item C) ---------- */
+    (function initRailResize() {
+      const el = $('ltRail'), handle = $('ltRailResizer');
+      if (!el || !handle) return;
+      const MIN = 320, MAX = 720, DEF = 380, KEY = 'lt150-rail-w';
+      const clamp = (v) => Math.min(MAX, Math.max(MIN, Math.round(v)));
+      const apply = (w, persist) => {
+        w = clamp(w);
+        document.documentElement.style.setProperty('--lt-rail-w', w + 'px');
+        handle.setAttribute('aria-valuenow', String(w));
+        if (persist) { try { localStorage.setItem(KEY, String(w)); } catch (e) {} }
+        return w;
+      };
+      let saved = DEF;
+      try { const v = parseInt(localStorage.getItem(KEY), 10); if (v) saved = v; } catch (e) {}
+      apply(saved, false);
+
+      const widthFromX = (x) => window.innerWidth - x;
+      let dragging = false, startX = 0, moved = false;
+      const onMove = (e) => {
+        if (!dragging || Math.abs(e.clientX - startX) < 3) return;
+        moved = true;
+        apply(widthFromX(e.clientX), true);
+      };
+      const onUp = (e) => {
+        dragging = false;
+        handle.classList.remove('is-dragging');
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        if (moved) apply(widthFromX(e.clientX), true);
+      };
+      // Document-level listeners, not setPointerCapture, which suppresses the
+      // compatibility click and dblclick events. The width only changes after
+      // real movement: a plain click must not nudge the rail, or the handle
+      // slides out from under the second click of a double-click.
+      handle.addEventListener('pointerdown', (e) => {
+        dragging = true; moved = false; startX = e.clientX;
+        handle.classList.add('is-dragging');
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      });
+      handle.addEventListener('dblclick', () => { apply(DEF, true); });
+      handle.addEventListener('keydown', (e) => {
+        const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lt-rail-w'), 10) || DEF;
+        if (e.key === 'ArrowLeft') { apply(cur + 32, true); e.preventDefault(); }
+        if (e.key === 'ArrowRight') { apply(cur - 32, true); e.preventDefault(); }
+      });
+    })();
     $('brandHome').onclick = (e) => {
       e.preventDefault();
       openHome();

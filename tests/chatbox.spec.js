@@ -783,6 +783,84 @@ test('the sub-heading being read is marked as the active child', async ({ page }
   await expect(current).toHaveText(/Pseudocode/);
 });
 
+/* ------------------------------------------------------------------ *
+ * Resizing the rail (item C)
+ * ------------------------------------------------------------------ *
+ * Decision C: a draggable divider, 320-720px, persisted, double-click
+ * to reset. The width drives --lt-rail-w, which the rail already reads.
+ */
+
+const resizer = '#ltRailResizer';
+const RAIL_MIN = 320;
+const RAIL_MAX = 720;
+const RAIL_DEFAULT = 380;
+
+const railWidth = (page) =>
+  page.locator(rail).evaluate((el) => el.getBoundingClientRect().width);
+
+/** Drag the divider to an absolute x, the way a reader moves the handle. */
+async function dragTo(page, x) {
+  const box = await page.locator(resizer).boundingBox();
+  const y = box.y + box.height / 2;
+  await page.mouse.move(box.x + box.width / 2, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y, { steps: 12 });
+  await page.mouse.up();
+}
+
+test('the rail has a draggable divider', async ({ page }) => {
+  test.skip(isMobile(page), 'the rail only exists on wide viewports');
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  await expect(page.locator(resizer)).toBeVisible();
+  await expect(page.locator(resizer)).toHaveAttribute('role', 'separator');
+  await expect(page.locator(resizer)).toHaveAttribute('aria-orientation', 'vertical');
+});
+
+test('dragging the divider resizes the rail and clamps to 320-720', async ({ page }) => {
+  test.skip(isMobile(page), 'the rail only exists on wide viewports');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  // The rail hugs the right edge, so its width is innerWidth minus the
+  // divider's x: dragging left widens it, dragging right narrows it.
+  await dragTo(page, 1440 - 560);
+  expect(await railWidth(page), 'drag widened the rail').toBeCloseTo(560, 0);
+
+  await dragTo(page, 1440 - 340);
+  expect(await railWidth(page), 'drag narrowed the rail').toBeCloseTo(340, 0);
+
+  await dragTo(page, 0);
+  expect(await railWidth(page), 'clamped at the max').toBeLessThanOrEqual(RAIL_MAX);
+
+  await dragTo(page, 1440);
+  expect(await railWidth(page), 'clamped at the min').toBeGreaterThanOrEqual(RAIL_MIN);
+});
+
+test('the rail width survives a reload and resets on double-click', async ({ page }) => {
+  test.skip(isMobile(page), 'the rail only exists on wide viewports');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  await dragTo(page, 1440 - 520);
+  const dragged = await railWidth(page);
+
+  await page.reload();
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  expect(await railWidth(page), 'width persisted across reload').toBeCloseTo(dragged, 0);
+
+  await page.locator(resizer).dblclick();
+  await expect
+    .poll(() => railWidth(page), { timeout: 5000 })
+    .toBeCloseTo(RAIL_DEFAULT, 0);
+});
+
 test('the one-liner is operable from the keyboard', async ({ page }) => {
   test.skip(isMobile(page), 'the TOC only exists on wide viewports');
 
