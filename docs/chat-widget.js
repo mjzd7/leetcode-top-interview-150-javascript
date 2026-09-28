@@ -88,6 +88,7 @@
     streaming: false,
     controller: null,
     firstTokenTimer: null,
+    statusOverride: '',
     pinScroll: true,
     lastFocus: null,
     reveal: null,
@@ -801,10 +802,10 @@
     // dry run" on every page, including the behavioural-interview guide where
     // none of those exist.
     var KIND_COPY = {
-      problem: 'I have this guide open — ask about any approach, level, or follow-up in it.',
-      primer: 'I have this primer open — ask me to explain a pitfall or show working JavaScript.',
+      problem: 'I have this guide open — ask about any approach, level, or follow-up in it, or point me at another problem.',
+      primer: 'I have this primer open — ask me to explain a pitfall or show working JavaScript, or pull up a different topic.',
       guide: 'I have this guide open — ask me to explain a section or turn it into a plan.',
-      home: 'Ask me how this manual is organised, or what to study first.',
+      home: 'Ask me how this manual is organised, what to study first, or anything else.',
     };
 
     var chips = buildSuggestions()
@@ -817,7 +818,7 @@
     empty.className = 'ltc-empty';
     empty.innerHTML =
       '<div class="ltc-empty-mark" aria-hidden="true">' + AI_MARK + '</div>' +
-      '<h2 class="ltc-empty-title">Ask about this page</h2>' +
+      '<h2 class="ltc-empty-title">Ask anything</h2>' +
       '<p class="ltc-empty-page">' + esc(title) + '</p>' +
       badge +
       '<p class="ltc-empty-sub">' + esc(KIND_COPY[kind] || KIND_COPY.guide) + '</p>' +
@@ -1070,8 +1071,13 @@
    * Network chunks do not align with SSE frames, so a partial tail is held in
    * `buffer` until its blank-line terminator arrives. The provider may also
    * interleave `: comment` heartbeats, which are ignored by design.
+   *
+   * `onStatus` receives the route's progress frames ({"status":"..."}). These
+   * matter more than they look: a tool round can spend real time in retrieval
+   * with no content to show, and the first-token watchdog would otherwise treat
+   * that silence as a hang and abort a working request.
    */
-  async function readSse(res, onDelta, onDone, onError) {
+  async function readSse(res, onDelta, onDone, onError, onStatus) {
     if (!res.body) {
       onError('This browser cannot read the response stream.');
       return;
@@ -1104,6 +1110,7 @@
             continue; // not JSON — ignore rather than kill the stream
           }
           if (obj && obj.error) { sawError = String(obj.error); continue; }
+          if (obj && obj.status) { if (onStatus) onStatus(String(obj.status)); continue; }
           var delta = obj && obj.choices && obj.choices[0] && obj.choices[0].delta;
           if (delta && typeof delta.content === 'string' && delta.content) onDelta(delta.content);
         }
@@ -1125,12 +1132,20 @@
     el.panel.setAttribute('data-streaming', on ? 'true' : 'false');
     // Driven from JS rather than swapped with a CSS ::after: a visibility:hidden
     // label keeps its box, which stretched the pill across the whole header.
-    if (el.statusTxt) el.statusTxt.textContent = on ? 'Thinking' : 'Reading this page';
+    if (el.statusTxt) el.statusTxt.textContent = on ? (state.statusOverride || 'Thinking') : 'Ready';
     // aria-live + aria-busy is the combination that keeps a screen reader from
     // announcing a word-by-word reveal one word at a time; the finished message
     // is announced when the log leaves the busy state.
     el.log.setAttribute('aria-busy', on ? 'true' : 'false');
-    if (!on) endReveal();
+    if (!on) {
+      state.statusOverride = '';
+      endReveal();
+    }
+  }
+
+  function showStatus(text) {
+    state.statusOverride = text;
+    if (el.statusTxt) el.statusTxt.textContent = text;
   }
 
   function failTurn(message) {
@@ -1264,6 +1279,14 @@
           clearTimeout(state.firstTokenTimer);
           setStreaming(false);
           failTurn(message);
+        },
+        function (status) {
+          // A tool is running. This is proof the request is alive, so stand the
+          // watchdog down — otherwise a slow retrieval reads as a hang and we
+          // abort a request that was about to succeed.
+          clearTimeout(state.firstTokenTimer);
+          state.firstTokenTimer = null;
+          showStatus(status);
         },
       );
     } catch (e) {
