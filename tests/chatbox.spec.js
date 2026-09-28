@@ -674,9 +674,10 @@ test('the article is no longer squeezed by a fourth column', async ({ page }) =>
  * The one-liner page navigation (item A)
  * ------------------------------------------------------------------ *
  * Collapsed, "On this page" is a single row naming the section in view.
- * Clicking it opens just that section, whose sub-headings hang off a
- * guide line. A section the reader opened by hand stays open when the
- * one-liner moves on to another section.
+ * Clicking it opens that section's sub-headings, which hang off a guide
+ * line. Moving to another section closes the one that was open, so the
+ * navigation is never more than a single section deep and never lists
+ * sections out of article order.
  */
 
 /** Sections actually painted, i.e. not hidden by the one-liner rule. */
@@ -747,56 +748,46 @@ test('sub-headings hang off a guide line so they read as children', async ({ pag
   expect(indent, 'child sits right of the guide').toBeGreaterThan(0);
 });
 
-test('a section opened by hand stays open when the one-liner moves on', async ({ page }) => {
+test('an opened section closes when the reader moves to another', async ({ page }) => {
   test.skip(isMobile(page), 'the TOC only exists on wide viewports');
 
   const row = await oneLiner(page);
   await row.locator('.toc-toggle').click();
-  const opened = page.locator('#tocNav .toc-sec[data-user-open="true"]');
-  await expect(opened).toHaveCount(1);
-  const openedText = await opened.locator('.toc-link').first().textContent();
+  await expect(page.locator('#tocNav .toc-sec[data-collapsed="false"]')).toHaveCount(1);
 
   await scrollToSection(page, /Level 3/);
 
+  // The new section leads and the one that was open has folded away, so the
+  // navigation is a single line again rather than two out-of-order sections.
+  expect(await visibleSecs(page), 'only the section in view is shown').toBe(1);
   await expect(page.locator('#tocNav .toc-sec.is-active .toc-link').first())
     .toContainText(/Level 3/);
-  await expect(opened).toHaveCount(1);
-  await expect(opened.locator('.toc-sub')).toBeVisible();
-  expect(await opened.locator('.toc-link').first().textContent()).toBe(openedText);
-  expect(await visibleSecs(page), 'one-liner plus the section they opened').toBe(2);
+  await expect(page.locator('#tocNav .toc-sec[data-collapsed="false"]')).toHaveCount(0);
 });
 
-test('the section in view stays pinned above a section opened earlier', async ({ page }) => {
+test('only the section in view is ever shown', async ({ page }) => {
   test.skip(isMobile(page), 'the TOC only exists on wide viewports');
 
   const row = await oneLiner(page);
   await row.locator('.toc-toggle').click();
   await scrollToSection(page, /Level 3/);
 
-  const secs = page.locator('#tocNav .toc-sec:visible');
-  await expect(secs).toHaveCount(2);
-  // The one-liner leads, even though the opened section comes first in the
-  // article, so the current section is never pushed down the rail.
-  await expect(secs.first()).toHaveClass(/is-active/);
-  await expect(secs.nth(1)).toHaveAttribute('data-user-open', 'true');
-
-  const [activeBox, openBox] = await Promise.all([
-    secs.first().boundingBox(),
-    secs.nth(1).boundingBox(),
-  ]);
-  expect(activeBox.y, 'active section is above the opened one').toBeLessThan(openBox.y);
+  const shown = page.locator('#tocNav .toc-sec:visible');
+  await expect(shown).toHaveCount(1);
+  await expect(shown.first()).toHaveClass(/is-active/);
 });
 
-test('pinning survives scrolling in both directions', async ({ page }) => {
+test('the one-liner keeps tracking the section in both directions', async ({ page }) => {
   test.skip(isMobile(page), 'the TOC only exists on wide viewports');
 
   const row = await oneLiner(page);
   await row.locator('.toc-toggle').click();
 
-  for (const target of [/Level 3/, /Gotchas/, /Level 1/]) {
+  for (const [target, name] of [[/Level 3/, /Level 3/], [/Gotchas/, /Gotchas/], [/Level 1/, /Level 1/]]) {
     await scrollToSection(page, target);
-    const first = page.locator('#tocNav .toc-sec:visible').first();
-    await expect(first, `active leads after scrolling to ${target}`).toHaveClass(/is-active/);
+    expect(await visibleSecs(page), `one section shown at ${name}`).toBe(1);
+    await expect(page.locator('#tocNav .toc-sec.is-active .toc-link').first())
+      .toContainText(name);
   }
 });
 
