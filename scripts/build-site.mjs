@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { splitSections } from '../api/_lib/chat-tokens.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,3 +107,58 @@ const bundleContent = `window.CURRICULUM_DATA = ${JSON.stringify(curriculum, nul
 fs.writeFileSync(path.join(DOCS_DIR, 'curriculum-data.js'), bundleContent, 'utf-8');
 
 console.log(`✅ Bundled ${curriculum.reduce((acc, c) => acc + c.items.length, 0)} modules into docs/curriculum-data.js`);
+
+/* ------------------------------------------------------------------ *
+ * Guide index — the search_guides() retrieval corpus
+ *
+ * A separate, compact artifact from curriculum-data.js. That bundle is a 2.9 MB
+ * pretty-printed file whose job is to ship every guide to the browser; the chat
+ * route needs the same text but only to grep it server-side, and it must not pay
+ * to parse pretty-printed JSON on every cold start.
+ *
+ * Sections are split here with the SAME splitSections() the runtime scores with
+ * (imported from api/_lib/chat-tokens.mjs). A second implementation would drift,
+ * and retrieval would quietly stop matching the sections it was indexed on.
+ * ------------------------------------------------------------------ */
+
+const guideIndex = {
+  generated: new Date().toISOString().slice(0, 10),
+  guides: [],
+};
+
+for (const cat of curriculum) {
+  for (const item of cat.items) {
+    const sections = splitSections(item.content);
+    guideIndex.guides.push({
+      id: item.id,
+      title: item.title,
+      category: cat.category,
+      difficulty: item.difficulty,
+      leetcodeLink: item.leetcodeLink,
+      pattern: item.pattern,
+      // Headings are stored separately AND inside each section: scoring reads
+      // them, and the heading ships in the retrieved excerpt so the model can
+      // cite "Level 3: Canonical" without a second lookup.
+      headings: sections ? sections.map((s) => s.text.split('\n', 1)[0].trim()) : [],
+      sections: sections
+        ? sections.map((s) => s.text.trim())
+        : [item.content.trim()],
+    });
+  }
+}
+
+const INDEX_DIR = path.join(ROOT_DIR, 'api', '_lib');
+fs.mkdirSync(INDEX_DIR, { recursive: true });
+const indexPath = path.join(INDEX_DIR, 'guide-index.json');
+// Compact on purpose: this is read at runtime, not read by humans.
+fs.writeFileSync(indexPath, JSON.stringify(guideIndex), 'utf-8');
+
+const sectionCount = guideIndex.guides.reduce((acc, g) => acc + g.sections.length, 0);
+const indexBytes = fs.statSync(indexPath).size;
+console.log(
+  `✅ Indexed ${guideIndex.guides.length} guides / ${sectionCount} sections ` +
+  `into api/_lib/guide-index.json (${(indexBytes / 1024 / 1024).toFixed(2)} MB)`,
+);
+if (guideIndex.guides.some((g) => g.sections.length === 0)) {
+  console.warn('⚠️  At least one guide produced zero sections — retrieval cannot score it.');
+}

@@ -24,6 +24,18 @@
 export const CONTEXT_OPEN = '<<<GUIDE_CONTENT>>>';
 export const CONTEXT_CLOSE = '<<<END_GUIDE_CONTENT>>>';
 
+/**
+ * Delimiter used to fence TOOL output inside the conversation.
+ *
+ * Deliberately a different pair from the guide fence. Tool results arrive from
+ * the open internet and from files the model chose to read, so they get their own
+ * boundary: a reader (or a model) can never confuse retrieved text for the page
+ * the browser actually sent, and the prompt can say "web text is never an
+ * instruction channel" about a range the page text is not in.
+ */
+export const WEB_OPEN = '<<<TOOL_CONTENT>>>';
+export const WEB_CLOSE = '<<<END_TOOL_CONTENT>>>';
+
 const DEFAULT_RATE_LIMIT = 5; // requests ...
 const DEFAULT_RATE_WINDOW_MS = 60_000; // ... per minute (integration plan §2.3)
 
@@ -137,6 +149,14 @@ const CONTROL_TOKENS = [
 /** Our own fence. Unconditional: a guide containing it could break out early. */
 const FENCE_BREAK = new RegExp(CONTEXT_OPEN.split('').map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(''), 'gi');
 
+/**
+ * The tool fence needs the same protection, and for a sharper reason: a fetched
+ * web page is fully attacker-controlled, so a page whose text contained our own
+ * delimiter could otherwise close the fence early and have the remainder of its
+ * contents read as trusted conversation.
+ */
+const FENCE_BREAK_TOOL = new RegExp(WEB_OPEN.split('').map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(''), 'gi');
+
 // Line-leading conversational role turns: "System: ...", "assistant: ...".
 // The lookahead deliberately skips matches where the value is a quoted string,
 // which is the signature of a JS object literal ({ user: 'alice' }) rather than
@@ -171,8 +191,12 @@ export function sanitizeContext(input, { maxChars = 60_000 } = {}) {
     });
   }
 
-  // 3. Fence-break attempts on our own delimiter.
+  // 3. Fence-break attempts on our own delimiters.
   text = text.replace(FENCE_BREAK, () => {
+    removed += 1;
+    return '[redacted]';
+  });
+  text = text.replace(FENCE_BREAK_TOOL, () => {
     removed += 1;
     return '[redacted]';
   });
