@@ -138,12 +138,11 @@
     .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
     .toc-link.active { color: var(--accent); border-color: var(--accent); }
 
-    /* One-liner page navigation. Only the section in view, plus any section
-       the reader opened by hand, is painted; everything else is display:none
-       so it drops out of the flow and cannot scroll. */
+    /* One-liner page navigation. Only the section in view is painted, so the
+       panel is never more than one section deep and never lists sections out
+       of article order. */
     .toc-sec { display: none; }
-    .toc-sec.is-active,
-    .toc-sec[data-user-open="true"] { display: block; }
+    .toc-sec.is-active { display: block; }
     .toc-row { display: flex; align-items: center; gap: 0.25rem; }
     .toc-sec.is-active .toc-link { color: var(--accent); }
     .toc-toggle { transition: color 0.15s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
@@ -1066,12 +1065,7 @@
         toggle.setAttribute('aria-controls', sub.id);
         toggle.setAttribute('aria-label', 'Subsections of ' + h.textContent);
         toggle.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
-        toggle.onclick = () => {
-          const open = sec.dataset.collapsed === 'true';
-          setOpen(sec, open);
-          // A section the reader opened stays visible when the one-liner moves on.
-          if (open) sec.dataset.userOpen = 'true'; else delete sec.dataset.userOpen;
-        };
+        toggle.onclick = () => setOpen(sec, sec.dataset.collapsed === 'true');
 
         row.append(a, toggle);
         sec.append(row, sub);
@@ -1116,15 +1110,9 @@
 
       const markActive = (id) => {
         const target = sections.find((s) => s.h.id === id) || sections[0];
-        // Sections are built in article order, so a section the reader opened
-        // earlier would otherwise sit above the one they are reading now. Move
-        // the current one to the front; the opened ones keep their order below.
-        if (tocNav.firstElementChild !== target.sec) tocNav.prepend(target.sec);
         sections.forEach((s) => {
           s.sec.classList.toggle('is-active', s === target);
-          // The one-liner stays collapsed; only a section the reader opened
-          // by hand survives the one-liner moving to another section.
-          if (s.sec.dataset.userOpen !== 'true') setOpen(s.sec, false);
+          setOpen(s.sec, false);
         });
       };
 
