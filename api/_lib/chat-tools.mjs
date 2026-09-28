@@ -19,7 +19,7 @@
  */
 
 import { searchGuides } from './chat-guides.mjs';
-import { tavilySearch, tavilyScrape } from './chat-web.mjs';
+import { tavilySearch, tavilyScrape, webConfigured } from './chat-web.mjs';
 import { sanitizeContext, WEB_OPEN, WEB_CLOSE } from './chat-security.mjs';
 import { countTokens, truncateRelevant, MAX_TOOL_RESULT_TOKENS, MAX_TOOL_CALLS } from './chat-tokens.mjs';
 
@@ -85,6 +85,20 @@ export const TOOL_SCHEMAS = [
     },
   },
 ];
+
+/**
+ * The tools this deployment can actually serve.
+ *
+ * search_guides is always offered: it is local, free, and the right answer for
+ * most study questions. The web tools are offered ONLY when Tavily is
+ * configured, so the model is never handed a tool whose every call is guaranteed
+ * to come back "not configured" — which wastes a round trip and, worse, teaches
+ * the model that tool results can be ignored.
+ */
+export function availableTools(env = process.env) {
+  if (webConfigured(env)) return TOOL_SCHEMAS;
+  return TOOL_SCHEMAS.filter((t) => t.function.name === 'search_guides');
+}
 
 /**
  * Per-request tool-call budget.
