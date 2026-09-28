@@ -19,4 +19,15 @@ Thumbs.db
 docs/curriculum-data.js
 .vercel
 .env*
+!.env.example
 opencode.json
+
+# Agent scratch: QA screenshots, throwaway diagnostics, session notes
+scratch/
+
+# Playwright run artifacts (traces, screenshots on failure)
+test-results/
+playwright-report/
+
+# Downloaded headless browser binaries (@mermaid-js/mermaid-cli pulls puppeteer)
+.puppeteer_cache/
