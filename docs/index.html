@@ -205,6 +205,21 @@
     .lt-rail { display: contents; }
     .lt-rail-toc { display: none; }
     #ltRailResizer { display: none; }
+    @media (min-width: 768px) {
+      #sidebar[data-stage="1"] { width: 200px; }
+      #sidebar[data-stage="2"] { width: 56px; }
+      #sidebar[data-stage="1"] .nav-badge,
+      #sidebar[data-stage="2"] .nav-badge { display: none; }
+      #sidebar[data-stage="2"] .nav-title,
+      #sidebar[data-stage="2"] .nav-group-label,
+      #sidebar[data-stage="2"] .nav-group-count { display: none; }
+      /* At 56px these collapse to unusable slivers, so they go too. */
+      #sidebar[data-stage="2"] #searchInput,
+      #sidebar[data-stage="2"] #difficultyFilters { display: none; }
+      #sidebar[data-stage="2"] .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+      #sidebar[data-stage="2"] .nav-item > .shrink-0 { width: auto; }
+      #ltNavCollapse { display: flex; }
+    }
     .ltc-backdrop {
       position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
       opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
@@ -729,10 +744,14 @@
             <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
             <circle id="ringFg" cx="32" cy="32" r="26" fill="none" stroke="#C8FA4B" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="163.36"/>
           </svg>
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <div id="ringPct" class="font-display font-bold text-xl leading-none">0%</div>
             <div id="ringSub" class="text-xs text-slate-400 mt-1 font-mono">0 / 150 done</div>
           </div>
+          <button id="ltNavCollapse" type="button" aria-label="Collapse the navigation"
+                  class="hidden shrink-0 w-8 h-8 rounded-lg items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
         </div>
         <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
                class="mt-3 w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[#C8FA4B]/60 min-h-[44px]">
@@ -880,7 +899,7 @@
       Hard: 'background:rgba(251,113,133,.12);color:#FB7185;border:1px solid rgba(251,113,133,.3)',
       Primer: 'background:rgba(200,250,75,.1);color:#C8FA4B;border:1px solid rgba(200,250,75,.3)',
     };
-    const badge = (d) => `<span class="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="${DIFF_STYLE[d] || DIFF_STYLE.Primer}">${d}</span>`;
+    const badge = (d) => `<span class="nav-badge text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="${DIFF_STYLE[d] || DIFF_STYLE.Primer}">${d}</span>`;
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     /* ---------- sidebar ---------- */
@@ -924,10 +943,10 @@
         const head = document.createElement('div');
         head.className = 'px-2 pt-1';
         head.innerHTML = '<div class="flex items-baseline justify-between gap-2">' +
-          '<span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">' + esc(cat.category) + '</span>' +
+          '<span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">' + esc(cat.category) + '</span>' +
           (isFound
-            ? '<span class="text-[10px] font-mono text-slate-600">' + items.length + '</span>'
-            : '<span class="text-[10px] font-mono text-slate-500">' + doneCount + '/' + items.length + '</span>') +
+            ? '<span class="nav-group-count text-[10px] font-mono text-slate-600">' + items.length + '</span>'
+            : '<span class="nav-group-count text-[10px] font-mono text-slate-500">' + doneCount + '/' + items.length + '</span>') +
           '</div>' +
           (isFound ? '' : '<div class="mod-bar mt-1.5"><span style="width:' + Math.round((doneCount / items.length) * 100) + '%"></span></div>');
         wrap.appendChild(head);
@@ -945,7 +964,7 @@
           btn.onmouseleave = () => { if (!active) btn.style.background = 'transparent'; };
           btn.innerHTML =
             '<span class="shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
-            '<span class="truncate flex-1 ' + (done && !active ? 'line-through opacity-60' : '') + '">' + esc(item.title) + '</span>' +
+            '<span class="nav-title truncate flex-1 ' + (done && !active ? 'line-through opacity-60' : '') + '">' + esc(item.title) + '</span>' +
             badge(item.difficulty);
           btn.title = item.title;
           btn.onclick = () => openArticle(item.id);
@@ -1508,6 +1527,31 @@
     }
     $('menuBtn').onclick = openSidebar;
     sideOverlay.onclick = closeSidebar;
+
+    /* ---------- left nav collapse, two stages (item E) ---------- */
+    (function initNavCollapse() {
+      const el = $('sidebar'), btn = $('ltNavCollapse');
+      if (!el || !btn) return;
+      const KEY = 'lt150-nav-stage';
+      const LABELS = ['Collapse the navigation',
+                      'Widen the navigation to a text rail',
+                      'Widen the navigation fully',
+                      'Collapse the navigation'];
+      let stage = 0;
+      try { const v = parseInt(localStorage.getItem(KEY), 10); if (v >= 0 && v <= 2) stage = v; } catch (e) {}
+      const apply = (s, persist) => {
+        stage = ((s % 3) + 3) % 3;
+        el.dataset.stage = String(stage);
+        btn.setAttribute('aria-label', LABELS[stage]);
+        btn.title = LABELS[stage];
+        ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
+          const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
+        });
+        if (persist) { try { localStorage.setItem(KEY, String(stage)); } catch (e) {} }
+      };
+      apply(stage, false);
+      btn.onclick = () => apply(stage + 1, true);
+    })();
 
     /* ---------- rail resize (item C) ---------- */
     (function initRailResize() {
