@@ -1116,6 +1116,10 @@
 
       const markActive = (id) => {
         const target = sections.find((s) => s.h.id === id) || sections[0];
+        // Sections are built in article order, so a section the reader opened
+        // earlier would otherwise sit above the one they are reading now. Move
+        // the current one to the front; the opened ones keep their order below.
+        if (tocNav.firstElementChild !== target.sec) tocNav.prepend(target.sec);
         sections.forEach((s) => {
           s.sec.classList.toggle('is-active', s === target);
           // The one-liner stays collapsed; only a section the reader opened
