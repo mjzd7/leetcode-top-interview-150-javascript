@@ -39,6 +39,9 @@ async function openChat(page) {
 /** One upstream SSE frame carrying a text delta. */
 const delta = (content) => `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
 
+/** One route status frame, as /api/chat emits while a tool is running. */
+const statusFrame = (text) => `data: ${JSON.stringify({ status: text })}\n\n`;
+
 /**
  * Fulfill /api/chat with a well-formed SSE body.
  * `chunks` is turned into a single string; framing happens in the browser.
@@ -50,6 +53,18 @@ async function mockChat(page, chunks, { status = 200, extraHeaders = {} } = {}) 
       status,
       contentType: 'text/event-stream',
       headers: { 'Access-Control-Allow-Origin': '*', ...extraHeaders },
+      body,
+    });
+  });
+}
+
+/** Fulfill /api/chat with arbitrary pre-framed SSE text (status frames, heartbeats). */
+async function mockChatRaw(page, body, { status = 200 } = {}) {
+  await page.route('**/api/chat', async (route) => {
+    await route.fulfill({
+      status,
+      contentType: 'text/event-stream',
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body,
     });
   });
@@ -582,6 +597,56 @@ test('an unreachable API degrades instead of hanging', async ({ page }) => {
 
   await expect(page.locator('.ltc-retry')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(input)).toBeEnabled();
+});
+
+test('tool status frames are progress, not answer text', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  // Two lookups, as a cross-question turn produces, interleaved with the answer.
+  await mockChatRaw(
+    page,
+    statusFrame('Looking up search_guides…')
+    + delta('Guide 146: LRU Cache')
+    + statusFrame('Looking up web_search…')
+    + delta(' uses a hash map and a doubly linked list.')
+    + 'data: [DONE]\n\n',
+  );
+  await openChat(page);
+
+  await page.locator(input).fill('how does an LRU cache work while I am on Two Sum?');
+  await page.locator(sendBtn).click();
+
+  await expect(assistantBubble(page)).toContainText('Guide 146: LRU Cache', { timeout: 15_000 });
+  await expect(assistantBubble(page)).toContainText('doubly linked list');
+
+  // A status frame is chrome. If it reached the transcript the reader would read
+  // "Looking up search_guides…" as part of the answer.
+  const bubble = await assistantBubble(page).innerText();
+  expect(bubble).not.toContain('Looking up');
+  expect(bubble).not.toContain('search_guides');
+  expect(bubble).not.toContain('web_search');
+
+  // The pill returns to idle rather than sticking on a tool name.
+  await expect(page.locator('#ltcStatusTxt')).toHaveText('Ready');
+  await expect(page.locator(input)).toBeEnabled();
+});
+
+test('a status-only stream still ends the turn cleanly', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  // The cut-off path: the route spent its lookup budget, so it reports progress
+  // and then the stream closes. The widget must release the UI, not hang.
+  await mockChatRaw(page, statusFrame('Looking up search_guides…') + 'data: [DONE]\n\n');
+  await openChat(page);
+
+  await page.locator(input).fill('something expensive');
+  await page.locator(sendBtn).click();
+
+  await expect(page.locator('#ltcStatusTxt')).toHaveText('Ready', { timeout: 15_000 });
+  await expect(page.locator(input)).toBeEnabled();
+  // data-busy, not the disabled attribute: send stays disabled while the input
+  // is empty, which is correct and would make this assertion meaningless.
+  await expect(page.locator(sendBtn)).toHaveAttribute('data-busy', 'false');
 });
 
 /* ------------------------------------------------------------------ *
