@@ -766,6 +766,40 @@ test('a section opened by hand stays open when the one-liner moves on', async ({
   expect(await visibleSecs(page), 'one-liner plus the section they opened').toBe(2);
 });
 
+test('the section in view stays pinned above a section opened earlier', async ({ page }) => {
+  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
+
+  const row = await oneLiner(page);
+  await row.locator('.toc-toggle').click();
+  await scrollToSection(page, /Level 3/);
+
+  const secs = page.locator('#tocNav .toc-sec:visible');
+  await expect(secs).toHaveCount(2);
+  // The one-liner leads, even though the opened section comes first in the
+  // article, so the current section is never pushed down the rail.
+  await expect(secs.first()).toHaveClass(/is-active/);
+  await expect(secs.nth(1)).toHaveAttribute('data-user-open', 'true');
+
+  const [activeBox, openBox] = await Promise.all([
+    secs.first().boundingBox(),
+    secs.nth(1).boundingBox(),
+  ]);
+  expect(activeBox.y, 'active section is above the opened one').toBeLessThan(openBox.y);
+});
+
+test('pinning survives scrolling in both directions', async ({ page }) => {
+  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
+
+  const row = await oneLiner(page);
+  await row.locator('.toc-toggle').click();
+
+  for (const target of [/Level 3/, /Gotchas/, /Level 1/]) {
+    await scrollToSection(page, target);
+    const first = page.locator('#tocNav .toc-sec:visible').first();
+    await expect(first, `active leads after scrolling to ${target}`).toHaveClass(/is-active/);
+  }
+});
+
 test('the sub-heading being read is marked as the active child', async ({ page }) => {
   test.skip(isMobile(page), 'the TOC only exists on wide viewports');
 
