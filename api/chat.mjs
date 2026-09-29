@@ -21,7 +21,7 @@
 
 import { buildChatRequest, DEFAULT_MODEL } from './_lib/chat-prompt.mjs';
 import { checkOrigin, rateLimit, clientIp, allowedOrigins, SIGNED_IN_RATE_LIMIT, DAILY_RATE_LIMIT, DAILY_RATE_WINDOW_MS, DAY_PREFIX } from './_lib/chat-security.mjs';
-import { MAX_COMPLETION_TOKENS, MAX_TOOL_ROUNDS, MAX_TOOL_RESULT_TOKENS } from './_lib/chat-tokens.mjs';
+import { MAX_COMPLETION_TOKENS, MAX_TOOL_ROUNDS, MAX_TOOL_RESULT_TOKENS, completionParams, unknownModelHint } from './_lib/chat-tokens.mjs';
 import { availableTools, createToolBudget, runTool } from './_lib/chat-tools.mjs';
 import { getSession } from './_lib/session.mjs';
 
@@ -281,8 +281,7 @@ export default async function handler(req, res) {
       upstream = await client.chat.completions.create(
         {
           model,
-          temperature: 0.2, // low: coding answers should be reproducible, not creative
-          max_tokens: MAX_COMPLETION_TOKENS, // cost control (improvements-doc §6.3)
+          ...completionParams(model),
           stream: true,
           messages: conversation,
           ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
@@ -294,7 +293,17 @@ export default async function handler(req, res) {
       // The client is gone: nothing to write to.
       if (aborted) return { gone: true };
       const timedOut = e?.code === 'ETIMEDOUT' || /timeout/i.test(String(e?.message || ''));
-      log('chat.upstream_failed', { ip, round: stats.rounds + 1, error: String(e?.message || e), timedOut });
+      // A 400 here is almost always a parameter the chosen model does not accept,
+      // not a transient fault. The reason goes to the log — never to the reader —
+      // because "unsupported parameter: max_tokens" names the env var to change;
+      // the reader only needs to be told to retry.
+      log('chat.upstream_failed', {
+        ip,
+        round: stats.rounds + 1,
+        error: String(e?.message || e),
+        timedOut,
+        ...(e?.status === 400 ? { hint: unknownModelHint(model) } : {}),
+      });
       sse(res, { error: timedOut ? 'The assistant took too long to respond. Please retry.' : 'The assistant is unavailable right now. Please retry.' });
       res.write('data: [DONE]\n\n');
       res.end();

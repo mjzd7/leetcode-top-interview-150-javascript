@@ -387,6 +387,13 @@
       color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
     }
     .ltc-empty-sub { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; max-width: 34ch; }
+    .ltc-empty-privacy {
+      /* --muted (6.4:1 on the panel), NOT the hint's #5A6377, which is 3.2:1 and
+         fails AA at this size. Subordinate via size and the rule above it. */
+      font-size: 0.68rem; color: var(--muted); opacity: .78; line-height: 1.65;
+      margin: 1.1rem 0 0; max-width: 42ch;
+      border-top: 1px solid rgba(148, 163, 184, 0.12); padding-top: 0.85rem;
+    }
     .ltc-suggestions {
       display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
       margin-top: 1.1rem; width: 100%;
