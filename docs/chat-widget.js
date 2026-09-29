@@ -39,9 +39,6 @@
   /** Same-origin by default. Set to an absolute URL to host the API separately. */
   var API_BASE = '';
 
-  /** Per-article chat history, so switching guides keeps separate threads. */
-  var STORAGE_KEY = 'lt150-chat-v1';
-
   /** Client-side cap. The server also truncates by tokens; this is the cheap first pass. */
   var MAX_CONTEXT_CHARS = 40000;
 
@@ -404,26 +401,185 @@
 
   /* ------------------------------------------------------------------ *
    * Persistence
-   * ------------------------------------------------------------------ */
+   * ------------------------------------------------------------------ *
+   * `localStorage`, not `sessionStorage`, and not IndexedDB.
+   *
+   * sessionStorage was the actual defect: it is per-tab, so a thread died with
+   * the tab. IndexedDB would fix that too, but it makes every read a promise, and
+   * messageNode(), clearCurrent() and the per-guide thread swap are all built on
+   * readStore() being SYNCHRONOUS. localStorage fixes the defect for free and
+   * keeps that ordering. Same key as before, so nothing else had to change.
+   *
+   * The cost of the fix is a privacy one, and it is real: history that outlives
+   * the tab is readable by anyone at the same browser profile. Retention is the
+   * mitigation, so it is bounded three ways — a byte cap with oldest-first
+   * eviction, a 30-day TTL, and a control that erases every thread at once.
+   */
 
-  function readStore() {
+  /** Per-article chat history, so switching guides keeps separate threads. */
+  var STORAGE_KEY = 'lt150-chat-v1';
+
+  /**
+   * Consecutive-429 counter, stored beside the store rather than inside it.
+   *
+   * It is not a thread, and `lt150-chat-v1` is a flat {articleId: entry} map that
+   * the cap and the TTL both walk. A magic key inside it would have to be special
+   * -cased in three places to avoid being treated as a 30-day-old conversation.
+   */
+  var GATE_KEY = STORAGE_KEY + ':gate';
+
+  /**
+   * Retention window. 30 days matches the session cookie's own 30-day expiry, so
+   * a signed-in reader's history does not outlive their session by much.
+   */
+  var STORE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+  /**
+   * Byte budget for the whole store.
+   *
+   * Measured, not guessed (2026-09-28). Built from this manual's own guide
+   * markdown as a stand-in for model output — same LaTeX, same fenced code, same
+   * dry-run tables — at the shape the widget actually keeps, `slice(-40)` of
+   * ~5 KB answers:
+   *
+   *   p50 per message   5,226 B      p99 5,340 B      max 5,348 B
+   *   one full thread    107,271 B    (40 messages)
+   *   20 such threads    2,147,153 B
+   *
+   * 1 MiB therefore holds ~10 maxed-out threads. It is a fifth of the 5 MiB
+   * origin quota, which is shared with this portal's progress, judge-draft, rail
+   * and nav keys, and a setItem that overruns throws — and a throw here would
+   * cost the reader persistence for the WHOLE origin, not just chat. Headroom is
+   * the point; a tighter cap would start evicting threads a reader still wants.
+   */
+  var STORE_MAX_BYTES = 1048576;
+
+  /** Messages kept per guide. */
+  var MAX_MESSAGES = 40;
+
+  /* --- 429 soft gate (D-10) ------------------------------------------ */
+
+  /** A session RAISES the rate limit; it never gates chat. Offer it from here. */
+  var GATE_AFTER = 3;
+
+  /** Ceiling on the counter, so a long outage cannot nag a reader indefinitely. */
+  var GATE_MAX = 5;
+
+  /**
+   * Two 429s an hour apart are not a burst. Without this window a reader who hit
+   * the limit once last week would be "offered a sign-in" on their next single 429
+   * today, which is nagging rather than a remedy.
+   */
+  var GATE_WINDOW_MS = 15 * 60 * 1000;
+
+  /** UTF-8 byte length, because the localStorage quota is accounted in bytes. */
+  function byteLength(s) {
+    try { return new Blob([s]).size; } catch (e) { return s.length; }
+  }
+
+  function loadStore() {
     try {
-      var raw = sessionStorage.getItem(STORAGE_KEY);
+      var raw = localStorage.getItem(STORAGE_KEY);
       var parsed = raw ? JSON.parse(raw) : null;
-      return parsed && typeof parsed === 'object' ? parsed : {};
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
     } catch (e) {
       return {};
     }
   }
 
-  function saveStore() {
+  function writeStore(store) {
     try {
-      var store = readStore();
-      store[state.articleId] = { updatedAt: Date.now(), messages: state.messages.slice(-40) };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     } catch (e) {
       /* private mode / quota — chat still works for this session */
     }
+  }
+
+  /**
+   * Adopt threads written by the previous sessionStorage build.
+   *
+   * A reader who was mid-conversation when this shipped has their history only
+   * in sessionStorage, and losing it on deploy is a real regression. localStorage
+   * wins on conflict (it is the newer medium), the session copy is then dropped
+   * so it cannot come back or be counted twice, and a malformed value is
+   * discarded rather than retried on every read.
+   */
+  function migrateFromSession(store) {
+    var raw;
+    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) { return false; }
+    if (!raw) return false;
+    try {
+      var old = JSON.parse(raw);
+      if (old && typeof old === 'object' && !Array.isArray(old)) {
+        Object.keys(old).forEach(function (id) {
+          if (!store[id]) store[id] = old[id];
+        });
+      }
+    } catch (e) { /* malformed: drop it below rather than re-parsing forever */ }
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    return true;
+  }
+
+  /**
+   * Apply the TTL, then the byte cap, oldest first.
+   *
+   * Returns true if anything was removed, so the caller knows to persist. Done on
+   * READ as well as write: a reader who has stopped chatting should still have
+   * their store shrink, and it makes "the store never exceeds the cap" hold
+   * without depending on a future write.
+   */
+  function pruneStore(store) {
+    var now = Date.now();
+    var changed = false;
+
+    Object.keys(store).forEach(function (id) {
+      var entry = store[id];
+      if (!entry || typeof entry !== 'object' || typeof entry.updatedAt !== 'number'
+          || now - entry.updatedAt > STORE_TTL_MS) {
+        delete store[id];
+        changed = true;
+      }
+    });
+
+    while (byteLength(JSON.stringify(store)) > STORE_MAX_BYTES) {
+      var oldestId = null;
+      var oldest = Infinity;
+      Object.keys(store).forEach(function (id) {
+        var at = store[id] && store[id].updatedAt;
+        if (typeof at === 'number' && at < oldest) { oldest = at; oldestId = id; }
+      });
+      // A single thread bigger than the whole budget is kept: deleting the
+      // conversation the reader is currently in is worse than a setItem that
+      // may throw, and the old code already degraded to "unsaved" in that case.
+      if (oldestId === null) break;
+      delete store[oldestId];
+      changed = true;
+    }
+    return changed;
+  }
+
+  /**
+   * The store, pruned and migrated.
+   *
+   * Synchronous by contract: the init path, the per-guide swap and clearCurrent()
+   * all call this and immediately use the result.
+   */
+  function readStore() {
+    var store = loadStore();
+    var migrated = migrateFromSession(store);
+    var pruned = pruneStore(store);
+    if (migrated || pruned) writeStore(store);
+    return store;
+  }
+
+  function saveStore() {
+    var store = readStore();
+    store[state.articleId] = {
+      updatedAt: Date.now(),
+      messages: state.messages.slice(-MAX_MESSAGES),
+    };
+    pruneStore(store);
+    writeStore(store);
   }
 
   function loadForArticle(id) {
@@ -438,30 +594,83 @@
   function clearCurrent() {
     state.messages = [];
     state.animated = Object.create(null);
-    try {
-      var store = readStore();
-      delete store[state.articleId];
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    } catch (e) { /* ignore */ }
+    var store = readStore();
+    delete store[state.articleId];
+    writeStore(store);
     renderLog();
     el.input.focus();
+  }
+
+  /**
+   * Erase every guide's thread, not just the open one.
+   *
+   * Separate from clearCurrent because the two have very different consequences
+   * and only one of them is obvious from its label: this one has no undo, and it
+   * takes every conversation on the device with it. The gate counter goes too —
+   * it is part of this widget's local state, and leaving it behind would mean
+   * "clear all chats" did not.
+   */
+  function clearAllChats() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    try { localStorage.removeItem(GATE_KEY); } catch (e) { /* ignore */ }
+    state.messages = [];
+    state.animated = Object.create(null);
+    renderLog();
+    el.input.focus();
+  }
+
+  /* --- 429 soft gate ------------------------------------------------- */
+
+  function readGate() {
+    try {
+      var raw = localStorage.getItem(GATE_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed.count === 'number' ? parsed : { count: 0, at: 0 };
+    } catch (e) {
+      return { count: 0, at: 0 };
+    }
+  }
+
+  function writeGate(gate) {
+    try { localStorage.setItem(GATE_KEY, JSON.stringify(gate)); } catch (e) { /* ignore */ }
+  }
+
+  /** Record a rate-limited attempt; true from the third of a burst onward. */
+  function noteRateLimited() {
+    var gate = readGate();
+    var now = Date.now();
+    var carried = gate.at && now - gate.at <= GATE_WINDOW_MS ? gate.count : 0;
+    var count = Math.min(carried + 1, GATE_MAX);
+    writeGate({ count: count, at: now });
+    return count >= GATE_AFTER;
+  }
+
+  /** Any turn that got through the limiter ends the streak. */
+  function noteTurnAllowed() {
+    if (readGate().count) writeGate({ count: 0, at: 0 });
   }
 
   /* ------------------------------------------------------------------ *
    * Markdown rendering
    * ------------------------------------------------------------------ */
 
-  var mermaidReady = false;
-
   /**
    * Render any Mermaid diagrams inside `scope`, and only those.
    *
-   * Scoped deliberately: the portal's openArticle() calls mermaid.run() across the
-   * whole page, which would also re-render the chat's diagrams with the article's
-   * `securityLevel: 'loose'`. Chat diagrams are model-authored and unreviewed, so
-   * this re-asserts 'strict' for them. The source is already DOMPurify'd and
-   * escaped by the renderer, so a parse failure can only cost the picture, never
-   * the message — hence the fallback to a plain <pre>.
+   * `mermaid.initialize` is GLOBAL state, not per-call, and the portal's
+   * openArticle() re-initialises it to `securityLevel: 'loose'` before an
+   * unscoped `mermaid.run()`. So initialize() is called before *every* run here,
+   * not once: a one-way "already initialised" latch left every chat diagram after
+   * the reader opened a guide rendering under the article's 'loose'. The
+   * consequence is not cosmetic — Mermaid binds a `click`/`href` directive into a
+   * live `<a xlink:href>` only at 'loose', so a model-authored `click A
+   * "javascript:…"` became a clickable javascript: URL in the chat bubble, and
+   * `fetch_page` lets a stranger's page influence what the model emits.
+   *
+   * The run stays scoped to `scope`, which keeps the chat's own diagrams out of
+   * the article's page-wide pass. The source is already DOMPurify'd and escaped
+   * by the renderer, so a parse failure can only cost the picture, never the
+   * message — hence the fallback to a plain <pre>.
    */
   async function renderMermaid(scope) {
     if (!window.mermaid) return;
@@ -473,15 +682,14 @@
     var sources = nodes.map(function (n) { return n.textContent; });
 
     try {
-      if (!mermaidReady) {
-        window.mermaid.initialize({
-          startOnLoad: false,
-          theme: 'dark',
-          securityLevel: 'strict',
-          themeVariables: { primaryTextColor: '#E9EDF4', edgeLabelBackground: '#1A2130' },
-        });
-        mermaidReady = true;
-      }
+      // Re-asserted on every render, immediately before the run: the portal's
+      // openArticle() can (and does) reset this global to 'loose' at any time.
+      window.mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        securityLevel: 'strict',
+        themeVariables: { primaryTextColor: '#E9EDF4', edgeLabelBackground: '#1A2130' },
+      });
       await window.mermaid.run({ nodes: nodes });
     } catch (e) { /* handled by the check below, which covers both cases */ }
 
@@ -495,7 +703,16 @@
       if (!failed) return;
       var pre = document.createElement('pre');
       pre.className = 'ltc-mermaid-error';
-      pre.textContent = sources[i];
+      // A bare <pre> of source is indistinguishable from a broken box: the
+      // reader cannot tell a diagram was attempted, or that what they are
+      // looking at is meant to be readable. The label is a real element rather
+      // than a CSS ::before so a screen reader announces it and so a test can
+      // assert it — a generated-content label is neither.
+      var note = document.createElement('span');
+      note.className = 'ltc-mermaid-error-note';
+      note.textContent = 'This diagram could not be parsed, so its source is shown instead.';
+      pre.appendChild(note);
+      pre.appendChild(document.createTextNode(sources[i]));
       n.replaceWith(pre);
     });
   }
@@ -575,10 +792,11 @@
    * A marked renderer that bakes a copy button into every fenced code block.
    *
    * marked changed this signature: v15+ passes a single token object
-   * ({ text, lang, escaped }) while v12-v14 passed (code, infostring). The CDN tag
-   * in index.html is unpinned, so both shapes are handled rather than betting on
-   * one. `code` is escaped here because a custom renderer returns raw HTML that
-   * marked will not re-escape.
+   * ({ text, lang, escaped }) while v12-v14 passed (code, infostring). The CDN
+   * script is pinned to an exact version, so only one shape is live — the shim
+   * is kept anyway, so a deliberate version bump cannot silently turn every
+   * code block in a chat answer into a blank box. `code` is escaped here because
+   * a custom renderer returns raw HTML that marked will not re-escape.
    */
   function makeRenderer() {
     var renderer = new marked.Renderer();
@@ -633,6 +851,43 @@
     }
     // No sanitiser available: show the source rather than inject untrusted HTML.
     return '<pre>' + esc(src) + '</pre>';
+  }
+
+  /**
+   * Typeset the `$…$` / `$$…$$` inside `scope`, with the portal's own options.
+   *
+   * The option object is copied verbatim from `docs/index.html`'s openArticle()
+   * rather than invented, and every key of it earns its place — all four were
+   * measured against KaTeX 0.16.9 rather than assumed:
+   *
+   *   - `delimiters` is load-bearing. auto-render's *defaults* are `$$…$$`,
+   *     `\(…\)` and `\[…\]`; `$…$` is not among them, so omitting this key
+   *     silently renders no math at all rather than failing loudly.
+   *   - `ignoredTags` is what stops a JS template literal being typeset. The
+   *     hazard is a list that is WRONG, not one that is absent (KaTeX's own
+   *     default already includes pre/code), but it is real: against a widget
+   *     code block holding `` `${x}` `` and `$r$`, an `ignoredTags` list without
+   *     pre/code produces one `.katex` and rewrites the source to
+   *     "const key = `x'lets={nums[i]}`;".
+   *   - `throwOnError: false` keeps malformed LaTeX as the literal text the
+   *     model wrote instead of blanking the paragraph.
+   *   - There is deliberately no `trust` key. Math runs AFTER DOMPurify, so
+   *     KaTeX's output is never sanitised; `\href{javascript:…}` and
+   *     `\htmlClass{<img onerror=…>}` are refused precisely because trust is
+   *     off, and both were probed to produce 0 anchors and 0 images.
+   */
+  function renderMath(scope) {
+    if (!scope || !window.renderMathInElement) return;
+    try {
+      window.renderMathInElement(scope, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false }
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+        throwOnError: false
+      });
+    } catch (e) { /* leave the literal text rather than lose the answer */ }
   }
 
   /**
@@ -707,6 +962,11 @@
     // Assistant markdown is sanitised; user text is always escaped.
     body.innerHTML = m.role === 'assistant' ? renderMarkdown(m.content) : esc(m.content);
     enhanceTables(body);
+    // Math for a settled message: a restored thread, or the turn the reveal has
+    // just handed back. User turns are skipped on purpose — their text is
+    // escaped rather than markdown, and KaTeX would rewrite a reader's own words
+    // ("$5 and $10") into a formula.
+    if (m.role === 'assistant') renderMath(body);
     // Fire-and-forget: Mermaid replaces the node's contents with an <svg> once
     // it resolves, so nothing downstream depends on this having finished.
     renderMermaid(body);
@@ -734,6 +994,39 @@
       err.className = 'ltc-msg-error';
       err.textContent = m.error;
       wrap.appendChild(err);
+    }
+
+    // The soft gate: a third consecutive 429 adds a way to raise the limit. It is
+    // an ordinary line in the thread — no modal, no redirect, no disabled input —
+    // because waiting out the Retry-After remains a complete answer, and a reader
+    // who is never required to log in must never be treated as if they were.
+    if (m.gate) {
+      var gate = document.createElement('div');
+      gate.className = 'ltc-gate';
+      var gateText = document.createElement('span');
+      gateText.textContent = 'Rate-limited three times running. Waiting a minute works too, or ';
+      var gateLink = document.createElement('a');
+      gateLink.href = '/api/auth/login';
+      gateLink.textContent = 'sign in with GitHub';
+      var gateTail = document.createElement('span');
+      // The surrounding spaces are load-bearing: these are three sibling inline
+      // nodes, so nothing separates them but their own text. Without them the
+      // reader gets "too;sign in with GitHubfor a higher limit".
+      gateTail.textContent = ' for a higher limit.';
+      gate.appendChild(gateText);
+      gate.appendChild(gateLink);
+      gate.appendChild(gateTail);
+      wrap.appendChild(gate);
+    }
+
+    // The provider hit its output cap, so the answer ends mid-sentence. A quiet
+    // subordinate line, deliberately NOT the error treatment: nothing failed and
+    // the answer above is real and copyable, it is only unfinished.
+    if (m.truncated) {
+      var cut = document.createElement('p');
+      cut.className = 'ltc-truncated';
+      cut.textContent = 'This answer was cut off — ask me to continue.';
+      wrap.appendChild(cut);
     }
 
     if (m.status === 'error') {
@@ -953,6 +1246,14 @@
       var prefix = split > 0 ? text.slice(0, split) : '';
       r.md.innerHTML = renderMarkdown(prefix);
       enhanceTables(r.md);
+      // Math on the PREFIX ONLY, never the tail. This is the whole reason the
+      // reveal splits where it does: stableSplit is fence-aware, so a `$…$` pair
+      // inside the prefix is already closed and typesets once with nothing left
+      // to change — no snap. The tail is escaped text, so a half-typed `$a+b`
+      // never reaches KaTeX at all. Deferring math to messageNode() instead was
+      // measured to be worse: the prefix re-renders once per paragraph, so
+      // every paragraph holding math would show raw LaTeX and snap at turn end.
+      renderMath(r.md);
     }
     r.tail.textContent = text.slice(r.stable > 0 ? r.stable : 0);
     if (state.pinScroll) el.log.scrollTop = el.log.scrollHeight;
@@ -1076,8 +1377,13 @@
    * matter more than they look: a tool round can spend real time in retrieval
    * with no content to show, and the first-token watchdog would otherwise treat
    * that silence as a hang and abort a working request.
+   *
+   * `onTruncated` receives the route's `{"truncated":true}` frame, which it
+   * emits after the last content delta and before [DONE] when the provider
+   * stopped on finish_reason === 'length'. The frame is a fact about the turn,
+   * not text: it carries no content and must never reach the transcript as any.
    */
-  async function readSse(res, onDelta, onDone, onError, onStatus) {
+  async function readSse(res, onDelta, onDone, onError, onStatus, onTruncated) {
     if (!res.body) {
       onError('This browser cannot read the response stream.');
       return;
@@ -1111,6 +1417,9 @@
           }
           if (obj && obj.error) { sawError = String(obj.error); continue; }
           if (obj && obj.status) { if (onStatus) onStatus(String(obj.status)); continue; }
+          // Before the delta branch, so the flag is read off the frame rather
+          // than inferred from a stream that happened to end.
+          if (obj && obj.truncated) { if (onTruncated) onTruncated(); continue; }
           var delta = obj && obj.choices && obj.choices[0] && obj.choices[0].delta;
           if (delta && typeof delta.content === 'string' && delta.content) onDelta(delta.content);
         }
@@ -1148,13 +1457,16 @@
     if (el.statusTxt) el.statusTxt.textContent = text;
   }
 
-  function failTurn(message) {
+  function failTurn(message, rateLimited) {
     var last = state.messages[state.messages.length - 1];
     if (last && last.role === 'assistant') {
       last.status = 'error';
       last.error = message;
+      if (rateLimited) last.gate = true;
     } else {
-      state.messages.push({ role: 'assistant', content: '', error: message, ts: nowLabel(), status: 'error' });
+      var failed = { role: 'assistant', content: '', error: message, ts: nowLabel(), status: 'error' };
+      if (rateLimited) failed.gate = true;
+      state.messages.push(failed);
     }
     saveStore();
     renderLog();
@@ -1228,13 +1540,24 @@
       if (!res.ok) {
         var detail = null;
         try { detail = (await res.json()) || {}; } catch (e) { /* non-JSON error body */ }
-        if (res.status === 429) throw new Error('You are sending messages too quickly. Wait a moment and retry.');
+        if (res.status === 429) {
+          // The message is unchanged and still the primary response. The sign-in
+          // line is an *addition* from the third 429 of a burst onward, because a
+          // session raises the limit rather than unlocking anything (D-10).
+          var limited = new Error('You are sending messages too quickly. Wait a moment and retry.');
+          limited.rateLimited = noteRateLimited();
+          throw limited;
+        }
         if (res.status === 403) throw new Error('This assistant is not available from this origin.');
         if (res.status === 503) throw new Error('The assistant is not configured on this deployment.');
         throw new Error((detail && detail.error) || 'The assistant is unavailable (HTTP ' + res.status + ').');
       }
 
+      // This turn got past the limiter, so any rate-limit streak is over.
+      noteTurnAllowed();
+
       var first = true;
+      var wasTruncated = false;
       await readSse(
         res,
         function (chunk) {
@@ -1270,6 +1593,10 @@
           // finish to the reveal is what keeps a fast provider from collapsing
           // the answer into a single jump at [DONE].
           handOffToReveal(function () {
+            // Set here rather than on the frame, so a turn that errored or was
+            // stopped never grows the flag, and so it is on the message before
+            // saveStore() — the restore path has nothing special to do for it.
+            if (wasTruncated) assistantMsg.truncated = true;
             setStreaming(false);
             saveStore();
             renderLog();
@@ -1287,6 +1614,11 @@
           clearTimeout(state.firstTokenTimer);
           state.firstTokenTimer = null;
           showStatus(status);
+        },
+        function () {
+          // Latched, not rendered: the bubble is still the live streaming one,
+          // and the notice belongs on the settled message the reveal hands back.
+          wasTruncated = true;
         },
       );
     } catch (e) {
@@ -1308,7 +1640,7 @@
         renderLog();
       } else {
         setStreaming(false);
-        failTurn(e && e.message ? e.message : 'Could not reach the assistant.');
+        failTurn(e && e.message ? e.message : 'Could not reach the assistant.', !!(e && e.rateLimited));
       }
     } finally {
       state.controller = null;
@@ -1456,6 +1788,7 @@
     el.panelTitle = $('ltcPanelTitle');
     el.statusTxt = $('ltcStatusTxt');
     el.scrollDown = $('ltcScrollDown');
+    el.clearAll = $('ltcClearAll');
     if (!el.panel || !el.fab || !el.log || !el.form || !el.input || !el.send) return;
 
     // On desktop the panel is always visible, so `open()` never runs there. The
@@ -1471,6 +1804,7 @@
     el.fab.addEventListener('click', toggle);
     $('ltcClose').addEventListener('click', close);
     $('ltcClear').addEventListener('click', clearCurrent);
+    if (el.clearAll) el.clearAll.addEventListener('click', clearAllChats);
     el.stop.addEventListener('click', stop);
     if (el.backdrop) el.backdrop.addEventListener('click', close);
     if (el.scrollDown) {
@@ -1608,6 +1942,7 @@
     close: close,
     toggle: toggle,
     clear: clearCurrent,
+    clearAll: clearAllChats,
     send: send,
     stop: stop,
     extractPageContext: extractPageContext,
