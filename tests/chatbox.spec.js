@@ -262,9 +262,87 @@ test('accumulates SSE deltas into one assistant answer', async ({ page }) => {
   const bubble = assistantBubble(page);
   await expect(bubble).toContainText('Use a hash map for O(n).', { timeout: 15_000 });
   await expect(page.locator(`${log} .ltc-msg`)).toHaveCount(2);
-  await expect(page.locator('[data-typing]')).toHaveCount(0);
+  await expect(page.locator('[data-thinking]')).toHaveCount(0);
   await expect(page.locator(input)).toBeEnabled();
   await expect(page.locator(stopBtn)).toBeHidden();
+});
+
+/**
+ * The thinking indicator is a green gradient chip that slides along the seam
+ * between the conversation and the composer — Gemini's indeterminate progress
+ * line, not a blinking ellipsis.
+ *
+ * Asserted rather than eyeballed because the three properties that make it
+ * read as "blended" are the three a screenshot cannot show: it is anchored to
+ * the seam rather than floating in the log, the chip is genuinely animating,
+ * and both of its end stops are transparent. Opacity is read numerically
+ * instead of via toBeHidden(), because Playwright counts an opacity:0 element
+ * as visible and the line is faded rather than display:none'd so it can ease.
+ */
+test('a sliding green line marks the input seam while thinking, not three dots', async ({ page }) => {
+  // The suite-wide default is reduced motion, which freezes the sweep by
+  // design; this test is about the animation, so opt back in.
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  // Hold the turn open so every streaming-only assertion below lands inside the
+  // window. Everything that needs `data-streaming` is asserted immediately after
+  // the click, before the ones that do not, so the 6s is never the thing being
+  // tested — the read window has to comfortably outlast the assertion latency.
+  await page.route('**/api/chat', async (route) => {
+    await new Promise((r) => setTimeout(r, 6000));
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: delta('Use a hash map.') + 'data: [DONE]\n\n',
+    });
+  });
+  await openChat(page);
+
+  const line = page.locator('.ltc-think-line');
+  await expect(line, 'the thinking line is part of the composer').toHaveCount(1);
+  await expect(line, 'it costs no attention while the turn is idle').toHaveCSS('opacity', '0');
+
+  await page.locator(input).fill('explain');
+  await page.locator(sendBtn).click();
+
+  await expect(line, 'the line shows while a turn is in flight').toHaveCSS('opacity', '1');
+
+  // Anchored to the seam, not floating in the conversation: the line's box ends
+  // where the composer begins.
+  const [lineBox, composerBox] = await Promise.all([
+    line.boundingBox(),
+    page.locator('.ltc-composer').boundingBox(),
+  ]);
+  expect(lineBox.y + lineBox.height, 'the line rests on top of the composer')
+    .toBeLessThanOrEqual(composerBox.y + 1);
+
+  const chip = await line.evaluate((el) => {
+    const cs = getComputedStyle(el, '::before');
+    return {
+      animationName: cs.animationName,
+      animationDuration: cs.animationDuration,
+      backgroundImage: cs.backgroundImage,
+    };
+  });
+  expect(chip.animationName, 'the chip is actually animating').not.toBe('none');
+  expect(chip.animationDuration).not.toBe('0s');
+  expect(chip.backgroundImage, 'a gradient, not a flat fill').toMatch(/linear-gradient/);
+  // "Blends into the conversation" is literally a transparent end stop.
+  expect(chip.backgroundImage, 'the chip dissolves to nothing at its ends')
+    .toContain('rgba(0, 0, 0, 0)');
+  expect(chip.backgroundImage, 'and it is the panel accent green').toContain('200, 250, 75');
+
+  await expect(page.locator('.ltc-typing'), 'the element that drew the dots is gone').toHaveCount(0);
+  // The wait still has to be announced: the green line carries no text and the
+  // header status is display:none below 1180px.
+  const note = page.locator('[data-thinking]');
+  await expect(note, 'a screen-reader note stands in for the dots').toHaveCount(1);
+  await expect(note, 'and it is not something you can see').toBeHidden();
+
+  await expect(assistantBubble(page)).toContainText('Use a hash map.', { timeout: 15_000 });
+  await expect(line, 'the line fades out once the answer lands').toHaveCSS('opacity', '0');
 });
 
 test('buffers an SSE stream split at arbitrary byte boundaries', async ({ page }) => {
@@ -701,8 +779,8 @@ for (const [status, expectText] of [
     await expect(page.locator(input)).toBeEnabled();
     await expect(page.locator('.ltc-retry')).toHaveCount(1);
     // Regression: failTurn() renders, so it must run *after* setStreaming(false)
-    // or the typing dots are painted on a turn that has already ended.
-    await expect(page.locator('[data-typing]')).toHaveCount(0);
+    // or the thinking note is painted on a turn that has already ended.
+    await expect(page.locator('[data-thinking]')).toHaveCount(0);
   });
 }
 

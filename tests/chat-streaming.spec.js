@@ -205,7 +205,7 @@ test('a caret marks the reveal position and disappears when the turn ends', asyn
   expect(seen.caretFrames, 'the caret is visible for more than a single frame').toBeGreaterThan(3);
   expect(seen.clearedAfterCaret, 'the caret goes away when the turn ends').toBe(true);
   expect(seen.finalCaret).toBe(false);
-  await expect(page.locator('[data-typing]')).toHaveCount(0);
+  await expect(page.locator('[data-thinking]')).toHaveCount(0);
 });
 
 /* ------------------------------------------------------------------ *
