@@ -1,7 +1,4 @@
-import { randomToken, appBaseUrl } from '../_lib/session.mjs';
-
-const STATE_COOKIE = 'oauth_state';
-const STATE_TTL_SEC = 600; // 10 minutes: enough to complete GitHub login
+import { randomToken, appBaseUrl, oauthStateCookieHeader } from '../_lib/session.mjs';
 
 /**
  * GET /api/auth/login — start GitHub OAuth.
@@ -26,10 +23,9 @@ export default async function handler(req, res) {
     state,
     allow_signup: 'false',
   });
-  res.setHeader(
-    'Set-Cookie',
-    `${STATE_COOKIE}=${state}; Path=/; HttpOnly; Max-Age=${STATE_TTL_SEC}; SameSite=Lax`,
-  );
+  // The cookie itself is built in _lib/session.mjs, so the state cookie and the
+  // session cookie cannot drift apart on `Secure`.
+  res.setHeader('Set-Cookie', oauthStateCookieHeader(state));
   res.writeHead(302, { Location: `https://github.com/login/oauth/authorize?${params}` });
   res.end();
 }
