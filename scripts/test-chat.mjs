@@ -32,7 +32,7 @@ import { buildSystemPrompt, buildChatRequest } from '../api/_lib/chat-prompt.mjs
 import { searchGuides, loadGuideIndex, resetGuideIndexCache } from '../api/_lib/chat-guides.mjs';
 import { isBlockedUrl, tavilySearch, tavilyScrape, webConfigured } from '../api/_lib/chat-web.mjs';
 import { TOOL_SCHEMAS, runTool, createToolBudget } from '../api/_lib/chat-tools.mjs';
-import chatHandler, { resetProviderClient } from '../api/chat.mjs';
+import chatHandler, { resetProviderClient, toolSignature } from '../api/chat.mjs';
 import { appBaseUrl, sessionCookieHeader, signSession, verifySession, getSession } from '../api/_lib/session.mjs';
 import loginHandler from '../api/auth/login.mjs';
 import callbackHandler from '../api/auth/callback.mjs';
@@ -1065,6 +1065,70 @@ async function main() {
   check((happy.text.match(/data: \[DONE\]/g) || []).length === 1, 'appends exactly one [DONE]');
   check(!/chat\.completed/.test(happy.text), 'SSE body contains no log noise');
 
+  /* --- a slow draw is re-rolled, not reported ------------------------- */
+  // AI_MODEL=auto rotates per request, so a retry is a fresh sample of the
+  // pool: a slow model is a model to abandon, not a fault to surface. These two
+  // pin both halves of that — the retry happens, and the reader never learns
+  // that the first draw was slow.
+  const slowContent = 'answered on the re-roll';
+
+  /** A stream that opens and then never says anything: the shape of a slow draw. */
+  function silentBody() {
+    return new ReadableStream({ pull() { /* never enqueues, never closes */ } });
+  }
+
+  let drawCalls = 0;
+  const reRolled = await withEnv({ CHAT_FIRST_TOKEN_MS: '250', CHAT_SLOW_RETRIES: '1' },
+    () => withStubbedFetch(
+      async () => {
+        drawCalls++;
+        if (drawCalls === 1) {
+          return new Response(silentBody(), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+        }
+        return new Response(sseBody([delta(slowContent)])(), { status: 200 });
+      },
+      async () => {
+        const res = mockRes();
+        const logs = await captureLogs(() => chatHandler(
+          mockReq({ body: { messages: [{ role: 'user', content: 'explain' }], pageContext: 'ctx', pageTitle: 'Two Sum' } }),
+          res,
+        ));
+        return { res, logs };
+      },
+    ));
+
+  check(drawCalls === 2, 'a silent first draw is abandoned and a second one is made', `made ${drawCalls}`);
+  check(reRolled.res.text.includes(slowContent), 'the re-rolled draw reaches the reader');
+  check((reRolled.res.text.match(/data: \[DONE\]/g) || []).length === 1, 'the retry still terminates once');
+  check(!/exceeded the time limit/.test(reRolled.res.text), 'one slow draw is not a dead turn');
+  const slowLog = reRolled.logs.find((l) => l.event === 'chat.slow_draw');
+  check(slowLog?.draw === 1, 'the abandoned draw is counted in the log', JSON.stringify(slowLog));
+  check(!reRolled.logs.some((l) => l.event === 'chat.stream_error'),
+    'abandoning a draw is not reported as a broken stream');
+
+  // With the allowance spent, the reader gets a prompt retry instead of a wait
+  // that is already known not to land.
+  let spentCalls = 0;
+  const exhausted = await withEnv({ CHAT_FIRST_TOKEN_MS: '250', CHAT_SLOW_RETRIES: '0' },
+    () => withStubbedFetch(
+      async () => {
+        spentCalls++;
+        return new Response(silentBody(), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+      },
+      async () => {
+        const res = mockRes();
+        await chatHandler(
+          mockReq({ body: { messages: [{ role: 'user', content: 'explain' }], pageContext: 'ctx', pageTitle: 'Two Sum' } }),
+          res,
+        );
+        return res;
+      },
+    ));
+
+  check(spentCalls === 1, 'no allowance means exactly one draw', `made ${spentCalls}`);
+  check(/took too long to respond/.test(exhausted.text), 'the reader is told to retry, plainly');
+  check((exhausted.text.match(/data: \[DONE\]/g) || []).length === 1, 'the refused turn still terminates once');
+
   // The system prompt is what gets sent upstream, and it carries the context.
   let seenRequest = null;
   await withStubbedFetch(
@@ -1584,6 +1648,66 @@ async function main() {
     'the unaffordable tool is never dispatched',
     `roles=${reserveRequests[1]?.messages?.map((m) => m.role).join(',')}`);
   check(reserveRequests.at(-1)?.tool_choice === 'none', 'the final call forbids tools so prose still arrives');
+
+  /* --- a repeated lookup is not paid for twice ----------------------- */
+  // A model that re-issues a lookup it already has is not making new
+  // information appear: it spends a real search and a slice of the round budget
+  // to fetch a result already in its context. On a rotating pool that is also a
+  // fresh chance to draw a slow model, which is how one turn reached 57s and died.
+  section('a repeated lookup is short-circuited');
+
+  // Key order is normalised, so the guard survives the commonest way a re-issue
+  // differs from the original. A guard that only matched byte-identical JSON
+  // would miss exactly the case it exists for.
+  const sig = (args) => toolSignature('search_guides', args);
+  check(sig({ query: 'two sum', limit: 3 }) === sig({ limit: 3, query: 'two sum' }),
+    'argument key order does not make a call look new');
+  check(sig({ query: 'two sum' }) !== sig({ query: 'three sum' }),
+    'a genuinely different lookup is not mistaken for a repeat');
+  check(toolSignature('search_guides', { query: 'x' }) !== toolSignature('web_search', { query: 'x' }),
+    'the tool name is part of the identity');
+  const circular = { query: 'loop' };
+  circular.self = circular;
+  check(typeof toolSignature('search_guides', circular) === 'string',
+    'an argument set that cannot be serialised still yields a usable identity');
+
+  const repeatRequests = [];
+  let repeatCalls = 0;
+  const repeated = await withStubbedFetch(
+    async (url, init) => {
+      const body = JSON.parse(init.body);
+      repeatRequests.push(body);
+      repeatCalls++;
+      if (repeatCalls === 1) return new Response(sseBody(toolFrames('search_guides', JSON.stringify({ query: 'two sum' })))(), { status: 200 });
+      // search_guides takes only `query`, so the re-issue that matters end to end
+      // is a byte-identical one. Key-order independence is pinned above, where it
+      // can be stated with two real keys instead of an invented one.
+      if (repeatCalls === 2) return new Response(sseBody(toolFrames('search_guides', JSON.stringify({ query: 'two sum' })))(), { status: 200 });
+      return new Response(sseBody([delta('Two Sum uses a single-pass hash map.')])(), { status: 200 });
+    },
+    async () => {
+      const res = mockRes();
+      const logs = await captureLogs(() => chatHandler(
+        mockReq({ body: { messages: [{ role: 'user', content: 'how does two sum work' }], pageContext: 'ctx', pageTitle: 'Two Sum' } }),
+        res,
+      ));
+      return { res, logs };
+    },
+  );
+
+  const toolLogs = repeated.logs.filter((l) => l.event === 'chat.tool_used');
+  check(toolLogs.length === 1, 'the repeated lookup is searched once, not twice', `searched ${toolLogs.length}x`);
+  check(repeated.logs.some((l) => l.event === 'chat.tool_duplicate'),
+    'the repeat is visible in the log rather than silently dropped');
+  const lastRepeat = repeatRequests.at(-1)?.messages || [];
+  const toolMsgs = lastRepeat.filter((m) => m.role === 'tool');
+  check(toolMsgs.length === 2, 'both declared tool_calls still get a response, as the API requires',
+    `${toolMsgs.length} tool messages`);
+  check(toolMsgs.filter((m) => /\[duplicate call\]/.test(m.content || '')).length === 1,
+    'the second response is the duplicate notice');
+  check(repeated.res.text.includes('single-pass hash map'), 'the reader still gets a real answer');
+  check((repeated.res.text.match(/data: \[DONE\]/g) || []).length === 1, 'the turn still terminates once');
+  check(!/data: \{"error":/.test(repeated.res.text), 'short-circuiting a repeat is not an error', repeated.res.text.slice(-200));
 
   /* ==================== rate limiting — session raises the ceiling ==================== */
   // Chat is deliberately anonymous (decision D-6): nobody is ever required to
