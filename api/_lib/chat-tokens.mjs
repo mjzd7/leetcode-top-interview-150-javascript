@@ -26,12 +26,25 @@ export const MAX_TOTAL_TOKENS = 12_000;
 /** Ceiling for the pageContext slice, so context can't starve the conversation. */
 export const MAX_CONTEXT_TOKENS = 2000;
 /**
- * Hard cap on completion length — cost control (improvements-doc §6.3).
+ * Hard cap on completion length — cost control.
  *
  * Was 1000 (~750 words), which truncated mid-explanation on exactly the
- * cross-question and follow-up discussion this feature exists to enable.
+ * cross-question and follow-up discussion this feature exists to enable. Then
+ * 2000. Raised to 4096 by owner decision, 2026-09-29, because a 2D DP dry-run
+ * plus its explanation runs long and `finish_reason === "length"` was firing
+ * often enough to be worth fixing.
+ *
+ * A FLAT raise, deliberately not a formula. The plan's rejected expression,
+ * `min(MAX_TOTAL_TOKENS - totalTokens, 4096)`, subtracted the PROMPT budget from
+ * the COMPLETION budget — a category error that evaluates to a constant 4096 on
+ * every request the system will ever see. Do not reintroduce it.
+ *
+ * The exposure is bounded by DAILY_RATE_LIMIT (300/24h per IP,
+ * `api/_lib/chat-security.mjs`), not by this number: 300 × ≈$0.0092 ≈ $2.76/day
+ * per IP. Item 0.3 logs `finishReason`, so if 4096 turns out to be more headroom
+ * than readers need, that is measurable rather than guesswork.
  */
-export const MAX_COMPLETION_TOKENS = 2000;
+export const MAX_COMPLETION_TOKENS = 4096;
 /** Sliding window: how many conversational turns to retain. */
 export const MAX_HISTORY_MESSAGES = 10;
 

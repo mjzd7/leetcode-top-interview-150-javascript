@@ -20,9 +20,10 @@
  */
 
 import { buildChatRequest, DEFAULT_MODEL } from './_lib/chat-prompt.mjs';
-import { checkOrigin, rateLimit, clientIp, allowedOrigins } from './_lib/chat-security.mjs';
+import { checkOrigin, rateLimit, clientIp, allowedOrigins, SIGNED_IN_RATE_LIMIT, DAILY_RATE_LIMIT, DAILY_RATE_WINDOW_MS, DAY_PREFIX } from './_lib/chat-security.mjs';
 import { MAX_COMPLETION_TOKENS, MAX_TOOL_ROUNDS, MAX_TOOL_RESULT_TOKENS } from './_lib/chat-tokens.mjs';
 import { availableTools, createToolBudget, runTool } from './_lib/chat-tools.mjs';
+import { getSession } from './_lib/session.mjs';
 
 /** Vercel platform limit for this function. Streaming needs headroom. */
 export const maxDuration = 60;
@@ -150,11 +151,46 @@ export default async function handler(req, res) {
 
   const ip = clientIp(req);
   const startedAt = Date.now();
-  const limit = await rateLimit(`chat:${ip}`);
-  if (!limit.ok) {
-    const retryAfter = Math.max(1, Math.ceil((limit.reset - Date.now()) / 1000));
+  // A session RAISES the limit, it never gates it (D-6 amends abuse handling
+  // only). There is deliberately no 401 path: getSession returns null for an
+  // anonymous caller — or whenever SESSION_SECRET is unset — and such a
+  // request is metered exactly as it was before this existed.
+  const session = getSession(req);
+  const ipLimit = await rateLimit(`chat:${ip}`);
+  // The daily budget is a per-IP COST bound, so it applies to everyone — a
+  // session raises the per-minute allowance, it does not buy unlimited spend.
+  // It is charged before the per-minute decision so a reader who is out of
+  // daily budget is told so, and it shares the 429 contract exactly.
+  const dayLimit = await rateLimit(`chat:${ip}`, {
+    limit: DAILY_RATE_LIMIT,
+    windowMs: DAILY_RATE_WINDOW_MS,
+    prefix: DAY_PREFIX,
+  });
+  // Always consumed, even when it does not decide, so toggling the cookie
+  // cannot hand out a fresh per-IP budget.
+  const userLimit = session
+    ? await rateLimit(`chat:u:${session.githubId}`, { limit: SIGNED_IN_RATE_LIMIT })
+    : null;
+  // Which bucket DECIDES. With an identity, the identity decides the per-minute
+  // question: that is the whole point, since everyone behind one NAT otherwise
+  // shares a single 5/min budget and one reader's rate is everyone else's
+  // outage. The daily budget is NOT overridable by an identity — it is the
+  // provider-spend bound. Without an identity, the IP bucket decides,
+  // byte-for-byte as before.
+  const tripped = !dayLimit.ok
+    ? { ...dayLimit, bucket: 'day' }
+    : session
+      ? (userLimit && !userLimit.ok ? { ...userLimit, bucket: 'user' } : null)
+      : (!ipLimit.ok ? { ...ipLimit, bucket: 'ip' } : null);
+  if (tripped) {
+    const retryAfter = Math.max(1, Math.ceil((tripped.reset - Date.now()) / 1000));
     res.setHeader('Retry-After', String(retryAfter));
-    log('chat.rate_limited', { ip, scope: limit.scope });
+    log('chat.rate_limited', {
+      ip,
+      scope: tripped.scope,
+      bucket: tripped.bucket,
+      login: session?.login || null,
+    });
     return res.status(429).json({ error: 'Too many requests. Please slow down.' });
   }
 
@@ -216,8 +252,12 @@ export default async function handler(req, res) {
   // stays at index 0 for the whole exchange, so page scope is retained no matter
   // how many tools run.
   const conversation = [{ role: 'system', content: prepared.system }, ...prepared.messages];
-  const stats = { rounds: 0, toolCalls: 0, toolsUsed: [] };
+  const stats = { rounds: 0, toolCalls: 0, toolsUsed: [], finishReason: null };
   let lastBeat = Date.now();
+  // Whether the reader's FINAL answer is incomplete. Owned by the loop rather
+  // than by a turn, because it must describe the last round only: a tool round
+  // that ended on `tool_calls` must not leave a stale flag behind.
+  let truncatedAnswer = false;
 
   /**
    * Read one upstream turn to completion.
@@ -264,6 +304,11 @@ export default async function handler(req, res) {
     /** index -> { id, name, args } accumulated across deltas. */
     const calls = new Map();
     let released = false;
+    // Upstream says how a turn ended on its LAST payload line. `length` means the
+    // model hit the completion ceiling mid-sentence — the text is good, it just
+    // stops. Unread, that is indistinguishable from a finished answer, both to
+    // the reader and to us: no affordance, no log field, no measurable rate.
+    let finishReason = null;
 
     try {
       const reader = payloadStream(upstream).getReader();
@@ -279,10 +324,22 @@ export default async function handler(req, res) {
           sse(res, { error: 'Response exceeded the time limit.' });
           return { gone: false, cut: true, calls };
         }
-        const step = await Promise.race([
-          reader.read(),
-          new Promise((r) => setTimeout(() => r({ timeout: true }), HEARTBEAT_MS)),
-        ]);
+        // The read is raced against a heartbeat timer so a silent provider can
+        // still be pinged and our own deadline noticed. Promise.race awaits ONE
+        // side, so the loser's timer is left armed — one per chunk, hundreds per
+        // stream, each holding the event loop open long after res.end(). Bind the
+        // handle and drop it on every way out of the body: read wins, timeout
+        // wins, break, return, or throw.
+        let step;
+        let beat = null;
+        try {
+          step = await Promise.race([
+            reader.read(),
+            new Promise((r) => { beat = setTimeout(() => r({ timeout: true }), HEARTBEAT_MS); }),
+          ]);
+        } finally {
+          clearTimeout(beat);
+        }
 
         if (step.timeout) {
           if (Date.now() - lastBeat >= HEARTBEAT_MS) {
@@ -309,7 +366,12 @@ export default async function handler(req, res) {
 
           let parsed = null;
           try { parsed = JSON.parse(line); } catch { parsed = null; }
-          const delta = parsed?.choices?.[0]?.delta;
+          const choice = parsed?.choices?.[0];
+          // Last writer wins: the terminal chunk is the one that carries it.
+          if (typeof choice?.finish_reason === 'string' && choice.finish_reason) {
+            finishReason = choice.finish_reason;
+          }
+          const delta = choice?.delta;
 
           if (delta?.tool_calls) {
             for (const tc of delta.tool_calls) {
@@ -336,7 +398,18 @@ export default async function handler(req, res) {
       return { gone: true, calls };
     }
 
-    return { gone: false, cut: false, calls: [...calls.values()].filter((c) => c.name) };
+    return {
+      gone: false,
+      cut: false,
+      // NOT the same thing as `cut`, which is the internal deadline flag. A
+      // length-truncated turn is a real answer that ran out of room; a cut turn
+      // got the "exceeded the time limit" error frame and is not the reader's
+      // to continue. Conflating them would tell a reader to "ask me to continue"
+      // for a turn that was already refused.
+      truncated: finishReason === 'length',
+      finishReason,
+      calls: [...calls.values()].filter((c) => c.name),
+    };
   }
 
   try {
@@ -344,6 +417,10 @@ export default async function handler(req, res) {
       const turn = await runTurn({ toolChoice: 'auto' });
       if (turn.gone) return;
       if (turn.cut) return;
+      // Only a turn that actually reached the reader sets these; `gone` and
+      // `cut` return above, so a refused turn can never claim truncation.
+      truncatedAnswer = turn.truncated === true;
+      stats.finishReason = turn.finishReason;
       stats.rounds++;
 
       const pending = turn.calls || [];
@@ -364,7 +441,11 @@ export default async function handler(req, res) {
           role: 'assistant',
           content: 'I have already used my lookup budget for this question; answer from what you have.',
         });
-        await runTurn({ toolChoice: 'none' });
+        const final = await runTurn({ toolChoice: 'none' });
+        if (!final.gone && !final.cut) {
+          truncatedAnswer = final.truncated === true;
+          stats.finishReason = final.finishReason;
+        }
         return;
       }
 
@@ -412,18 +493,27 @@ export default async function handler(req, res) {
     }
   } finally {
     if (!res.writableEnded) {
+      // Truncation notice, then the terminator — in that order, so the client
+      // has seen it before the stream closes. The frame body is pinned by
+      // contract with the widget's readSse handler: exactly `{"truncated":true}`,
+      // no spaces, no extra fields, no nesting. `sse()` writes `data: ` + the
+      // JSON.stringify'd object + a blank line, and JSON.stringify adds no
+      // space, so this renders the agreed bytes. A missing frame means "not
+      // truncated", so this is only ever emitted when it is true.
+      if (truncatedAnswer) sse(res, { truncated: true });
       res.write('data: [DONE]\n\n');
       res.end();
     }
     log('chat.completed', {
       ip,
-      scope: limit.scope,
+      scope: ipLimit.scope,
       model,
       latencyMs: Date.now() - startedAt,
       tools: tools.map((t) => t.function.name).join(','),
       rounds: stats.rounds,
       toolCalls: stats.toolCalls,
       toolsUsed: stats.toolsUsed.join(','),
+      finishReason: stats.finishReason,
       ...prepared.meta,
     });
   }
