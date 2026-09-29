@@ -157,6 +157,49 @@ test('mobile: focus stays trapped inside the open sheet', async ({ page }) => {
  * Context extraction
  * ------------------------------------------------------------------ */
 
+test('the empty state says where a chat goes, before anything is typed', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  // On mobile the panel is a closed bottom sheet, so the empty state is attached
+  // but not visible — and a disclosure nobody can see is not a disclosure.
+  await openChat(page);
+
+  // The disclosure has to name BOTH halves, or it is the "we store nothing
+  // server-side" claim in a nicer font: a local thread does not mean the
+  // question never left the device. Both are asserted so neither can be dropped
+  // without this failing.
+  const note = page.locator(`${log} .ltc-empty-privacy`);
+  await expect(note).toBeVisible();
+  await expect(note).toContainText(/stay in this browser/i);
+  await expect(note).toContainText(/30 days/i);
+  await expect(note).toContainText(/OpenAI/);
+  await expect(note, 'and it does not claim nothing is stored anywhere').not.toContainText(/store nothing|nothing is stored|never leaves/i);
+
+  // It has to be legible on the viewport where the 9.5px hint under the input is
+  // hidden entirely, which is the whole reason this copy is not over there.
+  const box = await note.boundingBox();
+  expect(box?.height ?? 0, 'the disclosure is not a sliver of unreadable text').toBeGreaterThan(18);
+  const size = await note.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(size, 'and it is not the 9.5px hint size').toBeGreaterThanOrEqual(10);
+
+  // Contrast, measured rather than eyeballed. The hint's #5A6377 is 3.2:1 on this
+  // panel and fails AA at small sizes; copying it here would have shipped a
+  // disclosure nobody with low vision can read.
+  const contrast = await note.evaluate((el) => {
+    const lin = (c) => {
+      const [r, g, b] = c.match(/[\d.]+/g).map(Number).map((v) => {
+        v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    let node = el, bg = 'rgba(0, 0, 0, 0)';
+    while (node && bg === 'rgba(0, 0, 0, 0)') { bg = getComputedStyle(node).backgroundColor; node = node.parentElement; }
+    const a = lin(getComputedStyle(el).color), b = lin(bg);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  });
+  expect(contrast, 'the disclosure meets WCAG AA for small text (4.5:1)').toBeGreaterThanOrEqual(4.5);
+});
+
 test('sends the visible guide as pageContext but never inside the message history', async ({ page }) => {
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });

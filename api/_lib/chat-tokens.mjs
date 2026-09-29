@@ -45,6 +45,62 @@ export const MAX_CONTEXT_TOKENS = 2000;
  * than readers need, that is measurable rather than guesswork.
  */
 export const MAX_COMPLETION_TOKENS = 4096;
+
+/**
+ * Model families that take `max_completion_tokens` instead of `max_tokens`.
+ *
+ * The API reference is explicit that `max_completion_tokens` REPLACES the
+ * deprecated `max_tokens`, which "is not compatible with newer o-series models".
+ * Matched on a whole name segment, never a substring: `gpt-4o-mini` contains
+ * "o" and `o1x-custom` contains "o1", and neither is an o-series model.
+ *
+ * What is NOT in here is a `temperature` change. The reference lists
+ * `temperature` as a valid Chat Completions parameter and does not document
+ * o-series rejecting it, so this does not drop it on a guess. If a future model
+ * turns out to need that, the honest fix is a test that fails, not a silent
+ * second guess layered on the first.
+ */
+const REASONING_MODEL = /^(o[134](?:-|$)|gpt-5(?:[.-]|$))/;
+
+/**
+ * The completion-budget parameters for a model.
+ *
+ * The default path is byte-identical to what shipped, so this cannot regress the
+ * model actually in use; it only changes shape for a family nobody has switched
+ * to yet. `AI_PARAM_STYLE` is the escape hatch in both directions, for a model
+ * this list has never heard of.
+ *
+ * Note the ceiling means something different on a reasoning model:
+ * `max_completion_tokens` counts REASONING tokens against the same budget, so the
+ * visible answer is shorter than 4096. That is the API's accounting, not a bug
+ * here, and it is the reason to raise the number deliberately rather than assume
+ * 4096 visible tokens.
+ */
+export function completionParams(model, env = process.env) {
+  const override = String(env.AI_PARAM_STYLE || '').trim();
+  const useNew = override === 'max_completion_tokens'
+    || (override !== 'max_tokens' && REASONING_MODEL.test(String(model || DEFAULT_MODEL_FALLBACK)));
+  return useNew
+    ? { temperature: 0.2, max_completion_tokens: MAX_COMPLETION_TOKENS }
+    : { temperature: 0.2, max_tokens: MAX_COMPLETION_TOKENS };
+}
+
+/** Used only to keep completionParams() total when no model is configured. */
+const DEFAULT_MODEL_FALLBACK = 'gpt-4o-mini';
+
+/**
+ * Operator-facing explanation for a 400 from the provider.
+ *
+ * A raw "unsupported parameter" tells an operator nothing about which env var
+ * to change. This names the likely cause and the switch, without ever being
+ * shown to a reader — it goes to the log, not to the client.
+ */
+export function unknownModelHint(model) {
+  return REASONING_MODEL.test(String(model || ''))
+    ? `${model} is a reasoning model: it needs max_completion_tokens, and AI_PARAM_STYLE can force either parameter.`
+    : `${model} is not a model this shim recognises. If the provider rejected the request, set AI_PARAM_STYLE=max_completion_tokens (reasoning models reject max_tokens) or AI_PARAM_STYLE=max_tokens to pin the legacy parameter.`;
+}
+
 /** Sliding window: how many conversational turns to retain. */
 export const MAX_HISTORY_MESSAGES = 10;
 

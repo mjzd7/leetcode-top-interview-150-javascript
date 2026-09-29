@@ -14,8 +14,12 @@ import http from 'node:http';
 import {
   countTokens, estimateTokens, truncateToTokens, truncateRelevant, buildWindow,
   normaliseHistory, resetEncoderCache, MAX_CONTEXT_TOKENS, ELISION_MARKER, MAX_COMPLETION_TOKENS,
-  MAX_TOTAL_TOKENS,
+  MAX_TOTAL_TOKENS, countMessagesTokens, MAX_TOOL_ROUNDS, MAX_TOOL_CALLS, MAX_TOOL_RESULT_TOKENS,
 } from '../api/_lib/chat-tokens.mjs';
+// Namespace import so a not-yet-existing export reads as `undefined` and fails
+// an assertion rather than taking the whole suite down at import time.
+import * as chatTokens from '../api/_lib/chat-tokens.mjs';
+const { completionParams, unknownModelHint } = chatTokens;
 import {
   checkOrigin, sanitizeContext, rateLimit, clientIp, allowedOrigins, resetLimiterCache,
   DEFAULT_RATE_LIMIT, DEFAULT_RATE_WINDOW_MS,
@@ -1104,6 +1108,146 @@ async function main() {
     'prompt budget + completion ceiling still fit the default model’s context window',
     `prompt=${MAX_TOTAL_TOKENS} + completion=${MAX_COMPLETION_TOKENS} context=${MODEL_CONTEXT}`);
 
+  // The line above is necessary but NOT sufficient, and it was the only arithmetic
+  // the raise was ever checked against. MAX_TOTAL_TOKENS bounds the prompt the
+  // route ASSEMBLES, but a tool round appends its results to the conversation
+  // AFTER that budget is spent: MAX_TOOL_ROUNDS rounds x MAX_TOOL_CALLS results,
+  // each trimmed to MAX_TOOL_RESULT_TOKENS. A ceiling that only clears the
+  // prompt budget can still push the real request past the model's context
+  // window, and the failure would be a 400 from the provider on the last round —
+  // i.e. exactly the "ceiling above the model's limit is a silent 400" outcome
+  // the raise was supposed to avoid. The bound below is the real one.
+  const TOOL_TOKENS_WORST = MAX_TOOL_ROUNDS * MAX_TOOL_CALLS * MAX_TOOL_RESULT_TOKENS;
+  const WORST_REQUEST = MAX_TOTAL_TOKENS + TOOL_TOKENS_WORST + MAX_COMPLETION_TOKENS;
+  check(WORST_REQUEST <= MODEL_CONTEXT,
+    'the worst case a tool loop can build — full prompt budget + every tool result it may append + the completion — still fits the model’s context window',
+    `prompt=${MAX_TOTAL_TOKENS} + tools=${TOOL_TOKENS_WORST} + completion=${MAX_COMPLETION_TOKENS} = ${WORST_REQUEST} vs context=${MODEL_CONTEXT}`);
+  // And the same bound measured on a REAL assembled conversation rather than
+  // the arithmetic, so the numbers above cannot be right by accident: a full
+  // context, a full 10-turn history, and MAX_TOOL_ROUNDS * MAX_TOOL_CALLS tool
+  // results at their per-result ceiling.
+  const worstHistory = Array.from({ length: 10 }, (_, i) => ({
+    role: i % 2 === 0 ? 'user' : 'assistant',
+    content: `turn ${i} ` + 'two pointers sliding windows and hashing '.repeat(60),
+  }));
+  const worstBuilt = await buildChatRequest({
+    context: 'guide text '.repeat(4000),
+    title: 'Two Sum',
+    category: 'HASHMAP',
+    history: worstHistory,
+    tools: [{ function: { name: 'search_guides' } }, { function: { name: 'web_search' } }],
+  });
+  const worstConversation = [
+    { role: 'system', content: worstBuilt.system },
+    ...worstBuilt.messages,
+    ...Array.from({ length: MAX_TOOL_ROUNDS * MAX_TOOL_CALLS }, () => ({
+      role: 'tool', tool_call_id: 'x', content: 'w'.repeat(MAX_TOOL_RESULT_TOKENS * 4),
+    })),
+  ];
+  const worstReal = await countMessagesTokens(worstConversation);
+  check(worstBuilt.meta.totalTokens <= MAX_TOTAL_TOKENS,
+    'premise: the assembled prompt really is inside MAX_TOTAL_TOKENS, so the bound below is additive rather than double-counting',
+    `totalTokens=${worstBuilt.meta.totalTokens} budget=${MAX_TOTAL_TOKENS}`);
+  check(worstReal + MAX_COMPLETION_TOKENS <= MODEL_CONTEXT,
+    'a real full-budget conversation carrying every tool result still fits alongside a full 4,096-token completion',
+    `conversation=${worstReal} + completion=${MAX_COMPLETION_TOKENS} = ${worstReal + MAX_COMPLETION_TOKENS} vs context=${MODEL_CONTEXT}`);
+
+  /* ==================== model parameter compatibility ==================== */
+  // `max_tokens` is documented as incompatible with newer o-series models; the
+  // replacement, `max_completion_tokens`, also counts REASONING tokens against
+  // the same ceiling, so on a reasoning model the visible answer is shorter than
+  // the number. AI_MODEL is env-driven, so a wrong guess here is a 400 at the
+  // first request rather than a compile error.
+  //
+  // The default path must stay byte-identical to what shipped: this is a shim
+  // for a model nobody is using yet, and it must not be able to regress the one
+  // that is.
+  // Guarded so a missing export is ONE clear failure naming it, rather than a
+  // TypeError that takes the rest of the suite with it.
+  if (typeof completionParams !== 'function' || typeof unknownModelHint !== 'function') {
+    check(false, 'chat-tokens exports completionParams() and unknownModelHint() for model compatibility',
+      `completionParams=${typeof completionParams} unknownModelHint=${typeof unknownModelHint}`);
+  } else {
+  const shimParams = (model, env) => completionParams(model, env);
+  const shimBase = shimParams('gpt-4o-mini');
+  check(shimBase.max_tokens === MAX_COMPLETION_TOKENS && shimBase.max_completion_tokens === undefined,
+    'the default model keeps the max_tokens parameter exactly as it shipped',
+    JSON.stringify(shimBase));
+  check(shimBase.temperature === 0.2, 'and keeps its temperature', `temperature=${shimBase.temperature}`);
+
+  for (const shimModel of ['o1', 'o1-mini', 'o3-mini', 'o4-mini', 'gpt-5', 'gpt-5-mini', 'o3', 'gpt-5.1']) {
+    const sp = shimParams(shimModel);
+    check(sp.max_completion_tokens === MAX_COMPLETION_TOKENS && sp.max_tokens === undefined,
+      `${shimModel} is sent max_completion_tokens instead of max_tokens`,
+      JSON.stringify(sp));
+  }
+  // Not a substring match: a model merely CONTAINING "o1" must not be silently
+  // switched to different parameters.
+  for (const shimModel of ['gpt-4o-mini', 'gpt-4o', 'text-embedding-3-small', 'llama-3-70b', 'o1x-custom']) {
+    const sp = shimParams(shimModel);
+    check(sp.max_tokens === MAX_COMPLETION_TOKENS,
+      `${shimModel} is NOT treated as a reasoning model`, JSON.stringify(sp));
+  }
+  // Explicit override, both directions, for a model this list has never heard of.
+  const shimForced = shimParams('some-future-reasoner', { AI_PARAM_STYLE: 'max_completion_tokens' });
+  check(shimForced.max_completion_tokens === MAX_COMPLETION_TOKENS && shimForced.max_tokens === undefined,
+    'AI_PARAM_STYLE forces the newer parameter for a model the list does not know',
+    JSON.stringify(shimForced));
+  const shimPinned = shimParams('o3-mini', { AI_PARAM_STYLE: 'max_tokens' });
+  check(shimPinned.max_tokens === MAX_COMPLETION_TOKENS && shimPinned.max_completion_tokens === undefined,
+    'AI_PARAM_STYLE=max_tokens pins the legacy parameter even for a reasoning model',
+    JSON.stringify(shimPinned));
+  check(completionParams(undefined).max_tokens === MAX_COMPLETION_TOKENS,
+    'an unset model falls back to the default rather than to undefined');
+  check(/reasoning|max_completion_tokens|AI_PARAM_STYLE/i.test(unknownModelHint('o3-mini')),
+    'the hint an operator sees on a 400 names the actual cause', unknownModelHint('o3-mini'));
+  check(/AI_PARAM_STYLE/.test(unknownModelHint('some-future-reasoner')),
+    'and tells them which env var to set when the model is unrecognised',
+    unknownModelHint('some-future-reasoner'));
+  }
+
+  /* ==================== preview deployments (5.6 / A-4) ==================== */
+  // Login fails on every preview today, because the callback is derived from the
+  // preview host and GitHub only accepts registered callbacks. That is expected
+  // but it reads as a broken integration. Registering a second OAuth App is the
+  // owner's call; what the code can do is make the outcome deterministic and say
+  // so in the log rather than failing quietly.
+  section('auth — a preview deployment is deterministic, and says so');
+
+  const loginWith = (env, headers) => withEnv(env, async () => {
+    const res = mockRes();
+    const logs = await captureLogs(() => loginHandler(mockReq({ method: 'GET', query: {}, headers }), res));
+    return { status: res.statusCode, location: res.headers.location, logs };
+  });
+
+  const previewHeaders = { host: 'salmon-abc123.vercel.app' };
+  const pvNoOrigin = await loginWith({ VERCEL_ENV: 'preview', PUBLIC_ORIGIN: undefined, GITHUB_OAUTH_CLIENT_ID: 'Iv1.abc' }, previewHeaders);
+  check(pvNoOrigin.status === 302, 'login still redirects on a preview rather than erroring', `status=${pvNoOrigin.status}`);
+  const pvWarn = pvNoOrigin.logs.find((l) => l.event === 'auth.login_preview_origin');
+  check(pvWarn?.hint && /PUBLIC_ORIGIN/.test(pvWarn.hint),
+    'and a preview with no PUBLIC_ORIGIN logs WHY the callback will be rejected',
+    JSON.stringify(pvWarn));
+  check(pvWarn?.origin === 'https://salmon-abc123.vercel.app',
+    'naming the origin it actually derived', JSON.stringify(pvWarn));
+
+  const pvWithOrigin = await loginWith(
+    { VERCEL_ENV: 'preview', PUBLIC_ORIGIN: 'https://prod.example', GITHUB_OAUTH_CLIENT_ID: 'Iv1.abc' }, previewHeaders);
+  check(!pvWithOrigin.logs.some((l) => l.event === 'auth.login_preview_origin'),
+    'setting PUBLIC_ORIGIN silences the warning — the callback is no longer the preview host',
+    JSON.stringify(pvWithOrigin.logs));
+  check(decodeURIComponent(pvWithOrigin.location).includes('https://prod.example/api/auth/callback'),
+    'and the redirect_uri is the configured origin, not the preview host',
+    pvWithOrigin.location);
+
+  const pvProd = await loginWith(
+    { VERCEL_ENV: 'production', PUBLIC_ORIGIN: undefined, GITHUB_OAUTH_CLIENT_ID: 'Iv1.abc' },
+    { host: 'prod.vercel.app' });
+  check(!pvProd.logs.some((l) => l.event === 'auth.login_preview_origin'),
+    'production never warns', JSON.stringify(pvProd.logs));
+  check(decodeURIComponent(pvProd.location).includes('scope=read.3Auser')
+    || decodeURIComponent(pvProd.location).includes('scope=read:user'),
+    'and the scope is still exactly read:user', pvProd.location);
+
   check(seenRequest?.messages?.[0]?.role === 'system', 'first message is the system prompt');
   check(seenRequest?.messages?.[0]?.content?.includes('SENTINEL_CTX'), 'pageContext travels in the system prompt');
   check(
@@ -1729,6 +1873,69 @@ async function main() {
       check(dayLog?.bucket === 'day', 'the log says which budget was spent', JSON.stringify(dayLog));
       check(dayLog?.login === undefined || dayLog?.login === null,
         'an anonymous caller is still logged with no login', JSON.stringify(dayLog));
+
+      // --- A session RAISES the per-minute allowance; it must not buy daily spend.
+      // The daily bucket is the provider-cost bound, and it is keyed on the IP, so
+      // signing in cannot move it. This is the assertion the whole item rests on:
+      // without it, `bucket: 'day'` is only ever proven for a caller who cannot
+      // raise any limit in the first place, which is the case an anonymous
+      // attacker is in anyway — and a signed-in reader would simply be a way to
+      // spend 7,200 requests a day. The `cookie` parameter of `oneFrom` existed
+      // and was never passed, so this is coverage that was assumed, not tested.
+      resetLimiterCache();
+      for (let i = 0; i < DAILY_ALLOWANCE; i++) {
+        await rateLimit('chat:198.51.100.88', {
+          limit: DAILY_ALLOWANCE,
+          windowMs: chatSecurity.DAILY_RATE_WINDOW_MS,
+          prefix: chatSecurity.DAY_PREFIX,
+        });
+      }
+      const signedDay = await oneFrom('198.51.100.88', sidFor(3003));
+      check(signedDay.status === 429,
+        'a SIGNED-IN reader is also 429d by the daily cap — a session raises 20/min, not the daily budget',
+        `status=${signedDay.status}`);
+      check(signedDay.res.body?.error === 'Too many requests. Please slow down.',
+        'the signed-in daily 429 keeps the same error body', JSON.stringify(signedDay.res.body));
+      check(signedDay.res.headers['retry-after'] !== undefined,
+        'the signed-in daily 429 keeps the same Retry-After contract');
+      const signedDayLog = signedDay.logs.find((l) => l.event === 'chat.rate_limited');
+      check(signedDayLog?.bucket === 'day',
+        'and the log still names the DAY bucket, not the identity bucket', JSON.stringify(signedDayLog));
+      // Item 0.8: every rate_limited line carries the caller's login, so spend
+      // spent against the daily bound is attributable even though the session
+      // did not decide it.
+      check(signedDayLog?.login === 'user3003',
+        'the daily 429 for a signed-in caller still names them in the log', JSON.stringify(signedDayLog));
+
+      // --- When BOTH budgets are spent, the day bucket decides. The brief leaves
+      // the ordering to the implementer but requires the rule be documented, so it
+      // has to be pinned rather than left to whichever branch was written first.
+      // The rule: the daily cap is the provider-cost bound and is charged before
+      // the per-minute decision, so a caller out of both is told the truth that
+      // matters — waiting a minute would not have helped them. Swapping the order
+      // reports `user` here, which is a worse answer: it implies the reader should
+      // retry shortly, and they would be refused again for the rest of the day.
+      resetLimiterCache();
+      for (let i = 0; i < DAILY_ALLOWANCE; i++) {
+        await rateLimit('chat:198.51.100.99', {
+          limit: DAILY_ALLOWANCE,
+          windowMs: chatSecurity.DAILY_RATE_WINDOW_MS,
+          prefix: chatSecurity.DAY_PREFIX,
+        });
+      }
+      // ...and spend the identity allowance too, so both buckets are spent at once.
+      const bothCookie = sidFor(4004);
+      for (let i = 0; i < chatSecurity.SIGNED_IN_RATE_LIMIT; i++) {
+        await rateLimit('chat:u:4004', { env: SECRET_ENV, limit: chatSecurity.SIGNED_IN_RATE_LIMIT });
+      }
+      const both = await oneFrom('198.51.100.99', bothCookie);
+      check(both.status === 429, 'a caller out of BOTH budgets is 429d', `status=${both.status}`);
+      const bothLog = both.logs.find((l) => l.event === 'chat.rate_limited');
+      check(bothLog?.bucket === 'day',
+        'when the day and identity buckets are both spent, the log names the DAY bucket — a minute of waiting would not have helped',
+        JSON.stringify(bothLog));
+      check(bothLog?.login === 'user4004',
+        'and the caller is still attributable', JSON.stringify(bothLog));
     },
   );
   resetLimiterCache();
