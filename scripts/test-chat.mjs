@@ -8,22 +8,55 @@
  * client, which is also how we prove the SSE forwarding contract.
  */
 
+import crypto from 'node:crypto';
+import http from 'node:http';
+
 import {
   countTokens, estimateTokens, truncateToTokens, truncateRelevant, buildWindow,
   normaliseHistory, resetEncoderCache, MAX_CONTEXT_TOKENS, ELISION_MARKER, MAX_COMPLETION_TOKENS,
+  MAX_TOTAL_TOKENS,
 } from '../api/_lib/chat-tokens.mjs';
 import {
   checkOrigin, sanitizeContext, rateLimit, clientIp, allowedOrigins, resetLimiterCache,
+  DEFAULT_RATE_LIMIT, DEFAULT_RATE_WINDOW_MS,
   CONTEXT_OPEN, WEB_OPEN, WEB_CLOSE,
 } from '../api/_lib/chat-security.mjs';
+// Namespace import so a not-yet-existing export reads as `undefined` and fails
+// an assertion rather than taking the whole suite down at import time.
+import * as chatSecurity from '../api/_lib/chat-security.mjs';
 import { buildSystemPrompt, buildChatRequest } from '../api/_lib/chat-prompt.mjs';
 import { searchGuides, loadGuideIndex, resetGuideIndexCache } from '../api/_lib/chat-guides.mjs';
 import { isBlockedUrl, tavilySearch, tavilyScrape, webConfigured } from '../api/_lib/chat-web.mjs';
 import { TOOL_SCHEMAS, runTool, createToolBudget } from '../api/_lib/chat-tools.mjs';
 import chatHandler, { resetProviderClient } from '../api/chat.mjs';
+import { appBaseUrl, sessionCookieHeader, signSession, verifySession, getSession } from '../api/_lib/session.mjs';
+import loginHandler from '../api/auth/login.mjs';
+import callbackHandler from '../api/auth/callback.mjs';
 
 let assertions = 0;
 let failures = 0;
+
+/**
+ * Ceiling on the system prompt's OWN token cost — every line of it except the
+ * injected guide text.
+ *
+ * Was a bare `+ 800` in two assertions, i.e. an 800-token scaffold ceiling that
+ * sat 98% full (737 of 800). It is now 1,000, and the change is deliberate:
+ * Waves 2 and 3 mandate six product rules in this prompt — quoted Mermaid
+ * labels, a <15-node cap, "diagrams render, never apologize", a recursion call
+ * tree, an 8x8 table bound, and no DP-grid abbreviation — which cost 151 tokens
+ * of scaffold (737 -> 888). No lossless edit to unrelated prose closes a 63-token
+ * gap, so the alternatives were to ship the guidance with no ceiling at all or
+ * to cut existing product guidance that still earns its place.
+ *
+ * 1,000 is not a product threshold and nothing downstream can feel it: at
+ * MAX_TOTAL_TOKENS (12,000) with a MAX_CONTEXT_TOKENS (2,000) context, 1,000 of
+ * scaffold still leaves ~9,000 tokens for a history window that is itself capped
+ * at MAX_HISTORY_MESSAGES (10) turns. The ceiling exists to catch UNBOUNDED
+ * prompt growth, which is why it is derived rather than typed twice, and why
+ * the scaffold is also asserted on its own above.
+ */
+const MAX_SYSTEM_SCAFFOLD_TOKENS = 1000;
 
 function check(cond, label, detail = '') {
   assertions++;
@@ -50,6 +83,13 @@ function mockRes() {
     status(c) { this.statusCode = c; return this; },
     json(o) { this.body = o; this.writableEnded = true; return this; },
     setHeader(k, v) { this.headers[String(k).toLowerCase()] = v; },
+    // The auth routes redirect rather than stream, so they redirect through
+    // writeHead. Same merge semantics as the real thing: headers set earlier
+    // with setHeader (e.g. Set-Cookie) survive a later writeHead(302, {...}).
+    writeHead(c, h) {
+      this.statusCode = c;
+      for (const [k, v] of Object.entries(h || {})) this.headers[String(k).toLowerCase()] = v;
+    },
     flushHeaders() { this.headersFlushed = true; },
     write(chunk) { this.chunks.push(String(chunk)); return true; },
     end() { this.writableEnded = true; },
@@ -59,8 +99,55 @@ function mockRes() {
 }
 
 /** Build a fake req with a body, no cookies, and a controllable origin. */
-function mockReq({ method = 'POST', body = {}, headers = {} } = {}) {
-  return { method, body, headers: { host: 'example.vercel.app', ...headers } };
+function mockReq({ method = 'POST', body = {}, headers = {}, query } = {}) {
+  return { method, body, query, headers: { host: 'example.vercel.app', ...headers } };
+}
+
+/**
+ * Run `fn` with a console.log capture, returning every log line as an object.
+ *
+ * The route's observability is a contract of its own (0.3 adds `finishReason`,
+ * 0.8 adds `login` to `chat.rate_limited`), and the only way to prove a log
+ * field exists is to read one back.
+ */
+async function captureLogs(fn) {
+  const real = console.log;
+  const lines = [];
+  console.log = (...args) => lines.push(args.map(String).join(' '));
+  try {
+    await fn();
+  } finally {
+    console.log = real;
+  }
+  return lines.map((l) => {
+    try { return JSON.parse(l); } catch { return null; }
+  }).filter((v) => v && typeof v.event === 'string');
+}
+
+/** Pending `setTimeout` handles, as the event loop itself reports them. */
+function pendingTimers() {
+  return process.getActiveResourcesInfo().filter((r) => r === 'Timeout').length;
+}
+
+/**
+ * Apply env overrides for the duration of `fn`, then restore exactly.
+ * `undefined` means "unset", so a test can exercise both branches of a
+ * `process.env` read without leaking state into the next one.
+ */
+async function withEnv(overrides, fn) {
+  const saved = Object.fromEntries(Object.keys(overrides).map((k) => [k, process.env[k]]));
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+  }
+  try {
+    return await fn();
+  } finally {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
 }
 
 async function main() {
@@ -369,17 +456,180 @@ async function main() {
   check(/active \| done \| swapped \| error/.test(sys), 'states the allowed cell states');
   check(/at most one diagram per reply/i.test(sys), 'caps diagrams per reply');
 
+  /* ==================== prompt: mermaid example + label quoting ==================== */
+  // The prompt is a product surface, not a string constant. A model
+  // pattern-matches the EXAMPLE far more reliably than it obeys the rule printed
+  // next to it, so the rule and the example it contradicts have to be asserted
+  // separately — fixing one while leaving the other is what makes the rule a coin
+  // flip.
+  section('prompt — mermaid example and label quoting (2.1, 2.2)');
+
+  // The prompt is hard-wrapped prose, so a phrase assertion that insists on a
+  // literal space is really asserting the line break, not the rule. Every
+  // phrase-level assertion below runs against this flattened copy; the structural
+  // NODE_LABEL scan deliberately runs against the raw string, because it depends
+  // on a bracket sitting IMMEDIATELY after an identifier.
+  const flatPrompt = sys.replace(/\s+/g, ' ');
+
+  // Every Mermaid node label in the prompt (`id[...]`, `id{...}`, `id(...)`) must
+  // be double-quoted. The pattern deliberately requires the bracket to sit
+  // IMMEDIATELY after the identifier, with no space: that is what separates a
+  // Mermaid node reference from prose ("the label holds ( ) [ ] { }") and from
+  // the viz-array JSON (`"cells":[` , `"map":[[`).
+  const NODE_LABEL = /\b([A-Za-z_][A-Za-z0-9_]*)([[({])([^\]})]*)([\])}])/g;
+  const nodeLabels = [...sys.matchAll(NODE_LABEL)];  // Non-vacuity first: "nothing is unquoted" is trivially true if the scan never
+  // matches, which is exactly the broken state where a regex typo turns the real
+  // assertion below into a green that proves nothing.
+  check(nodeLabels.length >= 3,
+    'premise: the prompt really does carry Mermaid node labels for the scan below to judge',
+    `scanned ${nodeLabels.length} label(s) — the pattern is not matching the example`);
+
+  const unquotedLabels = nodeLabels.filter(([, , , inner]) => !(inner.startsWith('"') && inner.endsWith('"')));
+  check(unquotedLabels.length === 0,
+    '2.1: every Mermaid node label in the prompt is double-quoted — the example must not contradict the rule',
+    `unquoted: ${JSON.stringify(unquotedLabels.map((m) => m[0]))}`);
+
+  // Labels are double-quote delimited, so an inner double quote mangles the parse
+  // into a silent no-op rather than a visible error. A label that needs internal
+  // quoting must use single quotes.
+  const innerQuoteLabels = nodeLabels.filter(([, , , inner]) => /"/.test(inner.slice(1, -1)));
+  check(innerQuoteLabels.length === 0,
+    '2.1: no label nests a double quote inside its own delimiters (use single quotes instead)',
+    `offending: ${JSON.stringify(innerQuoteLabels.map((m) => m[0]))}`);
+
+  // 2.2 #1 — state the rule the example now follows.
+  check(/wrap (?:every|a) node label in double quotes/i.test(flatPrompt),
+    '2.2: the prompt states the quote-your-labels rule');
+  // The brief prescribed "use single quotes" for a label that needs internal
+  // quoting. That does not parse. Mermaid's flowchart grammar takes only a
+  // double-quote-delimited label, so `A['text "x"']` is a hard grammar reject
+  // (verified against the mermaid in node_modules — see the report), which is
+  // strictly worse than the double-quote hazard it was meant to avoid. The
+  // escape that does work is mermaid's own `#quot;` entity. Both halves are
+  // pinned: the working escape is offered, the broken one is not.
+  check(/#quot;/.test(flatPrompt),
+    '2.2: offers #quot; — the escape that actually parses — for a label needing an inner quote');
+  check(!/use single quotes/i.test(flatPrompt),
+    '2.2: does NOT recommend single-quote delimiters, which the Mermaid grammar rejects outright',
+    `matched: ${JSON.stringify(flatPrompt.match(/.{0,40}use single quotes.{0,40}/i)?.[0])}`);
+
+  // 2.2 #2 — node cap. Numeric, not literal: "<= 15" survives a later edit to
+  // 12, whereas a hard-coded string assertion would just be a copy of the prompt.
+  const nodeCap = flatPrompt.match(/(?:under|fewer than|less than|at most|no more than|maximum of)\s*(\d+)\s*nodes?/i);
+  check(nodeCap !== null, '2.2: the prompt caps how many nodes a diagram may have');
+  check(nodeCap !== null && Number(nodeCap[1]) <= 15,
+    '2.2: the node cap is 15 or fewer', `cap=${nodeCap?.[0] ?? '(no cap found)'}`);
+  check(nodeCap !== null && /under|fewer than|less than/i.test(nodeCap[0]),
+    '2.2: the cap is strict, so it stays consistent with "about 12 cells or fewer"',
+    `cap=${nodeCap?.[0] ?? '(no cap found)'}`);
+
+  // 2.2 #3 — the model must not hedge about being able to draw at all.
+  check(/diagrams render\b/i.test(flatPrompt), '2.2: states plainly that diagrams render');
+  check(/never (?:say|tell|apologize|apologise|claim)[^.\n]{0,90}?(?:text-only|formatting limit|cannot draw)/i.test(flatPrompt),
+    '2.2: forbids apologising for a text-only or formatting limit');
+
+  /* ==================== prompt: visual guidance (Waves 2 + 3) ==================== */
+  section('prompt — visual guidance (3.1, 3.2, 3.3)');
+
+  // 3.1 — recursion visualised as a call tree, not a sequenceDiagram. Proximity
+  // matters: a prompt that merely mentions both words somewhere is not guidance.
+  check(/call tree/i.test(flatPrompt), '3.1: the prompt names the call tree');
+  check(/recursion[^.\n]{0,140}call tree|call tree[^.\n]{0,140}recursion/i.test(flatPrompt),
+    '3.1: the call tree is attached to recursion, not floating as a bare keyword');
+  check(/sequenceDiagram/i.test(flatPrompt),
+    '3.1: the prompt names sequenceDiagram as the thing to avoid for recursion');
+
+  // 3.2 — tables are bounded, generously, and DP grids are never abbreviated.
+  // Numeric on the bound: the rejected rule was 5x5, and the whole point is that
+  // 5x5 was too small. Asserting the number keeps a later "let's shrink tables"
+  // edit from quietly reintroducing it.
+  const tableBound = flatPrompt.match(/(\d+)\s*rows?\s*(?:by|x|×|\*)\s*(\d+)\s*columns?/i);
+  check(tableBound !== null, '3.2: the prompt bounds how large a table may be');
+  check(tableBound !== null && Number(tableBound[1]) <= 8 && Number(tableBound[2]) <= 8,
+    '3.2: tables are bounded at 8x8 or smaller — 2D DP grids are the curriculum',
+    `bound=${tableBound?.[0] ?? '(no bound found)'}`);
+  // The rejection, pinned numerically. A `<= 8` bound alone would happily accept
+  // a later "let's shrink tables" edit back down to 5x5, which is the exact
+  // regression 3.2 exists to forbid — so the bound must also be strictly ABOVE it.
+  check(tableBound !== null && Number(tableBound[1]) > 5 && Number(tableBound[2]) > 5,
+    '3.2: the bound stays strictly larger than the rejected 5x5, in whichever way it is spelled',
+    `bound=${tableBound?.[0] ?? '(no bound found)'}`);
+  check(/viz-array[^.\n]{0,80}per row|per row[^.\n]{0,80}viz-array/i.test(flatPrompt),
+    '3.2: a 2D structure past that bound is steered to viz-array rows');
+  check(/never (?:shorten|abbreviate|trim|elide) a (?:grid|table)/i.test(flatPrompt),
+    '3.2: abbreviating a DP grid is forbidden outright');
+
+  /* ==================== prompt: the rules that were rejected ==================== */
+  // Each of these is a rule the hardening plan proposed and the review REJECTED.
+  // They are pinned by their ABSENCE, and every pin carries a premise assertion
+  // proving the detector really does match the sentence the plan proposed — so a
+  // typo in the pattern cannot turn a rejection pin into a vacuous green.
+  section('prompt — rejected rules stay rejected (1.3, 3.2, 3.3)');
+
+  const UNICODE_RULE = /prefer(?:ring)?\s+(?:standard\s+)?unicode|unicode\s+plain\s+text/i;
+  check(UNICODE_RULE.test('For simple complexities prefer standard Unicode plain text (e.g. `O(N log N)`).'),
+    'premise: the Unicode-rule detector matches the exact sentence the plan proposed');
+  check(!UNICODE_RULE.test(flatPrompt),
+    '1.3: the prompt carries no "prefer Unicode over LaTeX" rule — unverifiable, and worse output for a KaTeX corpus',
+    `matched: ${JSON.stringify(flatPrompt.match(UNICODE_RULE)?.[0])}`);
+
+  const FIVE_BY_FIVE = /5\s*[x×]\s*5|\b5\s*rows?\s*(?:by|x|×)\s*5\b/i;
+  check(FIVE_BY_FIVE.test('Limit tables to max 5×5.'),
+    'premise: the 5x5 detector matches the exact sentence the plan proposed');
+  check(FIVE_BY_FIVE.test('Bound a table at 5 rows by 5 columns.'),
+    'premise: the 5x5 detector also catches the spelled-out "5 rows by 5" a later edit would use');
+  check(!FIVE_BY_FIVE.test(flatPrompt),
+    '3.2: the rejected 5x5 table cap is absent — ellipsizing a 6x6 DP table destroys the dry run',
+    `matched: ${JSON.stringify(flatPrompt.match(FIVE_BY_FIVE)?.[0])}`);
+
+  // The word "ellipsis" is banned from the prompt text outright so this stays a
+  // clean tripwire; the prompt says "never shorten a grid" instead.
+  const ELLIPSIS_RULE = /ellips/i;
+  check(ELLIPSIS_RULE.test('Use ellipses (…) for larger grids.'),
+    'premise: the ellipsis detector matches the exact sentence the plan proposed');
+  check(!ELLIPSIS_RULE.test(flatPrompt),
+    '3.2: the rejected "abbreviate larger grids" rule is absent (the prompt never uses the word, which is what keeps this pin clean)');
+
+  const WORD_CAP = /\b\d{2,4}\s*words\b|never exceed\s+\w+\s*words/i;
+  check(WORD_CAP.test('Never exceed 500 words.'),
+    'premise: the word-count detector matches the exact sentence the plan proposed');
+  check(!WORD_CAP.test(flatPrompt),
+    '3.3: the prompt carries no word-count ceiling — it is unverifiable and fights the 2D-visualisation guidance',
+    `matched: ${JSON.stringify(flatPrompt.match(WORD_CAP)?.[0])}`);
+
+  // What replaces the word count: soft length guidance plus the structural
+  // budgets that are actually checkable. "at most one diagram per reply" is
+  // asserted above; the snippet budget was not asserted anywhere, so it is added
+  // here — a demotion must never quietly become a gutting.
+  check(/short enough to read on a phone/i.test(flatPrompt),
+    '3.3: length is soft guidance ("readable on a phone"), not a number');
+  check(/at most\s+a short JS snippet/i.test(flatPrompt),
+    '3.3: the "at most a short JS snippet" structural budget is still stated');
+
   const sysNoCtx = buildSystemPrompt({ title: 'Two Sum' });
   check(/no guide text was captured/i.test(sysNoCtx), 'degrades honestly when there is no context');
 
   // The diagram docs must not push the prompt past the budget, or the context
   // gets squeezed out of a real request.
+  //
+  // Both this and the `huge` case below add `MAX_SYSTEM_SCAFFOLD_TOKENS` to a
+  // fixed context size, so what they actually measure is the prompt's OWN cost:
+  // everything except the injected guide text. That is why the scaffold is now
+  // also asserted directly, below — so the ceiling is pinned by the thing it is
+  // a ceiling on rather than inferred from a fixture's arithmetic.
   const sysTokens = await countTokens(buildSystemPrompt({
     title: 'Two Sum', category: 'HASHMAP',
     context: 'word '.repeat(2000).trim(),
   }));
-  check(sysTokens < MAX_CONTEXT_TOKENS + 800,
+  check(sysTokens < MAX_CONTEXT_TOKENS + MAX_SYSTEM_SCAFFOLD_TOKENS,
     'system prompt leaves headroom inside MAX_TOTAL_TOKENS', `systemTokens=${sysTokens}`);
+
+  const sysScaffold = await countTokens(buildSystemPrompt({
+    title: 'Two Sum', category: 'HASHMAP', context: 'guide text',
+  }));
+  check(sysScaffold < MAX_SYSTEM_SCAFFOLD_TOKENS,
+    'the system prompt scaffold (everything but the guide text) is inside its ceiling',
+    `scaffold=${sysScaffold} ceiling=${MAX_SYSTEM_SCAFFOLD_TOKENS}`);
 
   const CONTEXT_SENTINEL = 'ZZZ_UNIQUE_CONTEXT_STRING_ZZZ';
   const built = await buildChatRequest({
@@ -424,7 +674,8 @@ async function main() {
     maxContextTokens: 300,
   });
   check(huge.meta.contextTruncated === true, 'oversize context is truncated');
-  check(huge.meta.systemTokens < 300 + 800, 'system prompt respects the context cap', `systemTokens=${huge.meta.systemTokens}`);
+  check(huge.meta.systemTokens < 300 + MAX_SYSTEM_SCAFFOLD_TOKENS,
+    'system prompt respects the context cap', `systemTokens=${huge.meta.systemTokens}`);
 
   // The regression that live testing found: a head+tail trim silently deleted
   // Level 3, so the assistant told the reader its context "elides the later
@@ -827,6 +1078,32 @@ async function main() {
   check(seenRequest?.max_tokens === MAX_COMPLETION_TOKENS,
     'caps completion length via the cost-control constant',
     `got ${seenRequest?.max_tokens}, constant=${MAX_COMPLETION_TOKENS}`);
+
+  // The assertion above is a tautology — it compares the request to the constant
+  // it was built from, so it passes at any value. The ceiling is an OWNER
+  // decision with a spend consequence, so the number itself is pinned here as a
+  // literal: changing 4096 must be a visible edit, not a silent one.
+  const OWNER_COMPLETION_CEILING = 4096;
+  check(MAX_COMPLETION_TOKENS === OWNER_COMPLETION_CEILING,
+    'the completion ceiling is the owner-decided 4096, pinned as a literal rather than derived',
+    `MAX_COMPLETION_TOKENS=${MAX_COMPLETION_TOKENS}`);
+  check(seenRequest?.max_tokens === OWNER_COMPLETION_CEILING,
+    'and it is what actually reaches the provider', `sent=${seenRequest?.max_tokens}`);
+  // Deliberately NOT `MAX_COMPLETION_TOKENS < MAX_TOTAL_TOKENS / MAX_TOOL_ROUNDS`:
+  // MAX_TOTAL_TOKENS is the PROMPT budget and this is the COMPLETION budget.
+  // Dividing one by the other is the category error the plan's rejected
+  // `min(MAX_TOTAL_TOKENS - totalTokens, 4096)` formula made, and the arithmetic
+  // resolves to a constant either way. The real constraints are the model's own
+  // limits for the default model (gpt-4o-mini: 16,384 max output, 128,000 context).
+  const MODEL_MAX_OUTPUT = 16_384;
+  const MODEL_CONTEXT = 128_000;
+  check(MAX_COMPLETION_TOKENS <= MODEL_MAX_OUTPUT,
+    'the completion ceiling is within the default model’s max output tokens',
+    `ceil=${MAX_COMPLETION_TOKENS} model=${MODEL_MAX_OUTPUT}`);
+  check(MAX_TOTAL_TOKENS + MAX_COMPLETION_TOKENS <= MODEL_CONTEXT,
+    'prompt budget + completion ceiling still fit the default model’s context window',
+    `prompt=${MAX_TOTAL_TOKENS} + completion=${MAX_COMPLETION_TOKENS} context=${MODEL_CONTEXT}`);
+
   check(seenRequest?.messages?.[0]?.role === 'system', 'first message is the system prompt');
   check(seenRequest?.messages?.[0]?.content?.includes('SENTINEL_CTX'), 'pageContext travels in the system prompt');
   check(
@@ -864,6 +1141,108 @@ async function main() {
   check(refused.statusCode === 200, 'SDK turns a 401 into a thrown error, handled inline');
   check(/data: \{"error":/.test(refused.text), 'provider refusal surfaces as an SSE error frame');
   check(!refused.text.includes('bad key'), 'the raw provider error is not leaked to the client');
+
+  /* ==================== truncation signalling ==================== */
+  // A turn that runs into MAX_COMPLETION_TOKENS is still a real answer: the text
+  // is good, it just stops mid-sentence. Until 0.3 the reader could not tell
+  // that from a complete answer, and neither could we — runTurn never read
+  // finish_reason, so the rate was unmeasurable.
+  section('truncation signalling (finish_reason: length)');
+
+  /** Terminal frame a provider sends alongside its final delta. */
+  const finish = (reason) => JSON.stringify({ choices: [{ delta: {}, finish_reason: reason }] });
+
+  // The exact frame bytes are pinned by contract with the client half, which
+  // matches on this shape. Do not reformat: `sse()` emits `data: ` + the
+  // JSON.stringify'd object + a blank line, and JSON.stringify adds no space.
+  const TRUNCATED_FRAME = 'data: {"truncated":true}';
+
+  const lengthRun = await withStubbedFetch(
+    async () => new Response(sseBody([delta('Two '), delta('Sum'), finish('length')])(), { status: 200 }),
+    async () => {
+      const res = mockRes();
+      const logs = await captureLogs(() => chatHandler(
+        mockReq({ body: { messages: [{ role: 'user', content: 'explain' }] } }), res,
+      ));
+      return { res, logs };
+    },
+  );
+  check(lengthRun.res.text.includes(TRUNCATED_FRAME),
+    'a length-truncated answer emits the truncation frame', lengthRun.res.text.slice(-200));
+  check((lengthRun.res.text.match(/data: \{"truncated":true\}/g) || []).length === 1,
+    'the truncation frame is emitted exactly once',
+    `count=${(lengthRun.res.text.match(/data: \{"truncated":true\}/g) || []).length}`);
+  check(lengthRun.res.text.includes('Two ') && lengthRun.res.text.includes('Sum'),
+    'the truncated text is still delivered — truncation is a notice, not a refusal');
+  // Placement is the contract: after the last content delta, before [DONE].
+  const lastDeltaAt = lengthRun.res.text.lastIndexOf(`data: ${finish('length')}`);
+  const truncAt = lengthRun.res.text.indexOf(TRUNCATED_FRAME);
+  const doneAt = lengthRun.res.text.indexOf('data: [DONE]');
+  check(truncAt > lastDeltaAt,
+    'the truncation frame comes after the last content delta', `truncAt=${truncAt} lastDeltaAt=${lastDeltaAt}`);
+  check(truncAt > 0 && truncAt < doneAt,
+    'the truncation frame comes before [DONE]', `truncAt=${truncAt} doneAt=${doneAt}`);
+  check((lengthRun.res.text.match(/data: \[DONE\]/g) || []).length === 1,
+    'a truncated answer still terminates with exactly one [DONE]');
+  check(lengthRun.logs.find((l) => l.event === 'chat.completed')?.finishReason === 'length',
+    'the completed log carries finishReason=length so the rate is measurable',
+    JSON.stringify(lengthRun.logs.at(-1)));
+
+  // The control: a turn that finished on its own must NOT claim truncation.
+  const stopRun = await withStubbedFetch(
+    async () => new Response(sseBody([delta('Complete answer.'), finish('stop')])(), { status: 200 }),
+    async () => {
+      const res = mockRes();
+      const logs = await captureLogs(() => chatHandler(
+        mockReq({ body: { messages: [{ role: 'user', content: 'explain' }] } }), res,
+      ));
+      return { res, logs };
+    },
+  );
+  check(!stopRun.res.text.includes(TRUNCATED_FRAME),
+    'a complete answer emits no truncation frame', stopRun.res.text.slice(-200));
+  check(stopRun.logs.find((l) => l.event === 'chat.completed')?.finishReason === 'stop',
+    'a complete answer logs finishReason=stop',
+    JSON.stringify(stopRun.logs.at(-1)));
+
+  // The distinction the brief is most emphatic about. `cut` is the internal
+  // DEADLINE flag: the reader is told the time limit was exceeded and nothing
+  // else. A dead socket takes the same branch, and is the reachable way to
+  // prove a non-length exit never masquerades as truncation.
+  const cutRun = await withStubbedFetch(
+    async () => new Response(sseBody([delta('half an ans'), finish('stop')], { failAfter: 60 })(), { status: 200 }),
+    async () => {
+      const res = mockRes();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'explain' }] } }), res);
+      return res;
+    },
+  );
+  check(/data: \{"error":/.test(cutRun.text) && !cutRun.text.includes(TRUNCATED_FRAME),
+    'a cut turn gets the error frame and NEVER {"truncated":true}',
+    cutRun.text.slice(-200));
+
+  /* ==================== heartbeat timer hygiene ==================== */
+  // The read races a HEARTBEAT_MS timer so the route can ping while the provider
+  // is silent. Promise.race awaits ONE side, so an uncleared timer survives its
+  // loser: one armed 10s timer per chunk, hundreds per stream, each holding the
+  // event loop open long after res.end().
+  section('heartbeat timer hygiene');
+
+  const timerRun = await withStubbedFetch(
+    async () => new Response(sseBody(Array.from({ length: 40 }, (_, i) => delta(`tok${i} `)))(), { status: 200 }),
+    async () => {
+      const res = mockRes();
+      const before = pendingTimers();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'long answer please' }] } }), res);
+      const after = pendingTimers();
+      return { res, before, after };
+    },
+  );
+  check(timerRun.res.text.includes('tok39'), 'the 40-chunk stream really was served end to end',
+    timerRun.res.text.slice(-120));
+  check(timerRun.after === timerRun.before,
+    'no heartbeat timer is left pending after the stream ends',
+    `pending before=${timerRun.before} after=${timerRun.after} leaked=${timerRun.after - timerRun.before}`);
 
   /* ==================== tool loop ==================== */
   // The route used to make exactly ONE upstream call and forward its bytes. A
@@ -946,6 +1325,33 @@ async function main() {
   check((withTool.text.match(/data: \[DONE\]/g) || []).length === 1, 'a tool round still ends with exactly one [DONE]');
   check(/data: \{"status":/.test(withTool.text), 'a status frame tells the client a tool is running');
   check(/search_guides/.test(withTool.text), 'the status frame names the tool');
+
+  // The truncation notice (0.3) belongs to the FINAL answer, not to whatever
+  // round happened to be running. Round 1 here ends on `finish_reason:
+  // tool_calls`, so if the flag were latched per-round the notice would land
+  // between the tool status frame and the real prose — the one place the client
+  // would render it against the wrong message.
+  const toolThenLength = await withStubbedFetch(
+    async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.messages.length === 2) {
+        return new Response(sseBody(toolFrames('search_guides', JSON.stringify({ query: 'LRU cache' })))(), { status: 200 });
+      }
+      return new Response(sseBody([delta('LRU is '), finish('length')])(), { status: 200 });
+    },
+    async () => {
+      const res = mockRes();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'how does an LRU cache work?' }] } }), res);
+      return res;
+    },
+  );
+  check(toolThenLength.text.includes(TRUNCATED_FRAME),
+    'a length-truncated answer after a tool round is still flagged', toolThenLength.text.slice(-200));
+  check(toolThenLength.text.indexOf(TRUNCATED_FRAME) > toolThenLength.text.lastIndexOf('LRU is '),
+    'the notice lands after the final round\'s prose, not between rounds',
+    toolThenLength.text.slice(-300));
+  check((toolThenLength.text.match(/data: \{"truncated":true\}/g) || []).length === 1,
+    'the tool round does not emit a second notice');
 
   // --- Tools are filtered by what is actually configured.
   let unconfiguredBody = null;
@@ -1034,6 +1440,513 @@ async function main() {
     'the unaffordable tool is never dispatched',
     `roles=${reserveRequests[1]?.messages?.map((m) => m.role).join(',')}`);
   check(reserveRequests.at(-1)?.tool_choice === 'none', 'the final call forbids tools so prose still arrives');
+
+  /* ==================== rate limiting — session raises the ceiling ==================== */
+  // Chat is deliberately anonymous (decision D-6): nobody is ever required to
+  // log in, a session unlocks no feature, and history stays on the device. What
+  // a session changes is the *ceiling* — the per-IP bucket is shared by everyone
+  // behind a NAT, while an attacker rotating IPs gets a fresh one every time —
+  // so an identity key makes the abuse attributable without moving a single
+  // reader's chat off their machine. There is deliberately no 401 path.
+  section('rate limiting — a session raises the limit (0.8)');
+
+  const CHAT_SECRET = 'test-secret-for-chat-suite-only';
+  const SECRET_ENV = { SESSION_SECRET: CHAT_SECRET };
+  const sidFor = (id) => `sid=${encodeURIComponent(signSession({ githubId: id, login: `user${id}` }, CHAT_SECRET))}`;
+  // Pinned here as a literal on purpose: the route must not be the only place
+  // this number exists, and a change to the allowance should be a visible
+  // decision rather than a silent edit.
+  const SIGNED_IN_ALLOWANCE = 20;
+  check(chatSecurity.SIGNED_IN_RATE_LIMIT === SIGNED_IN_ALLOWANCE,
+    'the generous allowance is a named export beside the anonymous limit, not a magic number in the route',
+    `exported=${chatSecurity.SIGNED_IN_RATE_LIMIT} expected=${SIGNED_IN_ALLOWANCE}`);
+
+  await withStubbedFetch(
+    async () => new Response(sseBody([delta('ok')])(), { status: 200 }),
+    async () => {
+      /** One chat request from `ip`; the cookie, if any, arrives as the widget sends it. */
+      async function chatFrom(ip, { cookie = null, env = SECRET_ENV } = {}) {
+        const res = mockRes();
+        const logs = await captureLogs(() => withEnv(env, () => chatHandler(
+          mockReq({
+            body: { messages: [{ role: 'user', content: 'hi' }] },
+            headers: { 'x-forwarded-for': ip, ...(cookie ? { cookie } : {}) },
+          }),
+          res,
+        )));
+        return { status: res.statusCode, res, logs };
+      }
+
+      // --- Anonymous: byte-for-byte the behaviour that shipped.
+      const anon = [];
+      for (let i = 0; i < 7; i++) anon.push((await chatFrom('198.51.100.10')).status);
+      check(anon[DEFAULT_RATE_LIMIT - 1] === 200 && anon[DEFAULT_RATE_LIMIT] === 429,
+        'an anonymous reader is still capped at exactly 5/min per IP', anon.join(','));
+      check(!anon.includes(401), 'there is no 401 path — a session is never required', anon.join(','));
+      check(anon.every((s) => s === 200 || s === 429), 'anonymous statuses are unchanged', anon.join(','));
+
+      // --- Signed in: the same IP, the same burst, no longer punished for it.
+      const cookie = sidFor(1001);
+      const signed = [];
+      for (let i = 0; i < 8; i++) signed.push((await chatFrom('198.51.100.20', { cookie })).status);
+      check(signed.every((s) => s === 200),
+        'a signed-in reader is NOT 429d past the anonymous per-IP budget', signed.join(','));
+
+      // --- The ceiling is a named constant, and tripping it is attributable.
+      //     Run to the ceiling from one address, then present the SAME cookie
+      //     from a different one: were the limiter still keyed on the IP, that
+      //     second request would land in a virgin bucket and sail through. This
+      //     is the shared-NAT case the item exists for, and it is also what
+      //     proves the key is an identity at all.
+      const exact = [];
+      let blocked = null;
+      for (let i = 0; i < SIGNED_IN_ALLOWANCE + 2; i++) {
+        const r = await chatFrom('198.51.100.30', { cookie: sidFor(2002) });
+        exact.push(r.status);
+        if (r.status === 429 && !blocked) blocked = r;
+      }
+      check(exact.indexOf(429) === SIGNED_IN_ALLOWANCE,
+        `a signed-in reader gets the documented ${SIGNED_IN_ALLOWANCE}/min allowance`,
+        `first 429 at index ${exact.indexOf(429)}: ${exact.join(',')}`);
+      const moved = await chatFrom('198.51.100.99', { cookie: sidFor(2002) });
+      check(moved.status === 429,
+        'the generous allowance follows the identity, not the IP address',
+        `status=${moved.status}`);
+      const limited = blocked?.logs.find((l) => l.event === 'chat.rate_limited');
+      check(limited?.login === 'user2002',
+        'the rate_limited log names the caller, so abuse is attributable',
+        JSON.stringify(limited));
+      check(blocked?.res.headers['retry-after'] !== undefined,
+        'the identity 429 keeps the same Retry-After contract');
+      check(blocked?.res.body?.error === 'Too many requests. Please slow down.',
+        'the identity 429 keeps the same error body — nothing client-visible moved',
+        JSON.stringify(blocked?.res.body));
+    },
+  );
+
+  /* ==================== rate limiting — the layer that decides ==================== */
+  // The signed-in allowance is worth nothing if it only moves the in-memory
+  // floor. The Upstash sliding window is CONSTRUCTED with its limit baked into
+  // the script it evals, so a single memoised limiter pins every caller to the
+  // anonymous ceiling. This project provisions KV for the judge, so with Redis
+  // configured that is the layer that actually decides — and it is the normal
+  // production case, not an edge.
+  section('rate limiting — the allowance reaches the Redis layer');
+
+  const redisSeen = [];
+  const fakeUpstash = http.createServer((req, rq) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      redisSeen.push(body);
+      rq.writeHead(200, { 'content-type': 'application/json' });
+      // The sliding-window script evals to [allowed, resetAt, window, remaining].
+      let n = 1;
+      try { n = JSON.parse(body).length; } catch { /* keep n = 1 */ }
+      rq.end(JSON.stringify(Array.from({ length: n }, () => ({ result: [1, Date.now() + 60_000, 60_000, 99] }))));
+    });
+  });
+  await new Promise((r) => fakeUpstash.listen(0, '127.0.0.1', r));
+  const redisEnv = { UPSTASH_REDIS_REST_URL: `http://127.0.0.1:${fakeUpstash.address().port}`, UPSTASH_REDIS_REST_TOKEN: 'tok' };
+  // The Upstash client needs a real fetch; the suite kill-switch is restored
+  // immediately after. Only a loopback socket this block itself opened is
+  // reachable here — no external network, no provider call.
+  restoreFetch();
+  // @upstash/ratelimit records analytics via console.warn (index.mjs:959), and
+  // flushes the batch late enough that the write can still be in flight when
+  // this block's socket closes. It then warns with a wall of ECONNREFUSED after
+  // the suite has printed its summary, on every run. No socket lifetime can
+  // prevent that, so the library's own line is filtered — and deliberately NOT
+  // restored, because the warning arrives after this block. It can only match
+  // this one library's analytics message, and only this block configures Redis.
+  const realConsoleWarn = console.warn;
+  console.warn = (...a) => {
+    if (!String(a[0] ?? '').startsWith('Failed to record analytics')) realConsoleWarn(...a);
+  };
+  try {
+    resetLimiterCache();
+    const anonRes = await rateLimit('redis:anon', { env: redisEnv });
+    const signedRes = await rateLimit('redis:signed', { env: redisEnv, limit: 20 });
+    check(anonRes.scope === 'memory+redis', 'the fake Upstash endpoint is genuinely engaged',
+      `scope=${anonRes.scope}`);
+    check(signedRes.scope === 'memory+redis', 'and it engages on the signed-in call too',
+      `scope=${signedRes.scope}`);
+
+    // evalsha body: [cmd, sha, nkeys, key, prevKey, LIMIT, now, window, ...]
+    const sentLimits = redisSeen
+      .map((b) => { try { return JSON.parse(b)[0]?.[5]; } catch { return undefined; } })
+      .filter((v) => typeof v === 'number');
+    check(sentLimits.length >= 2, 'both limiter calls reached Redis', JSON.stringify(sentLimits));
+    check(sentLimits[0] === DEFAULT_RATE_LIMIT,
+      'the anonymous limiter is built with the anonymous limit', `sent=${sentLimits[0]}`);
+    check(sentLimits.at(-1) === 20,
+      'the signed-in limiter is built with the SIGNED-IN limit, not the anonymous one',
+      `sent=${sentLimits.at(-1)} all=${JSON.stringify(sentLimits)}`);
+  } finally {
+    globalThis.fetch = noNetwork;
+    resetLimiterCache();
+    await new Promise((r) => fakeUpstash.close(r));
+  }
+  check(globalThis.fetch === noNetwork, 'the suite kill-switch is back in place after the Redis probe');
+
+  /* ==================== the per-IP DAILY cap (owner decision 5.3) ==================== */
+  // 5/min is a rate, not a budget: one address at 5/min for 24h is 7,200
+  // requests, and at the raised 4,096-token ceiling that is ~$66/day from a
+  // single IP. Rotating addresses multiplies it linearly, and an anonymous
+  // attacker never signs in, so the per-identity allowance above cannot bound
+  // it. This is the bound that can.
+  section('rate limiting — the per-IP daily cap reaches the Redis layer');
+
+  const DAILY_ALLOWANCE = 300;
+  check(chatSecurity.DAILY_RATE_LIMIT === DAILY_ALLOWANCE,
+    'the daily allowance is a named export beside the other two, not a magic number in the route',
+    `exported=${chatSecurity.DAILY_RATE_LIMIT} expected=${DAILY_ALLOWANCE}`);
+
+  // --- The window reaches Redis, and does so on its OWN key namespace.
+  // A sliding window derives its storage keys from prefix + key + bucket, so a
+  // per-minute and a per-day limiter sharing a prefix would increment the SAME
+  // counters and the daily figure would be silent garbage. Two asserts, because
+  // either failure alone is a wrong number rather than an error.
+  const dailySeen = [];
+  const dailyFake = http.createServer((req, rq) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      dailySeen.push(body);
+      rq.writeHead(200, { 'content-type': 'application/json' });
+      let n = 1;
+      try { n = JSON.parse(body).length; } catch { /* keep n = 1 */ }
+      rq.end(JSON.stringify(Array.from({ length: n }, () => ({ result: [1, Date.now() + 86_400_000, 86_400_000, 99] }))));
+    });
+  });
+  await new Promise((r) => dailyFake.listen(0, '127.0.0.1', r));
+  const dailyEnv = { UPSTASH_REDIS_REST_URL: `http://127.0.0.1:${dailyFake.address().port}`, UPSTASH_REDIS_REST_TOKEN: 'tok' };
+  restoreFetch();
+  try {
+    resetLimiterCache();
+    const day = await rateLimit('probe:samekey', {
+      env: dailyEnv,
+      limit: chatSecurity.DAILY_RATE_LIMIT,
+      windowMs: chatSecurity.DAILY_RATE_WINDOW_MS,
+      prefix: chatSecurity.DAY_PREFIX,
+    });
+    const minute = await rateLimit('probe:samekey', { env: dailyEnv });
+    check(day.scope === 'memory+redis' && minute.scope === 'memory+redis',
+      'the fake Upstash endpoint is engaged for both windows of the same key',
+      `day=${day.scope} minute=${minute.scope}`);
+
+    // evalsha body: [cmd, sha, nkeys, KEY, prevKey, LIMIT, now, WINDOW, ...]
+    // Both calls used the SAME request key, so the only thing that can differ in
+    // the returned Redis key is the prefix. That is what makes the next assert
+    // real rather than accidentally satisfied by a different key.
+    const calls = dailySeen
+      .map((b) => { try { const a = JSON.parse(b)[0]; return { key: a?.[3], limit: a?.[5], window: a?.[7] }; } catch { return null; } })
+      .filter((c) => c && typeof c.limit === 'number');
+    check(calls.length >= 2, 'both windows of one key reached Redis', JSON.stringify(calls));
+    check(calls[0].limit === DAILY_ALLOWANCE,
+      'the daily limiter is built with the daily limit, not the per-minute one',
+      `sent=${calls[0].limit}`);
+    check(calls[0].window === 86_400_000,
+      'the daily limiter is built with a 24-hour window, not the module minute',
+      `window=${calls[0].window}`);
+    // Upstash appends a window-bucket suffix, so compare the namespace the
+    // prefix + request key form. Both calls used the same request key, so the
+    // prefix is the only thing that can differ.
+    const dayNs = `${chatSecurity.DAY_PREFIX}:probe:samekey:`;
+    const minNs = `${chatSecurity.MINUTE_PREFIX}:probe:samekey:`;
+    check(calls[0].key.startsWith(dayNs),
+      'the daily limiter stamps its own prefix onto the Redis key, same request key underneath',
+      `key=${calls[0].key} expected-prefix=${dayNs}`);
+    check(calls.at(-1).key.startsWith(minNs),
+      'the per-minute limiter keeps the original prefix — one request key, two namespaces',
+      `key=${calls.at(-1).key} expected-prefix=${minNs}`);
+  } finally {
+    globalThis.fetch = noNetwork;
+    resetLimiterCache();
+    await new Promise((r) => dailyFake.close(r));
+  }
+
+  // --- The boundary itself, at the layer that decides without Redis.
+  // Same key every time, or every call lands in a virgin bucket and the
+  // counter never accumulates.
+  resetLimiterCache();
+  const dailyAllowed = [];
+  for (let i = 0; i < DAILY_ALLOWANCE + 1; i++) {
+    dailyAllowed.push((await rateLimit('day:onekey', {
+      limit: DAILY_ALLOWANCE,
+      windowMs: chatSecurity.DAILY_RATE_WINDOW_MS,
+      prefix: chatSecurity.DAY_PREFIX,
+    })).allowed);
+  }
+  check(dailyAllowed.slice(0, DAILY_ALLOWANCE).every(Boolean)
+    && dailyAllowed[DAILY_ALLOWANCE] === false,
+    `a reader is allowed exactly ${DAILY_ALLOWANCE} requests a day and blocked on the next`,
+    `allowed=${dailyAllowed.filter(Boolean).length} of ${dailyAllowed.length}`);
+
+  // ... and the two windows of ONE ip key must not share a counter. Without the
+  // namespaced in-memory key, the day call inflates the minute count and the
+  // reader is 429'd for a minute they never exceeded.
+  resetLimiterCache();
+  await rateLimit('chat:1.2.3.4', { limit: DEFAULT_RATE_LIMIT, windowMs: DEFAULT_RATE_WINDOW_MS });
+  const afterDay = await rateLimit('chat:1.2.3.4', {
+    limit: DAILY_ALLOWANCE, windowMs: chatSecurity.DAILY_RATE_WINDOW_MS, prefix: chatSecurity.DAY_PREFIX,
+  });
+  const nextMinute = await rateLimit('chat:1.2.3.4', { limit: DEFAULT_RATE_LIMIT, windowMs: DEFAULT_RATE_WINDOW_MS });
+  check(afterDay.remaining === DAILY_ALLOWANCE - 1 && nextMinute.remaining === DEFAULT_RATE_LIMIT - 2,
+    'the daily window does not consume the per-minute budget for the same IP',
+    `day.remaining=${afterDay.remaining} minute.remaining=${nextMinute.remaining}`);
+  resetLimiterCache();
+
+  // --- Through the route: the daily 429 is indistinguishable from the minute one.
+  // The body, the status and the header are the client contract Wave 0 pinned;
+  // a second limiter must not quietly reshape them.
+  await withStubbedFetch(
+    async () => new Response(sseBody([delta('ok')])(), { status: 200 }),
+    async () => {
+      async function oneFrom(ip, cookie) {
+        const res = mockRes();
+        const logs = await captureLogs(() => withEnv(SECRET_ENV, () => chatHandler(
+          mockReq({ body: { messages: [{ role: 'user', content: 'hi' }] }, headers: { 'x-forwarded-for': ip, ...(cookie ? { cookie } : {}) } }),
+          res,
+        )));
+        return { status: res.statusCode, res, logs };
+      }
+      // Exhaust the daily bucket directly, then spend one through the route.
+      resetLimiterCache();
+      for (let i = 0; i < DAILY_ALLOWANCE; i++) {
+        await rateLimit('chat:198.51.100.77', {
+          limit: DAILY_ALLOWANCE,
+          windowMs: chatSecurity.DAILY_RATE_WINDOW_MS,
+          prefix: chatSecurity.DAY_PREFIX,
+        });
+      }
+      const r = await oneFrom('198.51.100.77');
+      check(r.status === 429, 'the route 429s once the daily budget is spent', `status=${r.status}`);
+      check(r.res.body?.error === 'Too many requests. Please slow down.',
+        'the daily 429 keeps the same error body as the per-minute one', JSON.stringify(r.res.body));
+      check(r.res.headers['retry-after'] !== undefined, 'the daily 429 keeps the same Retry-After contract');
+      const dayLog = r.logs.find((l) => l.event === 'chat.rate_limited');
+      check(dayLog?.bucket === 'day', 'the log says which budget was spent', JSON.stringify(dayLog));
+      check(dayLog?.login === undefined || dayLog?.login === null,
+        'an anonymous caller is still logged with no login', JSON.stringify(dayLog));
+    },
+  );
+  resetLimiterCache();
+
+  /* ==================== auth hardening ==================== */
+  // The login path is hand-rolled on node:crypto and was never the weak link in
+  // the plan's terms — GitHub is already the sole provider, scope is read:user,
+  // and the access token is discarded. These are the four real gaps in it.
+  section('auth — appBaseUrl origin (0.5)');
+
+  // The redirect_uri origin decides where a real user is sent to log in. Reading
+  // it from x-forwarded-* is safe only while the platform sets those headers
+  // itself; one pass-through proxy and it is attacker-chosen.
+  const hostile = { headers: { host: 'real.vercel.app', 'x-forwarded-proto': 'https', 'x-forwarded-host': 'evil.example' } };
+  // Pin the premise: with PUBLIC_ORIGIN unset this request really does answer
+  // from the header, so a later PASS cannot be vacuously true.
+  check(await withEnv({ PUBLIC_ORIGIN: undefined }, () => appBaseUrl(hostile)) === 'https://evil.example',
+    'premise: without PUBLIC_ORIGIN the forwarded host is what decides the origin',
+    await withEnv({ PUBLIC_ORIGIN: undefined }, () => appBaseUrl(hostile)));
+  check(await withEnv({ PUBLIC_ORIGIN: 'https://example.test' }, () => appBaseUrl(hostile)) === 'https://example.test',
+    'PUBLIC_ORIGIN wins over an attacker-supplied x-forwarded-host',
+    await withEnv({ PUBLIC_ORIGIN: 'https://example.test' }, () => appBaseUrl(hostile)));
+
+  check(await withEnv({ PUBLIC_ORIGIN: 'https://example.test/' }, () => appBaseUrl(hostile)) === 'https://example.test',
+    'a trailing slash is stripped from PUBLIC_ORIGIN');
+  check(await withEnv({ PUBLIC_ORIGIN: 'https://example.test///' }, () => appBaseUrl(hostile)) === 'https://example.test',
+    'repeated trailing slashes are stripped from PUBLIC_ORIGIN');
+  check(await withEnv({ PUBLIC_ORIGIN: '  https://example.test  ' }, () => appBaseUrl(hostile)) === 'https://example.test',
+    'surrounding whitespace is trimmed from PUBLIC_ORIGIN');
+
+  // A bad value must be ignored, never thrown on: a typo in an env var is not a
+  // reason to take the login route down with a 500.
+  for (const bad of ['javascript:alert(1)', 'ftp://example.test', 'file:///etc/passwd', 'not-a-url', '//evil.example', '']) {
+    let outcome;
+    let threw = false;
+    try {
+      outcome = await withEnv({ PUBLIC_ORIGIN: bad }, () => appBaseUrl(hostile));
+    } catch (e) {
+      threw = true;
+      outcome = String(e?.message || e);
+    }
+    check(!threw && outcome === 'https://evil.example',
+      `PUBLIC_ORIGIN=${JSON.stringify(bad)} is ignored, and the header logic still answers`,
+      `threw=${threw} got=${outcome}`);
+  }
+
+  // Unset: byte-identical to the header logic that shipped.
+  const noOrigin = { PUBLIC_ORIGIN: undefined };
+  check(await withEnv(noOrigin, () => appBaseUrl({ headers: { host: 'app.test.local' } })) === 'https://app.test.local',
+    'unset PUBLIC_ORIGIN: a bare host still defaults to https');
+  check(await withEnv(noOrigin, () => appBaseUrl({ headers: { host: 'localhost:3000' } })) === 'http://localhost:3000',
+    'unset PUBLIC_ORIGIN: localhost still gets http');
+  check(await withEnv(noOrigin, () => appBaseUrl({ headers: {
+    host: 'x.vercel.app', 'x-forwarded-proto': 'https', 'x-forwarded-host': 'a.vercel.app',
+  } })) === 'https://a.vercel.app', 'unset PUBLIC_ORIGIN: forwarded proto+host still win');
+  check(await withEnv(noOrigin, () => appBaseUrl({ headers: { host: 'x', 'x-forwarded-proto': 'http, https' } })) === 'http://x',
+    'unset PUBLIC_ORIGIN: only the first proto entry is used');
+  check(await withEnv(noOrigin, () => appBaseUrl({ headers: {} })) === 'http://localhost:3000',
+    'unset PUBLIC_ORIGIN: a header-less request still gets a usable origin');
+
+  /* ==================== auth — oauth_state cookie ==================== */
+  // Two cookies, one site, and they were built by two different rules. The
+  // state cookie is the login-CSRF defense; leaving it non-Secure on a
+  // production host while the session cookie is Secure is the kind of gap a
+  // security review finds long after it ships.
+  section('auth — oauth_state cookie hygiene (0.6)');
+
+  const AUTH_ENV = {
+    GITHUB_OAUTH_CLIENT_ID: 'test-client-id',
+    GITHUB_OAUTH_CLIENT_SECRET: 'test-client-secret',
+    SESSION_SECRET: 'test-secret-for-chat-suite-only',
+  };
+
+  /** Run the login route and hand back the single Set-Cookie it wrote. */
+  async function loginStateCookie(env) {
+    const res = mockRes();
+    await withEnv({ ...AUTH_ENV, ...env }, () => loginHandler(mockReq({ method: 'GET' }), res));
+    return { res, cookie: [].concat(res.headers['set-cookie'] || [])[0] || '' };
+  }
+
+  const prod = await loginStateCookie({ VERCEL_ENV: 'production' });
+  check(prod.res.statusCode === 302, 'login redirects to GitHub', `status=${prod.res.statusCode}`);
+  check(/^oauth_state=/.test(prod.cookie), 'login sets the state cookie', prod.cookie);
+  check(prod.cookie.includes('HttpOnly'), 'the state cookie is HttpOnly');
+  check(prod.cookie.includes('SameSite=Lax'), 'the state cookie is SameSite=Lax');
+  check(prod.cookie.includes('Secure'),
+    'the state cookie is Secure under VERCEL_ENV=production', prod.cookie);
+
+  const dev = await loginStateCookie({});
+  check(dev.cookie.includes('HttpOnly') && !dev.cookie.includes('Secure'),
+    'the state cookie is NOT Secure outside production (localhost http must still work)', dev.cookie);
+
+  const forced = await loginStateCookie({ COOKIE_SECURE: '1' });
+  check(forced.cookie.includes('Secure'),
+    'COOKIE_SECURE=1 marks the state cookie Secure off-production', forced.cookie);
+
+  // The point of the fix: ONE rule, not two copies that drift.
+  const sidProd = await withEnv({ VERCEL_ENV: 'production' }, () => sessionCookieHeader('x'));
+  const sidDev = await withEnv({}, () => sessionCookieHeader('x'));
+  check(sidProd.includes('Secure') === prod.cookie.includes('Secure'),
+    'the session cookie and the state cookie agree under production env');
+  check(sidDev.includes('Secure') === dev.cookie.includes('Secure'),
+    'the session cookie and the state cookie agree outside production');
+
+  // sessionCookieHeader's existing behaviour must not move while it is refactored.
+  check(await withEnv({ VERCEL_ENV: 'production' }, () => sessionCookieHeader('abc'))
+    === 'sid=abc; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax; Secure',
+    'sessionCookieHeader output is byte-identical under production');
+  check(await withEnv({}, () => sessionCookieHeader('abc'))
+    === 'sid=abc; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax',
+    'sessionCookieHeader output is byte-identical outside production');
+  check((await withEnv({ COOKIE_SECURE: '1' }, () => sessionCookieHeader('abc'))).includes('Secure'),
+    'sessionCookieHeader honours COOKIE_SECURE=1');
+
+
+  // The state cookie is single-use. Only the success path used to clear it, so
+  // a stale 10-minute cookie survived every failed attempt.
+  const failPaths = [
+    { label: 'state mismatch', query: { code: 'c', state: 'wrong' }, cookie: 'oauth_state=right', status: 400 },
+    { label: 'missing code', query: { state: 'right' }, cookie: 'oauth_state=right', status: 400 },
+    // The suite kill-switch is still installed, so the token exchange throws and
+    // the route takes its fetch-failure branch.
+    { label: 'token exchange failure', query: { code: 'c', state: 'right' }, cookie: 'oauth_state=right', status: 502 },
+  ];
+  for (const p of failPaths) {
+    const res = mockRes();
+    await withEnv(AUTH_ENV, () => callbackHandler(
+      mockReq({ method: 'GET', query: p.query, headers: { cookie: p.cookie } }), res,
+    ));
+    const cookies = [].concat(res.headers['set-cookie'] || []);
+    check(cookies.some((c) => /^oauth_state=;/.test(c) && c.includes('Max-Age=0')),
+      `callback ${p.label} expires oauth_state`, `status=${res.statusCode} cookies=${JSON.stringify(cookies)}`);
+  }
+
+  /* ==================== auth — session epoch ==================== */
+  // Sessions are stateless and last 30 days, so a leaked cookie is valid for a
+  // month and nothing on the server can withdraw it: there is no incident
+  // response tool at all. A signed epoch is the whole tool — bump the env var,
+  // every outstanding cookie stops verifying, no storage, no migration.
+  section('auth — SESSION_EPOCH kill switch (0.7)');
+
+  const EPOCH_SECRET = 'test-secret-for-chat-suite-only';
+  const b64url = (buf) => Buffer.from(buf).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const decodeToken = (token) => JSON.parse(
+    Buffer.from(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'),
+  );
+  /**
+   * A token in the pre-epoch wire format, signed by hand.
+   *
+   * Deliberately not built by signSession: the whole point is a payload today's
+   * signer would never produce, because that is exactly what every cookie
+   * already sitting in a reader's browser looks like on the deploy day.
+   */
+  const legacyToken = (payload, secret) => {
+    const body = b64url(JSON.stringify(payload));
+    return `${body}.${b64url(crypto.createHmac('sha256', secret).update(body).digest())}`;
+  };
+
+  const epoch1 = await withEnv({ SESSION_EPOCH: undefined }, () => signSession({ githubId: 11, login: 'ada' }, EPOCH_SECRET));
+  check(decodeToken(epoch1).epoch === 1, 'a new token is stamped with the default epoch 1',
+    JSON.stringify(decodeToken(epoch1)));
+  check((await withEnv({ SESSION_EPOCH: undefined }, () => verifySession(epoch1, EPOCH_SECRET)))?.githubId === 11,
+    'an epoch-1 token verifies at the default');
+
+  // The kill switch.
+  check(await withEnv({ SESSION_EPOCH: '2' }, () => verifySession(epoch1, EPOCH_SECRET)) === null,
+    'bumping SESSION_EPOCH invalidates every token minted before the bump');
+  const epoch2 = await withEnv({ SESSION_EPOCH: '2' }, () => signSession({ githubId: 12, login: 'grace' }, EPOCH_SECRET));
+  check(decodeToken(epoch2).epoch === 2, 'a token minted after the bump carries epoch 2',
+    JSON.stringify(decodeToken(epoch2)));
+  check((await withEnv({ SESSION_EPOCH: '2' }, () => verifySession(epoch2, EPOCH_SECRET)))?.githubId === 12,
+    'a token minted at the CURRENT epoch still verifies — the switch kills old, not all');
+  check(await withEnv({ SESSION_EPOCH: '1' }, () => verifySession(epoch2, EPOCH_SECRET)) === null,
+    'bumping back invalidates the newer cohort too — it is a value, not a watermark');
+
+  // Back-compat is the requirement that decides whether this ships: a deploy
+  // that logs out every existing reader is not a kill switch, it is an outage.
+  const legacyNow = Math.floor(Date.now() / 1000);
+  const legacy = legacyToken({ githubId: 13, login: 'alan', iat: legacyNow, exp: legacyNow + 3600 }, EPOCH_SECRET);
+  check(decodeToken(legacy).epoch === undefined, 'the legacy fixture really carries no epoch field',
+    JSON.stringify(decodeToken(legacy)));
+  check((await withEnv({ SESSION_EPOCH: undefined }, () => verifySession(legacy, EPOCH_SECRET)))?.githubId === 13,
+    'BACK-COMPAT: a pre-epoch cookie still verifies, so the deploy logs nobody out');
+  check((await withEnv({ SESSION_EPOCH: '1' }, () => verifySession(legacy, EPOCH_SECRET)))?.githubId === 13,
+    'an explicit SESSION_EPOCH=1 is the same as the default for a pre-epoch cookie');
+  check(await withEnv({ SESSION_EPOCH: '2' }, () => verifySession(legacy, EPOCH_SECRET)) === null,
+    'a bumped epoch does sweep pre-epoch cookies — that is what the switch is for');
+
+  // A typo must not be an outage. Anything unparseable falls back to the default
+  // rather than silently landing on some other cohort.
+  for (const bad of ['', ' ', 'abc', '2.5', '0', '-1', 'null']) {
+    check((await withEnv({ SESSION_EPOCH: bad }, () => verifySession(epoch1, EPOCH_SECRET)))?.githubId === 11,
+      `a nonsense SESSION_EPOCH (${JSON.stringify(bad)}) falls back to the default instead of logging everyone out`);
+  }
+
+  // The epoch is server state, not caller state.
+  const spoof = await withEnv({ SESSION_EPOCH: '1' },
+    () => signSession({ githubId: 14, login: 'mallory', epoch: 2 }, EPOCH_SECRET));
+  check(decodeToken(spoof).epoch === 1, 'a caller cannot smuggle an epoch through the payload',
+    JSON.stringify(decodeToken(spoof)));
+
+  // Nothing that was already true may stop being true.
+  const full = await withEnv({ SESSION_EPOCH: undefined }, () => verifySession(epoch1, EPOCH_SECRET));
+  check(full.login === 'ada' && typeof full.iat === 'number' && typeof full.exp === 'number',
+    'the epoch addition preserves every existing payload field', JSON.stringify(full));
+  check(await withEnv({}, () => verifySession(`${epoch1}x`, EPOCH_SECRET)) === null,
+    'a tampered token is still rejected');
+  check(await withEnv({}, () => verifySession(signSession({ githubId: 11 }, EPOCH_SECRET, -1), EPOCH_SECRET)) === null,
+    'an expired token is still rejected');
+  check(await withEnv({ SESSION_SECRET: undefined }, () => getSession({ headers: { cookie: `sid=${encodeURIComponent(epoch1)}` } })) === null,
+    'a missing SESSION_SECRET still fails closed — no session is better than a forged one');
+  check((await withEnv({ SESSION_EPOCH: '2', SESSION_SECRET: EPOCH_SECRET },
+    () => getSession({ headers: { cookie: `sid=${encodeURIComponent(epoch2)}` } })))?.githubId === 12,
+    'premise: that same cookie DOES yield a session once a secret exists');
+  check(await withEnv({ SESSION_EPOCH: '2', SESSION_SECRET: EPOCH_SECRET },
+    () => getSession({ headers: { cookie: `sid=${encodeURIComponent(epoch1)}` } })) === null,
+    'getSession honours the epoch — the kill switch works through the real entry point');
 
   /* ==================== hermeticity ==================== */
   section('hermeticity');
