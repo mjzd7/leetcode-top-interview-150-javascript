@@ -39,6 +39,50 @@ export const WEB_CLOSE = '<<<END_TOOL_CONTENT>>>';
 const DEFAULT_RATE_LIMIT = 5; // requests ...
 const DEFAULT_RATE_WINDOW_MS = 60_000; // ... per minute (integration plan §2.3)
 
+/**
+ * Allowance for a request that carries a valid session cookie.
+ *
+ * What it is: a higher per-window ceiling on the identity key
+ * `chat:u:<githubId>`, consumed on every signed-in request. It replaces the
+ * per-IP bucket as the thing that DECIDES the outcome (api/chat.mjs); the
+ * per-IP bucket is still counted, so toggling the cookie buys no fresh budget.
+ *
+ * Why it exists: chat is deliberately anonymous (decision D-6), and this does
+ * not change that. It never becomes a requirement, it unlocks no feature, and
+ * it moves no chat history off the device. It fixes two things the IP key
+ * cannot: everyone behind one NAT (an office, a campus, a mobile carrier)
+ * shares a single 5/min bucket, so one reader's rate is everyone else's
+ * outage; and an attacker rotating addresses gets a fresh budget every time,
+ * so abuse is unattributable. Signing in makes the request both fairer and
+ * nameable — and it is the stronger control, since an identity is one account
+ * where 5/min per address is trivially multiplied by rotating addresses.
+ *
+ * Why 20: a real reader asks a handful of questions a minute, so 20 is roughly
+ * 4x the pace of actual study and never something a human notices hitting. It
+ * is still a hard ceiling — a signed-in session must not be a licence to spend
+ * the owner's provider budget without bound, which is the failure mode an
+ * anonymous endpoint is most exposed to.
+ */
+const SIGNED_IN_RATE_LIMIT = 20; // requests per ... per minute for a signed-in identity
+
+/**
+ * Requests one IP may spend in a rolling 24 hours.
+ *
+ * 5/min is a rate, not a budget. At 5/min an address spends 7,200 requests a
+ * day, and at the 4,096-token completion ceiling that is roughly **$66/day from
+ * a single IP**. Rotating addresses multiplies that linearly, and an anonymous
+ * attacker never signs in, so the per-identity allowance above cannot bound it —
+ * only a per-IP ceiling can.
+ *
+ * 300 is chosen so the worst case per IP falls to about **$2.76/day** (300 ×
+ * $0.0092) while no real reader can feel it: 300 questions is a full study
+ * session, and the per-minute limiter still governs how fast they can be asked.
+ */
+const DAILY_RATE_LIMIT = 300; // requests per ... rolling 24 hours, per IP
+
+/** The daily window, in ms. Kept beside the limit so the pair is read together. */
+const DAILY_RATE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /* ------------------------------------------------------------------ *
  * Client identity
  * ------------------------------------------------------------------ */
@@ -235,17 +279,36 @@ function restConfig(env) {
   return { url, token };
 }
 
-let limiterPromise;
+// One limiter per distinct (limit, window, prefix).
+//
+// Neither the limit nor the window is a runtime argument to the Upstash client:
+// `slidingWindow()` bakes both into the Lua script the limiter evals, so they are
+// fixed the moment the Ratelimit is constructed. A single memoised instance
+// therefore pins EVERY caller to one ceiling and one window, and a per-call
+// option would only ever move the in-memory floor — the wrong layer to be the
+// only one that listens. With Redis configured (this project provisions KV for
+// the judge, so that is the normal production case) the signed-in and daily
+// allowances would have been silently ignored.
+//
+// The prefix is part of the key because a sliding window derives its storage
+// keys from prefix + key + bucket: a per-minute and a per-day limiter sharing a
+// prefix would increment the SAME counters, and the daily figure would be
+// garbage rather than wrong-looking.
+const limiterCache = new Map();
+
+const MINUTE_PREFIX = 'lt150:chat';
+const DAY_PREFIX = 'lt150:chat:day';
 
 /**
- * Build (once per instance) the Upstash sliding-window limiter.
+ * Build the Upstash sliding-window limiter for a given limit, window and prefix.
  * Resolves to null when Redis isn't configured or the client can't be built.
  */
-async function resolveLimiter(env) {
+async function resolveLimiter(env, limit, windowMs = DEFAULT_RATE_WINDOW_MS, prefix = MINUTE_PREFIX) {
   const cfg = restConfig(env);
   if (!cfg) return null;
-  if (limiterPromise === undefined) {
-    limiterPromise = (async () => {
+  const cacheKey = `${limit}|${windowMs}|${prefix}`;
+  if (!limiterCache.has(cacheKey)) {
+    limiterCache.set(cacheKey, (async () => {
       try {
         const [{ Redis }, { Ratelimit }] = await Promise.all([
           import('@upstash/redis'),
@@ -254,21 +317,21 @@ async function resolveLimiter(env) {
         const redis = new Redis({ url: cfg.url, token: cfg.token });
         return new Ratelimit({
           redis,
-          limiter: Ratelimit.slidingWindow(DEFAULT_RATE_LIMIT, '60 s'),
-          prefix: 'lt150:chat',
+          limiter: Ratelimit.slidingWindow(limit, `${Math.round(windowMs / 1000)} s`),
+          prefix,
           analytics: true,
         });
       } catch {
         return null;
       }
-    })();
+    })());
   }
-  return limiterPromise;
+  return limiterCache.get(cacheKey);
 }
 
 /** Test seam: force re-resolution with different env. */
 export function resetLimiterCache() {
-  limiterPromise = undefined;
+  limiterCache.clear();
   memoryState.clear();
 }
 
@@ -277,11 +340,19 @@ export function resetLimiterCache() {
 // api/judge/run.mjs so the codebase reads consistently.
 const memoryState = new Map();
 
-function checkMemory(key, windowMs, limit) {
+// The in-memory key is namespaced exactly like the Upstash one. Keying it on the
+// request key alone would make the per-minute and per-day limiters SHARE a
+// counter for `chat:<ip>`: the day call would find the minute entry, count past
+// it, and the next minute check would read the inflated count and 429 a reader
+// who has not exceeded anything.
+const memoryKey = (key, windowMs, prefix) => `${prefix}|${windowMs}|${key}`;
+
+function checkMemory(key, windowMs, limit, prefix = MINUTE_PREFIX) {
+  const slot = memoryKey(key, windowMs, prefix);
   const now = Date.now();
-  const entry = memoryState.get(key);
+  const entry = memoryState.get(slot);
   if (!entry || now - entry.start >= windowMs) {
-    memoryState.set(key, { start: now, count: 1 });
+    memoryState.set(slot, { start: now, count: 1 });
     return { allowed: true, remaining: limit - 1, reset: now + windowMs };
   }
   entry.count += 1;
@@ -303,9 +374,10 @@ export async function rateLimit(key, {
   env = process.env,
   limit = DEFAULT_RATE_LIMIT,
   windowMs = DEFAULT_RATE_WINDOW_MS,
+  prefix = MINUTE_PREFIX,
 } = {}) {
-  const memory = checkMemory(key, windowMs, limit);
-  const limiter = await resolveLimiter(env);
+  const memory = checkMemory(key, windowMs, limit, prefix);
+  const limiter = await resolveLimiter(env, limit, windowMs, prefix);
   if (!limiter) {
     return { ...memory, ok: memory.allowed, scope: 'memory' };
   }
@@ -324,4 +396,12 @@ export async function rateLimit(key, {
   }
 }
 
-export { DEFAULT_RATE_LIMIT, DEFAULT_RATE_WINDOW_MS };
+export {
+  DEFAULT_RATE_LIMIT,
+  DEFAULT_RATE_WINDOW_MS,
+  SIGNED_IN_RATE_LIMIT,
+  DAILY_RATE_LIMIT,
+  DAILY_RATE_WINDOW_MS,
+  MINUTE_PREFIX,
+  DAY_PREFIX,
+};
