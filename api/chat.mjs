@@ -52,6 +52,63 @@ function toolRoundReserveMs() {
   return Number.isFinite(n) && n >= 0 ? n : 15_000;
 }
 
+/**
+ * Wall-clock to wait for a turn's FIRST upstream payload before declaring the
+ * draw a loss.
+ *
+ * AI_MODEL=auto rotates per request, so a retry is a fresh sample of the pool:
+ * a slow model is a model to abandon, not a fault to report. The provider client
+ * allows one call 30s, more than half the total budget, so a single unlucky draw
+ * used to end the turn with "Response exceeded the time limit" while the model
+ * was still working — the reader lost both the answer and the wait. Bounding the
+ * wait for the FIRST payload instead makes a bad draw cost ~10s and a retry ~3s.
+ *
+ * Only the first payload: once a turn is streaming, a long generation is the
+ * point rather than a fault. Read per request, like the tool reserve above.
+ */
+function firstTokenMs() {
+  const n = Number.parseInt(String(process.env.CHAT_FIRST_TOKEN_MS ?? ''), 10);
+  return Number.isFinite(n) && n > 0 ? n : 10_000;
+}
+
+/**
+ * How many extra draws to spend re-rolling a slow model.
+ *
+ * One. A second retry means two slow draws in a row, and a prompt "please retry"
+ * beats a third wait. The allowance is only ever spent by turns that were
+ * actually slow, so a turn that answers promptly never touches it.
+ */
+function slowRetries() {
+  const n = Number.parseInt(String(process.env.CHAT_SLOW_RETRIES ?? ''), 10);
+  return Number.isFinite(n) && n >= 0 ? n : 1;
+}
+
+/**
+ * Identity of a tool call, for recognising one the model has already had served.
+ *
+ * Keys are sorted so `{"query":"x","limit":3}` and `{"limit":3,"query":"x"}` are
+ * the same call — a model re-issuing a lookup rarely reproduces key order, and a
+ * guard that missed on ordering alone would not catch the case it exists for.
+ * Values are left exactly as sent: two genuinely different queries that differ
+ * only in case are two lookups, and quietly merging them would hide a source.
+ */
+export function toolSignature(name, args) {
+  const stable = (v) => {
+    if (Array.isArray(v)) return v.map(stable);
+    if (v && typeof v === 'object') {
+      return Object.keys(v).sort().reduce((out, k) => { out[k] = stable(v[k]); return out; }, {});
+    }
+    return v;
+  };
+  try {
+    return `${name}:${JSON.stringify(stable(args))}`;
+  } catch {
+    // A circular or otherwise unserialisable argument set cannot be compared, so
+    // it is treated as its own call rather than guessed at.
+    return `${name}:${String(args)}`;
+  }
+}
+
 let clientPromise;
 
 function providerClient() {
@@ -247,6 +304,18 @@ export default async function handler(req, res) {
 
   const deadline = Date.now() + TOTAL_BUDGET_MS;
   const budget = createToolBudget();
+  /**
+   * Signatures of the lookups that have already produced a result for THIS
+   * question.
+   *
+   * Scoped to the request, so the next question searches freely. A model that
+   * re-issues a lookup it already has is not making new information appear — it
+   * is spending a real search and a slice of the round budget to fetch a result
+   * that is already in its context, and on a rotating pool that is also a fresh
+   * chance to draw a slow model. Observed doing exactly this: two identical
+   * `search_guides` calls in one turn, which is how a turn reached 57s and died.
+   */
+  const servedTools = new Set();
   // The conversation is mutable across rounds: system + history, then assistant
   // tool_calls turns and tool results appended as they happen. The system prompt
   // stays at index 0 for the whole exchange, so page scope is retained no matter
@@ -275,7 +344,30 @@ export default async function handler(req, res) {
    * A pure tool turn therefore emits no content at all, and the tool loop can
    * run without the browser ever seeing a fragment of it.
    */
+  /**
+   * Read one upstream turn, under a signal that dies with THIS attempt.
+   *
+   * `upstreamAbort` means "the reader went away" and cancelling it would end the
+   * turn for everyone, so a slow draw needs its own controller: linked to the
+   * global so a disconnect still cancels, but independently cancellable so the
+   * caller can re-roll. Linked by hand rather than AbortSignal.any, which is
+   * Node 20.3+ while this project's floor is Node 20.
+   */
   async function runTurn({ toolChoice }) {
+    const attemptAbort = new AbortController();
+    const onReaderGone = () => attemptAbort.abort();
+    upstreamAbort.signal.addEventListener('abort', onReaderGone, { once: true });
+    try {
+      return await streamTurn(toolChoice, attemptAbort);
+    } finally {
+      upstreamAbort.signal.removeEventListener('abort', onReaderGone);
+    }
+  }
+
+  async function streamTurn(toolChoice, attemptAbort) {
+    const turnStartedAt = Date.now();
+    /** Set by the first upstream payload of any kind; arms the first-token clock off. */
+    let sawPayload = false;
     let upstream;
     try {
       upstream = await client.chat.completions.create(
@@ -286,7 +378,7 @@ export default async function handler(req, res) {
           messages: conversation,
           ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
         },
-        { signal: upstreamAbort.signal },
+        { signal: attemptAbort.signal },
       );
     } catch (e) {
       const aborted = upstreamAbort.signal.aborted || e?.name === 'AbortError';
@@ -334,17 +426,23 @@ export default async function handler(req, res) {
           return { gone: false, cut: true, calls };
         }
         // The read is raced against a heartbeat timer so a silent provider can
-        // still be pinged and our own deadline noticed. Promise.race awaits ONE
-        // side, so the loser's timer is left armed — one per chunk, hundreds per
-        // stream, each holding the event loop open long after res.end(). Bind the
-        // handle and drop it on every way out of the body: read wins, timeout
-        // wins, break, return, or throw.
+        // still be pinged and our own deadline noticed. While the first payload
+        // is still outstanding the race also has to wake no later than the
+        // first-token window, or a slow draw is noticed a whole beat late; after
+        // that it is a plain heartbeat, because a long stream is the point.
+        // Promise.race awaits ONE side, so the loser's timer is left armed — one
+        // per chunk, hundreds per stream, each holding the event loop open long
+        // after res.end(). Bind the handle and drop it on every way out of the
+        // body: read wins, timeout wins, break, return, or throw.
+        const waitMs = sawPayload
+          ? HEARTBEAT_MS
+          : Math.max(250, Math.min(HEARTBEAT_MS, firstTokenMs() - (Date.now() - turnStartedAt)));
         let step;
         let beat = null;
         try {
           step = await Promise.race([
             reader.read(),
-            new Promise((r) => { beat = setTimeout(() => r({ timeout: true }), HEARTBEAT_MS); }),
+            new Promise((r) => { beat = setTimeout(() => r({ timeout: true }), waitMs); }),
           ]);
         } finally {
           clearTimeout(beat);
@@ -355,11 +453,21 @@ export default async function handler(req, res) {
             if (!res.writableEnded) res.write(': ping\n\n');
             lastBeat = Date.now();
           }
+          // First-token window spent with nothing upstream: this draw is slow,
+          // so hand control back and let the caller re-roll. A retry is safe
+          // here precisely because nothing was forwarded — a tool-call turn
+          // leaks nothing by contract, and a content turn has not produced its
+          // first delta — so the replacement cannot duplicate a single byte.
+          if (!sawPayload && Date.now() - turnStartedAt >= firstTokenMs()) {
+            attemptAbort.abort();
+            return { gone: false, slow: true, waitedMs: Date.now() - turnStartedAt };
+          }
           continue;
         }
 
         if (step.done) break;
         if (upstreamAbort.signal.aborted) return { gone: true, calls };
+        sawPayload = true;
 
         buffer += decoder.decode(step.value, { stream: true });
         // The SDK hands us newline-terminated SSE *payload* lines with the `data:`
@@ -399,6 +507,14 @@ export default async function handler(req, res) {
         }
       }
     } catch (e) {
+      // An attempt-scoped abort while the reader is still attached is a slow
+      // draw that lost the race to its own deadline, not a broken stream. It
+      // must reach the caller as `slow` so the turn can be re-rolled; reporting
+      // it as an interruption would spend the reader's turn on a model that was
+      // merely slow.
+      if (attemptAbort.signal.aborted && !upstreamAbort.signal.aborted) {
+        return { gone: false, slow: true, waitedMs: Date.now() - turnStartedAt };
+      }
       if (!upstreamAbort.signal.aborted) {
         log('chat.stream_error', { ip, error: String(e?.message || e) });
         sse(res, { error: 'The response stream was interrupted.' });
@@ -422,8 +538,32 @@ export default async function handler(req, res) {
   }
 
   try {
+    let slowDraws = 0;
     for (;;) {
-      const turn = await runTurn({ toolChoice: 'auto' });
+      let turn = await runTurn({ toolChoice: 'auto' });
+      // A slow draw is a model to abandon, not a turn to report. With
+      // AI_MODEL=auto rotating per request the next call is a different model,
+      // so re-roll while there is still budget to spend on one. Counted only
+      // once a turn has actually been slow, so a turn that answers promptly
+      // never touches the allowance.
+      while (turn.slow) {
+        slowDraws++;
+        log('chat.slow_draw', {
+          ip,
+          draw: slowDraws,
+          waitedMs: turn.waitedMs,
+          msLeft: deadline - Date.now(),
+        });
+        if (slowDraws > slowRetries() || deadline - Date.now() < toolRoundReserveMs()) {
+          // The same reserve the tool loop uses: a re-roll needs room for a
+          // first token plus a generation, and a reader is better served by a
+          // prompt retry than by a wait we already know will not land.
+          truncatedAnswer = false;
+          sse(res, { error: 'The assistant took too long to respond. Please retry.' });
+          return;
+        }
+        turn = await runTurn({ toolChoice: 'auto' });
+      }
       if (turn.gone) return;
       if (turn.cut) return;
       // Only a turn that actually reached the reader sets these; `gone` and
@@ -469,6 +609,26 @@ export default async function handler(req, res) {
       });
 
       for (const call of pending) {
+        let args = {};
+        try { args = JSON.parse(call.args || '{}'); } catch { args = {}; }
+        const signature = toolSignature(call.name, args);
+
+        // Checked before the budget is spent, so a repeat costs neither a search
+        // nor a slot in MAX_TOOL_CALLS. The tool message is still mandatory —
+        // the assistant turn above declared this tool_call, and the API requires
+        // a response per declared call — so the loop keeps its shape and the
+        // model gets told plainly why there is nothing new.
+        if (servedTools.has(signature)) {
+          conversation.push({
+            role: 'tool',
+            tool_call_id: call.id,
+            content: '[duplicate call] This exact lookup already ran earlier in this turn and its result is above. '
+              + 'Do not call it again — answer now from the results you already have.',
+          });
+          log('chat.tool_duplicate', { ip, tool: call.name, rounds: stats.rounds });
+          continue;
+        }
+
         if (!budget.spend()) {
           conversation.push({
             role: 'tool',
@@ -477,14 +637,16 @@ export default async function handler(req, res) {
           });
           continue;
         }
-        let args = {};
-        try { args = JSON.parse(call.args || '{}'); } catch { args = {}; }
 
         sse(res, { status: `Looking up ${call.name}…` });
         lastBeat = Date.now();
         stats.toolCalls++;
 
         const result = await runTool(call.name, args, { env: process.env, model, maxTokens: MAX_TOOL_RESULT_TOKENS });
+        // Only a call that actually produced something arms the guard: a repeat
+        // after a failure is a legitimate retry, and short-circuiting it would
+        // turn a transient error into a permanently empty answer.
+        if (result.ok) servedTools.add(signature);
         if (result.ok) {
           stats.toolsUsed.push(result.label);
           log('chat.tool_used', { ip, tool: result.label, ok: true, sources: result.sources?.length || 0 });
