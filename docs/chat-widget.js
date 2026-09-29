@@ -1115,7 +1115,13 @@
       '<p class="ltc-empty-page">' + esc(title) + '</p>' +
       badge +
       '<p class="ltc-empty-sub">' + esc(KIND_COPY[kind] || KIND_COPY.guide) + '</p>' +
-      (chips ? '<div class="ltc-suggestions">' + chips + '</div>' : '');
+      (chips ? '<div class="ltc-suggestions">' + chips + '</div>' : '') +
+      // Where a reader decides whether to type, so it belongs here and not in the
+      // 9.5px hint under the input, which is hidden below 420px. It states what is
+      // actually true: the thread is local, and questions still leave the device.
+      '<p class="ltc-empty-privacy">Chats stay in this browser for 30 days. ' +
+      'Your questions and the page you are on are sent to OpenAI to answer, ' +
+      'and web lookups go to Tavily.</p>';
     return empty;
   }
 
