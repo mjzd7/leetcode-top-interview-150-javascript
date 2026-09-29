@@ -653,16 +653,57 @@
       font-family: "JetBrains Mono", monospace; font-size: 11px; line-height: 1.5;
       color: var(--muted);
     }
-    .ltc-typing { display: flex; gap: 5px; padding: 0.15rem 0 0.15rem 0.2rem; }
-    .ltc-typing span {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
-      opacity: 0.35;
-      animation: ltc-blink 1.15s infinite ease-in-out;
+    /* The thinking indicator, and why the dots are gone: Gemini runs a short
+       bright gradient chip that slides across a transparent track on the seam
+       above the input, rather than an ellipsis floating in the transcript. The
+       chip's end stops are transparent, so it dissolves into the conversation
+       instead of sitting on top of it as a bar. Green because green is the
+       accent this widget already speaks in (--accent), so the line reads as
+       part of the panel rather than as a spinner dropped in from elsewhere. */
+    .ltc-think-line {
+      position: absolute; top: -4px; left: 0; right: 0; height: 9px;
+      overflow: hidden; pointer-events: none;
+      opacity: 0; transition: opacity 0.25s ease;
     }
-    .ltc-typing span:nth-child(2) { animation-delay: 0.16s; }
-    .ltc-typing span:nth-child(3) { animation-delay: 0.32s; }
-    @keyframes ltc-blink { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+    .ltc-panel[data-streaming="true"] .ltc-think-line { opacity: 1; }
+    .ltc-think-line::before {
+      content: ''; position: absolute; top: 3px; left: 0;
+      width: 48%; height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(200, 250, 75, 0.2) 22%,
+        #C8FA4B 50%,
+        rgba(200, 250, 75, 0.2) 78%,
+        transparent 100%);
+      box-shadow: 0 0 8px rgba(200, 250, 75, 0.45);
+      animation: ltc-think-sweep 1.15s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    }
+    /* -100% parks the chip's trailing edge on the track's left edge and 208.33%
+       is 1/0.48, the offset that parks its leading edge on the right edge. Equal
+       travel past each edge is what makes the loop seamless, and clipping to the
+       track is what fades the chip in and out instead of popping it.
+
+       The chip is wide and the easing gentle on purpose. A strong ease-out parks
+       the chip against the right edge where it crawls — measured per-frame it
+       went 31, 20, 19, 11, 10, 5, 4 px per 90ms, so the back half of the cycle
+       was a near-stop that a glance reads as a static line. */
+    @keyframes ltc-think-sweep {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(208.33%); }
+    }
+    @keyframes ltc-think-breathe {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    /* The line carries no text, so on its own the wait would be silent: the
+       header's "Thinking" is display:none below 1180px. This keeps the
+       announcement the dots used to give without putting a dot back on screen. */
+    .ltc-sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
     .ltc-form {
+      position: relative;
       flex-shrink: 0; border-top: 1px solid var(--line);
       padding: 0.7rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
       display: flex; flex-direction: column; gap: 0.45rem;
@@ -736,7 +777,16 @@
     @media (min-width: 1024px) { .ltc-fab { display: none; } }
     @media (prefers-reduced-motion: reduce) {
       .ltc-panel { transition: none; }
-      .ltc-typing span { animation: none; opacity: 0.6; }
+      /* Reduced motion drops the travel, not the signal. A chip crossing the
+         panel is exactly the large-scale movement the setting exists to
+         suppress, but a frozen segment reads as a broken widget — which is what
+         a frozen one got reported as. So the fallback breathes opacity instead:
+         no translation, no scale, no parallax, and the turn still looks alive.
+         Centred, because 48% of the track leaves 26% either side. */
+      .ltc-think-line::before {
+        animation: ltc-think-breathe 1.5s ease-in-out infinite;
+        left: 26%;
+      }
       /* The reveal is already instant under reduced motion (see paintReveal);
          these are the decorative animations that would otherwise still run. */
       .ltc-enter, .ltc-empty, .ltc-mark--busy, .ltc-caret { animation: none; }
@@ -867,6 +917,7 @@
         </button>
       </div>
       <form id="ltcForm" class="ltc-form" autocomplete="off">
+        <div class="ltc-think-line" aria-hidden="true"></div>
         <div class="ltc-composer">
           <textarea id="ltcInput" rows="1" placeholder="Ask about this page, any other guide, or the web…" aria-label="Message the assistant" enterkeyhint="send"></textarea>
           <div class="ltc-actions">
