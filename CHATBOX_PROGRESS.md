@@ -41,8 +41,8 @@ preview OAuth App, and one piece of honest retention copy.
 | `npm run validate` | Scanned: 150 problem files, 0 errors |
 | `npm test` | 450 syntax blocks, 828 runtime assertions, 0 failures |
 | `npm run test:judge` | 64 assertions, 0 failures |
-| `npm run test:chat` | **413** assertions, 0 failures (hermetic — 0 outbound calls) |
-| `npm run test:e2e` | 160 tests: **142 passed, 18 skipped, 0 failures** |
+| `npm run test:chat` | **451** assertions, 0 failures (hermetic — 0 outbound calls) |
+| `npm run test:e2e` | 162 tests: **144 passed, 18 skipped, 0 failures** |
 | `npm run build` | 175 modules bundled |
 | `npm run test:chat:live` | skips cleanly (no `OPENAI_API_KEY` in `.env.local` yet) |
 
@@ -1411,3 +1411,60 @@ recommendation that was declined.
   one-liner belongs in `.ltc-hint`: *history stays in this browser for 30 days;
   questions and page context still go to OpenAI each turn, and web-tool queries
   to Tavily.*
+
+---
+
+# ✅ T16 — The last three open items, and a first build
+
+- **5.5 — `max_tokens` vs `max_completion_tokens`.** Verified against the API reference rather
+  than from memory: `max_completion_tokens` **replaces** the deprecated `max_tokens`, which is
+  "not compatible with newer o-series models". So `AI_MODEL=o3-mini` was a 400 on the first
+  request, not a compile error. `completionParams()` now selects the parameter per model, matched
+  on a **whole name segment** — `gpt-4o-mini` and `o1x-custom` are not o-series, and a substring
+  test would have silently changed the request for both. The default path is byte-identical to
+  what shipped, so this cannot regress the model in use. `AI_PARAM_STYLE` overrides in both
+  directions for a model the list has never heard of, and a 400 logs which parameter and which
+  env var instead of leaving "unsupported parameter" to be interpreted.
+  - **A detail worth knowing before anyone raises the ceiling again:** on a reasoning model
+    `max_completion_tokens` counts **reasoning** tokens against the same budget, so the visible
+    answer is *shorter* than 4,096. That is the API's accounting, not a bug here.
+  - **`temperature` is deliberately NOT dropped.** The reference lists it as a valid Chat
+    Completions parameter and does not document o-series rejecting it. Guessing would be a
+    second unverifiable assumption stacked on the first; the honest fix, if it is ever needed,
+    is a test that fails.
+
+- **5.6 — preview deployments.** Registering a second GitHub OAuth App is an **owner action** and
+  is not done. The code half is: a preview with `PUBLIC_ORIGIN` blank now logs
+  `auth.login_preview_origin` naming the origin it derived and the env var that fixes it, so the
+  cause is in the logs instead of being inferred from a failed login. Setting `PUBLIC_ORIGIN`
+  makes a preview deterministically use the production callback. Both branches are asserted, and
+  the assertion is proven non-vacuous by disabling the log and watching it fail.
+
+- **Retention copy — the gap item 4.1 opened.** The assistant now says where a chat goes, in the
+  **empty state**, which is where a reader decides whether to type. It is deliberately not in
+  `.ltc-hint`: that line is 9.5px and `display: none` below 420px, so a disclosure placed there
+  disappears on the smallest screens — and a disclosure nobody can see is not a disclosure. The
+  copy names **both** halves (the thread is local; the question still goes to OpenAI), because a
+  note carrying only the reassuring half is the "we store nothing server-side" claim in a nicer
+  font, which is the exact thing §7 rejected.
+  - The colour is **measured, not matched to a neighbour.** The hint's `#5A6377` is **3.23:1** on
+    this panel and fails WCAG AA at this size; the note uses `--muted` at **6.38:1**, and the
+    ratio is asserted so it cannot quietly regress. Writing a test for this caught that the note
+    was attached-but-**invisible** on mobile, where the panel is a closed bottom sheet.
+  - I could not complete a visual review — the image-inspection tool timed out twice — so the
+    check is programmatic: colour, size, height, no clipping, no overlap with the input form, on
+    both viewports. Not the same as having looked at it.
+
+- **First build in this repo's history for the chat work.** `npm run build` → 175 modules into
+  `docs/curriculum-data.js` and 175 guides / 1,651 sections into `api/_lib/guide-index.json`. Both
+  are gitignored, so the tracked tree stayed clean, and the e2e suite was re-run against the
+  **fresh** build rather than the stale one.
+
+- **Evidence:** `npm run test:chat` → **451 assertions, 0 failures** · `npm run test:judge` →
+  **64, 0** · `npm test` → 828 runtime, 0 failures · `npm run validate` → 0 errors ·
+  `npm run test:e2e` → **144 passed, 18 skipped, 0 failures** (162 tests).
+- **One thing I could not explain, recorded rather than smoothed over.** A single `test:chat` run
+  reported **448 assertions / 2 failures** instead of 451/0. Ten consecutive runs after it were all
+  451/0. The *count* differs by three, so something took a different code path rather than an
+  assertion merely failing. I could not reproduce it and I am not going to invent a cause. If it
+  recurs, the three-assertion delta is the thing to chase, not the two failures.
