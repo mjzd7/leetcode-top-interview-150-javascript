@@ -1071,13 +1071,19 @@
     return wrap;
   }
 
-  function typingNode() {
-    var typing = document.createElement('div');
-    typing.className = 'ltc-typing';
-    typing.setAttribute('data-typing', '');
-    typing.setAttribute('aria-label', 'Thinking');
-    typing.innerHTML = '<span></span><span></span><span></span>';
-    return typing;
+  /**
+   * The screen-reader half of the thinking signal. The visible half is the green
+   * line on the composer seam, which carries no text, and the header's status
+   * text is display:none below 1180px — so this is what actually announces the
+   * wait, the way the dots' aria-label used to.
+   */
+  function thinkingNote() {
+    var note = document.createElement('div');
+    note.className = 'ltc-sr-only';
+    note.setAttribute('data-thinking', '');
+    note.setAttribute('role', 'status');
+    note.textContent = 'Thinking';
+    return note;
   }
 
   function emptyState() {
@@ -1144,16 +1150,12 @@
     state.messages.forEach(function (m, i) {
       el.log.appendChild(messageNode(m, i, i === animateIdx));
     });
-    if (state.streaming) {
-      if (state.reveal && state.reveal.node) {
-        // A re-render mid-turn: rebuild the live bubble in place so the reveal
-        // continues instead of the answer freezing half-typed.
-        var node = streamingNode();
-        el.log.appendChild(node);
-        armReveal(node.querySelector('.ltc-msg-body'));
-      } else {
-        el.log.appendChild(typingNode());
-      }
+    // A turn in flight but not yet producing tokens gets the screen-reader note
+    // only. The log deliberately stays showing the question the reader just
+    // asked: the green line on the composer seam is the visible signal, and an
+    // empty bubble here would read as a failed turn rather than a pending one.
+    if (state.streaming && !(state.reveal && state.reveal.node)) {
+      el.log.appendChild(thinkingNote());
     }
     if (state.pinScroll) el.log.scrollTop = el.log.scrollHeight;
   }
@@ -1478,12 +1480,12 @@
     renderLog();
   }
 
-  /** Swap the "thinking" dots for the live assistant bubble. */
+  /** Mount the live assistant bubble the green composer line is announcing. */
   function mountStreamingBubble() {
-    var typing = el.log.querySelector('[data-typing]');
+    var note = el.log.querySelector('[data-thinking]');
+    if (note) el.log.removeChild(note);
     var node = streamingNode();
-    if (typing) el.log.replaceChild(node, typing);
-    else el.log.appendChild(node);
+    el.log.appendChild(node);
     state.reveal = newReveal();
     armReveal(node.querySelector('.ltc-msg-body'));
     if (state.pinScroll) el.log.scrollTop = el.log.scrollHeight;
