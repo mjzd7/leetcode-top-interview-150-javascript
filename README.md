@@ -14,7 +14,7 @@ Crack MAANG JavaScript interviews with **150 problems, each solved 3 ways** — 
 - **150 problem guides** (`01-array-string/` … `23-kadanes-algorithm/`) — each one a self-contained study session: intuition, flowcharts, pseudocode, step-by-step dry-run tables, commented JS, Big-O, and interviewer-ready explanations.
 - **4 foundation primers** (`00-foundations/`) — JS runtime quirks, zero-dependency data-structure polyfills, core algorithmic patterns, explaining complexity to interviewers. Read these first.
 - **Executable test suite** (`scripts/test-runner.mjs`) — 828 assertions across all guides; solutions are code that runs, not text that rots.
-- **Judge subsystem tests** (`scripts/test-judge.mjs`) — 32 assertions over the QuickJS sandbox, verdict driver, session helpers, and `/api/judge/run` guards.
+- **Judge subsystem tests** (`scripts/test-judge.mjs`) — 64 assertions over the QuickJS sandbox, verdict driver, session helpers, and `/api/judge/run` guards.
 - **Schema validator** (`scripts/validate-guide.mjs`) — rejects truncated or malformed guides in CI.
 - **Interactive web portal** (`docs/`) — dark-mode manual with fuzzy search (`⌘K`), difficulty filters, progress tracking, Mermaid diagrams, Prism highlighting, and KaTeX math. Built by `scripts/build-site.mjs`, deployed to Vercel.
 - **Study assistant** (`api/chat.mjs`) — streaming chat in the right rail, scoped to the page you have open but not trapped by it. See below.
@@ -49,7 +49,7 @@ a round it cannot finish inside `maxDuration`, answering in prose from what it
 already has rather than timing out mid-answer.
 
 ```bash
-npm run test:chat   # 278 assertions: tools, fencing, SSRF, token budgets, tool loop
+npm run test:chat   # 395 assertions: tools, fencing, SSRF, token budgets, tool loop, auth, rate limits
 npm run test:chat:live  # hits the real provider (spends tokens)
 ```
 
@@ -112,7 +112,7 @@ Requires Node 20+ (CI uses Node 20). Install backend dependencies first (the cur
 npm install              # quickjs-emscripten sandbox for the judge API
 npm run validate   # schema + code-fence integrity for all 150 guides
 npm test           # execute every JS solution block (828 assertions)
-npm run test:judge # judge sandbox, driver, session + route guards (32 assertions)
+npm run test:judge # judge sandbox, driver, session + route guards (64 assertions)
 npm run build      # regenerate docs/curriculum-data.js from markdown
 npm run verify     # all of the above, in order
 ```
@@ -141,8 +141,8 @@ vercel.json                              # outputDirectory: docs for git-based d
 ## Status & roadmap
 
 - ✅ 150/150 guides complete, validated, tested (`npm test`: 828 assertions, 0 failures), deployed.
-- ✅ Judge execution routes built + tested (`npm run test:judge`: 32 assertions, 0 failures) — QuickJS sandbox, verdict driver, session helpers, `/api/judge/run` with auth/rate guards.
-- ✅ Study assistant with off-page retrieval and web search (`npm run test:chat`: 278 assertions, 0 failures). Needs `OPENAI_API_KEY`; `TAVILY_API_KEY` is optional.
+- ✅ Judge execution routes built + tested (`npm run test:judge`: 64 assertions, 0 failures) — QuickJS sandbox, verdict driver, session helpers, `/api/judge/run` with auth/rate guards.
+- ✅ Study assistant with off-page retrieval and web search (`npm run test:chat`: 395 assertions, 0 failures). Needs `OPENAI_API_KEY`; `TAVILY_API_KEY` is optional.
 - 🔲 Auth routes + progress store next (needs owner-created GitHub OAuth App) — see `MASTER_PLAN.md` §6.
 
 ## Contributing
