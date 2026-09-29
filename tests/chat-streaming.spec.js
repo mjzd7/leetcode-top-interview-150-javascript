@@ -155,6 +155,12 @@ test('a completed paragraph is real markdown while the turn is still streaming',
 });
 
 test('a caret marks the reveal position and disappears when the turn ends', async ({ page }) => {
+  // The reveal is a wall-clock animation, so this test's cost is dominated by how
+  // long the page takes to become interactive. The portal loads five libraries
+  // from two public CDNs, and when jsdelivr is slow that load — not the
+  // behaviour under test — is what runs the budget out. `slow()` buys headroom
+  // for the load; the assertions below are still state-based, not timed.
+  test.slow();
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto(`/#${PROBLEM}`);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
@@ -169,6 +175,14 @@ test('a caret marks the reveal position and disappears when the turn ends', asyn
 
   await page.locator(input).fill('hello');
   await page.locator(sendBtn).click();
+
+  // Wait for the turn to actually start before counting frames. Otherwise a slow
+  // machine can finish the reveal between the click and the first poll, and the
+  // caret is legitimately never seen — a timing artefact, not a regression.
+  await expect
+    .poll(() => page.evaluate(() => document.getElementById('ltcPanel').dataset.streaming === 'true'),
+      { timeout: 30_000, intervals: [50] })
+    .toBe(true);
 
   const seen = await page.evaluate(async () => {
     const panel = document.getElementById('ltcPanel');
@@ -314,6 +328,101 @@ test('switching from a problem to a MAANG guide rewrites the suggestions', async
   const after = await chips(page);
   expect(after.length).toBeGreaterThanOrEqual(3);
   expect(after).not.toEqual(before);
+});
+
+/* ------------------------------------------------------------------ *
+ * S5 — math never typesets from the live tail (item 1.2 / 1.4)
+ * ------------------------------------------------------------------ *
+ * The reveal hands KaTeX two different regions. The stable prefix is finished
+ * markdown that can no longer change, so a `$…$` pair inside it is already
+ * closed and typesets without a snap. The live tail is the sentence currently
+ * being typed, held as escaped text.
+ *
+ * A half-typed `$a+b` is the case that would flash: it has an opening delimiter
+ * and no closing one. Probed against KaTeX 0.16.9 — `renderMathInElement` on
+ * unclosed `$a+b` neither throws nor emits a `.katex`, it leaves the text alone.
+ * So the honest assertion is not "it never crashed" (it never could, with
+ * `throwOnError: false`); it is that no partial expression is ever typeset while
+ * the turn is running, and the reader sees the literal characters instead.
+ */
+
+/**
+ * Three paragraphs; the last is left mid-expression by the [DONE] boundary.
+ *
+ * That last sentence is deliberately long. `advance()` lands on the next space
+ * unless the token is longer than REVEAL_HARD_CHARS, so a short tail is written
+ * in a single frame and a 16ms sampler can step straight over it — which made
+ * this test pass on desktop and fail on mobile for reasons that had nothing to
+ * do with math. A ~200-char tail is revealed over dozens of frames instead.
+ */
+const UNCLOSED_MATH_ANSWER = 'The lookup is $O(1)$ per element, so the pass is linear.\n\n'
+  + 'The second pass then walks the array once and looks each value up. '.repeat(10)
+  + '\n\nPut the value as $a+b so the running sum reads back the way the walk computed it, '
+  + 'and the reader can follow the arithmetic without re-running anything by hand.';
+
+test('a half-typed $a+b is never typeset while the turn is running', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(`/#${PROBLEM}`);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await mockDrip(page, UNCLOSED_MATH_ANSWER.match(/[^\n]+\n?|\n/g), { gapMs: 60 });
+  await openChat(page);
+
+  await page.locator(input).fill('explain the second pass');
+  await page.locator(sendBtn).click();
+
+  // Sample the live bubble for the whole turn. Any `.katex` whose text is not a
+  // complete expression would be the flash; the closed one in paragraph 1 is
+  // legitimate, so the tail is inspected directly.
+  const seen = await page.evaluate(async () => {
+    const live = () => document.querySelector('#ltcLog .ltc-msg.is-streaming');
+    const started = performance.now();
+    let frames = 0;
+    let sawTail = false;
+    let tailHadKatex = false;
+    let sawClosedMath = false;
+    let tailSamples = [];
+    while (performance.now() - started < 25_000) {
+      const el = live();
+      if (!el) {
+        if (frames) break;
+        await new Promise((r) => setTimeout(r, 16));
+        continue;
+      }
+      const tail = el.querySelector('.ltc-msg-tail');
+      const md = el.querySelector('.ltc-msg-md');
+      if (tail) {
+        frames++;
+        sawTail = true;
+        if (tail.querySelector('.katex')) tailHadKatex = true;
+        if (tail.textContent.includes('$')) {
+          tailSamples.push(tail.textContent);
+        }
+      }
+      if (md && md.querySelector('.katex')) sawClosedMath = true;
+      if (!document.getElementById('ltcPanel').dataset || document.getElementById('ltcPanel').dataset.streaming === 'false') {
+        if (frames) break;
+      }
+      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 16)));
+    }
+    return { frames, sawTail, tailHadKatex, sawClosedMath, tailSamples };
+  });
+
+  expect(seen.sawTail, 'the live tail is on screen while the turn runs').toBe(true);
+  expect(seen.frames, 'the tail was observed over many frames, not one').toBeGreaterThan(3);
+  expect(seen.sawClosedMath, 'a closed $…$ in the prefix does typeset mid-stream').toBe(true);
+  expect(seen.tailHadKatex, 'the live tail is never handed to KaTeX').toBe(false);
+  expect(seen.tailSamples.length, 'a partial $ really did reach the tail').toBeGreaterThan(0);
+  expect(errors, 'an unclosed expression throws nothing').toEqual([]);
+
+  // After the turn, the unclosed expression is still literal — KaTeX leaves an
+  // unmatched delimiter as text rather than eating it.
+  const bubble = assistantBody(page);
+  await expect(bubble).toContainText('$a+b', { timeout: 15_000 });
+  await expect(bubble.locator('.katex')).toHaveCount(1);
+  expect(errors).toEqual([]);
 });
 
 /* ------------------------------------------------------------------ *
