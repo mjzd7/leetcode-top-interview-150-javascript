@@ -1,0 +1,75 @@
+# K7 (plan v5 §3): a trace instrumenter loads each Level 1/2/3 solution block and
+# assumes synchronous execution. `async`/generator code there yields an empty or
+# truncated trace that passes CI vacuously (plan finding U3), so these rules fail
+# the guide. Applied by scripts/validate-guide.mjs to the 450 solution blocks only
+# — follow-up sections may use async/generator examples freely.
+#
+# Patterns are syntax-shaped, not text-shaped: `await` inside a template literal,
+# a regex literal, a string or a comment is NOT a violation and is not reported.
+id: no-await
+message: await inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  kind: await_expression
+---
+id: no-yield
+message: yield inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  kind: yield_expression
+---
+id: no-async-function
+message: async function inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  pattern: async function $F($$$) { $$$ }
+---
+id: no-async-arrow
+message: async arrow function inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  pattern: async ($$$) => $X
+---
+id: no-generator-function
+message: generator function inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  pattern: function* $F($$$) { $$$ }
+---
+id: no-eval
+message: eval inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  pattern: eval($$$)
+---
+id: no-new-function
+message: new Function inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  pattern: new Function($$$)
+---
+id: no-async-or-generator-method
+message: async/generator method inside a solution block (K7)
+severity: error
+language: JavaScript
+rule:
+  # ast-grep cannot re-pattern an object-literal or class method (`{ async $M($$$) { $$$ } }`
+  # parses as a shorthand property), so anchor on the parsed method node and read its
+  # own modifier token. Regex is scoped to this single AST node's text — never to markdown.
+  kind: method_definition
+  regex: '^\s*(async\b|\*)'
+---
+id: solution-block-must-parse
+message: solution block does not parse as JavaScript — the ast-grep scan cannot vouch for it (K7)
+severity: error
+language: JavaScript
+rule:
+  # sg reports zero findings on a file it cannot parse, which would silently pass.
+  kind: ERROR
