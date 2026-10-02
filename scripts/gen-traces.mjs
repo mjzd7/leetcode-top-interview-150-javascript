@@ -92,6 +92,20 @@ const LEVELS = [1, 2, 3];
 const DISPLAY_STEP_CAP = 2000;
 /** 60% of 12 x the measured 1 MB slot (`validate-envelope.mjs`'s own constant). */
 const BYTE_BUDGET = Math.floor(1024 * 1024 * 12 * 0.6);
+/**
+ * Generation gets a wider sandbox budget than the judge route does.
+ *
+ * `sandbox.mjs` defaults to 3 s, which is right for a learner waiting on one answer. It is
+ * too tight for BATCH generation on a loaded machine: `09-binary-tree-general/
+ * 07-flatten-binary-tree` L1 builds its tree recursively and passed three consecutive
+ * standalone runs at ~9 s total, then hit `Time Limit Exceeded` part-way through a full
+ * `npm run verify` chain. A gate that flakes on machine load is worse than no gate, so the
+ * generator widens only its OWN budget and leaves the judge route's 3 s untouched.
+ *
+ * ponytail: 3x the interactive default, because the whole corpus runs in one process here.
+ * Raise it if a guide legitimately needs more, not because CI was slow once.
+ */
+const GEN_TIMEOUT_MS = 9000;
 
 // ---------------------------------------------------------------------------
 // THE PROBE ADAPTER
@@ -969,6 +983,7 @@ export async function traceOne(guidePath, level = 3, opts = {}) {
     instrumented: built.instrumented,
     cases,
     caseIndex: opts.caseIndex ?? 0,
+    timeoutMs: opts.timeoutMs ?? GEN_TIMEOUT_MS,
   });
 
   // Undo the alias: the envelope's identity is the guide's target, not the generator's shim.
