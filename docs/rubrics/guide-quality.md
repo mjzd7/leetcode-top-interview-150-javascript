@@ -302,23 +302,32 @@ script is what makes it true or false.
     through.
   - `run`: 109 guides at 10/10, 41 at 0/10 — exactly row 3's work list.
 
-## A note on this file's name
+## Why this file was briefly called `README.md`
 
-It is `docs/rubrics/README.md`, not `docs/rubrics/guide-quality.md`, because
-three scripts decide what a "guide" is by *filename*: `scripts/validate-guide.mjs`,
-`scripts/test-runner.mjs` and `scripts/audit-curriculum.mjs` each treat any
-`.md` file under the repo root as a guide unless it is skipped by name or
-directory. A file at `docs/rubrics/guide-quality.md` is picked up by all three:
-`npm run validate` reports **151 problem files / 9 errors**, `npm test` reports
-**Files: 151** with a failure, and `audit --check` reports **13 passed, 3 failed**.
+It was first written as `docs/rubrics/README.md`, and that was not an accident — it was a
+correct read of a real bug. All three guide scanners decide what a guide is by walking
+the repo for `.md` files and excluding matches by **name**, so a rubric at
+`docs/rubrics/guide-quality.md` would have been validated as a guide: **151 problem
+files, 9 errors**, a `Files: 151` failure in `npm test`, and **3 failing** `--check`
+assertions. `README` is one of the two substrings those scanners exclude, so the name was
+load-bearing.
 
-Every one of those scripts already excludes names containing `README` (and
-`PLAN`), which is how `docs/00-IA-PLAN.md` survives today. When the guide
-predicate is unified into one module — plan row 2 — move this file to
-`docs/rubrics/guide-quality.md` and add `'rubrics'` to the shared skip set:
+The underlying fault was that `docs/` was **not in any skip set**. The walk had been
+passing by luck: every markdown file that happened to live there matched a skip name
+(`00-INDEX.md`, `_TEMPLATE-subpage.md`, `00-IA-PLAN.md` via the `PLAN` rule). One real
+document ended the luck. `scripts/build-site.mjs` had never needed an entry because it
+hardcodes `entry.name !== 'docs'` at line 39 — the original authors knew the portal was
+not curriculum, and row 0's copied skip list dropped that knowledge.
 
-```bash
-git mv docs/rubrics/README.md docs/rubrics/guide-quality.md
-```
+So the fix was to restore the guard, not to hide behind a filename: `'docs'` now appears
+in the `SKIP_DIRS` set of `validate-guide.mjs`, `test-runner.mjs` **and**
+`audit-curriculum.mjs`, and this file carries its plan name.
 
-Renaming it before that happens is what breaks the build.
+Two lessons, both still true:
+
+1. **A name that matches a skip pattern is a load-bearing decision.** If a file's *name* is
+   what keeps it out of a walker, that is a fact about the walker, not the file.
+2. **One predicate, three copies.** The fix had to land in all three scanners at once. The
+   same divergence is what produced the 813-vs-450 fence lie in the plan's own audit, and
+   row 0 now exports `selectSolutionBlocks()` so rows 4, 7 and 21 import one definition
+   rather than each counting their own.
