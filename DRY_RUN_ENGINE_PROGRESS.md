@@ -320,6 +320,17 @@ correctly. The `script` shape wraps the call (`merge(...)` then `return nums1`; 
 SubsequenceMatcher(t).isSubsequence(s)`), and the driver cannot see the wrapper. Direct confirmation
 of the cause.
 
+**One line explains the whole discrepancy.** `scripts/test-runner.mjs`'s `buildFnHarness` calls the
+target as a bare `__fn(...__args)` — **no codec conversion, no wrapper, no class special-case**.
+`api/_lib/problems.mjs`'s `buildBundle` calls it through `eval(__FN_NAME__)` and then converts the
+result per codec. Same guide, same code, same authored cases: the bare harness passes 1453
+assertions, the converting driver fails 139 goldens. The conversion is the entire difference.
+
+**Consequence for row 19.** Its differential harness builds on `buildFnHarness`, so it is
+**immune** to this bug and its divergence count can be trusted. Rows 15 and the goldens are the only
+things affected. That is worth stating plainly, because "the differential oracle is green" would
+otherwise read as evidence the golden verdicts are fine.
+
 **Proof the guides are correct and the DRIVER is wrong — same guide, two harnesses, opposite
 results.** `npm test 01-array-string/01-merge-sorted-array.md` → `✅ [PASS] (6 assertions)`, using
 the same canonical code and the same authored cases through `test-runner.mjs`'s harness. The golden
