@@ -514,15 +514,70 @@ const CODEC_SIGNALS = [
   ['graph', /\b(adj|adjList|adjacencyList|graph|neighbors|neighbours|numEdges|numCourses|numVertices|indegree|outdegree|edgeList)\b\s*(=[^=]|:|\[)/],
 ];
 
+/** Parameter names that mean "a tree/node already exists, walk it". */
+const NODE_PARAM = /^(root|node|n|tree|cur|current|p|q|top|parent|left|right|a|b)$/i;
+
+/**
+ * Parameter names that mean "raw values, from which a structure gets BUILT".
+ *
+ * This is the discriminator `tree` needs and did not have. `codec: tree` has one meaning to the
+ * engine: `api/_lib/problems.mjs`'s driver rewrites the call as
+ * `__FN__(__arrayToTree__(t.args[0]))` — the target CONSUMES a level-order array. So
+ * `invertTree(root)` is `tree`, but `buildTreeMap(preorder, inorder)` is not: it takes two raw
+ * arrays and constructs its own nodes, and marking it `tree` made the driver pass only the
+ * first argument, so `inorder` arrived undefined and the trace came back empty.
+ */
+const RAW_PARAM = /^(nums|arr|vals|values|preorder|inorder|postorder|strs|words|s|t|matrix|grid|intervals|points|numbers)$/i;
+
+/** The parameter list TEXT of `fnName` in `code`, or null when it cannot be found. */
+// Named `paramListOf` not `paramsOf`: line 185 already owns that name for a different job
+// (paramsText -> identifier list), and two functions with one name in one module is a crash.
+export function paramListOf(code, fnName) {
+  if (!fnName) return null;
+  const esc = fnName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = code.match(new RegExp(`(?:function\\s+${esc}|const\\s+${esc}\\s*=\\s*(?:async\\s*)?(?:function)?\\s*\\*?)\\s*\\(([^)]*)\\)`));
+  return m ? m[1] : null;
+}
+
+/**
+ * Does the target CONSUME a tree, or BUILD one?
+ *
+ * True when any parameter names a node (`root`, `node`, `p`, `q`, `k`, …). False when every
+ * parameter is a raw collection (`nums`, `preorder`, `inorder`, …) — that target reads values
+ * and allocates its own nodes, so `json` is the honest codec and the driver must hand it the
+ * arguments untouched.
+ *
+ * Undecidable (no params found, a mixed list, or names nobody recognises) → `true`, i.e. keep
+ * the current behaviour. A guess that keeps the existing classification is safer than a guess
+ * that reclassifies 60 blocks on a heuristic nobody has read.
+ */
+export function consumesTree(code, fnName) {
+  const raw = paramListOf(code, fnName);
+  if (raw === null) return true;
+  const params = raw.split(',').map((s) => s.trim().split(/[\s=:]/)[0]).filter(Boolean);
+  if (!params.length) return true;
+  if (params.some((p) => NODE_PARAM.test(p))) return true;
+  if (params.every((p) => RAW_PARAM.test(p))) return false;
+  return true;
+}
+
+
 /**
  * `ops` outranks the shape signals on purpose: a class with BEHAVIOUR is a stateful object
  * whose mutation IS the story (the plan renders LRU as `LRU-ops`). A bare
  * `class TreeNode { constructor }` is a polyfill with no behaviour, so a tree or list guide
  * carrying its own node class still falls through to `tree` / `list`.
  */
-export function suggestCodec(code, nodes = []) {
+export function suggestCodec(code, nodes = [], targetFn = null) {
   if (nodes.some((n) => n.kind === 'class-method' && n.name !== 'constructor')) return 'ops';
-  for (const [name, re] of CODEC_SIGNALS) if (re.test(code)) return name;
+  for (const [name, re] of CODEC_SIGNALS) {
+    if (!re.test(code)) continue;
+    // `tree` additionally requires that the target CONSUMES a tree. A guide whose canonical
+    // solution builds its own nodes from raw arrays is not a `tree` consumer, and the driver's
+    // level-order rewrite would eat all but its first argument.
+    if (name === 'tree' && !consumesTree(code, targetFn)) return 'json';
+    return name;
+  }
   return 'json';
 }
 
@@ -597,7 +652,7 @@ export function analyzeBlock(sel, prose, title) {
     blockLines: sel.code.split('\n').length,
     targetFn: target ? target.name : null,
     selfRecursive,
-    codec: suggestCodec(sel.code, nodes),
+    codec: suggestCodec(sel.code, nodes, target ? target.name : null),
     regionTable,
     watch,
   };
