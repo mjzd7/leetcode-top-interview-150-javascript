@@ -1,7 +1,4 @@
 {
-  "slug": "climbing-stairs",
-  "fnName": "climbStairs",
-  "codec": "json",
   "tests": [
     { "name": "n=1", "args": [1], "expected": 1 },
     { "name": "n=2", "args": [2], "expected": 2 },
