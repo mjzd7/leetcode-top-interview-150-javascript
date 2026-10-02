@@ -130,7 +130,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 22 | `array` primitive — **first pixels** | §7 | **done** | `2f2a7b6` | `npm run test:dryrun-player` → **40 checks, 0 failures**. Playwright passes at **both** configured viewports (1440×900 + Pixel 7); screenshots `scratch/dryrun/*.png` (untracked). Spec clicks forward ×2 asserting the array **changed**, then back. All 3 levels animate (decision 2). Thin tables say so rather than rendering an empty frame. |
 | 23 | Tier-1 presets: stack/matrix/window/bits | §7 | **done** | `c5b6469` | `node scripts/test-dryrun-render.mjs` → **90 checks, 0 failures**. `npx playwright test tests/dry-run.spec.mjs` → **56 passed** across desktop + mobile. Each preset shows its own concept, verified by eye: `stack` renders a **call stack with a depth**; `window` shows **bounds 1..4, size, and a per-step delta (+4/-0)** with in-window lit and out-of-window dimmed — not an array in disguise. Screenshots in `scratch/row23/` (untracked). **Tier 1 complete.** |
 | 24 | Tier-2 presets + overlay | §7 | **done** | `7f75941` | `node scripts/test-dryrun-render.mjs` → **141 checks, 0 failures** (Tier 1's 90 still green). `npx playwright test tests/dry-run.spec.mjs` → **100 passed** both viewports. 4 presets + `dp-table`/`recursion-tree` overlays, **canonical level only** (decision 2). Screenshots `scratch/row24/` (12, untracked). Verified by eye: `tree` draws real edges + a level readout; `recursion-tree` shows depth, open frames and the base-case hit. |
-| 25 | One table-driven Playwright spec | §7 | pending | | |
+| 25 | One table-driven Playwright spec | §7 | **done** | `HEAD` | `npx playwright test tests/dry-run.spec.mjs` → **126 passed** (63 × 2 projects), exit 0 (was 110/55). Full `npx playwright test` → **272 passed, 18 skipped**, exit 0 (was 256/18). **11 surfaces × 4 table-driven tests.** Per scenario, one viewport: S1 **38** · S2 **10** · S3 **16** · S5 **11** · S4 **0 (deliberately unbuilt)**; both viewports: 76/20/32/22. 0 tests untagged. validate 150/0 · npm test **1898** · render **141** · player **40** · doc-traces **17** · axe clean in player. Screenshots `scratch/row25/` (22 = 11 × 2, untracked). |
 | 26 | V5 event-floor gate | §7 | **done** | `2f1b9cd` | Floor is **derived from data**: **83 distinct values** across 150 problems (min 1, max 1962), pinned per level in `judge/traces/manifest.json`. No golden below its own floor (450 compared); dropping one step from any would fall under it. |
 | 27 | V9 table↔trace cross-check | §7 | **done** | `2f1b9cd` | **140/150 authored L3 tables share a value with their trace.** **10 reported UNCOMPARABLE, not counted as agreement** — a table with no numeric tokens or a trace under 3 steps has nothing to cross-check, and calling that drift would be dishonest the other way. `override` guard rejects a declared-but-unwatched identifier, judged against the code's declared names, not every English word. |
 | 28 | `trace-head.json` per problem | §7 | **done** | `HEAD` | **450 heads, mean 766 B, max 1392 B, 0 over the 2048 B cap** (was mean 1255 B, 11 over, max 2993 B). `npm run test:trace` → **117 assertions, 0 failures** (was 107). See the 2026-10-02 section at the end. |
@@ -785,3 +785,87 @@ the frozen v1.1 envelope and step are byte-identical to `2be142d`.
 
 Row 28's Commit cell reads `HEAD`: a commit cannot contain its own hash, and this section
 shipped in that commit.
+
+### 2026-10-02 — row 25 done: one table-driven spec, 11 surfaces, S1/S2/S3/S5 named per row
+
+The L2 motivation was *"per-preset Playwright specs are 13 files of copy-paste"*. What actually
+existed was one 894-line file with 55 hand-written tests, 18 of them already table loops and 11
+of the rest per-preset bodies differing only in a guide id and some expected strings. Now there
+is **one `CASES` table of 11 rows and one loop**, and adding a preset is adding a row.
+
+**Counts, measured not estimated** (`--list`, parsed):
+
+| | before | after |
+|---|---|---|
+| `dry-run.spec.mjs`, one viewport | 55 | **63** |
+| `dry-run.spec.mjs`, both viewports | 110 | **126** |
+| whole suite, both viewports | 256 passed / 18 skipped | **272 passed / 18 skipped** |
+
+Per-scenario coverage, from the titles themselves (every test carries at least one id; 12 carry
+two, so the column sums to 75 rather than 63):
+
+| ID | one viewport | both viewports | what it is here |
+|---|---|---|---|
+| **S1** | 38 | 76 | mounts + click-forward/back + per-step frames + screenshot, on all 11 surfaces, plus the five cross-cutting animation contracts |
+| **S2** | 10 | 20 | the reachable half — finite and clamped at both ends, no frame past the authored rows (`array`, `stack`, `linkedlist` rows + the scrubber-clamp test) |
+| **S3** | 16 | 32 | the browser half — no leaked global, no stacking on nav, skipped tables left alone, one transport across both chromes, plus row 31's five a11y/motion tests |
+| **S4** | **0** | **0** | **deliberately unbuilt — see below** |
+| **S5** | 11 | 22 | the browser half — `data-steps` equals the authored `tbody tr` count, the last frame is reachable and terminal, `max` is `steps − 1` |
+
+**S5 was empty in the browser and is now not.** Nothing before this row asserted that the player
+shows one frame per authored row, so a trace carrying helper-function frames (`arrayToTree` /
+`listToArray` / `buildGraph`) or steps after the target returned would have rendered fine and
+passed. The assertion is computed, not golden: `render.js` documents `plan.steps ===
+table.rows.length` as an invariant, and it holds **11/11** surfaces measured before it was
+written. Node-level, the same property is `scripts/test-trace.mjs` `region-isolation`.
+
+**S4 HAS NO PLAYWRIGHT SURFACE AND THAT IS THE PLAN'S DECISION, NOT A GAP IN THIS ROW.** §10's
+"Deliberately not built" list names the scoring UI, the custom-input form and degraded mode, and
+row 33 shipped **logging only** — no UI, no score, and deliberately not even a correctness record,
+because the plan names no endpoint and a route nobody calls is the surface P1 cuts. A test here
+would have had to invent the UI it asserts. It is gated on **T-b** (≥1 guide repair attributable
+to row 33's aggregate). Recorded here and in the spec file's header so a reader cannot mistake
+its absence for an oversight.
+
+**Half of S2 is unreachable from a browser, and it is reachable where it belongs.** The
+`[]`+`0` / `[3,3]`+`6` halves are inputs to the *generator*, not states a player can be put into.
+The `n=5000` truncation-banner half has **no surface to click**: `grep -n truncat docs/dryrun/`
+returns nothing, and the committed head format carries `stepCount` and `budget.mode` but no
+truncation flag, so the portal cannot render a banner. Both live in `scripts/test-trace.mjs`
+(row 12 asserts `n=5000` sets `truncated.display` with the **verdict unchanged**). The browser
+covers the other half, which is why S2 reads "clamped, and no frame past the last authored row"
+here rather than "truncation banner".
+
+**S1's `[0,1]` is unreachable too, for a reason rows 22/23 already recorded.** Two Sum's three
+dry-run tables are all scalar columns, so no array primitive can read state from it and the player
+correctly does not mount — the spec asserts that as a regression, not skips it. The `array` row
+runs on Merge Sorted Array instead, and this row added the assertion S1 actually asks for on it:
+the **final** frame (`at: 3` → `[1, 2, 3, 4]`, the state `mergeOptimized` exits with), which the
+old spec never reached. Scrubbing start-to-finish is the browser form of executing the case.
+
+**Two measurements changed how the table is written, both caught by probing rather than by
+failing afterwards.** Frames assert inside each surface, not the player: on the statecard guide
+the player holds 2 `.viz-row` and 1 `[data-call]` while its statecard stage holds 1 and 0, so
+player scope lets the recursion-tree overlay answer for the preset. And `openCase` cannot be
+called twice on one page — the portal has no `hashchange` listener, so a second `goto` to a new
+hash is a no-op in the app exactly as it is in the test; multi-guide tests hop by sidebar.
+
+**Deduped, with the coverage kept.** Five old tests were byte-identical in what they asserted:
+the globals check existed three times (array / Tier-1 preset / Tier-2 preset) and is now one test
+walking four surfaces; *a guide with nothing to animate* duplicated the two-sum half of *a guide
+with no array state*; *switching guides… replaces the preset* duplicated the preset half of *…replaces
+the player*; *Tier 1 is untouched* duplicated *row 22's array primitive is untouched*. The two
+reduced-motion tests were one test on two surfaces. None of that coverage was dropped — the
+deduped tests assert a **superset** — and the freed slots went to the S5 test, which is new.
+
+**Nothing else moved.** `npm run validate` 150 scanned / 0 errors / 0 warnings · `npm test` **1898**
+runtime assertions, 0 failures, 450 syntax blocks · `scripts/test-dryrun-render.mjs` **141** checks ·
+`test-dryrun-player` **40** · `test:doc-traces` **17** · axe-core clean inside the player.
+`scratch/row25/` holds **22** crops (11 surfaces × 2 viewports) and is gitignored at
+`.gitignore:48`; three were opened by eye and render real visualisations. The `Commit` cell reads
+`HEAD` because a commit cannot contain its own hash — row 23's own commit (`c5b6469`) shipped this
+same cell as `pending` for the same reason.
+
+**Row 25 was mid-unblock by a concurrent agent when this row was written.** Its `scripts/`,
+regenerated `judge/traces/*.head.json` and its own ledger sections are **not** in this commit —
+only `tests/dry-run.spec.mjs` and this file's row-25 cell and section are staged.
