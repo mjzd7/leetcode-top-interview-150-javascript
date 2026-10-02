@@ -896,6 +896,24 @@ export function stringifyEnvelope(envelope) {
 }
 
 /**
+ * One step, reduced to what a committed head may carry — plan §7 row 28, E32's ~2 KB cap.
+ *
+ * Measured, not guessed: `snap` and `operands` are the whole size story. Serialising the head
+ * with the full step left **11 of 450 over the cap, largest 2993 B**, and every one of them a
+ * binary-tree or trie guide whose watch state is a nested Map. `out` is already the truncated
+ * human summary the portal prints, so it is the payload that survives; `delta`, `cond` and
+ * `override` are per-step state that belongs in the full golden, not in a summary of it.
+ *
+ * Every value is COPIED, never aliased. `stringify` spends one id table per call and emits
+ * `{"__ref":N}` on the second sighting of a live object, so a head that shared `first.line`
+ * with `last.line` — which is exactly what happens whenever a golden has ONE step, because
+ * `steps[0]` and `steps.at(-1)` are then the same object — ships a back-reference instead of
+ * its own endpoint. Measured on this corpus: 6 heads carried `last: {"__ref":2}` before this
+ * row, i.e. a committed artefact that could not be read without the stringifier that wrote it.
+ */
+const headStep = (step) => (step ? { n: step.n, line: { ...step.line }, out: step.out } : null);
+
+/**
  * Row 11's degrade-to-`diff`, which row 10 deliberately does not do ("row 11 owns the client/
  * server delta split"). A golden that trips either cap has to say so in the one field that
  * means it, or `validateEnvelope` rejects it — and an envelope that is rejected is not a golden.
@@ -1160,8 +1178,9 @@ async function main(argv) {
         if (!noWrite) {
           fs.writeFileSync(path.join(TRACES_DIR, file), `${text}\n`);
           written.push(file);
-          // The committed per-problem summary (E32, plan §7 row 28's shape). ~2 KB, and the
-          // ONLY thing under judge/traces/ that git tracks. Row 28 owns its final form.
+          // The committed per-problem summary (E32, plan §7 row 28). ~2 KB, and the ONLY thing
+          // under judge/traces/ that git tracks. The step shape is row 28's own summary —
+          // `headStep`, above — and is NOT the frozen v1.1 step: a head is not the envelope.
           fs.writeFileSync(path.join(TRACES_DIR, goldenFileName(entry.path, level, '.head.json')), `${stringify({
             v: 1,
             path: entry.path,
@@ -1170,8 +1189,8 @@ async function main(argv) {
             codec: envelope.codec,
             blockHash: envelope.block.hash,
             stepCount: envelope.stepCount,
-            first: envelope.steps[0] ?? null,
-            last: envelope.steps.at(-1) ?? null,
+            first: headStep(envelope.steps[0]),
+            last: headStep(envelope.steps.at(-1)),
             verdict: envelope.verdict,
             budget: { bytes: envelope.budget.bytes, mode: envelope.budget.mode, chunks: envelope.budget.chunks },
             error: envelope.error,
