@@ -55,6 +55,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { stringify, deserialize } from './lib/serialize.mjs';
 import { validateEnvelope } from './validate-envelope.mjs';
+// The ~2 KB per-problem cap is E32's number and row 16 already owns it, so it is imported
+// rather than re-declared: two literals would drift, and the drift would be invisible.
+import { HEAD_BYTE_CAP } from './gen-doc-traces.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures', 'trace');
@@ -1221,6 +1224,97 @@ async function main() {
     check(badOverrides.length === 0,
       `S14 V9 override guard: no shipped override names an identifier the trace never watched (${liveOverrides.length} overrides in the corpus)`,
       `bad: ${badOverrides.slice(0, 6).join(', ')}`);
+
+    // ---- S15: row 28 — every committed head is a true, capped SUMMARY of its golden ----
+    // E32 is the claim ("commit only trace-head.json per problem"); this is the receipt. A head
+    // that has drifted from the golden it summarises is worse than a missing head, because it
+    // still reads as evidence, so the sweep compares the summary against the real thing rather
+    // than checking that the summary has the right shape.
+    const HEAD_MATCH = [
+      ['stepCount', 'stepCount'], ['verdict', 'verdict'], ['blockHash', 'block.hash'],
+      ['path', 'path'], ['level', 'level'],
+    ];
+    /** The head fields row 28's verify column names, against the golden they summarise. */
+    const driftOf = (head, golden) => HEAD_MATCH
+      .filter(([h, g]) => canon(head[h]) !== canon(g.split('.').reduce((o, k) => (o == null ? o : o[k]), golden)))
+      .map(([h]) => h);
+    /** Identity has to survive the summary: a head that opens at 1 and closes at stepCount. */
+    const identityOf = (head, golden) => [
+      ['first.n', head.first?.n === 1],
+      ['last.n', head.last?.n === golden.stepCount],
+    ].filter(([, ok]) => !ok).map(([k]) => k);
+
+    const headNames = fs.readdirSync(GOLDENS_DIR).filter((f) => f.endsWith('.head.json')).sort();
+    const noGolden = [];
+    const noField = [];
+    const drifted = [];
+    const oversized = [];
+    const unidentified = [];
+    let headBytes = 0;
+    let headMax = { bytes: 0, file: null };
+
+    for (const hf of headNames) {
+      const raw = fs.readFileSync(path.join(GOLDENS_DIR, hf));
+      const head = JSON.parse(raw.toString('utf8'));
+      headBytes += raw.length;
+      if (raw.length > headMax.bytes) headMax = { bytes: raw.length, file: hf };
+      if (raw.length > HEAD_BYTE_CAP) oversized.push(`${hf} ${raw.length}B`);
+      for (const [h] of HEAD_MATCH) {
+        if (head[h] === undefined || head[h] === null) noField.push(`${hf}: no \`${h}\``);
+      }
+      // Named, never skipped: a head whose full golden is absent cannot be checked, and
+      // silently checking 449 of 450 is how this gate becomes a gate that proves nothing.
+      const gname = hf.replace(/\.head\.json$/, '.json');
+      if (!fs.existsSync(path.join(GOLDENS_DIR, gname))) { noGolden.push(hf); continue; }
+      const golden = readGolden(gname);
+      for (const field of [...driftOf(head, golden), ...identityOf(head, golden)]) {
+        (['stepCount', 'verdict', 'blockHash', 'path', 'level'].includes(field) ? drifted : unidentified)
+          .push(`${hf}: ${field}`);
+      }
+    }
+
+    check(headNames.length === names.length && headNames.length > 0,
+      `S15 head: one committed head per golden (${headNames.length})`,
+      `${names.length} goldens, ${headNames.length} heads — a guide gained or lost a level`);
+    check(noGolden.length === 0,
+      `S15 head: all ${headNames.length} heads have the full golden on disk to be compared against`,
+      `goldens are gitignored (E32) — run \`npm run gen:traces\`; missing: ${noGolden.slice(0, 6).join(', ') || 'none'}`);
+    check(noField.length === 0,
+      `S15 head: every head carries stepCount, verdict, blockHash, path and level`,
+      `${noField.length} missing: ${noField.slice(0, 6).join(', ')}`);
+    check(drifted.length === 0,
+      `S15 head: stepCount + verdict + blockHash + path + level match the full golden on all ${headNames.length} heads`,
+      `${drifted.length} drifted: ${drifted.slice(0, 6).join(', ')}`);
+    check(unidentified.length === 0,
+      `S15 head: identity survives the summary — first.n is 1 and last.n is stepCount`,
+      `${unidentified.length} broken: ${unidentified.slice(0, 6).join(', ')}`);
+    check(oversized.length === 0,
+      `S15 head: E32 — every head is within the ${HEAD_BYTE_CAP}B committed per-problem footprint`,
+      `${oversized.length} over cap, largest ${headMax.file} ${headMax.bytes}B: ${oversized.slice(0, 6).join(', ')}`);
+
+    // The negatives, so "does it pass" is never the interesting half: a head that lies about
+    // any of the five fields, or about its own endpoints, has to be REJECTED — derived from a
+    // real head, so the probe cannot rot into checking a shape nothing ships.
+    const realHead = JSON.parse(fs.readFileSync(path.join(GOLDENS_DIR, headNames[0]), 'utf8'));
+    const realGolden = readGolden(headNames[0].replace('.head.json', '.json'));
+    for (const [field, edit] of [
+      ['stepCount', (h) => { h.stepCount += 1; }],
+      ['verdict', (h) => { h.verdict = { ...h.verdict, passed: 0 }; }],
+      ['blockHash', (h) => { h.blockHash = `sha256:${'0'.repeat(64)}`; }],
+    ]) {
+      const lied = clone(realHead);
+      edit(lied);
+      check(driftOf(lied, realGolden).includes(field),
+        `S15 head negative: a head that lies about \`${field}\` is caught`,
+        `driftOf said [${driftOf(lied, realGolden).join(', ')}] — the check did not notice`);
+    }
+    const shifted = clone(realHead);
+    shifted.last.n += 1;
+    check(identityOf(shifted, realGolden).includes('last.n'),
+      'S15 head negative: a head whose last.n is not stepCount is caught',
+      `identityOf said [${identityOf(shifted, realGolden).join(', ')}]`);
+
+    console.log(`S15 head: ${headNames.length} heads · mean ${Math.round(headBytes / headNames.length)}B · max ${headMax.bytes}B (${headMax.file}) · over ${HEAD_BYTE_CAP}B cap: ${oversized.length}`);
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
