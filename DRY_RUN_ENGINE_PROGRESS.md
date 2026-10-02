@@ -300,6 +300,26 @@ than it looked: **the verdict must come from running the authored script, not fr
 target behind its back.** Everything else — the class wrapper, the in-place comparison, the tree
 encode — falls out of that.
 
+**The codec asymmetry names the defect.** RUNTIME_TESTS-sourced guides, pass vs fail by codec:
+
+| Codec | fails | passes |
+|---|---|---|
+| `json` | 10 | **57** |
+| `tree` | **16** | 2 |
+| `list` | **8** | 3 |
+| `ops` | **6** | 3 |
+| `graph` | 0 | 4 |
+
+`json` — the only codec whose branch is a bare `__FN__.apply(null, t.args)` — passes 57 and fails 10.
+Every codec with a **conversion** branch fails far more than it passes. That is the shape of a bug
+in the conversion, not in the guides: `graph` has no branch at all and never fails.
+
+**And 0 of the 31 `cases`-shaped guides fail**, while 7 of the 10 `script`-shaped ones do. The
+`cases` shape holds raw `{args, expect}` triples with no adaptation, and the driver replays those
+correctly. The `script` shape wraps the call (`merge(...)` then `return nums1`; `new
+SubsequenceMatcher(t).isSubsequence(s)`), and the driver cannot see the wrapper. Direct confirmation
+of the cause.
+
 **Proof the guides are correct and the DRIVER is wrong — same guide, two harnesses, opposite
 results.** `npm test 01-array-string/01-merge-sorted-array.md` → `✅ [PASS] (6 assertions)`, using
 the same canonical code and the same authored cases through `test-runner.mjs`'s harness. The golden
