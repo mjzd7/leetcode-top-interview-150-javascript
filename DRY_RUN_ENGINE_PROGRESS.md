@@ -108,7 +108,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 0b | `guide-quality` rubric (`book-to-skill`) | §7 | **done** | `2e7c4b9` | `docs/rubrics/guide-quality.md` (323 lines) + `npm run audit --scores` → **150 scores, mean 96.4, min 80, max 100 (96 guides)**; bands reference 96 / sound 44 / incomplete-evidence 10 / draft 0. Thin-table cross-check: the 23 thin-table guides score **9.1/15** on the depth component vs 15/15 for the other 127, **23/23 below the median**. **Deliberately NO gate, NO threshold, exit 0** — row 0b is `[Y]` and the gate belongs to T1. |
 | 1 | `catalog/problems.json`, 150 entries | §7 | **done** | `1e2c9a4` | `npm run gen:catalog` → **150 entries, 150 unique paths, all exist on disk** (keyed by `path` per E30). Difficulty 40/92/18 E/M/H · codec `json` 101, `tree` 20, `list` 13, `graph` 9, `ops` 7 — **5 implemented codecs only, no 6th** · equivalence `exact` 123, `ops-terminal` 15, `order-insensitive` 9, `int-with-tolerance` 2, `multiset` 1. **`lcId` is `null` for all 150** — see §1.2. |
 | 2 | Drop `fns` via `sg` | §7 | **done** | `0ed65d4` | **86 insertions / 70 deletions**, `grep -c "fns:"` → **0**. Done by an ast-grep rule (`kind: pair` + scoped regex — `fns: [...]` at statement position parses as a **labelled statement**, so a bare pattern matches nothing). `npm test` → **828 assertions unchanged, 0 failures**; validate 150/0. 53 `script` entries untouched. Manifest-missing fails naming `node scripts/gen-blocks.mjs`. |
-| 3 | **41 → 0 syntax-only** | §7 | **cases done, splice pending** | `47ef4fe` | `catalog/cases.json` → **41/41 covered, 0 mismatches, 0 unverifiable**. Two tranches (20 + 21). Roster now committed as `__meta.roster` (was gitignored scratch). **The splice into `RUNTIME_TESTS` is still owed** — `npm test` must reach `syntax-only: 0`. |
+| 3 | **41 → 0 syntax-only** | §7 | **done** | `47ef4fe` `47a224a` | `npm test` → **`Files: 150 (runtime-tested: 150, syntax-only: 0)`**, assertions **828 → 1453**, 0 failures. Cases merged from `catalog/cases.json` at load (not pasted as 41 literals); inline `RUNTIME_TESTS` still wins on conflict. `audit --check` asserts `runtimeTested === 150` and `syntaxOnly === 0` (18 checks). **One authored case was wrong and the suite caught it**: `02-two-pointers/02-is-subsequence` declares a **class** (`SubsequenceMatcher`, codec `ops`) and the case had written a shadowing `isSubsequence` wrapper that collided with the guide's binding. **Kill criterion: 0 wrong of 41** vs >15 halt. |
 | 4 | Validator rejects async/generator/eval | §7 | **done** | `0aceb10` | `npm run test:validate` → 23 assertions, 0 failures (E16 await/generator/yield, E17 eval/new-Function, K7 missing-L3, prose-`await` control). `npm run validate` → 150 scanned, **0 errors, 0 warnings**. Scan is `sg` rules in `.ast-grep/rules/solution-block-sync.yml`; missing `sg`/rules ⇒ `SOLUTION_SCAN_UNAVAILABLE`, unparseable block ⇒ error. |
 | 5 | Envelope v1.1 schema + validator | §7 | **done** | `b3d44c1` | `npm run test:envelope` → **129 assertions, 0 failures**; 7 bad fixtures rejected by name across I1–I7 (+10 in-test mutations), good fixture exits 0. `docs/trace-schema.json` documents each field's meaning; caps taken from `sandbox.mjs` (1 MB / 3 s / 16 MB), not asserted. **Freeze point is row 13.** |
 | 6 | Canonical serializer + 9 round-trips | §7 | **done** | `aa6fa3a` | `npm run test:serialize` → E1–E9, 9 cases, 0 failures, exit 0. Compared via `jq -S .` (plan §0.2), not `deepEqual`. Exports `serialize`/`stringify`/`deserialize`/`MAX_DEPTH`. |
@@ -230,6 +230,39 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — **row 3 complete: 150/150 guides execute, syntax-only 0**
+
+`npm test`: **`Files: 150 (runtime-tested: 150, syntax-only: 0)`**, assertions **828 → 1453**,
+0 failures. This is the gate v5 was ordered around — v4 built goldens and a differential oracle
+for 41 guides that had **never been executed**.
+
+- Cases **merged** from `catalog/cases.json` at run time rather than pasted in as 41 object
+  literals. Hand-pasted entries rot on rename; that is the same disease as the `fns` duplication
+  row 2 deleted. An inline `RUNTIME_TESTS` entry still wins, so this cannot silently override a
+  hand-tuned case.
+- **One authored case was wrong, and the suite caught it.** `02-two-pointers/02-is-subsequence`
+  declares a **class** (`SubsequenceMatcher`, codec `ops`); the case had invented a shadowing
+  `isSubsequence` wrapper that collided with the guide's own binding. Driving the class directly
+  also bought a 7th case — *right-order-matters, not just membership* — which the wrapper could
+  not express. Fixed in the data, not the harness.
+- **The audit under-reported coverage and was corrected.** It parsed only the `RUNTIME_TESTS`
+  literal, so after the merge 41 executing guides read as syntax-only. An audit that
+  under-reports coverage is precisely how a gap hides. `runtimeTested === 150` and
+  `syntaxOnly === 0` are now asserted in `--check`, so the audit fails before `npm test` runs.
+
+### **KILL CRITERION: 0 wrong canonicals of 41** (threshold: >15 halts the visual product)
+
+Verified three ways, because a clean result is worthless without evidence it could have failed:
+1. The harness compares **executed** output against **independently authored** expectations —
+   structurally non-tautological.
+2. The hardest case's provenance traces to the guide's own Level 3 dry-run table
+   (`01-merge-sorted-array.md`: `[1,2,3,0,0,0]/3/[2,5,6]/3 → [1,2,2,3,5,6]`).
+3. A genuinely wrong case **was** found and did fail — `02-is-subsequence` — proving the check
+   bites. 0 mismatches is a measurement, not an absence of measurement.
+
+Regression green: `validate` 150/0 · `test:judge` 64/0 · `audit --check` 17/0 · `audit` DRIFT 14
+(the 14 remaining are genuine plan errors, §1.1).
 
 ### 2026-10-02 — row 2 delivered on retry; all 41 guides have cases
 
