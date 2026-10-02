@@ -1,0 +1,684 @@
+{
+  "v": 1,
+  "path": "05-hashmap/06-two-sum.md",
+  "level": 3,
+  "fnName": "twoSum",
+  "codec": "json",
+  "block": {
+    "hash": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+    "startLine": 250,
+    "lines": 13
+  },
+  "watch": [
+    "nums",
+    "target",
+    "seen",
+    "n",
+    "i",
+    "num",
+    "complement",
+    "prev"
+  ],
+  "steps": [
+    {
+      "n": 1,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 1
+      },
+      "type": "decl",
+      "text": "const seen = new Map();",
+      "operands": {},
+      "cond": null,
+      "snap": {
+        "i": {
+          "__u": 1
+        },
+        "n": {
+          "__u": 1
+        },
+        "seen": {
+          "__map": []
+        }
+      },
+      "delta": [
+        {
+          "path": "seen",
+          "from": {
+            "__u": 1
+          },
+          "to": {
+            "__map": []
+          }
+        }
+      ],
+      "out": "Step 1: `seen` starts empty — the single canonical pass keeps every value it has already walked past.",
+      "override": null
+    },
+    {
+      "n": 2,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 2
+      },
+      "type": "assign",
+      "text": "const n = nums.length;",
+      "operands": {
+        "nums.length": 4
+      },
+      "cond": null,
+      "snap": {
+        "i": {
+          "__u": 1
+        },
+        "n": 4,
+        "seen": {
+          "__map": []
+        }
+      },
+      "delta": [
+        {
+          "path": "n",
+          "from": {
+            "__u": 1
+          },
+          "to": 4
+        }
+      ],
+      "out": "Step 2: `n` is cached once, so the loop test never re-reads `.length`.",
+      "override": null
+    },
+    {
+      "n": 3,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 3
+      },
+      "type": "loop-head",
+      "text": "for (let i = 0; i < n; i++) {",
+      "operands": {
+        "i": 0,
+        "n": 4
+      },
+      "cond": true,
+      "snap": {
+        "i": 0,
+        "n": 4,
+        "seen": {
+          "__map": []
+        }
+      },
+      "delta": [
+        {
+          "path": "i",
+          "from": {
+            "__u": 1
+          },
+          "to": 0
+        }
+      ],
+      "out": "Step 3: loop opens at i = 0, and 0 < 4 holds.",
+      "override": null
+    },
+    {
+      "n": 4,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 4
+      },
+      "type": "assign",
+      "text": "const num = nums[i];",
+      "operands": {
+        "i": 0,
+        "nums[i]": 3
+      },
+      "cond": null,
+      "snap": {
+        "i": 0,
+        "n": 4,
+        "num": 3,
+        "seen": {
+          "__map": []
+        }
+      },
+      "delta": [
+        {
+          "path": "num",
+          "from": {
+            "__u": 1
+          },
+          "to": 3
+        }
+      ],
+      "out": "Step 4: num = nums[0] = 3.",
+      "override": null
+    },
+    {
+      "n": 5,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 5
+      },
+      "type": "assign",
+      "text": "const complement = target - num;",
+      "operands": {
+        "num": 3,
+        "target": 6
+      },
+      "cond": null,
+      "snap": {
+        "complement": 3,
+        "i": 0,
+        "n": 4,
+        "num": 3,
+        "seen": {
+          "__map": []
+        }
+      },
+      "delta": [
+        {
+          "path": "complement",
+          "from": {
+            "__u": 1
+          },
+          "to": 3
+        }
+      ],
+      "out": "Step 5: the partner 3 would need is 3 — the value is its own complement, and nothing is stored yet.",
+      "override": null
+    },
+    {
+      "n": 6,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 6
+      },
+      "type": "if-test",
+      "text": "if (seen.has(complement)) {",
+      "operands": {
+        "complement": 3,
+        "seen.get(complement)": {
+          "__u": 1
+        }
+      },
+      "cond": false,
+      "snap": {
+        "complement": 3,
+        "i": 0,
+        "n": 4,
+        "num": 3,
+        "prev": {
+          "__u": 1
+        },
+        "seen": {
+          "__map": []
+        }
+      },
+      "delta": [],
+      "out": "Step 6: seen.has(3) is false, so 3 has no partner yet — fall through and record it.",
+      "override": null
+    },
+    {
+      "n": 7,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 9
+      },
+      "type": "assign",
+      "text": "seen.set(num, i);",
+      "operands": {
+        "i": 0,
+        "num": 3
+      },
+      "cond": null,
+      "snap": {
+        "complement": 3,
+        "i": 0,
+        "n": 4,
+        "num": 3,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "seen",
+          "from": {
+            "__map": []
+          },
+          "to": {
+            "__map": [
+              [
+                3,
+                0
+              ]
+            ]
+          }
+        }
+      ],
+      "out": "Step 7: seen = {3 -> 0}. Insertion order is scan order, which is why the map renders as entries.",
+      "override": null
+    },
+    {
+      "n": 8,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 3
+      },
+      "type": "loop-back",
+      "text": "for (let i = 0; i < n; i++) {",
+      "operands": {
+        "i": 0,
+        "n": 4
+      },
+      "cond": true,
+      "snap": {
+        "complement": 3,
+        "i": 1,
+        "n": 4,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "i",
+          "from": 0,
+          "to": 1
+        }
+      ],
+      "out": "Step 8: i++ lands on 1, still below n = 4.",
+      "override": null
+    },
+    {
+      "n": 9,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 4
+      },
+      "type": "assign",
+      "text": "const num = nums[i];",
+      "operands": {
+        "i": 1,
+        "nums[i]": 2
+      },
+      "cond": null,
+      "snap": {
+        "complement": 3,
+        "i": 1,
+        "n": 4,
+        "num": 2,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "num",
+          "from": 3,
+          "to": 2
+        }
+      ],
+      "out": "Step 9: num = nums[1] = 2.",
+      "override": null
+    },
+    {
+      "n": 10,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 5
+      },
+      "type": "assign",
+      "text": "const complement = target - num;",
+      "operands": {
+        "num": 2,
+        "target": 6
+      },
+      "cond": null,
+      "snap": {
+        "complement": 4,
+        "i": 1,
+        "n": 4,
+        "num": 2,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "complement",
+          "from": 3,
+          "to": 4
+        }
+      ],
+      "out": "Step 10: the partner 2 would need is 4 — not seen yet.",
+      "override": null
+    },
+    {
+      "n": 11,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 6
+      },
+      "type": "if-test",
+      "text": "if (seen.has(complement)) {",
+      "operands": {
+        "complement": 4,
+        "seen.get(complement)": {
+          "__u": 1
+        }
+      },
+      "cond": false,
+      "snap": {
+        "complement": 4,
+        "i": 1,
+        "n": 4,
+        "num": 2,
+        "prev": {
+          "__u": 1
+        },
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ]
+          ]
+        }
+      },
+      "delta": [],
+      "out": "Step 11: seen.has(4) is false, so 2 goes in beside 3.",
+      "override": null
+    },
+    {
+      "n": 12,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 9
+      },
+      "type": "assign",
+      "text": "seen.set(num, i);",
+      "operands": {
+        "i": 1,
+        "num": 2
+      },
+      "cond": null,
+      "snap": {
+        "complement": 4,
+        "i": 1,
+        "n": 4,
+        "num": 2,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "seen",
+          "from": {
+            "__map": [
+              [
+                3,
+                0
+              ]
+            ]
+          },
+          "to": {
+            "__map": [
+              [
+                3,
+                0
+              ],
+              [
+                2,
+                1
+              ]
+            ]
+          }
+        }
+      ],
+      "out": "Step 12: seen = {3 -> 0, 2 -> 1}. Both values walked past are now recorded.",
+      "override": null
+    },
+    {
+      "n": 13,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 3
+      },
+      "type": "loop-back",
+      "text": "for (let i = 0; i < n; i++) {",
+      "operands": {
+        "i": 1,
+        "n": 4
+      },
+      "cond": true,
+      "snap": {
+        "i": 2,
+        "n": 4,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "i",
+          "from": 1,
+          "to": 2
+        }
+      ],
+      "out": "Step 13: i++ lands on 2, still below n = 4.",
+      "override": null
+    },
+    {
+      "n": 14,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 4
+      },
+      "type": "assign",
+      "text": "const num = nums[i];",
+      "operands": {
+        "i": 2,
+        "nums[i]": 4
+      },
+      "cond": null,
+      "snap": {
+        "i": 2,
+        "n": 4,
+        "num": 4,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "num",
+          "from": 2,
+          "to": 4
+        }
+      ],
+      "out": "Step 14: num = nums[2] = 4.",
+      "override": null
+    },
+    {
+      "n": 15,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 5
+      },
+      "type": "assign",
+      "text": "const complement = target - num;",
+      "operands": {
+        "num": 4,
+        "target": 6
+      },
+      "cond": null,
+      "snap": {
+        "complement": 2,
+        "i": 2,
+        "n": 4,
+        "num": 4,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      },
+      "delta": [
+        {
+          "path": "complement",
+          "from": 4,
+          "to": 2
+        }
+      ],
+      "out": "Step 15: the partner 4 would need is 2 — and 2 is exactly what step 12 stored.",
+      "override": null
+    },
+    {
+      "n": 16,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 6
+      },
+      "type": "if-test",
+      "text": "if (seen.has(complement)) {",
+      "operands": {
+        "complement": 2,
+        "seen.get(complement)": 1
+      },
+      "cond": true,
+      "snap": {
+        "complement": 2,
+        "i": 2,
+        "n": 4,
+        "num": 4,
+        "prev": 1,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      },
+      "delta": [],
+      "out": "Step 16: seen.has(2) is true, so 2 and 4 are the answer. One pass, no second scan.",
+      "override": null
+    },
+    {
+      "n": 17,
+      "line": {
+        "h": "sha256:2cb21261e0dbc5f4f396bf14a83d2c209ddaeeeffe35b7daedefd374a1099543",
+        "off": 7
+      },
+      "type": "return",
+      "text": "return [seen.get(complement), i];",
+      "operands": {
+        "i": 2,
+        "seen.get(complement)": 1
+      },
+      "cond": null,
+      "snap": {
+        "complement": 2,
+        "i": 2,
+        "n": 4,
+        "num": 4,
+        "seen": {
+          "__map": [
+            [
+              3,
+              0
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      },
+      "delta": [],
+      "out": "Step 17: returns [1, 2] — indices in ascending order, so no post-sort is needed.",
+      "override": null
+    }
+  ],
+  "result": [
+    1,
+    2
+  ],
+  "verdict": {
+    "passed": 3,
+    "failed": 0
+  },
+  "truncated": {
+    "execution": false,
+    "display": false,
+    "trace": true
+  },
+  "budget": {
+    "bytes": 18432,
+    "mode": "full",
+    "chunks": 1
+  },
+  "stepCount": 17,
+  "error": null
+}
