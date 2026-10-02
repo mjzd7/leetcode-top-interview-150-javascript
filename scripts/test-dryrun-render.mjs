@@ -27,17 +27,36 @@ import { parseGuide } from '../docs/dryrun/table.js';
 import { buildFrames, COL_MIN_PARSE_RATIO, clampStep, stepFrame } from '../docs/dryrun/index.js';
 import {
   PRESETS,
+  TIER2_PRESETS,
+  TIER2_LEVEL,
+  OVERLAYS,
   readStack,
   readGrid,
   readRange,
   readSequence,
   readBits,
   lowestBit,
+  readChain,
+  readTreeWire,
+  treeLayout,
+  readEdge,
+  graphComponents,
+  readOp,
+  readState,
+  readDpWrite,
+  readCall,
   planStack,
   planMatrix,
   planWindow,
   planBits,
+  planGraph,
+  planTree,
+  planStatecard,
+  planLinkedList,
+  planDpTable,
+  planRecursion,
   pickPreset,
+  pickOverlays,
   stackOp,
   windowBounds,
 } from '../docs/dryrun/render.js';
@@ -595,21 +614,461 @@ t('every preset plan carries the reason-free contract the mount needs', () => {
 
 console.log('\ncorpus coverage — every dry-run table in the 150 guides\n');
 
-t('reports how many tables each preset claims across the whole corpus', () => {
+t('reports how many tables each preset and each overlay claims across the whole corpus', () => {
   const catalog = JSON.parse(fs.readFileSync('catalog/problems.json', 'utf8'));
   let tables = 0;
   const byPreset = {};
+  const byOverlay = {};
   for (const problem of catalog.problems) {
     for (const table of guide(problem.path)) {
       tables++;
       const picked = pickPreset(table);
-      if (!picked) continue;
-      byPreset[picked.preset] = (byPreset[picked.preset] || 0) + 1;
+      if (picked) byPreset[picked.preset] = (byPreset[picked.preset] || 0) + 1;
+      for (const overlay of pickOverlays(table)) {
+        byOverlay[overlay.overlay] = (byOverlay[overlay.overlay] || 0) + 1;
+      }
     }
   }
   eq(tables, 450, 'tables parsed');
-  for (const name of ['window', 'matrix', 'stack', 'bits']) ok(byPreset[name] > 0, `${name} claims at least one`);
-  console.log(`      ${JSON.stringify(byPreset)} of ${tables} tables`);
+  for (const name of ['window', 'matrix', 'stack', 'bits', ...TIER2_PRESETS]) ok(byPreset[name] > 0, `${name} claims at least one`);
+  for (const name of OVERLAYS) ok(byOverlay[name] > 0, `${name} claims at least one`);
+  console.log(`      presets ${JSON.stringify(byPreset)} of ${tables} tables`);
+  console.log(`      overlays ${JSON.stringify(byOverlay)}`);
+});
+
+t('every Tier-2 claim is on a canonical-level table, and no Tier-2 claim is off one', () => {
+  const catalog = JSON.parse(fs.readFileSync('catalog/problems.json', 'utf8'));
+  for (const problem of catalog.problems) {
+    for (const table of guide(problem.path)) {
+      if (table.level === TIER2_LEVEL) continue;
+      eq(pickPreset(table) === null || TIER2_PRESETS.indexOf(pickPreset(table).preset) === -1, true, `${problem.path} L${table.level} stays Tier 1`);
+      eq(pickOverlays(table).length, 0, `${problem.path} L${table.level} carries no overlay`);
+    }
+  }
+});
+
+/* ================================================================== *
+ * Row 24 — Tier 2: linkedlist, tree, graph, statecard + two overlays
+ *
+ * Plan §9 decision 2: Tier 1 animates all three levels, TIER 2 ANIMATES
+ * THE CANONICAL LEVEL ONLY. So every Tier-2 planner and both overlay
+ * planners refuse a table whose level is not 3 — that gate is the first
+ * thing tested here, because getting it wrong is a dead UI on two levels
+ * or a constraint the reader did not ask for.
+ * ================================================================== */
+
+console.log('\nTier 2 — the canonical-level gate (plan §9 decision 2)\n');
+
+t('Tier 2 is four presets; the two overlays are chosen separately', () => {
+  eq(TIER2_PRESETS, ['graph', 'tree', 'statecard', 'linkedlist'], 'tier 2 presets');
+  eq(OVERLAYS, ['dp-table', 'recursion-tree'], 'overlays');
+  eq(TIER2_LEVEL, 3, 'canonical level');
+});
+
+t('PRESETS is row 23\'s, unchanged — Tier 2 added a registry, it did not reorder one', () => {
+  eq(PRESETS, ['window', 'matrix', 'stack', 'bits', 'array'], 'tier 1 order intact');
+});
+
+t('every Tier-2 planner and both overlay planners refuse a non-canonical level', () => {
+  // The same table, at L3 and at L1/L2. Only the L3 copy may be claimed.
+  const l3 = guide('10-binary-tree-bfs/04-zigzag-level-order.md')[2];
+  const l1 = guide('10-binary-tree-bfs/04-zigzag-level-order.md')[0];
+  const l2 = guide('10-binary-tree-bfs/04-zigzag-level-order.md')[1];
+  // Each Tier-2 preset on the guide whose catalog `codec` names its shape, at L1, L2 and L3.
+  const cases = [
+    ['tree', planTree, '10-binary-tree-bfs/04-zigzag-level-order.md'],
+    ['graph', planGraph, '19-graph-bfs/03-word-ladder.md'],
+    ['statecard', planStatecard, '01-array-string/12-insert-delete-getrandom-o1.md'],
+    ['linkedlist', planLinkedList, '08-linked-list/05-reverse-linked-list-ii.md'],
+    ['dp-table', planDpTable, '17-multi-dp/03-unique-paths-ii.md'],
+    ['recursion-tree', planRecursion, '09-binary-tree-general/03-invert-binary-tree.md'],
+  ];
+  for (const [name, plan, path] of cases) {
+    const [l1, l2, l3] = guide(path);
+    ok(plan(l3), `${name} claims the L3 table`);
+    eq(plan(l1), null, `${name} refuses L1`);
+    eq(plan(l2), null, `${name} refuses L2`);
+  }
+  eq(planDpTable(guide('17-multi-dp/03-unique-paths-ii.md')[1]), null, 'and the overlay planners are gated too');
+});
+
+t('a Tier-2 plan is still one frame per authored row — the transport is row 22\'s', () => {
+  for (const path of [
+    '19-graph-bfs/03-word-ladder.md',
+    '10-binary-tree-bfs/04-zigzag-level-order.md',
+    '08-linked-list/11-lru-cache.md',
+    '08-linked-list/05-reverse-linked-list-ii.md',
+    '17-multi-dp/03-unique-paths-ii.md',
+    '09-binary-tree-general/03-invert-binary-tree.md',
+  ]) {
+    const table = guide(path)[2];
+    for (const plan of [planGraph, planTree, planStatecard, planLinkedList, planDpTable, planRecursion]) {
+      const made = plan(table);
+      if (made) eq(made.steps, table.rows.length, `${path} ${made.preset || made.overlay} step count`);
+    }
+  }
+});
+
+/* ------------------------------------------------------------------ *
+ * readChain — a `next` chain, terminator included
+ * ------------------------------------------------------------------ */
+
+console.log('\nreadChain — the linkedlist preset (catalog: codec "list")\n');
+
+t('reads an arrow chain verbatim', () => {
+  eq(readChain('`1 -> 3 -> 2 -> 4 -> 5`'), { values: ['1', '3', '2', '4', '5'], terminated: false, unreachable: [] }, 'chain');
+});
+
+t('a `null` mid-chain is a TERMINATOR, not a gap — and the rest is unreachable', () => {
+  eq(readChain('`2 -> null`'), { values: ['2'], terminated: true, unreachable: [] }, 'explicit null ends it');
+  // The codec's own rule (api/_lib/codecs.mjs:184): a decode stops at the first null cell.
+  eq(readChain('`[1, 2, null, 5, 6]`'), { values: ['1', '2'], terminated: true, unreachable: ['5', '6'] }, 'array with a null');
+});
+
+t('reads the empty list as zero nodes and says it terminated', () => {
+  for (const cell of ['`[]`', '`null`', '`∅`', '—', 'empty']) {
+    eq(readChain(cell), { values: [], terminated: true, unreachable: [] }, cell);
+  }
+});
+
+t('reads a single node', () => {
+  eq(readChain('`dummy -> 1a`'), { values: ['dummy', '1a'], terminated: false, unreachable: [] }, 'two nodes');
+  eq(readChain('`[H,2,1,T]`'), { values: ['H', '2', '1', 'T'], terminated: false, unreachable: [] }, 'sentinel chain');
+});
+
+t('keeps an ellipsis node the guides write (`... -> 1b`)', () => {
+  eq(readChain('`... -> 1b`'), { values: ['...', '1b'], terminated: false, unreachable: [] }, 'ellipsis');
+});
+
+t('refuses a set literal — a set has no next', () => {
+  eq(readChain('`seen = {3,2,0}`'), null, 'set');
+});
+
+t('refuses a concatenation of two lists', () => {
+  eq(readChain('`[2,0,1] + [0,1]`'), null, 'two groups');
+});
+
+t('refuses a scalar', () => {
+  eq(readChain('`null`  is fine but `7` is not'), null, 'prose');
+  eq(readChain('`7`'), null, 'scalar');
+});
+
+t('marks which nodes the step just moved, derived from two consecutive chains', () => {
+  const frames = planLinkedList(guide('08-linked-list/05-reverse-linked-list-ii.md')[2]).frames;
+  eq(frames.map((f) => f.values), [
+    [], ['2'], ['3', '2'], ['4', '3', '2'], ['1', '4', '3', '2', '5'],
+  ], 'chains');
+  eq(frames.map((f) => f.op), ['carried', 'start', 'push', 'push', 'rewrite'], 'ops');
+  eq(frames[3].moved, [0], 'the new head is what moved');
+});
+
+t('a row that writes no chain carries the last one forward and says so', () => {
+  // reverse-linked-list-ii L3 step 0 is `Setup` — nothing to read. And a synthetic table with a
+  // `next = null` row in the middle: the chain is remembered, not re-invented or blanked.
+  const frames = planLinkedList(guide('08-linked-list/05-reverse-linked-list-ii.md')[2]).frames;
+  eq(frames[0].source, 'carried', 'the setup row');
+  eq(frames[0].op, 'carried', 'and the op says why');
+  const mid = planLinkedList({
+    level: 3,
+    columns: ['Chain State'],
+    rows: [['`1 -> 2 -> null`'], ['`2.next = 3`'], ['`3 -> 2 -> 1`']],
+  }).frames;
+  eq(mid.map((f) => [f.values, f.source]), [[['1', '2'], 'cell'], [['1', '2'], 'carried'], [['3', '2', '1'], 'cell']], 'carried mid-table');
+});
+
+/* ------------------------------------------------------------------ *
+ * readTreeWire + treeLayout — a tree with real edges
+ * ------------------------------------------------------------------ */
+
+console.log('\ntreeLayout — the tree preset (catalog: codec "tree")\n');
+
+t('reads levels of a level-order tree', () => {
+  eq(readTreeWire('`out = [[3],[20,9],[15,7]]`'), { levels: [['3'], ['20', '9'], ['15', '7']] }, 'levels');
+});
+
+t('one level parses — it is step 0 of a growing tree — but a flat array is not levels', () => {
+  eq(readTreeWire('`out = [[3]]`'), { levels: [['3']] }, 'one level');
+  eq(readTreeWire('`[3, 9, 20, 15, 7]`'), null, 'a flat array has no levels');
+});
+
+t('a table of one repeated level is still not a tree', () => {
+  eq(planTree({ level: 3, columns: ['State'], rows: [['`out = [[3]]`'], ['`out = [[3]]`']] }), null, 'no row opens a second level');
+});
+
+t('a rectangle is not levels of a tree — level widths must GROW', () => {
+  eq(readTreeWire('`[[1,3],[6,9]]`'), null, 'equal widths');
+  eq(readTreeWire('`[[1,3,5],[6,9]]`'), null, 'shrinking widths');
+});
+
+t('lays a level-order wire out with a parent for every non-root node', () => {
+  const layout = treeLayout(['3', '20', '9', '15', '7']);
+  eq(layout.height, 3, 'height');
+  eq(layout.width, 4, 'slots in the widest level');
+  eq(layout.nodes.map((n) => [n.i, n.value, n.depth, n.parent]), [
+    [0, '3', 0, null],
+    [1, '20', 1, 0],
+    [2, '9', 1, 0],
+    [3, '15', 2, 1],
+    [4, '7', 2, 1],
+  ], 'nodes with parent and depth — 20 holds both of level 2, 9 holds none');
+  eq(layout.edges, [[0, 1], [0, 2], [1, 3], [1, 4]], 'four edges, both ends present');
+});
+
+t('an absent child is a hole, and no edge is drawn to it', () => {
+  // The guide's own shape: 9 has no children at all, and 20 has only a right child.
+  const layout = treeLayout(['3', '9', '20', null, null, '7']);
+  eq(layout.nodes.map((n) => n.present), [true, true, true, false, false, true], 'holes marked');
+  eq(layout.edges, [[0, 1], [0, 2], [2, 5]], 'no edge from a hole');
+});
+
+t('refuses a wire with no nodes at all', () => {
+  eq(treeLayout([]), null, 'empty');
+});
+
+t('draws one more level per step, in the order the guide authored', () => {
+  // 10-binary-tree-bfs/04-zigzag-level-order.md L3: level 1 is [20, 9], NOT [9, 20].
+  const frames = planTree(guide('10-binary-tree-bfs/04-zigzag-level-order.md')[2]).frames;
+  eq(frames.map((f) => f.layout.height), [1, 2, 3], 'heights');
+  eq(frames[1].layout.nodes.map((n) => n.value), ['3', '20', '9'], 'mirrored level, as authored');
+  eq(frames.map((f) => f.added), [[0], [1, 2], [3, 4]], 'the nodes each step added');
+});
+
+/* ------------------------------------------------------------------ *
+ * readEdge + graphComponents — adjacency and disconnection
+ * ------------------------------------------------------------------ */
+
+console.log('\ngraphComponents — the graph preset (catalog: codec "graph")\n');
+
+t('reads the edges a row states: the expanded frontier times the neighbours it found', () => {
+  eq(readEdge(['expand `{hit}`', '`{hot}` found']), { from: ['hit'], to: ['hot'], terminal: null }, 'one edge');
+  eq(readEdge(['expand `{hot}`', '`{dot,lot}`']), { from: ['hot'], to: ['dot', 'lot'], terminal: null }, 'two edges');
+});
+
+t('a row that expands but states no neighbour adds no edge — and a bare word is not one', () => {
+  eq(readEdge(['expand `{cog}`', 'unwind']), { from: ['cog'], to: [], terminal: null }, 'nothing found');
+  eq(readEdge(['expand `{cog}`', '`{dog}` found']), { from: ['cog'], to: ['dog'], terminal: null }, 'a braced set is');
+});
+
+t('the frontier is the first expansion on the row, in whichever column it sits', () => {
+  // word-ladder L3 step 3 verbatim: the frontier being expanded is in `Pointer R` and the
+  // neighbours it found in `Pointer L`, the other way round from every other step.
+  eq(readEdge(['3', 'swap (2 > 1)', 'expand `{cog}`', 'expand `{dog,log}`', '`steps = 4`']),
+    { from: ['cog'], to: ['dog', 'log'], terminal: null }, 'columns are interchangeable');
+});
+
+t('reports the two components the guide\'s own edges form at step 3', () => {
+  // hit—hot—{dot,lot} and cog—{dog,log}: nothing joins them, so the graph is disconnected
+  // and a graph preset that drew one blob would be lying.
+  const frames = planGraph(guide('19-graph-bfs/03-word-ladder.md')[2]).frames;
+  eq(frames[2].components, [['cog', 'dog', 'log'], ['dot', 'hit', 'hot', 'lot']], 'two components');
+  eq(frames[2].added, [['cog', 'dog'], ['cog', 'log']], 'the step that joined them');
+  eq(frames[3].components.length, 2, 'the contact row adds no edge and keeps both');
+});
+
+t('components merge as edges arrive, and a node with no edge is its own component', () => {
+  eq(graphComponents(['a', 'b', 'c'], [['a', 'b']]), [['a', 'b'], ['c']], 'isolated c');
+  eq(graphComponents(['a', 'b', 'c'], [['a', 'b'], ['b', 'c']]), [['a', 'b', 'c']], 'merged');
+  eq(graphComponents([], []), [], 'no nodes');
+});
+
+t('an edge to a node nobody mentioned joins it rather than dropping it', () => {
+  eq(graphComponents(['a'], [['a', 'z']]), [['a', 'z']], 'z is discovered');
+});
+
+t('marks the node the guide says reached the target', () => {
+  const frames = planGraph(guide('19-graph-bfs/03-word-ladder.md')[2]).frames;
+  eq(frames.map((f) => f.terminal), [null, null, null, 'dot'], 'endSet contact only on the last step');
+});
+
+/* ------------------------------------------------------------------ *
+ * statecard — an object's state after each operation, plus its output
+ * ------------------------------------------------------------------ */
+
+console.log('\nplanStatecard — the ops case (catalog: codec "ops")\n');
+
+const insertDelete = guide('01-array-string/12-insert-delete-getrandom-o1.md')[2];
+
+t('claims the op column and both state fields', () => {
+  const plan = planStatecard(insertDelete);
+  ok(plan, 'a plan');
+  eq(plan.opColumn, 0, 'Operation');
+  eq(plan.fields.map((f) => f.label), ['`list` State', '`map` State'], 'both fields');
+  eq(plan.level, 3, 'level');
+});
+
+t('reads one frame per authored operation, in order', () => {
+  const frames = planStatecard(insertDelete).frames;
+  eq(frames.map((f) => f.ops), [['insert(10)'], ['insert(20)'], ['insert(30)'], ['remove(20)'], ['getRandom()']], 'ops');
+  eq(frames.map((f) => f.state.map((s) => s.value)), [
+    ['[10]', '{ 10 => 0 }'],
+    ['[10, 20]', '{ 10 => 0, 20 => 1 }'],
+    ['[10, 20, 30]', '{ 10 => 0, 20 => 1, 30 => 2 }'],
+    ['[10, 30]', '{ 10 => 0, 30 => 1 }'],
+    ['[10, 30]', '{ 10 => 0, 30 => 1 }'],
+  ], 'state per operation — the last row writes no map, so the map is carried');
+});
+
+t('a field a step did not touch is carried, and says so', () => {
+  const frames = planStatecard(insertDelete).frames;
+  eq(frames[4].state[1].source, 'carried', 'the map field is prose on the last row');
+  eq(frames[4].state[1].value, '{ 10 => 0, 30 => 1 }', 'and carries the value before it');
+});
+
+t('the output of the operation is read from the row, not invented', () => {
+  const frames = planStatecard(insertDelete).frames;
+  eq(frames.map((f) => f.output), [null, null, null, null, 'Yields 10 or 30 with P = 0.5'], 'only getRandom emits');
+});
+
+t('a row may state several operations, and they are all named', () => {
+  eq(readOp('`put(1,1), put(2,2)`'), ['put(1,1)', 'put(2,2)'], 'two ops in one cell');
+  eq(readOp('`addNum(1)`'), ['addNum(1)'], 'one');
+  eq(readOp('`push(-2)`'), ['push(-2)'], 'negative argument');
+  eq(readOp('`[1, 2, 3]`'), null, 'not a call');
+  eq(readOp('`push(-2), pop()`'), ['push(-2)', 'pop()'], 'two ops in one cell');
+  eq(readOp('`lo empty -> push low`'), null, 'prose with an arrow is not a call');
+});
+
+t('reads a field state written as an array or as a Map literal', () => {
+  eq(readState('`[10, 20, 30]`'), '[10, 20, 30]', 'array');
+  eq(readState('`{ 10 => 0, 20 => 1 }`'), '{ 10 => 0, 20 => 1 }', 'map');
+  eq(readState('`[H,3,1,T]`, `get(2)=-1`'), '[H,3,1,T]', 'state with output beside it');
+  eq(readState('`Yields 10 or 30`'), null, 'prose');
+});
+
+t('the LRU case renders: an op on every row, a state carried on the rows between writes', () => {
+  // 08-linked-list/11-lru-cache.md L3 writes `[H,2,1,T]` on step 1 and `[H,3,1,T]` on step 3,
+  // with `Returns 1` and `get(2)=-1` on the rows between. A state column that had to be
+  // written on most rows would refuse exactly the table a state card exists for.
+  const plan = planStatecard(guide('08-linked-list/11-lru-cache.md')[2]);
+  ok(plan, 'a plan');
+  eq(plan.steps, 4, 'steps');
+  eq(plan.frames.map((f) => f.state[0].source), ['cell', 'carried', 'cell', 'carried'], 'written / carried');
+  eq(plan.frames.map((f) => f.output), [null, 'Returns 1', 'get(2)=-1', 'get(1)=-1, get(3)=3, get(4)=4'], 'outputs');
+});
+
+/* ------------------------------------------------------------------ *
+ * dp-table — the overlay
+ * ------------------------------------------------------------------ */
+
+console.log('\nplanDpTable — the DP overlay (catalog: 16-one-dp / 17-multi-dp)\n');
+
+t('reads a whole-row write and a ranged write and a single-cell write', () => {
+  eq(readDpWrite('`dp = [1,1,1]`'), { lo: 0, hi: 2, values: ['1', '1', '1'] }, 'from the left edge');
+  eq(readDpWrite('`dp[6..10] = [2,2,3,3,2]`'), { lo: 6, hi: 10, values: ['2', '2', '3', '3', '2'] }, 'ranged');
+  eq(readDpWrite('`dp[10] = 2`'), { lo: 10, hi: 10, values: ['2'] }, 'single cell');
+});
+
+t('refuses a read (`min(dp[10],dp[9],dp[6])`) — a read writes nothing', () => {
+  eq(readDpWrite('`min(dp[10],dp[9],dp[6]) + 1`'), null, 'read');
+  eq(readDpWrite('`fold 1, 1, 2`'), null, 'prose');
+});
+
+t('fills the row cell by cell and marks the cells the step changed', () => {
+  // 17-multi-dp/03-unique-paths-ii.md L3: [1,1,1] -> [1,0,1] -> dp[2] = 2.
+  const frames = planDpTable(guide('17-multi-dp/03-unique-paths-ii.md')[2]).frames;
+  eq(frames.map((f) => f.cells), [['1', '1', '1'], ['1', '0', '1'], ['1', '0', '2']], 'the row as it grows');
+  eq(frames.map((f) => f.changed), [[], [1], [2]], 'the wall at index 1, then the target at 2');
+  eq(frames.map((f) => f.cursor), [0, 1, 2], 'the current cell each step marked');
+  eq(frames[0].changed, [], 'step 0 highlights nothing — there is no previous step');
+});
+
+t('claims a one-dp table too, and the cursor is the last index it wrote', () => {
+  // 16-one-dp/04-coin-change.md L3: dp[0..5] then dp[6..10], so the row grows across steps.
+  const plan = planDpTable(guide('16-one-dp/04-coin-change.md')[2]);
+  ok(plan, 'a plan');
+  eq(plan.width, 11, 'eleven cells');
+  eq(plan.frames[0].cells.length, 6, 'first step wrote six');
+  eq(plan.frames[1].cells.length, 11, 'second step wrote five more');
+  eq(plan.frames[1].cursor, 6, 'cursor on the first cell that step changed');
+});
+
+/* ------------------------------------------------------------------ *
+ * recursion-tree — the overlay
+ * ------------------------------------------------------------------ */
+
+console.log('\nplanRecursion — the recursion overlay\n');
+
+t('reads a call and refuses prose', () => {
+  eq(readCall('`invert(4)`'), { name: 'invert', args: ['4'] }, 'call');
+  eq(readCall('`dfs(hit, 1)`'), { name: 'dfs', args: ['hit', '1'] }, 'two args');
+  eq(readCall('`f(3,3)`'), { name: 'f', args: ['3', '3'] }, 'spaced');
+  eq(readCall('`return root`'), null, 'not a call');
+  eq(readCall('`[4,7,2,9,6,3,1]`'), null, 'array');
+});
+
+t('unfolds the call spine: depth grows on a descent and unwinds on a return', () => {
+  // 09-binary-tree-general/03-invert-binary-tree.md L3: invert(4) -> invert(7) [leaf] ->
+  // invert(2) [returned to the parent] -> return root.
+  const frames = planRecursion(guide('09-binary-tree-general/03-invert-binary-tree.md')[2]).frames;
+  eq(frames.map((f) => f.call), ['invert(4)', 'invert(7)', 'invert(2)', null], 'calls');
+  eq(frames.map((f) => f.depth), [0, 1, 1, 0], 'depths');
+  eq(frames.map((f) => f.base), [false, true, false, true], 'the leaf is where a base case is hit');
+});
+
+t('the deepest frame is the current one and the readout names the depth', () => {
+  const plan = planRecursion(guide('09-binary-tree-general/03-invert-binary-tree.md')[2]);
+  eq(plan.frames[1].spine, ['invert(4)', 'invert(7)'], 'spine at step 2');
+  eq(plan.height, 2, 'widest spine the guide walks');
+});
+
+/* ------------------------------------------------------------------ *
+ * Choosing — Tier 2 claims, overlays attach, Tier 1 does not regress
+ * ------------------------------------------------------------------ */
+
+console.log('\npickPreset / pickOverlays — who owns a table\n');
+
+const wordLadder = guide('19-graph-bfs/03-word-ladder.md')[2];
+const zigzag = guide('10-binary-tree-bfs/04-zigzag-level-order.md')[2];
+
+t('a node-and-neighbour row goes to the graph preset', () => {
+  eq(pickPreset(wordLadder).preset, 'graph', 'graph');
+});
+
+t('levels of a level-order go to the tree preset', () => {
+  eq(pickPreset(zigzag).preset, 'tree', 'tree');
+});
+
+t('an op column with state fields goes to the state card, not to the chain', () => {
+  const picked = pickPreset(insertDelete);
+  eq(picked.preset, 'statecard', 'statecard wins the list-shaped `list` State column');
+});
+
+t('a `next` chain goes to the linked-list preset', () => {
+  eq(pickPreset(guide('08-linked-list/05-reverse-linked-list-ii.md')[2]).preset, 'linkedlist', 'linkedlist');
+});
+
+t('overlays are a separate pass, so they never compete with a preset for the table', () => {
+  eq(pickOverlays(zigzag).map((o) => o.overlay), [], 'a BFS table is neither');
+  eq(pickOverlays(guide('17-multi-dp/03-unique-paths-ii.md')[2]).map((o) => o.overlay), ['dp-table'], 'a DP table is dp-table');
+  eq(pickOverlays(guide('09-binary-tree-general/03-invert-binary-tree.md')[2]).map((o) => o.overlay), ['recursion-tree'], 'a recursive table is recursion-tree');
+});
+
+t('an overlay-only table still gets a player, because overlays need a transport', () => {
+  // unique-paths-ii L3 has no graph/tree/statecard column, so `pickPreset` is null while
+  // `pickOverlays` is not. The mount must still build row 22's chrome or the overlay would
+  // have no scrubber.
+  eq(pickPreset(guide('17-multi-dp/03-unique-paths-ii.md')[2]), null, 'no preset');
+  eq(pickOverlays(guide('17-multi-dp/03-unique-paths-ii.md')[2]).length, 1, 'one overlay');
+});
+
+t('Tier 1 claims exactly what it claimed before — no table moved to Tier 2', () => {
+  // Measured over all 450 tables: run Tier 1 alone, then with Tier 2 in front of it, and
+  // require every Tier-1 claim to survive. This is the row-23-regression check.
+  const catalog = JSON.parse(fs.readFileSync('catalog/problems.json', 'utf8'));
+  const tier1 = { window: planWindow, matrix: planMatrix, stack: planStack, bits: planBits };
+  let claimed = 0;
+  let moved = [];
+  for (const problem of catalog.problems) {
+    for (const table of guide(problem.path)) {
+      const was = Object.keys(tier1).find((name) => tier1[name](table));
+      if (!was) continue;
+      claimed++;
+      const now = pickPreset(table);
+      if (!now || now.preset !== was) moved.push(`${problem.path} L${table.level}: ${was} -> ${now ? now.preset : 'none'}`);
+    }
+  }
+  ok(claimed > 0, 'Tier 1 claims something to protect');
+  eq(moved, [], 'nothing Tier 1 owned moved to Tier 2');
 });
 
 /* ------------------------------------------------------------------ *
