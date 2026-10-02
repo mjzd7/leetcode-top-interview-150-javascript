@@ -1,4 +1,24 @@
 /**
+ * ENVELOPE v1.1 IS FROZEN (row 13, plan v5 §7 row 13 / §5 "freeze at row 12 green").
+ *
+ * V3 is green over all 450 real goldens, so from here on "frozen" FORBIDS, without a
+ * deliberate and RECORDED decision:
+ *   - adding, removing or renaming any top-level field, or any `steps[]` field, of the
+ *     envelope (`FROZEN_V1_1_FIELDS` / `FROZEN_V1_1_STEP_FIELDS` below are the record);
+ *   - changing what any of those fields MEANS, even keeping the name — `v` is the contract
+ *     revision precisely because a v2 may reuse these names for different meanings;
+ *   - adding a field to the schema, the validator or the differ alone. Those are three
+ *     places one field lives, and a field present in only one of them is a silent-wrong
+ *     generator: accepted by the shape check, never compared by the differ.
+ *
+ * HOW IT IS ENFORCED, in S10: the frozen set is asserted against `docs/trace-schema.json`
+ * in BOTH directions (a renamed, added or removed field fails), against the validator
+ * BEHAVIOURALLY (deleting each field must make `validateEnvelope` report it missing), and
+ * against the DIFFER (changing each field must make `diffEnvelope` reject the pair). Plus,
+ * in S8, all 450 real goldens must carry exactly the frozen key set. A green V3 that cannot
+ * go red is the failure this row exists to prevent, so every frozen field has a probe that
+ * turns it red on purpose.
+ *
  * Row 8: the golden differ — plan v5 §7 row 8, ledger E19, decision K5/K6.
  *
  * A golden is only worth having if it says WHICH STEP went wrong and HOW. A differ that
@@ -39,6 +59,104 @@ import { validateEnvelope } from './validate-envelope.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures', 'trace');
 const EXPECTED = path.join(FIXTURES, 'expected.json');
+
+/**
+ * Row 15's goldens. Gitignored (E32): a fresh clone has none until `npm run gen:traces`.
+ *
+ * `TRACE_GOLDENS_DIR` exists so the two corpus failure modes are PROVABLE rather than claimed:
+ * an empty directory and a drifted one. Both are exercised against a throwaway copy, because
+ * the real corpus is 36 MB that other rows are reading concurrently.
+ */
+const GOLDENS_DIR = process.env.TRACE_GOLDENS_DIR
+  || path.join(__dirname, '..', 'judge', 'traces');
+/**
+ * The mutant target, named not numbered: the plan §5 worked example, so a golden that moves
+ * or disappears fails this loudly instead of silently retargeting the test somewhere else.
+ */
+const MUTANT_GOLDEN = '05-hashmap__06-two-sum.L3.json';
+
+// ---- the frozen contract (row 13) ----------------------------------------------------
+// Plan v5 §5's field list, transcribed. THIS is the record the freeze is enforced against —
+// not the schema document and not the validator, either of which can be edited to match the
+// other and look consistent while the envelope has already moved.
+const FROZEN_V1_1_FIELDS = [
+  'v', 'path', 'level', 'fnName', 'codec', 'block', 'watch', 'steps',
+  'result', 'verdict', 'truncated', 'budget', 'stepCount', 'error',
+];
+const FROZEN_V1_1_STEP_FIELDS = [
+  'n', 'line', 'type', 'text', 'operands', 'cond', 'snap', 'delta', 'out', 'override',
+];
+
+/** One real golden's worth of file IO helpers. */
+const goldenNames = () => fs.readdirSync(GOLDENS_DIR)
+  .filter((f) => /\.L[123]\.json$/.test(f))
+  .sort();
+const readGolden = (name) => JSON.parse(fs.readFileSync(path.join(GOLDENS_DIR, name), 'utf8'));
+
+/** The first step index satisfying a predicate — so a mutant targets a step the golden HAS. */
+const findStep = (g, pred) => g.steps.findIndex((s) => plainObject(s) && pred(s));
+
+/**
+ * Mutants DERIVED FROM A REAL GOLDEN, at run time.
+ *
+ * These are the negative case that proves V3 can fail: an authored `.json` mutant would drift
+ * from the golden it claims to mutate and eventually pass for the wrong reason (E19's lesson
+ * applied to the tests themselves). So each entry finds its own target step and reads its own
+ * `from` value out of the loaded golden, and returns the field PATH it expects to be named.
+ * Three distinct steps, so each mutant isolates exactly one field.
+ */
+const REAL_MUTANTS = {
+  'a-snap-value': (g) => {
+    const index = findStep(g, (s) => plainObject(s.snap) && Object.values(s.snap).some((v) => typeof v === 'number'));
+    const key = Object.keys(g.steps[index].snap).find((k) => typeof g.steps[index].snap[k] === 'number');
+    const mutant = clone(g);
+    mutant.steps[index].snap[key] += 1;
+    return { mutant, index, path: `snap.${key}` };
+  },
+  'an-operand': (g) => {
+    const index = findStep(g, (s) => plainObject(s.operands) && Object.keys(s.operands).length > 0);
+    const key = Object.keys(g.steps[index].operands)[0];
+    const from = g.steps[index].operands[key];
+    const mutant = clone(g);
+    mutant.steps[index].operands[key] = typeof from === 'number' ? from + 1 : `${from}-mutated`;
+    return { mutant, index, path: `operands.${key}` };
+  },
+  'a-step-type': (g) => {
+    const index = findStep(g, (s) => s.type === 'if-test');
+    const mutant = clone(g);
+    mutant.steps[index].type = 'call'; // a legal §5 type, so only the VALUE moved
+    return { mutant, index, path: 'type' };
+  },
+};
+
+/**
+ * One value-mutating probe per frozen envelope field, and the verdict it must produce.
+ *
+ * The freeze is only real if the DIFFER notices every field: a field added to the schema but
+ * never taught to `diffEnvelope` would make V3 permanently green, which is the silent-wrong
+ * this engine treats as its worst failure. Each probe edits ONE field and nothing else, so a
+ * probe that passes cannot be passing on some other field's back.
+ *
+ * `steps` and `stepCount` get their own codes on purpose: those two are handled by named
+ * phases of the differ rather than by the generic envelope-field scan, and a future field
+ * must be routed the same way deliberately, not by accident.
+ */
+const FIELD_PROBES = {
+  v: [(g) => { g.v = 2; }, 'ENVELOPE_FIELD'],
+  path: [(g) => { g.path = `${g.path}-drifted`; }, 'ENVELOPE_FIELD'],
+  level: [(g) => { g.level = g.level === 1 ? 3 : 1; }, 'ENVELOPE_FIELD'],
+  fnName: [(g) => { g.fnName = `${g.fnName}X`; }, 'ENVELOPE_FIELD'],
+  codec: [(g) => { g.codec = g.codec === 'json' ? 'tree' : 'json'; }, 'ENVELOPE_FIELD'],
+  block: [(g) => { g.block.startLine += 1; }, 'ENVELOPE_FIELD'],
+  watch: [(g) => { g.watch = [...g.watch, 'aMutationProbe']; }, 'ENVELOPE_FIELD'],
+  steps: [(g) => { g.steps[0].n += 1; }, 'STEP_DIFF'],
+  result: [(g) => { g.result = null; }, 'ENVELOPE_FIELD'],
+  verdict: [(g) => { g.verdict.failed += 1; }, 'ENVELOPE_FIELD'],
+  truncated: [(g) => { g.truncated.display = !g.truncated.display; }, 'ENVELOPE_FIELD'],
+  budget: [(g) => { g.budget.chunks += 1; }, 'ENVELOPE_FIELD'],
+  stepCount: [(g) => { g.stepCount += 1; }, 'STEP_COUNT'],
+  error: [(g) => { g.error = 'maxDepth'; }, 'ENVELOPE_FIELD'],
+};
 
 // The solution block `expected.json`'s `block.hash` is the sha256 of. Kept here so the
 // fixture's identity is RE-DERIVABLE rather than a hex literal nobody can check.
@@ -633,6 +751,191 @@ function main() {
     check(onDisk.equals(regenerated),
       `S7 fixtures: ${name}.json is byte-identical to what --mutate generates`,
       `on disk ${onDisk.length} bytes vs generated ${regenerated.length}`);
+  }
+
+  // ---- S8: V3 over the REAL corpus ---------------------------------------------------
+  // Row 8 proved the differ works on ONE hand-built envelope. Row 13 is the milestone: it has
+  // to work on the 450 goldens row 15 actually generated, because that is the population a
+  // guide edit will ever be compared against. Every non-EQUAL below is a bug in the differ or
+  // a defect in the corpus — the fix is never to relax the check.
+  const names = goldenNames();
+  const corpusPresent = names.length > 0;
+  const repoRoot = path.join(__dirname, '..');
+  const where = path.relative(repoRoot, GOLDENS_DIR);
+  check(corpusPresent,
+    `S8 corpus: ${where.startsWith('..') ? GOLDENS_DIR : where} holds goldens to compare`,
+    `the directory is empty — goldens are gitignored (E32), so a fresh clone must run \`npm run gen:traces\` before this file means anything`);
+
+  if (corpusPresent) {
+    const frozenTop = [...FROZEN_V1_1_FIELDS].sort().join(',');
+    const frozenStep = [...FROZEN_V1_1_STEP_FIELDS].sort().join(',');
+    const notEqual = [];
+    const keyDrift = [];
+    const orderSensitive = [];
+    let totalSteps = 0;
+    let levels = 0;
+
+    for (const name of names) {
+      const golden = readGolden(name);
+      totalSteps += golden.steps.length;
+      levels += golden.level === 1 || golden.level === 2 || golden.level === 3 ? 1 : 0;
+      // The corpus must carry exactly the frozen key set. A golden with an extra key would
+      // prove a field was added downstream without a decision — which is the freeze's whole
+      // subject — and a golden missing one would mean the generator and the contract parted.
+      if (Object.keys(golden).sort().join(',') !== frozenTop
+        || golden.steps.some((s) => Object.keys(s).sort().join(',') !== frozenStep)) {
+        keyDrift.push(name);
+      }
+      const verdict = diffEnvelope(golden, golden);
+      if (verdict.code !== 'EQUAL') notEqual.push(`${name} → ${verdict.code}: ${verdict.message}`);
+      // E8 at scale: the same document with every key inserted in the opposite order at every
+      // level. `stringify` sorts, so this is invisible by construction — proven here on 450
+      // real documents rather than on one fixture, because `deepEqual` leaking key order back
+      // in is exactly the kind of defect that survives a single fixture.
+      else if (!diffEnvelope(golden, JSON.parse(stringify(golden)), { render: false }).ok) {
+        orderSensitive.push(name);
+      }
+    }
+
+    check(notEqual.length === 0,
+      `S8 V3: all ${names.length} real goldens compare EQUAL against themselves`,
+      `${notEqual.length} did not:\n     ${notEqual.slice(0, 5).join('\n     ')}`);
+    check(keyDrift.length === 0,
+      `S8 V3: all ${names.length} real goldens carry exactly the frozen field set`,
+      `${keyDrift.length} drifted: ${keyDrift.slice(0, 3).join(', ')}`);
+    check(orderSensitive.length === 0,
+      `S8 V3: canonical comparison is key-order blind across all ${names.length} goldens (E8)`,
+      `${orderSensitive.length} disagreed with their own re-serialised form: ${orderSensitive.slice(0, 3).join(', ')}`);
+    check(levels === names.length && names.length % 3 === 0,
+      `S8 V3: the corpus is ${names.length / 3} guides x 3 levels, so L1/L2/L3 are all covered`,
+      `${levels} goldens carry a §5 level`);
+
+    // ---- S9: the negative case — a mutated REAL canonical must go red ----------------
+    // The corpus check above is a comparison of each golden against ITSELF, which is a
+    // comparison with nothing to disagree about. It proves the differ can read all 450; only
+    // a mutation proves it can say WHICH step moved. Without this, V3 would be a green light
+    // wired to nothing.
+    check(fs.existsSync(path.join(GOLDENS_DIR, MUTANT_GOLDEN)),
+      `S9 mutants: the target golden ${MUTANT_GOLDEN} is present`,
+      `run \`npm run gen:traces\` (goldens are gitignored)`);
+
+    if (fs.existsSync(path.join(GOLDENS_DIR, MUTANT_GOLDEN))) {
+      const golden = readGolden(MUTANT_GOLDEN);
+      for (const [label, derive] of Object.entries(REAL_MUTANTS)) {
+        const { mutant, index, path: fieldPath } = derive(golden);
+        const res = diffEnvelope(golden, mutant);
+        check(res.code === 'STEP_DIFF' && res.step !== null,
+          `S9 mutant (${label}): a real golden mutated in one \`${fieldPath}\` is rejected with a STEP_DIFF`,
+          `got ${res.code}${res.step === null ? ' with no step named' : ''}`);
+        check(res.step?.index === index,
+          `S9 mutant (${label}): names steps[${index}], the step that was mutated`,
+          `got index=${res.step?.index}`);
+        check(res.step?.fields.some((f) => f.path === fieldPath) && res.step.fields.length === 1,
+          `S9 mutant (${label}): names exactly the one field it changed — ${fieldPath}`,
+          JSON.stringify(res.step?.fields.map((f) => `${f.path} ${f.expected}→${f.actual}`)));
+      }
+
+      // The artifact a human reads in CI: plan §0.2's `delta` side-by-side, not a stack
+      // trace. `delta` is spawned, never imported, and the S5b degrade is re-proved here on a
+      // real golden — a missing pretty-printer must never fail a golden.
+      const shown = diffEnvelope(golden, REAL_MUTANTS['a-snap-value'](golden).mutant);
+      check(shown.step?.renderer === 'delta',
+        'S9 CI output: the failing step of a real golden is rendered side-by-side by delta (§0.2)',
+        `renderer was "${shown.step?.renderer}"`);
+      check(/│/.test(shown.step?.rendered ?? ''),
+        'S9 CI output: the render is delta\'s box-drawing side-by-side, not the plain fallback',
+        (shown.step?.rendered ?? '').split('\n').slice(0, 3).join(' / '));
+      check(shown.step?.rendered.includes(shown.step.fields[0].actual),
+        'S9 CI output: the rendered diff shows the value the run produced');
+
+      const realPath = process.env.PATH;
+      let realDegraded;
+      try {
+        process.env.PATH = '/nonexistent';
+        realDegraded = diffEnvelope(golden, REAL_MUTANTS['a-snap-value'](golden).mutant);
+      } finally {
+        process.env.PATH = realPath;
+      }
+      check(realDegraded.code === shown.code && realDegraded.step?.index === shown.step?.index,
+        'S9 CI output: without delta on PATH the VERDICT over a real golden is unchanged');
+      check(realDegraded.step?.renderer === 'text' && !/│/.test(realDegraded.step?.rendered ?? ''),
+        'S9 CI output: the fallback is a plain textual diff, and says so',
+        `renderer was "${realDegraded.step?.renderer}"`);
+
+      // ---- S10: the freeze, enforced in all three directions ---------------------------
+      // The frozen set has to be checked against every place a field can live. Schema and
+      // validator can be edited to agree with each other while the envelope has already moved,
+      // so neither is the authority — the literal above is.
+      const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'docs', 'trace-schema.json'), 'utf-8'));
+      const documented = schema.fields.map((f) => f.name).sort();
+      const documentedSteps = (schema.fields.find((f) => f.name === 'steps')?.subfields ?? []).map((f) => f.name).sort();
+      check(documented.join(',') === [...FROZEN_V1_1_FIELDS].sort().join(','),
+        'S10 freeze: docs/trace-schema.json documents EXACTLY the frozen field set',
+        `schema has [${documented.join(', ')}]`);
+      check(documentedSteps.join(',') === [...FROZEN_V1_1_STEP_FIELDS].sort().join(','),
+        'S10 freeze: the schema documents EXACTLY the frozen `steps[]` field set',
+        `schema has [${documentedSteps.join(', ')}]`);
+
+      // The validator's set is DERIVED, not read: delete a field and it must say the field is
+      // missing. A field the validator does not enforce is a field a generator can ship
+      // garbage in, which is exactly the drift the freeze exists to stop.
+      const enforced = [];
+      const crashed = [];
+      for (const field of FROZEN_V1_1_FIELDS) {
+        const without = clone(golden);
+        delete without[field];
+        try {
+          if (validateEnvelope(without).errors.some((e) => e.startsWith('MISSING_FIELD') && e.includes(`\`${field}\``))) {
+            enforced.push(field);
+          }
+        } catch {
+          crashed.push(field); // recorded below, not swallowed
+        }
+      }
+      check(enforced.length + crashed.length === FROZEN_V1_1_FIELDS.length,
+        `S10 freeze: the validator enforces all ${FROZEN_V1_1_FIELDS.length} frozen fields (${enforced.length} report it missing)`,
+        `unaccounted: ${FROZEN_V1_1_FIELDS.filter((f) => !enforced.includes(f) && !crashed.includes(f)).join(', ') || 'none'}`);
+      // REPORTED, NOT CHOSEN BETWEEN: today the validator agrees with the schema on the field
+      // set, but one field is enforced by crashing instead of by naming (keysOf(null) at
+      // validate-envelope.mjs:239). That is a row-5 defect this row may not fix, so it is
+      // PINNED here — an entry disappears only when someone fixes the validator and records
+      // that decision in the same commit.
+      check(crashed.join(',') === 'truncated',
+        'S10 freeze: the ONLY field the validator fails to name when absent is the pinned row-5 defect',
+        `crashed on: ${crashed.join(', ') || 'none'}`);
+      const enforcedSteps = FROZEN_V1_1_STEP_FIELDS.filter((field) => {
+        const without = clone(golden);
+        delete without.steps[0][field];
+        try {
+          return validateEnvelope(without).errors.some((e) => e.startsWith('MISSING_FIELD') && e.includes(`steps[0].${field}`));
+        } catch {
+          return false;
+        }
+      });
+      check(enforcedSteps.length === FROZEN_V1_1_STEP_FIELDS.length,
+        `S10 freeze: the validator enforces all ${FROZEN_V1_1_STEP_FIELDS.length} frozen step fields`,
+        `unenforced: ${FROZEN_V1_1_STEP_FIELDS.filter((f) => !enforcedSteps.includes(f)).join(', ')}`);
+
+      // And the differ: every frozen field has to have a probe that turns V3 RED on purpose.
+      const blind = [];
+      for (const field of FROZEN_V1_1_FIELDS) {
+        const probe = FIELD_PROBES[field];
+        if (!probe) { blind.push(`${field} (no probe)`); continue; }
+        const [edit, expectedCode] = probe;
+        const mutated = clone(golden);
+        edit(mutated);
+        const res = diffEnvelope(golden, mutated, { render: false });
+        if (res.ok || res.code !== expectedCode) blind.push(`${field} (got ${res.code}, wanted ${expectedCode})`);
+      }
+      check(blind.length === 0,
+        `S10 freeze: changing ANY of the ${FROZEN_V1_1_FIELDS.length} frozen fields turns V3 red — the check can fail on purpose`,
+        `blind: ${blind.join('; ')}`);
+
+      console.log(`\nV3 corpus: ${names.length} goldens EQUAL · ${totalSteps} steps · ${names.length / 3} guides x 3 levels`);
+      if (crashed.length > 0) {
+        console.log(`  ⚠️  pinned row-5 defect: validateEnvelope CRASHES on an envelope missing \`${crashed.join(', ')}\` (keysOf(null), validate-envelope.mjs:239) instead of reporting MISSING_FIELD — the field is enforced when PRESENT, not when absent`);
+      }
+    }
   }
 
   console.log('\n========================================');
