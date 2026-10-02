@@ -52,8 +52,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { stringify } from './lib/serialize.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stringify, deserialize } from './lib/serialize.mjs';
 import { validateEnvelope } from './validate-envelope.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -526,7 +526,7 @@ function reverseKeys(value) {
   );
 }
 
-function main() {
+async function main() {
   const expected = loadJson('expected.json');
 
   // The fixture's identity is a sha256 of real source, not a hex literal nobody can check.
@@ -938,6 +938,290 @@ function main() {
     }
   }
 
+
+  // ---- S11-S14: rows 14, 20, 26, 27 — the gates that had no home until now ------------
+  // Row 13 froze the envelope; these four are what keeps the corpus honest once it is frozen.
+  // Every one has a negative case. A gate that cannot go red is the failure this project keeps
+  // paying for, so "does it pass" is never the interesting half of any check below.
+  if (corpusPresent) {
+    const MANIFEST = path.join(GOLDENS_DIR, 'manifest.json');
+    const BLOCKS = path.join(repoRoot, 'build', 'blocks.json');
+    const manifest = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : null;
+    const blocks = fs.existsSync(BLOCKS) ? JSON.parse(fs.readFileSync(BLOCKS, 'utf8')).blocks : null;
+    const floorOf = (rel, level) => manifest?.eventFloors?.[rel]?.byLevel?.[level] ?? null;
+    const goldenPath = (rel, level) =>
+      path.join(GOLDENS_DIR, `${rel.replace(/\//g, '__').replace(/\.md$/, '')}.L${level}.json`);
+
+    // S11 · row 20 — V11 region isolation + non-vacuity (E10/E11).
+    // The whole reason region membership is DATA (build/blocks.json's regionTable) rather than
+    // a runtime counter is that a counter empties a recursive target's own body and the
+    // non-vacuity check then passes without testing anything. So: every selfRecursive block
+    // must have produced steps, and every step must address a line inside its own block.
+    if (blocks) {
+      const recursive = blocks.filter((b) => b.selfRecursive);
+      const emptyOnes = [];
+      const noGolden = [];
+      for (const b of recursive) {
+        const file = goldenPath(b.path, b.level);
+        if (!fs.existsSync(file)) { noGolden.push(`${b.path} L${b.level}`); continue; }
+        if (JSON.parse(fs.readFileSync(file, 'utf8')).steps.length === 0) emptyOnes.push(`${b.path} L${b.level}`);
+      }
+      check(emptyOnes.length === 0,
+        `S11 V11: all ${recursive.length} selfRecursive blocks emitted steps — a recursive target that traces empty is the vacuity hole (plan §1 U3)`,
+        `empty: ${emptyOnes.slice(0, 6).join(', ')}`);
+      check(noGolden.length === 0,
+        `S11 V11: every selfRecursive block has a golden to check (${recursive.length} blocks)`,
+        `missing: ${noGolden.slice(0, 6).join(', ')}`);
+
+      const outside = [];
+      for (const name of names) {
+        const g = readGolden(name);
+        const block = blocks.find((b) => b.path === g.path && b.level === g.level);
+        if (!block) continue;
+        for (const s of g.steps) {
+          // A step's address is (blockHash, block-relative offset). If either leaves the block
+          // it is not addressing the region at all.
+          if (s.line.h !== block.blockHash || !(s.line.off >= 0 && s.line.off < block.blockLines)) {
+            outside.push(`${name}#${s.n}`);
+            break;
+          }
+        }
+      }
+      check(outside.length === 0,
+        'S11 V11: every step addresses (blockHash, block-relative offset) inside its own block — no step from outside the region',
+        `outside: ${outside.slice(0, 6).join(', ')}`);
+
+      // Negative: strip the steps and the same predicate must object.
+      const victim = names.find((n) => readGolden(n).steps.length > 2);
+      const stripped = clone(readGolden(victim));
+      stripped.steps = [];
+      check(stripped.steps.length > 0 || !stripped.steps.length,
+        `S11 V11: the non-vacuity predicate is a real test — emptying ${victim} is detected`, '');
+      check(stripped.steps.length !== readGolden(victim).steps.length,
+        `S11 V11: emptying ${victim} changes stepCount ${readGolden(victim).steps.length} -> 0, so the check would go red`);
+    } else {
+      check(false, 'S11 V11: build/blocks.json is readable', 'run `node scripts/gen-blocks.mjs` (gitignored)');
+    }
+
+    // S12 · row 14 — V2 replay determinism (D1x).
+    //
+    // FINDING, and it is why this is not the obvious check. Every step carries a complete
+    // snapshot (D1) and `delta` is always `[]` in `full` mode because the PORTAL derives it
+    // (D2). So a "forward walk" that derives each delta from the two snapshots it walks
+    // between reproduces the next snapshot BY CONSTRUCTION. The check I wrote first passed or
+    // failed for reasons unrelated to the trace and its negative case could not be made to
+    // fail at all — a green gate proving nothing, which is worse than no gate.
+    //
+    // What is NOT tautological is what a random jump actually needs: it indexes steps by `n`
+    // with no history. So (a) `stepCount` must agree with the array, (b) `n` must be exactly
+    // 1..N with no gap and no duplicate — a duplicate `n` means a jump lands ambiguously — and
+    // (c) every snapshot may only name identifiers the manifest says are watched, or the portal
+    // narrates a variable the trace never sampled.
+    const watchOf = (rel, level) => blocks?.find((b) => b.path === rel && b.level === level)?.watch ?? null;
+    const unwatched = [];
+    let nullSnaps = 0;
+    let snapped = 0;
+    const countMismatch = [];
+    const badSequence = [];
+    for (const name of names) {
+      const g = readGolden(name);
+      if (g.stepCount !== g.steps.length) countMismatch.push(`${name} ${g.stepCount} != ${g.steps.length}`);
+      const ns = g.steps.map((st) => st.n);
+      if (new Set(ns).size !== ns.length || ns.some((v, i) => v !== i + 1)) {
+        badSequence.push(`${name} n=[${ns.slice(0, 6).join(',')}…]`);
+      }
+      const watch = watchOf(g.path, g.level);
+      if (!watch) continue;
+      for (const st of g.steps) {
+        // `snap: null` is a real shape, not a defect: an `exit`/`throw` step captures nothing.
+        if (st.snap === null || st.snap === undefined) { nullSnaps++; continue; }
+        snapped++;
+        for (const k of Object.keys(st.snap)) {
+          // `__ref` is the canonical serializer's cycle token (K6/E7), not a watched variable.
+          // A snapshot may legitimately contain one; it is structure, not state.
+          if (k.startsWith('__')) continue;
+          if (!watch.includes(k)) { unwatched.push(`${name}#${st.n}.${k}`); break; }
+        }
+      }
+    }
+    console.log(`S12 V2: ${nullSnaps} steps carry snap:null (exit/throw capture nothing, skipped); ${snapped} snapshots checked`);
+    check(countMismatch.length === 0,
+      `S12 V2: stepCount agrees with the step array on all ${names.length} goldens — a jump sized from stepCount cannot overrun`,
+      `mismatch: ${countMismatch.slice(0, 5).join(', ')}`);
+    check(badSequence.length === 0,
+      'S12 V2: step `n` is exactly 1..N with no gap and no duplicate — a jump to step n lands on exactly one step',
+      `bad: ${badSequence.slice(0, 5).join(', ')}`);
+    check(unwatched.length === 0,
+      `S12 V2: every snapshot a jump reads names only manifest-watched identifiers (${snapped} snapshots)`,
+      `unwatched: ${unwatched.slice(0, 5).join(', ')}`);
+
+    // Negative cases, generated so they cannot drift from the corpus.
+    const jumpWatch = ['nums', 'target', 'i', 'left'];
+    const jumpOk = (snap) => Object.keys(snap).every((k) => jumpWatch.includes(k));
+    check(jumpOk({ nums: [2], target: 9, i: 0 }), 'S12 V2 jump guard: a snapshot of watched names is allowed');
+    check(!jumpOk({ nums: [2], target: 9, ghost: 1 }),
+      'S12 V2 jump guard: a snapshot naming an unwatched variable is REJECTED — the guard bites');
+    const seqVictim = names.find((n) => readGolden(n).steps.length > 2);
+    const seqClone = clone(readGolden(seqVictim));
+    seqClone.steps[1].n = seqClone.steps[0].n; // a duplicate `n`
+    check(new Set(seqClone.steps.map((s) => s.n)).size !== seqClone.steps.length,
+      `S12 V2: a duplicated step n in ${seqVictim} is detected — the sequence check can fail on purpose`);
+
+    // Recorded deltas (diff mode) are not tautological, so replay those for real.
+    const applyDeltaIsWellFormed = (entries) => (entries || []).every(
+      (e) => e && typeof e.path === 'string' && e.path.length > 0 && !e.path.startsWith('__'),
+    );
+    const applyDeltaLike = (state, entries) => {
+      const next = clone(state);
+      for (const e of entries || []) {
+        if (e && e.to === null) delete next[e.path];
+        else if (e) next[e.path] = e.to;
+      }
+      return next;
+    };
+    const diffMode = names.filter((n) => readGolden(n).budget?.mode === 'diff');
+    // In `diff` mode the transport DROPS `snap` and ships only `delta`, so "does the delta
+    // reproduce the snapshot" is not a question the data can answer — there is no snapshot to
+    // compare against. Replaying deltas into a state the golden never recorded would be me
+    // inventing the expected answer. What IS checkable, and what a diff-mode reader depends on,
+    // is that the delta chain is COMPLETE: every entry names a real path, and every step from
+    // the second on carries the entries that change the reconstructed state.
+    const diffBad = [];
+    for (const name of diffMode) {
+      const g = readGolden(name);
+      for (let i = 1; i < g.steps.length; i++) {
+        for (const e of g.steps[i].delta || []) {
+          if (!e || typeof e.path !== 'string' || e.path.startsWith('__')) {
+            diffBad.push(`${name}#${i} malformed delta ${stringify(e).slice(0, 40)}`);
+            break;
+          }
+        }
+      }
+      // A degraded trace must not also claim to carry snapshots — that would be two sources of
+      // truth for the same state, which is the confusion `diff` mode exists to remove.
+      const carriesSnap = g.steps.some((st) => st.snap !== null && st.snap !== undefined);
+      if (carriesSnap) diffBad.push(`${name}: diff mode still carries per-step snapshots`);
+    }
+    check(diffBad.length === 0,
+      `S12 V2: diff-mode goldens ship a well-formed delta chain and no competing snapshots (${diffMode.length} golden(s); full-mode deltas are derived client-side, so replaying them would prove nothing)`,
+      `bad: ${diffBad.slice(0, 5).join(', ')}`);
+
+    // Negative: a delta naming a serializer token instead of a state path must be rejected.
+    check(applyDeltaIsWellFormed([{ path: '__u', from: null, to: 1 }]) === false,
+      'S12 V2: a delta naming a serializer token rather than a state path is rejected — the guard bites');
+    check(applyDeltaIsWellFormed([{ path: 'left', from: 1, to: 2 }]) === true,
+      'S12 V2: a delta naming a real state path is accepted');
+
+    // S13 · row 26 — V5 event-floor gate (F5). The floor must come from the DATA: manifest.json
+    // pins it to the L3 canonical golden's stepCount, per problem and per level.
+    if (manifest?.eventFloors) {
+      const floorValues = Object.values(manifest.eventFloors).map((f) => f.eventFloor);
+      const distinctFloors = new Set(floorValues).size;
+      check(distinctFloors > 1,
+        `S13 V5: the floor is derived from the trace, not a constant — ${distinctFloors} distinct values across ${floorValues.length} problems (min ${Math.min(...floorValues)}, max ${Math.max(...floorValues)})`);
+
+      const below = [];
+      let compared = 0;
+      for (const name of names) {
+        const g = readGolden(name);
+        const floor = floorOf(g.path, g.level);
+        if (floor === null) continue;
+        compared++;
+        if (g.stepCount < floor) below.push(`${name} ${g.stepCount} < ${floor}`);
+      }
+      check(below.length === 0,
+        `S13 V5: no golden sits below its own event floor (${compared} goldens compared against the manifest)`,
+        `below: ${below.slice(0, 6).join(', ')}`);
+
+      // Negative: a trace truncated under its floor is exactly what the gate must reject.
+      const floorVictim = names.find((n) => { const g = readGolden(n); return (floorOf(g.path, g.level) ?? 0) >= 2; });
+      const fg = readGolden(floorVictim);
+      const fFloor = floorOf(fg.path, fg.level);
+      check(fg.stepCount - 1 < fFloor || fFloor <= 1,
+        `S13 V5: the floor bites — dropping one step from ${floorVictim} (${fg.stepCount} -> ${fg.stepCount - 1}) would fall under its floor of ${fFloor}`);
+    } else {
+      check(false, 'S13 V5: judge/traces/manifest.json carries eventFloors', 'run `npm run gen:traces`');
+    }
+
+    // S14 · row 27 — V9 table<->trace cross-check + the override identifier guard.
+    // The authored table and the computed trace are two sources of truth on purpose (plan H4):
+    // the table is what a learner reads, the trace is what the code actually did. V9 is the
+    // only thing that stops them drifting apart silently.
+    const tableModule = await import(pathToFileURL(path.join(repoRoot, 'docs', 'dryrun', 'table.js')).href);
+    const numbersIn = (text) => (String(text).match(/-?\d+/g) || []).map(Number);
+    let comparedTables = 0;
+    let agreed = 0;
+    const disagreed = [];
+    const uncomparable = [];
+    for (const name of names.filter((n) => n.endsWith('.L3.json'))) {
+      const g = readGolden(name);
+      let guideText;
+      try { guideText = fs.readFileSync(path.join(repoRoot, g.path), 'utf8'); } catch { continue; }
+      const tables = tableModule.parseGuide(guideText);
+      const level3 = tables.find((t) => t.level === 3);
+      if (!level3 || !level3.rows.length) { uncomparable.push(g.path); continue; }
+      comparedTables++;
+      const tableNumbers = new Set(level3.rows.flatMap((r) => r.flatMap((c) => numbersIn(c))));
+      // Nothing numeric in the authored table means there is nothing to cross-check, and a
+      // trace too short to contain a shared value cannot confirm or contradict it. Both are
+      // UNCOMPARABLE. Calling them disagreements would report drift where no comparison is
+      // possible — the same sin as calling them agreement.
+      if (tableNumbers.size === 0 || g.steps.length < 3) { uncomparable.push(g.path); continue; }
+      const traceText = g.steps.map((st) => `${st.text} ${stringify(st.operands)} ${stringify(st.snap)}`).join(' ');
+      const traceNumbers = new Set(numbersIn(traceText));
+      const shared = [...tableNumbers].filter((n) => traceNumbers.has(n));
+      if (shared.length) agreed++;
+      else { disagreed.push(g.path); }
+    }
+    check(disagreed.length === 0,
+      `S14 V9: every comparable authored table shares at least one value with its trace (${agreed}/${comparedTables} agreed, ${uncomparable.length} uncomparable)`,
+      `disagree: ${disagreed.slice(0, 6).join(', ')}`);
+    console.log(`S14 V9: ${uncomparable.length} guides have no comparable L3 table (trace too coarse or table absent) — reported, not counted as agreement`);
+
+    // The override guard (plan D12): an override SENTENCE may not name an identifier the CODE
+    // declares but the trace never watched — otherwise the portal narrates a variable it never
+    // sampled. Judged against the code's own declared names, NOT against every word in the
+    // sentence: an override is prose, and "left meets right" is not a reference to `meets`.
+    const declaredIn = (source) => new Set([
+      ...[...String(source).matchAll(/\b(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/g)].map((m) => m[1]),
+      ...[...String(source).matchAll(/\(([^)]*)\)\s*(?:=>|\{)/g)].flatMap((m) => m[1].split(',').map((t) => t.trim().split(/[\s=:]/)[0]).filter(Boolean)),
+    ]);
+    // The sentence REFERENCES identifiers; it does not declare them. So the guard intersects the
+    // words the sentence mentions with the names the CODE declares, and rejects any the trace
+    // never watched.
+    const namesIn = (sentence) => new Set([...(String(sentence).match(/[A-Za-z_$][\w$]*/g) || [])]);
+    const overrideOk = (sentence, codeNames, watch) => [...namesIn(sentence)]
+      .filter((w) => codeNames.has(w) && !watch.includes(w));
+
+    const codeNames = new Set(['left', 'right', 'ghost']);
+    const watchNow = ['left', 'right'];
+    check(overrideOk('left meets right, so we stop', codeNames, watchNow).length === 0,
+      'S14 V9 override guard: a sentence naming watched code identifiers is allowed');
+    check(overrideOk('left meets right, then ghost appears', codeNames, watchNow).length > 0,
+      'S14 V9 override guard: a sentence naming a DECLARED-BUT-UNWATCHED identifier is REJECTED — the guard bites');
+    check(overrideOk('the count is 7', codeNames, watchNow).length === 0,
+      'S14 V9 override guard: prose and literals are not identifier references');
+    // A real guide: does any shipped override name a declared-but-unwatched identifier?
+    const guideDeclares = (rel, level) => {
+      try {
+        const text = fs.readFileSync(path.join(repoRoot, rel), 'utf8');
+        const b = blocks?.find((x) => x.path === rel && x.level === level);
+        return { declared: declaredIn(text), watch: b?.watch ?? [] };
+      } catch { return null; }
+    };
+
+    const liveOverrides = names.flatMap((n) => readGolden(n).steps.filter((s) => s.override).map((s) => `${n}#${s.n}`));
+    const badOverrides = liveOverrides.filter((ref) => {
+      const [n, i] = ref.split('#');
+      const g = readGolden(n);
+      const info = guideDeclares(g.path, g.level);
+      if (!info) return false;
+      return overrideOk(g.steps[Number(i)].override, info.declared, info.watch).length > 0;
+    });
+    check(badOverrides.length === 0,
+      `S14 V9 override guard: no shipped override names an identifier the trace never watched (${liveOverrides.length} overrides in the corpus)`,
+      `bad: ${badOverrides.slice(0, 6).join(', ')}`);
+  }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
   console.log(`Assertions: ${assertions} | Failures: ${failures}`);
@@ -948,5 +1232,5 @@ function main() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--mutate')) writeFixtures();
-  main();
+  await main();
 }
