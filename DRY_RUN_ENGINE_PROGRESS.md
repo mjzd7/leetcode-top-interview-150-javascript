@@ -41,6 +41,28 @@ Opened: 2026-10-02 · Repo HEAD at open: `ab0a678` · Node local `v26.5.0` / CI 
 
 The 41 syntax-only guides are the whole point of W-1. They have never been executed.
 
+### 1.2 `lcId` is not in this repo — row 1's null column is a finding, not a gap
+
+`catalog/problems.json` carries `lcId: null` for **all 150** entries. Verified by hand:
+every guide's LeetCode link is slug-only (`leetcode.com/problems/two-sum/`), with no
+numeric id anywhere in the tree — `grep -l "leetcode.com/problems" */*.md` → 150 files,
+`grep -o "leetcode.com/problems/[a-z-]*/[0-9]*"` → **no matches**.
+
+So the plan's row 1 spec ("`lcId`, extracted from the guide's link") names a field the
+repo cannot supply. Not fixed by inventing one. Two honest routes, owner call:
+
+1. **Drop `lcId` from the catalog** until something needs it — `path` is the identity
+   anyway (E30), and nothing in rows 5–33 reads `lcId`.
+2. **Harvest it later with `firecrawl`**, exactly as plan §8 already prescribes for the
+   scale track ("the problem list is harvested with `firecrawl` — path, lcId, title,
+   difficulty, tags are facts we fetch, never generate").
+
+Row 1 left the field present and `null` rather than silently reshaping the plan's own
+schema. Recommend route 2 and **no work now** — nothing in W-1…W-3 consumes `lcId`.
+
+`returnType` is `null` on 1 of 150 (`01-array-string/*` — derivable, cosmetic, row 19's
+equivalence work will want it).
+
 ### 1.1 Row 0 re-measurement — 16 drifts, none absorbed
 
 `npm run audit` measured the §1 baseline against the repo on 2026-10-02 at `633931e`.
@@ -83,12 +105,12 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | Row | Task | Plan § | Status | Commit | Evidence |
 |---|---|---|---|---|---|
 | 0 | `audit-curriculum.mjs` pins every count | §7 | **done** | `633931e` | `npm run audit` → 150 guides / 450 solution blocks / 109+41 coverage, 16 DRIFT rows printed, exit 0. `node scripts/audit-curriculum.mjs --check` → 16 passed, 0 failed. `selectSolutionBlocks()` exported for rows 4/7/21. |
-| 0b | `guide-quality` rubric (`book-to-skill`) | §7 | pending | | |
-| 1 | `catalog/problems.json`, 150 entries | §7 | pending | | |
+| 0b | `guide-quality` rubric (`book-to-skill`) | §7 | **done** | `2e7c4b9` | `docs/rubrics/guide-quality.md` (323 lines) + `npm run audit --scores` → **150 scores, mean 96.4, min 80, max 100 (96 guides)**; bands reference 96 / sound 44 / incomplete-evidence 10 / draft 0. Thin-table cross-check: the 23 thin-table guides score **9.1/15** on the depth component vs 15/15 for the other 127, **23/23 below the median**. **Deliberately NO gate, NO threshold, exit 0** — row 0b is `[Y]` and the gate belongs to T1. |
+| 1 | `catalog/problems.json`, 150 entries | §7 | **done** | `1e2c9a4` | `npm run gen:catalog` → **150 entries, 150 unique paths, all exist on disk** (keyed by `path` per E30). Difficulty 40/92/18 E/M/H · codec `json` 101, `tree` 20, `list` 13, `graph` 9, `ops` 7 — **5 implemented codecs only, no 6th** · equivalence `exact` 123, `ops-terminal` 15, `order-insensitive` 9, `int-with-tolerance` 2, `multiset` 1. **`lcId` is `null` for all 150** — see §1.2. |
 | 2 | Drop `fns` via `sg` | §7 | pending | | |
 | 3 | **41 → 0 syntax-only** | §7 | pending | | |
 | 4 | Validator rejects async/generator/eval | §7 | **done** | `0aceb10` | `npm run test:validate` → 23 assertions, 0 failures (E16 await/generator/yield, E17 eval/new-Function, K7 missing-L3, prose-`await` control). `npm run validate` → 150 scanned, **0 errors, 0 warnings**. Scan is `sg` rules in `.ast-grep/rules/solution-block-sync.yml`; missing `sg`/rules ⇒ `SOLUTION_SCAN_UNAVAILABLE`, unparseable block ⇒ error. |
-| 5 | Envelope v1.1 schema + validator | §7 | pending | | |
+| 5 | Envelope v1.1 schema + validator | §7 | **done** | `b3d44c1` | `npm run test:envelope` → **129 assertions, 0 failures**; 7 bad fixtures rejected by name across I1–I7 (+10 in-test mutations), good fixture exits 0. `docs/trace-schema.json` documents each field's meaning; caps taken from `sandbox.mjs` (1 MB / 3 s / 16 MB), not asserted. **Freeze point is row 13.** |
 | 6 | Canonical serializer + 9 round-trips | §7 | **done** | `aa6fa3a` | `npm run test:serialize` → E1–E9, 9 cases, 0 failures, exit 0. Compared via `jq -S .` (plan §0.2), not `deepEqual`. Exports `serialize`/`stringify`/`deserialize`/`MAX_DEPTH`. |
 | 7 | `gen-blocks.mjs` → `blocks.json` | §7 | pending | | |
 | 8 | RED: golden differ catches a mutation | §7 | pending | | |
@@ -104,7 +126,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 18 | Widen or delete `problems.mjs` | §7 | pending | | |
 | 19 | V4 differential harness | §7 | pending | | |
 | 20 | V11 region isolation + non-vacuity | §7 | pending | | |
-| 21 | Tier-1 table player | §7 | pending | | |
+| 21 | Tier-1 table player | §7 | **done** | `f4e7a3d` | `docs/dryrun/table.js` → **450 tables parsed across 150 guides**; thin = **27 tables / 23 guides, matching row 0's list exactly** (reconciled by me, diff empty). Dependency-free, browser-safe: **no `node:`/`fs`/`require`**, exports `parseGuide`/`parseAll`/`findThinTables`/`THIN_ROW_LIMIT`. `$…$` cells preserved verbatim. |
 | 22 | `array` primitive — **first pixels** | §7 | pending | | |
 | 23 | Tier-1 presets: stack/matrix/window/bits | §7 | pending | | |
 | 24 | Tier-2 presets + overlay | §7 | pending | | |
@@ -189,6 +211,25 @@ A row with no test id is a hole. `—` means the test does not exist yet.
   prose comment.
 - `npm run validate` and `npm test` unchanged throughout: 150 files, 109 runtime,
   41 syntax-only, 450 syntax blocks, 828 assertions, 0 failures, 0 errors.
+
+### 2026-10-02 — wave 2: rows 5, 1, 0b, 21 done
+
+- **Row 5** (`b3d44c1`) — envelope v1.1 + validator. 129 assertions, 7 bad fixtures
+  rejected by name across I1–I7. Freeze point is row 13.
+- **Row 1** (`cd2e85e`) — catalog, 150/150 keyed by path. **`lcId` null everywhere and
+  that is correct** — see §1.2; the field is not in this repo and was not invented.
+- **Row 0b** (`2e7c4b9`) — rubric + per-guide score. Ships **no gate**, per the row's own
+  `[Y]` tag; the threshold is T1's to set.
+- **Row 21** (`f4e7a3d`) — table player. 450 tables, thin list reconciled against row 0
+  with an empty diff. Browser-safe, no Node imports.
+- All four verified by hand, not taken on the agents' word. Regression held:
+  `npm run validate` 150/0 errors, `npm test` 150 files / 109 runtime / 41 syntax-only /
+  450 syntax blocks / 828 assertions / 0 failures, `audit --check` 16/0.
+
+**Cross-row discipline held:** rows 5, 21, 0b and 1 all *import or reconcile against*
+row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
+row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
+counted fences three ways, and this wave added three consumers and zero new parsers.
 
 ### 2026-10-02 — rows 6 and 4 done
 
