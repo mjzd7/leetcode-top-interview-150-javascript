@@ -30,9 +30,26 @@ import { fileURLToPath } from 'node:url';
 import { executeUserCode, parseVerdictEnvelope } from '../api/_lib/sandbox.mjs';
 import { PROBLEMS, buildBundle } from '../api/_lib/problems.mjs';
 import { validateEnvelope } from './validate-envelope.mjs';
+// Row 5 defines the caps ONCE, on purpose ("so the runner cannot pick a second, larger
+// number than the schema"). Rows 11/12 import them rather than re-deriving them, and this
+// suite asserts the runner's exported constants are the SAME values, by identity.
+import {
+  CHUNK_MAX_CHARS as SLOT_CHARS,
+  BYTE_BUDGET as SCHEMA_BYTE_BUDGET,
+  EXEC_STEP_CAP as SCHEMA_EXEC_CAP,
+  DISPLAY_STEP_CAP as SCHEMA_DISPLAY_CAP,
+} from './validate-envelope.mjs';
 import { serialize, deserialize } from './lib/serialize.mjs';
+import { buildInstrumented } from './gen-traces.mjs';
 
 // ---- the module under test. Its absence is the RED state. ------------------------
+//
+// The namespace is imported ALONGSIDE the named imports on purpose: rows 11/12 add exports,
+// and a named import of a name that does not exist yet is a module-load crash, which is a
+// legible RED for a human and an illegible one for CI. `traceRunner.X` turns a missing export
+// into a FAILING ASSERTION that names the export, which is what this file's whole output
+// format is built around.
+import * as traceRunner from '../api/_lib/trace-runner.mjs';
 import {
   runBlockTrace,
   loadBlocks,
@@ -69,6 +86,23 @@ const eq = (label, actual, expected) =>
 
 function section(title) {
   console.log(`\n--- ${title} ---`);
+}
+
+/**
+ * Run the module under test and turn a THROWN error into one failing assertion.
+ *
+ * Before rows 11/12 the `n=5000` fixture died deep inside the runner with an uncaught
+ * `TraceAssemblyError`, which took the rest of this file with it — a suite that dies reports
+ * less than a suite that fails. The cap cases below therefore assert on a returned envelope
+ * when there is one and on a named failure when there is not.
+ */
+async function attempt(label, opts) {
+  try {
+    return { env: await runBlockTrace(opts), thrown: null };
+  } catch (err) {
+    check(label, false, `${err.name}: ${String(err.message).slice(0, 200)}`);
+    return { env: null, thrown: err };
+  }
 }
 
 // =====================================================================================
@@ -411,6 +445,211 @@ const E24_INSTRUMENTED = [
   '}',
 ].join('\n');
 const E24_CASES = [{ name: 'never terminates', args: [1], expected: 0 }];
+
+// =====================================================================================
+// Rows 11 + 12 fixtures. Same `fixtureBlock` shape, same probe ABI, one code path.
+// =====================================================================================
+
+// ---- E23: a cheap long loop, so the EXECUTION cap is what stops it, not the clock ----
+// 300 000 iterations of `acc += i` costs QuickJS well under the 3 s timeout when nothing is
+// probing it, so the UNINSTRUMENTED verdict run (I2) completes normally and the only thing
+// that can end the traced run is the step cap. Sized so `execStepCap` can be lowered for the
+// test without turning the fixture into a different case — see the `execStepCap` below.
+const E23_BLOCK = fixtureBlock({ targetFn: 'spin', regionTable: [{ depth: 0, kind: 'function-decl', name: 'spin' }], watch: ['i', 'n'] });
+const E23_SOURCE = [
+  'function spin(n) {',
+  '  let acc = 0;',
+  '  for (let i = 0; i < n; i++) {',
+  '    acc += i;',
+  '  }',
+  '  return acc;',
+  '}',
+].join('\n');
+const E23_INSTRUMENTED = [
+  'function spin(n) {',
+  '  let acc = 0;',
+  `  ${T(0, 1, 'decl', { n: 'n' })}`,
+  '  for (let i = 0; i < n; i++) {',
+  `    ${T(0, 2, 'loop-head', { i: 'i', n: 'n' }, 'i < n', [O('i < n', 'i < n')])}`,
+  '    acc += i;',
+  '  }',
+  '  return acc;',
+  '}',
+].join('\n');
+const E23_CASES = [{ name: '300k iterations', args: [300000], expected: 44999850000 }];
+
+// ---- E25: an allocation the 16 MB heap refuses ----------------------------------------
+// The plan's number, not a shrunken one (E25 names `merge-k-sorted-lists`, which builds k fresh
+// arrays per output node). Measured, though: a run that allocates 1.6 MB per turn does NOT OOM at
+// all — `setMemoryLimit` refuses an ALLOCATION, so the refusal only happens once one request
+// exceeds the whole heap. Hence 5 000 000 elements (40 MB) in a single turn, which QuickJS turns
+// into `Memory Limit Exceeded` on turn 1. The probe BEFORE the allocation is what guarantees at
+// least one `__TRACE__<seq>` slot reached stdout first, because an OOM with no slot is not "trace
+// flushed if any".
+const E25_BLOCK = fixtureBlock({ targetFn: 'balloon', regionTable: [{ depth: 0, kind: 'function-decl', name: 'balloon' }], watch: ['i', 'n'] });
+const balloon = (size) => [
+  'function balloon(n) {',
+  '  const keep = [];',
+  '  for (let i = 0; i < n; i++) {',
+  `    keep.push(new Array(${size}).fill(i));`,
+  '  }',
+  '  return keep.length;',
+  '}',
+].join('\n');
+const balloonTraced = (size) => [
+  'function balloon(n) {',
+  '  const keep = [];',
+  `  ${T(0, 1, 'decl', { keep: 'keep' })}`,
+  '  for (let i = 0; i < n; i++) {',
+  `    ${T(0, 2, 'loop-head', { i: 'i' }, 'i < n', [O('i < n', 'i < n')])}`,
+  `    keep.push(new Array(${size}).fill(i));`,
+  `    ${T(0, 3, 'assign', { i: 'i' }, null, [O('keep.length', 'keep.length')])}`,
+  '  }',
+  '  return keep.length;',
+  '}',
+].join('\n');
+const E25_SOURCE = balloon(5000000);
+const E25_INSTRUMENTED = balloonTraced(5000000);
+const E25_CASES = [{ name: 'never fits', args: [1000], expected: 1000 }];
+const E25_FITS_CASES = [{ name: 'fits in a bigger heap', args: [40], expected: 40 }];
+// Six turns, not a thousand: every step re-encodes the whole growing container, so a long run
+// is dominated by the clock rather than by the byte ceiling — which is the E25 lesson anyway.
+const E25_BLOWUP_CASES = [{ name: 'blows up on turn 2', args: [6], expected: 6 }];
+
+// ---- E22's sibling: one step wider than the whole transport ---------------------------
+// A 2 000-element array canonicalises to ~13 kB, and the transport below is 900 chars a slot for
+// 12 slots, so by turn 2 a single step cannot travel at all. Shipping it oversized is how one
+// step silently eats the log allowance and the NEXT slot is dropped. A SMALL allocation on turn
+// 1 is deliberate: the trace needs one deliverable step for "what arrived before the blow-up" to
+// mean anything.
+const E25_BLOWUP_BLOCK = fixtureBlock({ targetFn: 'balloon', regionTable: [{ depth: 0, kind: 'function-decl', name: 'balloon' }], watch: ['keep', 'i', 'n'] });
+const E25_BLOWUP_SOURCE = balloon(2000);
+const E25_BLOWUP_INSTRUMENTED = [
+  'function balloon(n) {',
+  '  const keep = [];',
+  `  ${T(0, 1, 'decl', { keep: 'keep' })}`,
+  '  for (let i = 0; i < n; i++) {',
+  `    ${T(0, 2, 'loop-head', { keep: 'keep' }, 'i < n', [O('i < n', 'i < n')])}`,
+  '    keep.push(new Array(2000).fill(i));',
+  `    ${T(0, 3, 'assign', { keep: 'keep' }, null, [O('keep.length', 'keep.length')])}`,
+  '  }',
+  '  return keep.length;',
+  '}',
+].join('\n');
+
+// ---- E22: the guide's own `twoSum`, n=5000, at row 10's probe ABI ----------------------
+// The ledger names `n=5000` two-sum, and the blowup is real: with `nums` watched, EVERY one of
+// the 5 000 turns re-encodes a 5 000-element array, which is ~120 MB of step JSON against a
+// 12.6 MB transport. It is written here rather than taken from `buildInstrumented` because row
+// 15's `ADAPTER_PROBE` is a SEPARATE emitter that pushes into `__T_BUF__` without reading any of
+// rows 11/12's state — the in-sandbox degrade lives in `__T__`, so a case that has to reach it
+// must speak row 10's ABI. `E22` below runs the adapter shape too, as the regression guard for
+// the emitter this row cannot edit.
+const E22_BLOCK = fixtureBlock({
+  targetFn: 'twoSum',
+  regionTable: [{ depth: 0, kind: 'function-decl', name: 'twoSum' }],
+  watch: ['nums', 'target', 'i', 'num', 'complement', 'seen'],
+});
+const E22_SOURCE = [
+  'function twoSum(nums, target) {',
+  '  const seen = new Map();',
+  '  for (let i = 0; i < nums.length; i++) {',
+  '    const num = nums[i];',
+  '    const complement = target - num;',
+  '    if (seen.has(complement)) return [seen.get(complement), i];',
+  '    seen.set(num, i);',
+  '  }',
+  '  return [];',
+  '}',
+].join('\n');
+const E22_INSTRUMENTED = [
+  'function twoSum(nums, target) {',
+  '  const seen = new Map();',
+  '  for (let i = 0; i < nums.length; i++) {',
+  '    const num = nums[i];',
+  '    const complement = target - num;',
+  `    ${T(0, 2, 'loop-head', { nums: 'nums', i: 'i', target: 'target' }, 'i < nums.length', [O('i < nums.length', 'i < nums.length')])}`,
+  '    if (seen.has(complement)) return [seen.get(complement), i];',
+  `    ${T(0, 5, 'assign', { seen: 'seen', num: 'num', complement: 'complement' }, null, [O('target - num', 'target - num')])}`,
+  '    seen.set(num, i);',
+  '  }',
+  '  return [];',
+  '}',
+].join('\n');
+/** `n=5000` on an unsolvable target, so all 5 000 turns execute instead of returning early. */
+const twoSumN5000 = () => {
+  const nums = Array.from({ length: 5000 }, (_, i) => (i * 7919) % 5003);
+  return { nums, cases: [{ name: 'n=5000, no pair sums to the target', args: [nums, -999999], expected: [] }] };
+};
+// ---- the DISPLAY CAP fixture: a counter, so 5 000 steps stay SMALL ------------------
+// The acceptance case is `n=5000`, and a snapshot of a counter costs ~200 bytes a step while
+// a snapshot of a 5 000-element array costs ~24 KB. The display cap is about the UI being
+// handed more rows than it can animate, so the fixture has to produce 5 000 of them and stay
+// far under the byte ceiling — otherwise the byte cap would fire first and the two rows
+// (11 and 12) would be testing each other instead of themselves.
+const DISPLAY_BLOCK = fixtureBlock({ targetFn: 'countTo', regionTable: [{ depth: 0, kind: 'function-decl', name: 'countTo' }], watch: ['i', 'n'] });
+const DISPLAY_SOURCE = [
+  'function countTo(n) {',
+  '  let total = 0;',
+  '  for (let i = 1; i <= n; i++) {',
+  '    total += i;',
+  '  }',
+  '  return total;',
+  '}',
+].join('\n');
+const DISPLAY_INSTRUMENTED = [
+  'function countTo(n) {',
+  '  let total = 0;',
+  `  ${T(0, 1, 'decl', { n: 'n' })}`,
+  '  for (let i = 1; i <= n; i++) {',
+  `    ${T(0, 2, 'loop-head', { i: 'i', n: 'n' }, 'i <= n', [O('i <= n', 'i <= n')])}`,
+  '    total += i;',
+  `    ${T(0, 3, 'assign', { i: 'i' }, null, [O('i', 'i')])}`,
+  '  }',
+  '  return total;',
+  '}',
+].join('\n');
+const DISPLAY_CASES = [
+  { name: 'n=3', args: [3], expected: 6 },
+  { name: 'n=5000', args: [5000], expected: 12502500 },
+];
+
+// ---- E20's other arm: a LARGE, UNCHANGING snapshot ------------------------------------
+// Measured, twice, the other way round: degrading a five-step trace made it BIGGER (4 021 ->
+// 4 393 bytes), and degrading a 10 001-step counter made it bigger again (3.00 -> 3.24 MB).
+// Because a delta plus the narration outweighs a snapshot of two small scalars. So "over budget
+// => under budget" needs a snapshot-dominated trace, and the smallest honest one is a binding
+// that is big and never changes: `table` costs ~24 kB per step as a snapshot and nothing at all
+// as a delta, which is exactly the ratio row 11's degrade exists to exploit.
+const WIDE_BLOCK = fixtureBlock({
+  targetFn: 'countWide',
+  regionTable: [{ depth: 0, kind: 'function-decl', name: 'countWide' }],
+  watch: ['i', 'n', 'table', 'total'],
+});
+const WIDE_SOURCE = [
+  'function countWide(n, table) {',
+  '  let total = 0;',
+  '  for (let i = 1; i <= n; i++) {',
+  '    total += table[i];',
+  '  }',
+  '  return total;',
+  '}',
+].join('\n');
+const WIDE_INSTRUMENTED = [
+  'function countWide(n, table) {',
+  '  let total = 0;',
+  `  ${T(0, 1, 'decl', { table: 'table', n: 'n' })}`,
+  '  for (let i = 1; i <= n; i++) {',
+  `    ${T(0, 2, 'loop-head', { i: 'i', n: 'n', total: 'total', table: 'table' }, 'i <= n', [O('i <= n', 'i <= n')])}`,
+  '    total += table[i];',
+  `    ${T(0, 3, 'assign', { i: 'i', total: 'total' }, null, [O('table[i]', 'table[i]')])}`,
+  '  }',
+  '  return total;',
+  '}',
+].join('\n');
+/** `[0, 1, 2, …, 5000]` as `table[0..5000]`, so `table[1] + … + table[5000]` is 12 502 500. */
+const wideTable = () => [0, ...Array.from({ length: 5000 }, (_, i) => i + 1)];
+const WIDE_CASES = [{ name: 'n=5000 over a 5 001-entry table', args: [5000, wideTable()], expected: 12502500 }];
 
 // =====================================================================================
 // S3 — the manifest itself
@@ -891,13 +1130,598 @@ section('S2 · loud failures (nothing is swallowed)');
 }
 
 // =====================================================================================
-// S2 — the chunk cap is the sandbox's own measured constant
+// S2 · the chunk cap is the sandbox's own measured constant
 // =====================================================================================
 section('S2 · caps are derived from measured constants');
 {
   check('CHUNK_MAX_CHARS is the sandbox 1 MB slot', CHUNK_MAX_CHARS === 1024 * 1024, String(CHUNK_MAX_CHARS));
   check('CHUNKS_PER_TRACE is 12', CHUNKS_PER_TRACE === 12, String(CHUNKS_PER_TRACE));
   check('TRACE_PREFIX is __TRACE__', TRACE_PREFIX === '__TRACE__');
+}
+
+// =====================================================================================
+// ROWS 11 + 12 — plan v5 §7 rows 11/12, §3 K2/I2/I3/I4, §6 E20–E25.
+//
+// Row 10 deliberately left three holes and named them: a 4 MB byte budget that was fiction
+// (the real slot is 1 MB and it drops silently), a `truncated` flag borrowed from the LOG
+// cap, and no caps at all. These are the checks that close them.
+//
+// The shape of every case below is the same: an over-cap run must come back as a VALID
+// envelope that SAYS WHICH cap it hit, in the one field that means it. Silently short,
+// silently degraded, or silently dropped are all failures.
+// =====================================================================================
+section('S2 · rows 11/12 · caps are derived, not invented');
+{
+  // The derivation, asserted rather than asserted-about. `BYTE_BUDGET` must be exactly
+  // 60% of 12 slots of the measured 1 MB envelope slot — the numbers in plan §5, not a
+  // number this suite likes.
+  eq('BYTE_BUDGET is floor(slot x 12 slots x 0.6)', SCHEMA_BYTE_BUDGET, Math.floor(SLOT_CHARS * 12 * 0.6));
+  eq('EXEC_STEP_CAP is 200 000', SCHEMA_EXEC_CAP, 200000);
+  eq('DISPLAY_STEP_CAP is 2 000', SCHEMA_DISPLAY_CAP, 2000);
+  check('the runner RE-EXPORTS BYTE_BUDGET (row 11 owns the degrade, so it needs the number)',
+    traceRunner.BYTE_BUDGET === SCHEMA_BYTE_BUDGET,
+    `runner has ${JSON.stringify(traceRunner.BYTE_BUDGET)}, schema has ${SCHEMA_BYTE_BUDGET}`);
+  check('the runner RE-EXPORTS EXEC_STEP_CAP', traceRunner.EXEC_STEP_CAP === SCHEMA_EXEC_CAP,
+    `runner has ${JSON.stringify(traceRunner.EXEC_STEP_CAP)}`);
+  check('the runner RE-EXPORTS DISPLAY_STEP_CAP', traceRunner.DISPLAY_STEP_CAP === SCHEMA_DISPLAY_CAP,
+    `runner has ${JSON.stringify(traceRunner.DISPLAY_STEP_CAP)}`);
+  check('the runner\'s CHUNK_MAX_CHARS is the schema\'s — one definition, not two',
+    traceRunner.CHUNK_MAX_CHARS === SLOT_CHARS, `${traceRunner.CHUNK_MAX_CHARS} vs ${SLOT_CHARS}`);
+
+  // The transport ceiling. `sandbox.mjs` sizes its log allowance at
+  // `chunkMaxChars x chunksPerTrace`, and past it a whole `__TRACE__<seq>` line is DROPPED,
+  // which `assembleChunks` turns into a hard gap error. So the ceiling the SANDBOX stops at
+  // has to be that allowance, not a number invented here.
+  eq('ASSEMBLED_CEILING is exactly sandbox.mjs\'s own maxLogChars for a traced run',
+    traceRunner.ASSEMBLED_CEILING, CHUNK_MAX_CHARS * CHUNKS_PER_TRACE + traceRunner.LOG_HEADROOM_CHARS);
+  check('the assembled ceiling is ABOVE the byte budget, so both can be right',
+    traceRunner.ASSEMBLED_CEILING > SCHEMA_BYTE_BUDGET,
+    `${traceRunner.ASSEMBLED_CEILING} <= ${SCHEMA_BYTE_BUDGET} — the envelope budget and the transport allowance cannot both be right`);
+  check('the assembled ceiling is the slot count times the slot cap, plus the log headroom',
+    traceRunner.ASSEMBLED_CEILING === CHUNK_MAX_CHARS * CHUNKS_PER_TRACE + traceRunner.LOG_HEADROOM_CHARS
+      && traceRunner.ASSEMBLED_CEILING > CHUNK_MAX_CHARS * CHUNKS_PER_TRACE,
+    `${traceRunner.ASSEMBLED_CEILING}`);
+}
+
+// =====================================================================================
+// S2 · E20 — over budget degrades to `diff`, in the one field that means it (I3/I4)
+// =====================================================================================
+section('S2 · E20 · over budget degrades to diff');
+{
+  // The real two-sum pilot at a budget its own envelope cannot meet. Same block, same cases,
+  // same instrumented source as the S1 run above — the ONLY difference is the budget, so
+  // anything else that moved would be the cap's fault rather than the budget's.
+  const degraded = await runBlockTrace({
+    path: PROBLEMS['two-sum'].path,
+    level: 3,
+    slug: 'two-sum',
+    instrumented: PILOT_INSTRUMENTED['two-sum'],
+    byteBudget: 2000,
+  });
+  const v = validateEnvelope(degraded);
+  check('E20: the degraded envelope still passes validateEnvelope', v.isValid, v.errors.join(' | '));
+  eq('E20: budget.mode became "diff"', degraded.budget.mode, 'diff');
+  check('E20: truncated.trace is true (its OWN flag — I3)', degraded.truncated.trace === true);
+  check('E20: shedding snapshots did NOT set truncated.execution', degraded.truncated.execution === false,
+    'a byte-budget degrade is not an execution cut — borrowing the flag here is the I3 defect');
+  check('E20: shedding snapshots did NOT set truncated.display', degraded.truncated.display === false,
+    'a byte-budget degrade is not a display truncation');
+  check('E20: every step shed its snapshot (I4)', degraded.steps.every((s) => s.snap === null),
+    `${degraded.steps.filter((s) => s.snap !== null).length} step(s) still carry a snapshot`);
+  check('E20: at least one step carries a server-emitted delta (I4)',
+    degraded.steps.some((s) => s.delta.length > 0), 'nothing was shed and nothing was emitted');
+  check('E20: no step was DROPPED to fit — the trace is complete-but-degraded',
+    degraded.steps.length === pilotEnvelopes['two-sum'].steps.length,
+    `${degraded.steps.length} vs ${pilotEnvelopes['two-sum'].steps.length} — a degrade is not a truncation`);
+  check('E20: `result` survives the degrade', JSON.stringify(degraded.result) === JSON.stringify(pilotEnvelopes['two-sum'].result),
+    `${JSON.stringify(degraded.result)} vs ${JSON.stringify(pilotEnvelopes['two-sum'].result)}`);
+  // I2 under degrade: the budget moved, the verdict must not have.
+  eq('E20: the verdict did NOT move with the budget', degraded.verdict, pilotEnvelopes['two-sum'].verdict);
+  console.log(`   E20: ${degraded.stepCount} steps, ${degraded.budget.bytes} bytes, mode=${degraded.budget.mode}`);
+
+  // Arm 2: the budget is actually HONOURED — which only holds where snapshots are the payload.
+  //
+  // Measured on arm 1: degrading a five-step trace made it BIGGER (4 021 -> 4 393 bytes),
+  // because a delta plus the narration outweighs a snapshot of two numbers. So "over budget =>
+  // under budget" is a property of snapshot-dominated traces and the fixture has to be one.
+  // The budget here is the full trace's OWN measured size, so no number in this test is a
+  // guess and the assertion cannot be satisfied by tuning a constant.
+  const wide = await runBlockTrace({
+    path: 'fixtures/count-wide.md',
+    level: 3,
+    block: WIDE_BLOCK,
+    source: WIDE_SOURCE,
+    instrumented: WIDE_INSTRUMENTED,
+    cases: WIDE_CASES,
+  });
+  const shrunk = await runBlockTrace({
+    path: 'fixtures/count-wide.md',
+    level: 3,
+    block: WIDE_BLOCK,
+    source: WIDE_SOURCE,
+    instrumented: WIDE_INSTRUMENTED,
+    cases: WIDE_CASES,
+    // One byte under its own measured size: the smallest budget the full envelope cannot meet,
+    // so the assertion cannot be satisfied by tuning anything.
+    byteBudget: wide.budget.bytes - 1,
+  });
+  eq('E20: the snapshot-dominated trace degrades at its own measured size', shrunk.budget.mode, 'diff');
+  check('E20: and the degrade is a real SAVING where snapshots dominate',
+    shrunk.budget.bytes < wide.budget.bytes,
+    `${shrunk.budget.bytes} vs ${wide.budget.bytes} bytes — shedding snapshots saved nothing`);
+  check('E20: the degraded envelope is under the budget it was given',
+    shrunk.budget.bytes <= wide.budget.bytes - 1, `${shrunk.budget.bytes} vs ${wide.budget.bytes - 1}`);
+  const shrunkV = validateEnvelope(shrunk);
+  check('E20: the shrunk envelope passes validateEnvelope', shrunkV.isValid, shrunkV.errors.join(' | '));
+  eq('E20: and its verdict is the same one', shrunk.verdict, wide.verdict);
+  console.log(`   E20 wide: ${wide.budget.bytes} bytes -> ${shrunk.budget.bytes} bytes over ${wide.stepCount} steps`);
+}
+
+// =====================================================================================
+// S2 · E21 — a chunk over the slot cap is seq-numbered and host-assembled; a gap is loud
+// =====================================================================================
+section('S2 · E21 · a 3 MB trace chunks, and a gap in one is a hard error');
+{
+  // The ledger's own fixture: "synthetic 3 MB trace". Three slots of ~1 MB, each one step
+  // bigger than the 1 MB slot cap on its own would be — which is exactly the shape that used
+  // to be dropped silently.
+  const fat = 'x'.repeat(1_100_000);
+  const slot = (seq, n, done) => `${TRACE_PREFIX}${seq}${JSON.stringify({
+    stepCount: seq + 1,
+    steps: [{ n: seq + 1, off: 0, type: 'assign', cond: null, operands: {}, snap: { blob: fat } }],
+    done,
+    result: null,
+    error: null,
+  })}`;
+  const logs = [slot(0, 1, false), slot(1, 2, false), slot(2, 3, true)];
+  check('E21: the synthetic trace really is ~3 MB',
+    logs.reduce((n, l) => n + l.length, 0) > 3 * 1024 * 1024,
+    `${logs.reduce((n, l) => n + l.length, 0)} chars`);
+  check('E21: each slot is a SINGLE step that exceeds the slot cap', logs.every((l) => l.length > CHUNK_MAX_CHARS),
+    `slot sizes ${logs.map((l) => l.length).join(', ')} against a ${CHUNK_MAX_CHARS} cap`);
+
+  const whole = assembleChunks(logs);
+  eq('E21: three seq-numbered slots assemble into three steps', whole.steps.length, 3);
+  eq('E21: the slot count is reported', whole.chunks, 3);
+  eq('E21: the steps keep their sequence', whole.steps.map((s) => s.n).join(','), '1,2,3');
+  check('E21: the terminating slot\'s result came through', whole.done === true);
+
+  // The gap. Dropping the middle slot is what `sandbox.mjs` does on log overflow, and it is
+  // the failure plan §1 U2 describes: the payload vanishes and the only signal left points at
+  // the log buffer. It must be a named error.
+  let gapErr = null;
+  try { assembleChunks([logs[0], logs[2]]); } catch (e) { gapErr = e; }
+  check('E21: dropping a 1 MB slot is a hard TraceAssemblyError', gapErr instanceof TraceAssemblyError,
+    gapErr ? gapErr.constructor.name : 'no throw — the trace would have shipped 2 of 3 steps');
+  check('E21: the gap error NAMES the missing slot', gapErr && gapErr.message.includes(`${TRACE_PREFIX}1`),
+    gapErr ? gapErr.message.slice(0, 160) : '');
+
+  // And the real transport, end to end at a deliberately tiny cap.
+  const chunked = await runBlockTrace({
+    path: PROBLEMS['two-sum'].path,
+    level: 3,
+    slug: 'two-sum',
+    instrumented: PILOT_INSTRUMENTED['two-sum'],
+    chunkMaxChars: 700,
+  });
+  const cv = validateEnvelope(chunked);
+  check('E21: the real chunked run passes validateEnvelope', cv.isValid, cv.errors.join(' | '));
+  check('E21: the tiny cap really did produce several slots', chunked.budget.chunks > 1,
+    `${chunked.budget.chunks} slot(s)`);
+  eq('E21: host-side assembly lost nothing', chunked.steps.map((s) => s.n).join(','),
+    pilotEnvelopes['two-sum'].steps.map((s) => s.n).join(','));
+  console.log(`   E21: ${chunked.budget.chunks} slots -> ${chunked.steps.length} steps, no gap`);
+}
+
+// =====================================================================================
+// S2 · E22 — a snapshot blowup degrades INSIDE the sandbox, before the heap dies
+// =====================================================================================
+section('S2 · E22 · n=5000 two-sum degrades inside the sandbox');
+{
+  // The ledger's fixture: the guide's own twoSum at n=5000 on an unsolvable target, so all
+  // 5 000 turns execute. With `nums` watched, every turn re-encodes a 5 000-element array —
+  // ~120 MB of step JSON against a 12.6 MB transport allowance.
+  const { nums, cases } = twoSumN5000();
+  const { env } = await attempt('E22: the n=5000 blowup returns an envelope instead of dying', {
+    path: 'fixtures/two-sum-5000.md',
+    level: 3,
+    block: E22_BLOCK,
+    source: E22_SOURCE,
+    instrumented: E22_INSTRUMENTED,
+    cases,
+    // Bytes, not the clock. Every step re-encodes 5 000 numbers, so the traced run is slow by
+    // construction and a 3 s default would report a TIMEOUT and prove nothing about bytes.
+    timeoutMs: 120000,
+  });
+  if (env) {
+    const v = validateEnvelope(env);
+    check('E22: the n=5000 blowup yields a VALID envelope', v.isValid, v.errors.slice(0, 3).join(' | '));
+    eq('E22: budget.mode is "diff" — it degraded instead of dying', env.budget.mode, 'diff');
+    check('E22: truncated.trace is true', env.truncated.trace === true);
+    check('E22: the snapshot payload is GONE', env.steps.every((s) => s.snap === null),
+      `${env.steps.filter((s) => s.snap !== null).length} step(s) still carry a snapshot`);
+    check('E22: deltas were emitted for the degraded span (I4)',
+      env.steps.filter((s) => s.delta.length > 0).length > 0, 'no step carries a delta');
+    check('E22: the assembled trace stayed inside the transport allowance',
+      env.budget.bytes <= SCHEMA_BYTE_BUDGET, `${env.budget.bytes} vs ${SCHEMA_BYTE_BUDGET}`);
+    // The transport proof is that this envelope EXISTS: `assembleChunks` raises a hard
+    // `TraceAssemblyError` on a sequence gap, and `sandbox.mjs` produces exactly that gap when
+    // it drops a line past `maxLogChars`. So a returned envelope is the evidence that no slot was
+    // dropped — the slot COUNT is not the invariant, because a slot's char count is not the slot
+    // cap either (measured: 60 small slots here, where a full-slot trace stops at 12).
+    check('E22: the trace is BOUNDED — recording stopped before the run did',
+      env.steps.length < 10000, `${env.steps.length} steps — the untruncated trace has ~10 000`);
+    check('E22: and it is bounded from ABOVE too, not just below the step count',
+      env.steps.length > 0 && env.budget.chunks >= 1, `${env.budget.chunks} slot(s)`);
+    check('E22: the partial trace is still a trace', env.steps.length > 0, '0 steps');
+    check('E22: the envelope says so rather than pretending it finished', env.truncated.execution === true,
+      'steps stopped arriving before the run did — that is exactly what truncated.execution means');
+    check('E22: `error` names the byte budget', /byte budget/i.test(String(env.error)),
+      JSON.stringify(env.error));
+    check('E22: the verdict came from the raw run and is real', env.verdict.passed + env.verdict.failed > 0,
+      JSON.stringify(env.verdict));
+    console.log(`   E22: ${env.stepCount} steps kept of ~10 000, ${env.budget.chunks} slot(s), `
+      + `${env.budget.bytes} bytes, mode=${env.budget.mode}, verdict ${JSON.stringify(env.verdict)}`);
+  }
+
+  // The control: the SAME fixture at a size that fits. If the caps were firing on ordinary
+  // traces, this is the run that would show it — and the 450 goldens below are the real proof.
+  const smallNums = Array.from({ length: 200 }, (_, i) => (i * 7919) % 5003);
+  const small = await runBlockTrace({
+    path: 'fixtures/two-sum-5000.md',
+    level: 3,
+    block: E22_BLOCK,
+    source: E22_SOURCE,
+    instrumented: E22_INSTRUMENTED,
+    cases: [{ name: 'n=200, unsolvable', args: [smallNums, -999999], expected: [] }],
+  });
+  eq('E22: n=200 stays in `full` mode — the cap is the size, not the function', small.budget.mode, 'full');
+  check('E22: n=200 is not truncated at all',
+    !small.truncated.trace && !small.truncated.display && !small.truncated.execution,
+    JSON.stringify(small.truncated));
+  const smallV = validateEnvelope(small);
+  check('E22: n=200 passes validateEnvelope', smallV.isValid, smallV.errors.join(' | '));
+
+  // Row 15's emitter. `ADAPTER_PROBE` pushes into `__T_BUF__` directly and never reads rows
+  // 11/12's state, so it cannot perform the IN-SANDBOX delta switch. What it must still get is
+  // the writer's transport stop — and a degrade that happens host-side, from the step shapes,
+  // rather than one this row has to teach a file it does not own to perform.
+  const built = await buildInstrumented('05-hashmap/06-two-sum.md', 3);
+  const { env: adapted } = await attempt('E22: row 15\'s adapter also returns an envelope', {
+    path: '05-hashmap/06-two-sum.md',
+    level: 3,
+    block: built.block,
+    source: built.source,
+    instrumented: built.instrumented,
+    cases,
+    timeoutMs: 120000,
+  });
+  if (adapted) {
+    const av = validateEnvelope(adapted);
+    check('E22: the adapter run passes validateEnvelope', av.isValid, av.errors.slice(0, 3).join(' | '));
+    check('E22: the adapter trace is bounded too — the writer stopped it',
+      adapted.steps.length < 10000, `${adapted.steps.length} steps of ~10 000`);
+    check('E22: and the adapter run reports WHY it stopped',
+      adapted.truncated.execution === true && /byte budget|memory|time limit/i.test(String(adapted.error)),
+      `${JSON.stringify(adapted.truncated)} error=${JSON.stringify(adapted.error).slice(0, 80)}`);
+    console.log(`   E22 adapter: ${adapted.stepCount} steps, ${adapted.budget.chunks} slot(s), `
+      + `${adapted.budget.mode}, error="${String(adapted.error).split('\n')[0].slice(0, 60)}"`);
+  }
+}
+
+// =====================================================================================
+// S2 · E23 — over the execution cap: abort, TLE-shaped, and STILL flush
+// =====================================================================================
+section('S2 · E23 · the execution step cap aborts TLE-shaped and flushes');
+{
+  const { env } = await attempt('E23: the step cap aborts the run instead of throwing out of the runner', {
+    path: 'fixtures/spin.md',
+    level: 3,
+    block: E23_BLOCK,
+    source: E23_SOURCE,
+    instrumented: E23_INSTRUMENTED,
+    cases: E23_CASES,
+    // The cap is a CAP, not a constant baked into the fixture: 40 exercises exactly the same
+    // code path as 200 000 and finishes in milliseconds. The production number is asserted
+    // above against `validate-envelope.mjs`'s own constant.
+    execStepCap: 40,
+  });
+  if (env) {
+  const v = validateEnvelope(env);
+  check('E23: the capped envelope passes validateEnvelope', v.isValid, v.errors.join(' | '));
+  check('E23: the trace was FLUSHED, not thrown away with the abort', env.steps.length > 0,
+    '0 steps — the abort discarded what it had already captured');
+  check('E23: the abort stopped the capture at the cap', env.steps.length <= 40,
+    `${env.steps.length} steps for a cap of 40`);
+  check('E23: truncated.execution is true', env.truncated.execution === true);
+  check('E23: truncated.trace stayed FALSE — a step cap is not a byte budget (I3)',
+    env.truncated.trace === false, 'the execution cap borrowed the trace flag, which is the I3 defect');
+  check('E23: `error` is TLE-shaped', /Time Limit Exceeded/i.test(String(env.error)),
+    JSON.stringify(env.error));
+  check('E23: `error` names the cap it hit', /cap/i.test(String(env.error)), JSON.stringify(env.error));
+  check('E23: `result` is null (the run never returned)', env.result === null);
+  check('E23: the verdict still came from the uninstrumented run (I2)',
+    env.verdict.passed === 1 && env.verdict.failed === 0, JSON.stringify(env.verdict));
+  console.log(`   E23: ${env.stepCount} steps flushed at a cap of 40, error="${String(env.error).slice(0, 70)}"`);
+  }
+
+}
+
+// =====================================================================================
+// S2 · E25 — a 16 MB heap refusal is an error verdict, with whatever trace arrived
+// =====================================================================================
+section('S2 · E25 · a 16 MB OOM is an error verdict with the trace flushed');
+{
+  const { env } = await attempt('E25: the 16 MB refusal returns an envelope instead of throwing', {
+    path: 'fixtures/balloon.md',
+    level: 3,
+    block: E25_BLOCK,
+    source: E25_SOURCE,
+    instrumented: E25_INSTRUMENTED,
+    cases: E25_CASES,
+    memoryLimitBytes: 16 * 1024 * 1024,
+    // A small slot cap so slots reach stdout DURING the allocation loop. At 1 MB nothing would
+    // flush before the heap refused, and "trace flushed if any" would be untestable.
+    chunkMaxChars: 900,
+    timeoutMs: 8000,
+  });
+  if (env) {
+    const v = validateEnvelope(env);
+    check('E25: the OOM envelope passes validateEnvelope', v.isValid, v.errors.join(' | '));
+    check('E25: `error` names the heap', /memory|out of memory/i.test(String(env.error)),
+      JSON.stringify(env.error));
+    check('E25: whatever trace arrived is present', env.steps.length > 0,
+      'the property is "flushed if any", so a fixture that emits none proves nothing');
+    check('E25: `result` is null — the target never returned', env.result === null);
+    // An ERROR VERDICT, which is what the ledger asks for. A heap refusal surfaces inside the
+    // sandbox as an `InternalError` that `buildBundle`'s per-case try catches, so the driver
+    // counts the case as failed and the envelope carries `error` — the same shape as a thrown
+    // step (G3), not as a cut execution. `truncated.execution` is therefore FALSE here, and
+    // asserting otherwise would be asserting that the driver does not catch exceptions.
+    check('E25: the verdict is an ERROR verdict — the case failed', env.verdict.failed > 0,
+      JSON.stringify(env.verdict));
+    check('E25: an OOM did NOT set truncated.trace (I3, other direction)',
+      env.truncated.trace === false, 'the heap cap borrowed the trace flag');
+    check('E25: nor did it set truncated.display', env.truncated.display === false);
+    console.log(`   E25: ${env.stepCount} steps flushed before the heap refused, `
+      + `verdict ${JSON.stringify(env.verdict)}, error="${String(env.error).split('\n')[0].slice(0, 60)}"`);
+  }
+
+  // The control, without which the arm above passes for the wrong reason: the SAME fixture on a
+  // heap big enough for it completes and traces normally, so the refusal really was the 16 MB
+  // limit and not the fixture.
+  const control = await runBlockTrace({
+    path: 'fixtures/balloon.md',
+    level: 3,
+    block: E25_BLOCK,
+    source: E25_SOURCE,
+    instrumented: E25_INSTRUMENTED,
+    cases: E25_FITS_CASES,
+    memoryLimitBytes: 256 * 1024 * 1024,
+    timeoutMs: 8000,
+  });
+  check('E25: the control run completes with no error', control.error === null,
+    JSON.stringify(control.error));
+  check('E25: the control verdict passes', control.verdict.failed === 0 && control.verdict.passed > 0,
+    JSON.stringify(control.verdict));
+  check('E25: the control is not truncated at all',
+    !control.truncated.execution && !control.truncated.trace && !control.truncated.display,
+    JSON.stringify(control.truncated));
+
+  // The other half of the byte accounting, and E22 in a harsher form: a step whose own
+  // snapshot cannot fit the transport AT ALL. Shipping it oversized is how one step silently
+  // eats the log allowance and the NEXT slot is dropped — the exact chain plan §1 U2
+  // describes. So it stops recording, by name, instead.
+  const { env: blowup } = await attempt('E25: a step wider than the transport returns an envelope', {
+    path: 'fixtures/balloon-wide.md',
+    level: 3,
+    block: E25_BLOWUP_BLOCK,
+    source: E25_BLOWUP_SOURCE,
+    instrumented: E25_BLOWUP_INSTRUMENTED,
+    cases: E25_BLOWUP_CASES,
+    // A deliberately tiny transport: 900 chars a slot for 12 slots is a 10 800-char allowance
+    // against a ~13 kB snapshot, so the second step cannot travel. The clock is irrelevant here
+    // — the fixture finishes in milliseconds — but it is raised anyway so a slow machine reports
+    // a timeout instead of masquerading as this case.
+    chunkMaxChars: 900,
+    chunksPerTrace: 12,
+    timeoutMs: 8000,
+  });
+  if (blowup) {
+    const bv = validateEnvelope(blowup);
+    check('E25: the oversized-step envelope passes validateEnvelope', bv.isValid, bv.errors.join(' | '));
+    check('E25: the steps before the blow-up are still here', blowup.steps.length > 0,
+      '0 steps — nothing was recorded, so nothing can be said about what a blow-up preserves');
+    check('E25: `error` names the byte budget', /byte budget/i.test(String(blowup.error)),
+      JSON.stringify(blowup.error));
+    check('E25: and it says which of the two byte ceilings it hit',
+      /one step|transport slots|delta stopped/i.test(String(blowup.error)),
+      JSON.stringify(blowup.error));
+    // Either ceiling is correct here and which one binds depends on how many steps arrived
+    // before it, so the test asserts the SHAPE — a trace that stops, is named, and lost no step
+    // it had already recorded — rather than which of the two fired first.
+    check('E25: the stop is a recording stop, not a thrown error',
+      blowup.truncated.execution === true && typeof blowup.error === 'string',
+      JSON.stringify({ t: blowup.truncated, e: blowup.error }));
+    check('E25: truncated.execution is true — steps we did not record are steps that ran',
+      blowup.truncated.execution === true);
+    check('E25: truncated.trace stayed FALSE — nothing was shed, recording stopped',
+      blowup.truncated.trace === false);
+    console.log(`   E25 blowup: ${blowup.stepCount} steps kept, error="${String(blowup.error).slice(0, 80)}"`);
+  }
+}
+
+// =====================================================================================
+// S2 · the display cap: 5 000 steps, and the verdict does not move
+// =====================================================================================
+section('S2 · display cap · n=5000 truncates for display, verdict unchanged');
+{
+  const big = await runBlockTrace({
+    path: 'fixtures/count-to.md',
+    level: 3,
+    block: DISPLAY_BLOCK,
+    source: DISPLAY_SOURCE,
+    instrumented: DISPLAY_INSTRUMENTED,
+    cases: DISPLAY_CASES,
+    caseIndex: 1,
+  });
+  const v = validateEnvelope(big);
+  check('display: the n=5000 envelope passes validateEnvelope', v.isValid, v.errors.join(' | '));
+  check('display: it really did exceed the cap', big.steps.length > SCHEMA_DISPLAY_CAP,
+    `${big.steps.length} steps against a cap of ${SCHEMA_DISPLAY_CAP}`);
+  check('display: truncated.display is set', big.truncated.display === true);
+  check('display: truncating for DISPLAY did not set truncated.trace (I3)',
+    big.truncated.trace === false, 'the display cap borrowed the trace flag');
+  check('display: truncating for DISPLAY did not set truncated.execution (I3)',
+    big.truncated.execution === false, 'the display cap borrowed the execution flag');
+  eq('display: nothing degraded — a small trace stays in `full` mode', big.budget.mode, 'full');
+  check('display: `stepCount` is the EXECUTED count, not the shipped count',
+    big.stepCount === big.steps.length, `${big.stepCount} vs ${big.steps.length}`);
+
+  // The load-bearing half: the same block, the same cases, a trace under the cap. Identical
+  // verdict, different `truncated`. If display truncation could move a verdict, I2 is broken
+  // in a way no amount of "the verdict comes from the raw run" in a comment would catch.
+  const small = await runBlockTrace({
+    path: 'fixtures/count-to.md',
+    level: 3,
+    block: DISPLAY_BLOCK,
+    source: DISPLAY_SOURCE,
+    instrumented: DISPLAY_INSTRUMENTED,
+    cases: DISPLAY_CASES,
+    caseIndex: 0,
+  });
+  eq('display: the verdict is IDENTICAL with and without display truncation',
+    big.verdict, small.verdict);
+  check('display: and the two runs really did differ in truncation',
+    big.truncated.display === true && small.truncated.display === false,
+    `big=${big.truncated.display} small=${small.truncated.display}`);
+  console.log(`   display: ${big.stepCount} steps truncated=true vs ${small.stepCount} steps truncated=false, `
+    + `verdict ${JSON.stringify(big.verdict)} in both`);
+}
+
+// =====================================================================================
+// S2 · I2 — the verdict comes from an UNINSTRUMENTED run, and NOTHING here can move it
+// =====================================================================================
+section('S2 · I2 · nothing in rows 11/12 can move a verdict');
+{
+  // The bare run, exactly as `/api/judge/run` would do it: same block, no probe, no
+  // snapshot, no chunk, no cap. Every envelope below claims the same numbers.
+  const bare = await executeUserCode(buildBundle({
+    userCode: readBlockSource('05-hashmap/06-two-sum.md', 3),
+    fnName: 'twoSum',
+    codec: 'json',
+    tests: PROBLEMS['two-sum'].tests,
+  }), { timeoutMs: 3000 });
+  const bareVerdict = parseVerdictEnvelope(bare.envelopeRaw, bare.logs);
+  check('I2: the bare run produced a verdict', Boolean(bareVerdict), 'no __VERDICT__ line');
+  if (bareVerdict) {
+    const expected = { passed: bareVerdict.passed, failed: bareVerdict.failed };
+    eq('I2: an uninstrumented trace reports the bare verdict', pilotEnvelopes['two-sum'].verdict, expected);
+    eq('I2: a DEGRADED (diff-mode) trace reports the same bare verdict',
+      (await runBlockTrace({
+        path: '05-hashmap/06-two-sum.md',
+        level: 3,
+        slug: 'two-sum',
+        instrumented: PILOT_INSTRUMENTED['two-sum'],
+        byteBudget: 2000,
+      })).verdict, expected);
+  }
+
+  // The sharpest form of the question: does the probe suite perturb the thing it measures?
+  // Instrumentation reads state, allocates and costs time; if any of that reached the raw run
+  // the verdict would describe the probe suite. The fixture is deliberately the EXPENSIVE one —
+  // 5 000 traced turns, where a perturbing probe would have the most room to show it.
+  const heavy = await runBlockTrace({
+    path: 'fixtures/count-to.md',
+    level: 3,
+    block: DISPLAY_BLOCK,
+    source: DISPLAY_SOURCE,
+    instrumented: DISPLAY_INSTRUMENTED,
+    cases: DISPLAY_CASES,
+    caseIndex: 1,
+  });
+  const heavyBare = await executeUserCode(buildBundle({
+    userCode: DISPLAY_SOURCE,
+    fnName: 'countTo',
+    codec: 'json',
+    tests: DISPLAY_CASES,
+  }), { timeoutMs: 3000 });
+  const heavyVerdict = parseVerdictEnvelope(heavyBare.envelopeRaw, heavyBare.logs);
+  check('I2: the expensive fixture\'s bare run produced a verdict', Boolean(heavyVerdict), 'no __VERDICT__ line');
+  if (heavyVerdict) {
+    eq('I2: instrumented and bare agree step for step on an expensive run',
+      heavy.verdict, { passed: heavyVerdict.passed, failed: heavyVerdict.failed });
+    check('I2: and that run really did trace a lot', heavy.stepCount > SCHEMA_DISPLAY_CAP,
+      `${heavy.stepCount} steps — a cheap trace would not have exercised anything`);
+  }
+  // The converse arm, so the first arm cannot pass for the wrong reason.
+  const broken = await runBlockTrace({
+    path: '05-hashmap/06-two-sum.md',
+    level: 3,
+    slug: 'two-sum',
+    source: 'function twoSum(nums, target) { return [9, 9]; }',
+    instrumented: PILOT_INSTRUMENTED['two-sum'],
+  });
+  check('I2: a broken UNINSTRUMENTED source DOES move the verdict',
+    broken.verdict.failed > 0 && broken.verdict.passed === 0, JSON.stringify(broken.verdict));
+  console.log(`   I2: bare ${JSON.stringify(bareVerdict && { passed: bareVerdict.passed, failed: bareVerdict.failed })}`
+    + `, traced ${JSON.stringify(pilotEnvelopes['two-sum'].verdict)}, degraded ${JSON.stringify(broken.verdict)}`);
+}
+
+// =====================================================================================
+// S2 · I3 — three independent flags, asserted in BOTH directions
+// =====================================================================================
+section('S2 · I3 · execution, display and trace never borrow each other');
+{
+  // Row 10 already holds the "a timeout did not set the trace flag" half. The other three
+  // directions are what makes the object an object rather than one boolean with aliases.
+  const flags = (env) => (env && env.truncated
+    ? `${Number(env.truncated.execution)}${Number(env.truncated.display)}${Number(env.truncated.trace)}`
+    : '???');
+  const { env: overBudget } = await attempt('I3: the byte-degrade probe runs', {
+    path: PROBLEMS['two-sum'].path,
+    level: 3,
+    slug: 'two-sum',
+    instrumented: PILOT_INSTRUMENTED['two-sum'],
+    byteBudget: 2000,
+  });
+  eq('I3: a byte degrade sets ONLY `trace` (execution, display, trace)', flags(overBudget), '001');
+  const { env: capped } = await attempt('I3: the step-cap probe runs', {
+    path: 'fixtures/spin.md',
+    level: 3,
+    block: E23_BLOCK,
+    source: E23_SOURCE,
+    instrumented: E23_INSTRUMENTED,
+    cases: E23_CASES,
+    execStepCap: 40,
+  });
+  eq('I3: a step-cap abort sets ONLY `execution`', flags(capped), '100');
+  const { env: timedOut } = await attempt('I3: the timeout probe runs', {
+    path: 'fixtures/spins.md',
+    level: 3,
+    block: E24_BLOCK,
+    source: E24_SOURCE,
+    instrumented: E24_INSTRUMENTED,
+    cases: E24_CASES,
+    timeoutMs: 400,
+    chunkMaxChars: 800,
+  });
+  eq('I3: a timeout sets ONLY `execution`', flags(timedOut), '100');
+  const { env: displayed } = await attempt('I3: the display-cap probe runs', {
+    path: 'fixtures/count-to.md',
+    level: 3,
+    block: DISPLAY_BLOCK,
+    source: DISPLAY_SOURCE,
+    instrumented: DISPLAY_INSTRUMENTED,
+    cases: DISPLAY_CASES,
+    caseIndex: 1,
+  });
+  eq('I3: an over-cap trace sets ONLY `display`', flags(displayed), '010');
+  const clean = pilotEnvelopes['two-sum'];
+  eq('I3: an ordinary trace sets NONE of them', flags(clean), '000');
+  check('I3: `truncated` is exactly {execution, display, trace} on every envelope above',
+    [overBudget, capped, timedOut, displayed, clean].filter(Boolean)
+      .every((e) => JSON.stringify(Object.keys(e.truncated).sort()) === '["display","execution","trace"]'));
 }
 
 // ---- helper: read a guide's level-3 block source, same slice gen-blocks uses ------

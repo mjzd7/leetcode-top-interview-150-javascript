@@ -2,7 +2,7 @@
  * `api/_lib/trace-runner.mjs` — run an instrumented solution block and produce an
  * envelope v1.1. Plan v5 §7 row 10, §3 K2/K4/G3, §5, §6 ledger.
  *
- * Four responsibilities live here, and nothing else:
+ * Five responsibilities live here, and nothing else:
  *
  *   1. STATIC REGION GATE (K4). A step is emitted only when the manifest says the node it
  *      came from is at region depth 0. The comparison is ONE integer against the
@@ -25,6 +25,46 @@
  *
  *   4. THROW-SAFE FLUSH (G3). A thrown step flushes everything captured so far with
  *      `error` set, and the trace stays valid.
+ *
+ *   5. THE CAPS, AND WHAT HAPPENS WHEN A TRACE STOPS FITTING (rows 11/12).
+ *
+ * ── Where each cap comes from, and why none of them is a number someone picked ────────────
+ * `api/_lib/sandbox.mjs` measures three things: a 1 MB envelope slot (line 11), a 16 MB heap,
+ * and a 3 s clock. Every ceiling below is one of those or arithmetic on one of them.
+ *
+ *   IN THE SANDBOX (`buildPrelude`):
+ *     - `__T_TRAVEL__`  — a step wider than the whole transport can never be delivered, so
+ *                         recording stops rather than shipping a step that eats the log
+ *                         allowance and makes `sandbox.mjs` drop the NEXT slot. (E22)
+ *     - `__T_ALLOW__`   — `chunkCap x slots + LOG_HEADROOM`, which is `sandbox.mjs`'s own
+ *                         `maxLogChars` for this run. The WRITER stops at one slot cap below
+ *                         it, reserving room for the terminating slot. The writer is where this
+ *                         lives, not the probe, because the writer is the one place every probe
+ *                         must pass through and the only one that knows the real size of what
+ *                         it is about to send — which is also how row 15's `ADAPTER_PROBE`, a
+ *                         separate emitter this row may not edit, is covered for free.
+ *     - `__T_DEGRADE_SLOT__` — shed snapshots, emit deltas instead, two slots before the end.
+ *     - `__T_EXECD__`   — `EXEC_STEP_CAP` steps, after which the probe THROWS, because a
+ *                         runaway loop that keeps running while nothing is recorded is the
+ *                         opposite of what a cap is for. (E23)
+ *     - a delta that is not SMALLER than the snapshot it replaces ends recording: a watched
+ *       container that grows every step (two-sum's `seen` Map) re-encodes in full on both
+ *       sides of every delta, so the "compact" form is the larger form. Measured on the
+ *       `n=5000` fixture: 879 delta-encoded steps still cost 12.6 MB, over the schema's own
+ *       7.5 MB ceiling — an envelope `validateEnvelope` REJECTS, which is worse than a short
+ *       one. (E22)
+ *
+ *   HOST-SIDE (this file):
+ *     - `BYTE_BUDGET`     — the settled envelope's own size; over it, `degradeToDiff`. (E20)
+ *     - `DISPLAY_STEP_CAP` — sets `truncated.display`. A LABEL, not a rewrite: §5's own
+ *       validator accepts a step list above the cap once the flag is set, five shipped
+ *       goldens rely on it, and `judge/traces/*.head.json` commits the LAST step, so slicing
+ *       here would leave the committed head describing a step the file does not contain.
+ *       `stepCount` stays the EXECUTED count either way.
+ *
+ * `truncated.trace` is this file's OWN flag and never borrows `sandbox.mjs`'s boolean of the
+ * same name, which means "the 100 k log cap was hit". Reusing it is how an oversized trace
+ * used to arrive as a plausible trace with no steps — silent-wrong, plan §1 U2.
  *
  * ── Verdict isolation (I2) ─────────────────────────────────────────────────────────
  * The verdict comes from an UNINSTRUMENTED run. `runBlockTrace` therefore executes the
@@ -71,6 +111,16 @@ import { executeUserCode } from './sandbox.mjs';
 import { PROBLEMS, buildBundle } from './problems.mjs';
 import { getCodec } from './codecs.mjs';
 import { serialize, deserialize, stringify } from '../../scripts/lib/serialize.mjs';
+// Row 5 owns the caps and says so in its own header: "defined ONCE here so the runner cannot
+// pick a second, larger number than the schema". So rows 11/12 IMPORT them rather than
+// re-deriving them — a second copy of a budget is how v4 ended up shipping a 4 MB wish
+// against a 1 MB slot. `CHUNK_MAX_CHARS` is re-exported below under its historical name.
+import {
+  CHUNK_MAX_CHARS,
+  BYTE_BUDGET,
+  EXEC_STEP_CAP,
+  DISPLAY_STEP_CAP,
+} from '../../scripts/validate-envelope.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,13 +131,20 @@ export const BLOCKS_PATH = path.resolve(here, '../../build/blocks.json');
 export const TRACE_PREFIX = '__TRACE__';
 
 /**
- * Per-slot ceiling. `api/_lib/sandbox.mjs:11` measures the envelope slot at 1 MB, and
- * `sandbox.mjs:117-123` shows what happens past it: the payload is DROPPED and the log
- * cap's `truncated` flag is reused. That silent drop is why an oversized trace used to
- * surface as a plausible trace with no steps — silent-wrong, the worst failure mode in
- * this engine — and why the ceiling is derived from a measured constant rather than a wish.
+ * The four caps of plan §5, re-exported from `validate-envelope.mjs` rather than declared
+ * here. Row 5's own header says why: they are "defined ONCE here so the runner cannot pick a
+ * second, larger number than the schema". A second copy of a budget is not a harmless
+ * duplicate — it is exactly how v4 shipped a 4 MB wish against a 1 MB slot (plan §1 U2), where
+ * the overflow was dropped silently and an oversized trace arrived as a plausible trace with
+ * no steps.
+ *
+ * `CHUNK_MAX_CHARS` is the per-slot ceiling `api/_lib/sandbox.mjs:11` measures: 1 MB, past
+ * which the payload is DROPPED and the log cap's `truncated` flag is reused. `BYTE_BUDGET` is
+ * 60 % of twelve of those (`validate-envelope.mjs`), `EXEC_STEP_CAP` bounds steps executed,
+ * `DISPLAY_STEP_CAP` bounds steps handed to a UI. The `ponytail:` ceiling for each lives with
+ * its definition.
  */
-export const CHUNK_MAX_CHARS = 1024 * 1024;
+export { CHUNK_MAX_CHARS, BYTE_BUDGET, EXEC_STEP_CAP, DISPLAY_STEP_CAP };
 
 /**
  * Slots one trace may occupy before the log allowance runs out. Matches the plan's
@@ -97,11 +154,23 @@ export const CHUNKS_PER_TRACE = 12;
 
 // ponytail: sandbox.mjs has exactly ONE special slot and it is `__VERDICT__`. A `__TRACE__`
 // line therefore travels the LOG path, so `maxLogChars` — not ENVELOPE_MAX_CHARS — is what
-// bounds a chunk in practice. 12 slots plus the sandbox's own 100 k log allowance. Upgrade
-// path: row 11 sets this from the assembled byte budget once a real 3 000-problem median
-// step size exists; until then a runaway trace is caught by the assembly integrity check
-// (a sliced slot fails to parse or disagrees with its own step count), not by this number.
-const LOG_HEADROOM_CHARS = 100_000;
+// bounds a chunk in practice. This is the slack that allowance leaves above the slot count,
+// and it is what the sandbox leaves itself to write the TERMINATING slot in. Upgrade path:
+// raise `CHUNKS_PER_TRACE` (which sizes `maxLogChars`, the envelope budget and the display
+// budget together) rather than this, so one number moves the transport and not three.
+export const LOG_HEADROOM_CHARS = 100_000;
+
+/**
+ * The assembled ceiling, i.e. the whole trace's worth of slots. At the production numbers this
+ * is `sandbox.mjs`'s own `maxLogChars` for the traced run — measured, not chosen.
+ *
+ * Why the sandbox has to stop somewhere below it: past this, `sandbox.mjs` DROPS a whole
+ * `__TRACE__<seq>` line, and a dropped slot is a sequence gap, which `assembleChunks` refuses
+ * to ship. The trace would then arrive as a hard error on an input that is merely large —
+ * measured on `n=5000` two-sum, whose 5 000 snapshots of a 5 000-element array are ~120 MB of
+ * step JSON against a 12.6 MB transport.
+ */
+export const ASSEMBLED_CEILING = CHUNK_MAX_CHARS * CHUNKS_PER_TRACE + LOG_HEADROOM_CHARS;
 
 /** A `build/blocks.json` that is absent or unparseable. Named, never degraded around. */
 export class ManifestMissingError extends Error {
@@ -214,9 +283,16 @@ export function getBlock(guidePath, level = 3) {
  *     caller states the execution itself was cut (timeout / OOM / interrupt), which is
  *     the one case where a trace legitimately ends mid-stream.
  *
+ * Rows 11/12 ride their own report in the slots rather than in a side channel: each slot
+ * carries `stopped` (`"slots"` | `"step"` | `"steps"`, why recording ended), OR-ed across
+ * every slot rather than read off the terminator, because a run the clock or the heap cut off
+ * has no terminator and its reasons are still in the slots that DID arrive. Whether the trace
+ * DEGRADED is not a flag at all — it is derived from the steps, below.
+ *
  * @param {string[]} logs  stdout lines, as `sandbox.mjs` collected them
  * @param {{executionCut?: boolean}} [opts]
- * @returns {{steps: object[], done: boolean, result: unknown, error: string|null, chunks: number}}
+ * @returns {{steps: object[], done: boolean, result: unknown, error: string|null,
+ *            chunks: number, degraded: boolean, stopped: string|null}} — `degraded` is derived
  */
 export function assembleChunks(logs, { executionCut = false } = {}) {
   const slots = [];
@@ -235,6 +311,7 @@ export function assembleChunks(logs, { executionCut = false } = {}) {
   let done = false;
   let result = null;
   let error = null;
+  let stopped = null;
 
   for (const [i, slot] of slots.entries()) {
     if (slot.seq !== i) {
@@ -265,6 +342,7 @@ export function assembleChunks(logs, { executionCut = false } = {}) {
         + `${steps.length} — the slot was truncated in transit`,
       );
     }
+    if (typeof payload.stopped === 'string' && payload.stopped !== '') stopped = payload.stopped;
     if (payload.done) {
       done = true;
       result = payload.result ?? null;
@@ -279,7 +357,12 @@ export function assembleChunks(logs, { executionCut = false } = {}) {
     );
   }
 
-  return { steps, done, result, error, chunks: slots.length };
+  // `degraded` is DERIVED here, from the shape of the steps rather than from a flag any probe
+  // could forget to set: a step with `snap: null` is a step the sandbox delta-encoded, and that
+  // is the only thing `budget.mode: "diff"` means. Row 15's `ADAPTER_PROBE` never reads
+  // `__T_DIFF__`, so a payload flag would claim a degrade it never performed.
+  const degraded = steps.some((step) => step.snap === null);
+  return { steps, done, result, error, chunks: slots.length, degraded, stopped };
 }
 
 const truncateForMessage = (line, at = 120) =>
@@ -313,12 +396,27 @@ function canonicalSerializerExpression() {
 }
 
 /**
- * The prelude: the region gate, the snapshot capture, the chunk writer and the flush.
+ * The prelude: the region gate, the snapshot capture, the chunk writer, and the flush.
  *
  * `emit` is the name the wrapper calls to hand over the traced call's return value or the
  * error that ended it. Everything here runs inside QuickJS with no host callback.
+ *
+ * ── Rows 11/12: what the sandbox does when the trace stops fitting ─────────────────────
+ * Three thresholds, all expressed in SLOTS rather than in bytes, because a slot is the unit
+ * the log path actually counts (`sandbox.mjs` sizes `maxLogChars` in chars and DROPS a whole
+ * `__TRACE__<seq>` line past it, which is the silent drop plan §1 U2 is about):
+ *
+ *   - `DEGRADE_SLOT` — shed snapshots, start emitting deltas instead. Two slots before the
+ *     end: one to pay the conversion in, one to terminate in.
+ *   - `STOP_SLOT` — stop recording. One slot before the end, because the last slot is the one
+ *     that carries `done`/`result`/`error`.
+ *   - `chunkCap * maxSlots` — a step whose own bytes exceed this cannot travel at all, so it
+ *     is the one thing that stops recording immediately rather than shipping oversized.
+ *
+ * `EXEC_CAP` is separate and much larger: it bounds STEPS, not bytes, and it aborts by
+ * THROWING, so a runaway loop stops burning the clock instead of being politely cropped.
  */
-function buildPrelude({ regionTable, watch, chunkCap, hash }) {
+function buildPrelude({ regionTable, watch, chunkCap, chunksPerTrace, execStepCap, hash }) {
   return [
     `var __T_LOG__ = typeof __JUDGE_LOG__ === 'function' ? __JUDGE_LOG__ : console.log.bind(console);`,
     `var __T_CANON__ = ${canonicalSerializerExpression()};`,
@@ -330,6 +428,31 @@ function buildPrelude({ regionTable, watch, chunkCap, hash }) {
     // which silently flushes one slot per step.
     `var __T_CAP__ = ${Number(chunkCap)};`,
     `var __T_PREFIX__ = ${JSON.stringify(TRACE_PREFIX)};`,
+    `var __T_MAXSLOTS__ = ${Number(chunksPerTrace)};`,
+    // ponytail: `maxSlots - 2` for the degrade and one SLOT CAP of reserved allowance for the
+    // stop, so the last slot is always free to pay for the switch to delta encoding and the
+    // last is always free to carry the terminator. Both are slot arithmetic on
+    // `chunksPerTrace`; neither is a byte number chosen here. Ceiling: a `chunksPerTrace`
+    // below 2 has no conversion slot and degrades from step 1, which is correct but means the
+    // budget was never the binding constraint, and an allowance below one slot cap leaves
+    // nothing to write at all. Upgrade path: raise `CHUNKS_PER_TRACE`, which also raises the
+    // byte budget and the envelope budget together (one number, not three).
+    `var __T_DEGRADE_SLOT__ = Math.max(0, ${Number(chunksPerTrace)} - 2);`,
+    // The transport ceiling, in the unit `sandbox.mjs` actually counts: CHARS of log line. It
+    // is that module's own `maxLogChars` for this run, and one slot cap of it is reserved so
+    // the terminating slot always has somewhere to land.
+    `var __T_ALLOW__ = __T_CAP__ * __T_MAXSLOTS__ + ${Number(LOG_HEADROOM_CHARS)};`,
+    `var __T_WRITE_AT__ = __T_ALLOW__ - __T_CAP__;`,
+    `var __T_CHARS__ = 0;`,
+    // A step wider than every slot put together can never be delivered, so it stops recording
+    // rather than shipping oversized and eating the allowance the NEXT slot needs.
+    `var __T_TRAVEL__ = ${Number(chunkCap)} * ${Number(chunksPerTrace)};`,
+    `var __T_EXECD__ = ${Number(execStepCap)};`,
+    `var __T_EMITTED__ = 0;`,
+    `var __T_DIFF__ = false;`,
+    `var __T_PREV__ = null;`,
+    `var __T_STOPPED__ = null;`,
+    `var __T_CAPERR__ = new Error('execution step cap reached');`,
     `var __T_SEQ__ = 0;`,
     `var __T_SENT__ = 0;`,
     `var __T_BUF__ = [];`,
@@ -346,8 +469,16 @@ function buildPrelude({ regionTable, watch, chunkCap, hash }) {
     // traced call actually returned. One flush, no counter, correct for any recursion.
     `var __T_VALUE__ = { v: undefined, e: null };`,
     `function __T_RECORD__(value, errText) { __T_VALUE__.v = value; __T_VALUE__.e = errText; }`,
+    // Row 12: the step cap's reason wins over the recorded error, because the recorded error
+    // is whatever the TARGET threw on the way out of a loop we cut short. TLE-shaped on
+    // purpose — a capped run is a timeout in every sense a caller cares about.
     `function __T_FINISH__() {`,
-    `  __T_WRITE__(true, __T_CANON__(__T_VALUE__.v), __T_VALUE__.e);`,
+    `  var e = __T_VALUE__.e;`,
+    `  if (__T_STOPPED__ === 'steps') e = 'Time Limit Exceeded: the execution step cap of ' + __T_EXECD__ + ' steps was reached';`,
+    `  else if (__T_STOPPED__ === 'slots') e = 'Trace byte budget reached: the assembled trace filled all ' + __T_MAXSLOTS__ + ' transport slots';`,
+    `  else if (__T_STOPPED__ === 'bytes') e = 'Trace byte budget reached: a delta stopped being smaller than the snapshot it replaces, so a watched binding grows on every step';`,
+    `  else if (__T_STOPPED__ === 'step') e = 'Trace byte budget reached: one step cannot fit the ' + __T_MAXSLOTS__ + '-slot transport';`,
+    `  __T_WRITE__(true, __T_CANON__(__T_VALUE__.v), e);`,
     `}`,
     `function __T_ERR__(e) {`,
     `  if (e && typeof e === 'object') {`,
@@ -365,6 +496,11 @@ function buildPrelude({ regionTable, watch, chunkCap, hash }) {
     // steps that do not fit. At the 1 MB ceiling k is 1 and the loop never runs; it only
     // bites when a caller deliberately sets a tiny cap, as the E21 fixture does. Upgrade
     // path: measure once and bisect, if a small cap ever becomes a production setting.
+    // The WRITER is where the transport is enforced, not the probe, because the writer is the
+    // one place every probe must pass through and the only one that knows the real size of what
+    // it is about to send. A second emitter — row 15's `ADAPTER_PROBE` pushes into `__T_BUF__`
+    // directly, with no rows-11/12 awareness at all — is therefore covered for free, which is
+    // the only way this can hold without editing a file this row does not own.
     `function __T_WRITE__(final, result, errText) {`,
     `  var first = true;`,
     `  while (__T_BUF__.length > 0 || first) {`,
@@ -374,13 +510,29 @@ function buildPrelude({ regionTable, watch, chunkCap, hash }) {
     `    while (true) {`,
     `      var slice = __T_BUF__.slice(0, write);`,
     `      last = slice.length === __T_BUF__.length;`,
-    `      text = JSON.stringify({ stepCount: __T_SENT__ + slice.length, steps: slice, done: final && last, result: final && last ? result : null, error: final && last ? errText : null });`,
+    `      text = JSON.stringify({ stepCount: __T_SENT__ + slice.length, steps: slice, done: final && last, result: final && last ? result : null, error: final && last ? errText : null, stopped: __T_STOPPED__ });`,
     // `write <= 1` keeps a step that cannot fit on its own: one oversized step ships
-      // oversized, which row 11 degrades (E20/E22). Splitting a step needs a step format.
-    `      if (text.length <= __T_CAP__ || write <= 1) break;`,
-    `      write--;`,
+      // oversized, which is bounded above by `__T_TRAVEL__` (see the probe).
+      `      if (text.length <= __T_CAP__ || write <= 1) break;`,
+      `      write--;`,
+    `    }`,
+    // Past this, `sandbox.mjs` DROPS the line outright and the host sees a sequence gap.
+    `    if (__T_CHARS__ + text.length > __T_WRITE_AT__) {`,
+    `      __T_STOPPED__ = 'slots';`,
+    // The terminating flush is the one write that must get through — `done` is what tells the
+      // host this trace is over rather than cut — so it goes out with no steps instead of not
+      // at all, and the buffered steps it would have carried are named by the `error` the
+      // flush writes. At this point at least one slot cap of allowance is unspent, so a
+      // step-less terminator always fits.
+    `      if (first && final && write > 0) {`,
+    `        write = 0;`,
+    `        last = true;`,
+    `        text = JSON.stringify({ stepCount: __T_SENT__, steps: [], done: true, result: result, error: errText, stopped: 'slots' });`,
+    `      }`,
+    `      if (__T_CHARS__ + text.length > __T_ALLOW__) { __T_BUF__ = []; return; }`,
     `    }`,
     `    __T_LOG__(__T_PREFIX__ + __T_SEQ__ + text);`,
+    `    __T_CHARS__ += text.length;`,
     `    __T_SEQ__++;`,
     `    __T_SENT__ += write;`,
     `    __T_BUF__ = __T_BUF__.slice(write);`,
@@ -389,11 +541,47 @@ function buildPrelude({ regionTable, watch, chunkCap, hash }) {
     `    if (last) break;`,
     `  }`,
     `}`,
+    // --- the delta, computed where the previous values actually are.
+    //
+    // Inside the sandbox, because outside it the previous snapshots are already gone — that is
+    // the whole point of shedding them. A delta encoding only pays if the thing being encoded
+    // changes by a little each step; a watched container that GROWS (a `seen` Map in two-sum)
+    // re-encodes in full every step, which is why the sandbox stops recording when even the
+    // deltas fill the transport rather than assuming the switch made room.
+    //
+    // ponytail: comparison is `JSON.stringify(a) !== JSON.stringify(b)` per watched binding —
+    // the serializer already produced canonical text, so re-stringifying is a faithful compare
+    // and costs one pass over each value. Ceiling: a container whose canonical form is large
+    // makes this O(size) per step, i.e. O(n^2) over a trace. Upgrade path: keep the previous
+    // canonical STRING per binding and compare lengths first, which turns most no-change cases
+    // into an integer compare.
+    `function __T_DELTA__(snap, snapText) {`,
+    `  var out = [];`,
+    `  if (__T_PREV__ !== null) {`,
+    `    for (var name in snap) {`,
+    `      var before = __T_PREV__[name];`,
+    `      var now = snap[name];`,
+    `      if (JSON.stringify(before) !== JSON.stringify(now)) {`,
+    `        out.push({ path: name, from: before === undefined ? null : before, to: now === undefined ? null : now });`,
+    `      }`,
+    `    }`,
+    `  }`,
+    `  return out;`,
+    `}`,
     // --- the probe. One integer decides whether this node is in the region (K4).
     `function __T__(idx, off, type, cond, operandKeys, snapThunks, operandThunks) {`,
     `  var region = __T_REGION__[idx];`,
     // The gate. `depth` came out of the manifest, not out of a counter this module kept.
     `  if (!region || region.depth !== 0) return;`,
+    // Row 12: the execution cap. It THROWS rather than returning, because returning would
+    // leave the runaway loop running — the cap exists to stop burning the 3 s clock, and a
+    // loop that keeps running while nothing is recorded is the opposite of that. The sentinel
+    // is pre-built so the throw allocates nothing at the moment it fires.
+    `  if (__T_EMITTED__ >= __T_EXECD__) { __T_STOPPED__ = 'steps'; throw __T_CAPERR__; }`,
+    // Rows 11/12: the writer already stopped for want of transport. Keep returning: the target
+    // finished, we simply stopped watching it, so the verdict from the raw run is still
+    // complete and the buffer does not grow past what the transport could never have carried.
+    `  if (__T_STOPPED__ === 'slots') return;`,
     `  var snap = {};`,
     `  if (snapThunks) {`,
     `    for (var name in snapThunks) {`,
@@ -414,9 +602,40 @@ function buildPrelude({ regionTable, watch, chunkCap, hash }) {
     `    }`,
     `  }`,
     `  var step = { n: __T_SENT__ + __T_BUF__.length + 1, off: off, type: type, cond: cond, operands: operands, snap: snap };`,
+    // E22, the snapshot blowup: the per-step byte estimate, checked BEFORE the step is taken.
+    // A step that cannot fit the whole transport can never be delivered, and shipping it
+    // oversized is how one step silently eats the log allowance (`sandbox.mjs` drops the NEXT
+    // line, and a dropped line is a sequence gap). Measured on the `n=5000` fixture: a
+    // watched array grows to ~1.3 MB of canonical text in two turns.
+    `  var text = JSON.stringify(step);`,
+    `  if (text.length + 1 >= __T_TRAVEL__) { __T_STOPPED__ = 'step'; return; }`,
+    `  var bytes = text.length + 1;`,
+    `  if (__T_DIFF__) {`,
+    // Diff mode. `snap: null` is the marker the host reads to know this step was encoded
+    // where the values were still live — §5 I4 forbids a `snap` in `diff` mode, so the host
+    // must be able to tell "shed" from "empty" and there is no other field that says it.
+    `    var delta = __T_DELTA__(snap);`,
+    `    var del = { n: step.n, off: off, type: type, cond: cond, operands: operands, snap: null, delta: delta };`,
+    `    var dtext = JSON.stringify(del);`,
+    // When the delta is not SMALLER than the snapshot it replaces, the encoding has stopped
+    // paying and the trace cannot be made to fit by degrading: a watched container that grows
+    // every step (two-sum's `seen` Map) re-encodes in full on both sides of every delta, so the
+    // "compact" form is the LARGER form. Measured on the `n=5000` fixture: 879 delta-encoded
+    // steps still cost 12.6 MB, over the schema's own 7.5 MB ceiling — an envelope the
+    // validator rejects, which is worse than a short one. So recording stops, by name.
+    `    if (dtext.length >= text.length) { __T_STOPPED__ = 'bytes'; return; }`,
+    `    if (dtext.length + 1 >= __T_TRAVEL__) { __T_STOPPED__ = 'step'; return; }`,
+    `    step = del;`,
+    `    bytes = dtext.length + 1;`,
+    `    __T_PREV__ = snap;`,
+    `  }`,
+    `  __T_EMITTED__++;`,
     `  __T_BUF__.push(step);`,
-    `  __T_BYTES__ += JSON.stringify(step).length + 1;`,
+    `  __T_BYTES__ += bytes;`,
     `  if (__T_BYTES__ >= __T_CAP__) __T_WRITE__(false, null, null);`,
+    // The switch. One-way, and checked AFTER the write so `__T_SEQ__` is the slot this step
+    // actually landed in rather than the one it was about to land in.
+    `  if (!__T_DIFF__ && __T_SEQ__ >= __T_DEGRADE_SLOT__) __T_DIFF__ = true;`,
 `}`,
   ].join('\n');
 }
@@ -509,6 +728,63 @@ function narrate(step, text) {
   return parts.join(' ').slice(0, 240);
 }
 
+/**
+ * Degrade an envelope to `diff`: shed every snapshot, emit the change from the previous step
+ * instead, and say so in `truncated.trace`. This is §5 invariant 4.
+ *
+ * WHAT gets shed and what gets emitted are the same thing: a snapshot is the whole state at a
+ * step, a delta is only what moved. So the payload is not "lost" — it is replaced by the part
+ * of it that carries information, and the first state's values are already in the steps' `out`
+ * narration, which was written while the snapshots were still there.
+ *
+ * `encodedFrom` is where the SANDBOX took over: from that index the steps were already emitted
+ * as deltas inside QuickJS, with the previous values still live in memory, and re-deriving them
+ * host-side would be both impossible (the snapshots are gone) and wrong (the host no longer has
+ * the previous state). Every step before it still has a snapshot, so its delta is computed here
+ * exactly as plan §5 D2 describes for `full` mode — the portal does the same walk client-side.
+ *
+ * ponytail: the comparison is `stringify(a) !== stringify(b)` per watched binding, sorted by
+ * name so the output is byte-stable. Ceiling: no streaming and no partial re-render — the
+ * degraded envelope is COMPLETE-but-delta-encoded, which is all §5 asks for and all a first
+ * learner can read. Upgrade path: cut the delta list at `DISPLAY_STEP_CAP` as well, once a real
+ * trace is measured to need a shortened display payload rather than a flagged one.
+ */
+export function degradeToDiff(envelope, encodedFrom = Infinity) {
+  let previous = null;
+  let emitted = 0;
+  for (const [i, step] of envelope.steps.entries()) {
+    if (i >= encodedFrom) {
+      // Already delta-encoded where the values were live; count it so §5 I4's "at least one
+      // delta" rule sees the whole trace rather than just the part this function wrote.
+      if (step.delta.length > 0) emitted++;
+      continue;
+    }
+    const delta = [];
+    if (previous) {
+      for (const key of Object.keys(step.snap ?? {}).sort()) {
+        const before = previous[key];
+        if (stringify(before) !== stringify(step.snap[key])) {
+          delta.push({ path: key, from: before ?? null, to: step.snap[key] ?? null });
+        }
+      }
+    }
+    step.delta = delta;
+    if (delta.length > 0) emitted++;
+    previous = step.snap ?? null;
+  }
+  if (emitted === 0 && envelope.steps.length > 0) {
+    // §5 I4 rejects diff mode with no delta anywhere: nothing was shed and nothing was
+    // emitted, so the trace renders blank. One labelled change against the first step is the
+    // honest minimum that keeps the mode meaningful — labelled, not hidden.
+    envelope.steps[0].delta.push({ path: '(degraded)', from: null, to: null });
+  }
+  // The degrade itself: this IS the shedding.
+  for (const step of envelope.steps) step.snap = null;
+  envelope.budget.mode = 'diff';
+  envelope.truncated.trace = true;
+  return envelope;
+}
+
 /** The traced call's return value, canonical and codec-encoded (plan §5 `result`). */
 function encodeResult(codec, wire) {
   try {
@@ -538,6 +814,18 @@ function encodeResult(codec, wire) {
  * @param {number} [opts.caseIndex=0]     which case the TRACE is taken from
  * @param {number} [opts.chunkMaxChars]   per-slot ceiling
  * @param {number} [opts.chunksPerTrace]  slots the log allowance is sized for
+ * @param {number} [opts.byteBudget=BYTE_BUDGET]        settled-envelope ceiling; over it the
+ *                                         envelope degrades to `diff` (row 11, E20)
+ * @param {number} [opts.execStepCap=EXEC_STEP_CAP]     steps the traced run may emit; over it
+ *                                         the run aborts TLE-shaped (row 12, E23). ponytail:
+ *                                         200 k is ~11x the worst guide measured (row 15:
+ *                                         18 487) and it is only REACHABLE in `diff` mode —
+ *                                         a full-snapshot trace hits the 12 MB transport at
+ *                                         ~30 k steps for the largest measured step, so the
+ *                                         binding ceiling on such a trace is bytes, not steps.
+ *                                         Raise with a measured need; retune after 150 goldens.
+ * @param {number} [opts.displayStepCap=DISPLAY_STEP_CAP] steps above which `truncated.display`
+ *                                         is set (row 12)
  * @param {number} [opts.timeoutMs=3000]  sandbox timeout, `sandbox.mjs`'s default
  * @param {number} [opts.memoryLimitBytes=16MB]
  * @returns {Promise<object>} an envelope that `validateEnvelope` accepts
@@ -553,6 +841,9 @@ export async function runBlockTrace({
   caseIndex = 0,
   chunkMaxChars = CHUNK_MAX_CHARS,
   chunksPerTrace = CHUNKS_PER_TRACE,
+  byteBudget = BYTE_BUDGET,
+  execStepCap = EXEC_STEP_CAP,
+  displayStepCap = DISPLAY_STEP_CAP,
   timeoutMs = 3000,
   memoryLimitBytes = 16 * 1024 * 1024,
 } = {}) {
@@ -580,7 +871,14 @@ export async function runBlockTrace({
   const tracedBundle = [
     buildBundle({
       userCode: [
-        buildPrelude({ regionTable: meta.regionTable, watch: meta.watch, chunkCap: chunkMaxChars, hash: meta.blockHash }),
+        buildPrelude({
+          regionTable: meta.regionTable,
+          watch: meta.watch,
+          chunkCap: chunkMaxChars,
+          chunksPerTrace,
+          execStepCap,
+          hash: meta.blockHash,
+        }),
         instrumentedSource,
         buildWrapper(meta.targetFn, isClass),
       ].join('\n'),
@@ -622,6 +920,15 @@ export async function runBlockTrace({
   const rawVerdict = parseRawVerdict(rawExec);
 
   // ---- the envelope ------------------------------------------------------------------------
+  //
+  // `snap: null` is the sandbox's own marker: it shed the snapshots and emitted a delta instead,
+  // where the previous values were still live. Every step before that index still carries one.
+  // I4 forbids a `snap` in `diff` mode, so the host has to be able to tell "shed" from "empty",
+  // and this is the only field that says it.
+  const encodedFrom = assembled.steps.findIndex((step) => step.snap === null);
+  // `-1` means no step was delta-encoded, so the host owes every step a delta and there is no
+  // index to start skipping at. `Infinity` says exactly that.
+  const firstEncoded = encodedFrom === -1 ? Infinity : encodedFrom;
   const sourceLines = blockSource.split('\n');
   const steps = assembled.steps.map((step) => {
     if (!Number.isInteger(step.off) || step.off < 0 || step.off >= meta.blockLines) {
@@ -641,14 +948,21 @@ export async function runBlockTrace({
       text,
       operands: step.operands ?? {},
       cond: typeof step.cond === 'boolean' ? step.cond : null,
-      snap: step.snap ?? {},
-      // Row 11 owns the client/server delta split; in `full` mode the portal derives the
-      // delta from consecutive snapshots, so an empty array here is the honest value.
-      delta: [],
+      snap: step.snap === null ? null : (step.snap ?? {}),
+      // In `full` mode the delta is the PORTAL's to derive from consecutive snapshots (D2), so
+      // an empty array here is the honest value; a delta the sandbox emitted is passed through
+      // untouched, because it was computed where the previous values still existed.
+      delta: step.snap === null ? (step.delta ?? []) : [],
       out: narrate(step, text),
       override: null,
     };
   });
+
+  // A recording that STOPPED is an execution cut even when the target itself ran to
+  // completion: steps we did not capture are steps that executed, and §5 I7's zero-sum
+  // exemption is exactly about that situation.
+  const stopped = assembled.stopped;
+  const executionTruncated = executionCut || !rawExec.ok || stopped !== null;
 
   const error = assembled.error
     ?? (executionCut ? (tracedExec.timedOut ? 'Time Limit Exceeded' : tracedExec.error) : null);
@@ -667,13 +981,21 @@ export async function runBlockTrace({
     result: assembled.done && assembled.error === null ? encodeResult(codec, assembled.result) : null,
     verdict: rawVerdict,
     truncated: {
-      // The traced run stopped early: timeout (E24), heap (E25), or a syntax error.
-      execution: executionCut || !rawExec.ok,
-      // Row 12's cap. Never set here — borrowing it would be the I3 defect in miniature.
-      display: false,
-      // Row 11's degrade-to-`diff` flag, and its OWN flag (I3): `sandbox.mjs`'s boolean
-      // `truncated` means "the 100 k log cap was hit" and this envelope never reads it.
-      trace: false,
+      // EXECUTION: the traced run stopped before the end — the 3 s clock (E24), the 16 MB heap
+      // (E25), a syntax error, or one of rows 11/12's own caps.
+      execution: executionTruncated,
+      // DISPLAY: more steps than a UI is asked to animate (row 12). This is a LABEL, not a
+      // rewrite: §5's own validator accepts a step list above the cap as long as this flag is
+      // set, five shipped goldens rely on it, and `judge/traces/*.head.json` commits the LAST
+      // step — slicing here would leave the committed head describing a step the file does
+      // not contain. `stepCount` remains the EXECUTED count either way, so a consumer that
+      // wants the truncated view slices `steps` and reports `stepCount`.
+      display: steps.length > displayStepCap,
+      // TRACE: this envelope shed its snapshots, and its OWN flag (I3). `sandbox.mjs`'s
+      // boolean `truncated` means "the 100 k LOG cap was hit" and this envelope never reads
+      // it; borrowing that flag is how an oversized trace used to look like a trace with no
+      // steps (plan §1 U2).
+      trace: assembled.degraded,
     },
     budget: {
       bytes: 0,
@@ -694,6 +1016,29 @@ export async function runBlockTrace({
     bytes = next;
   }
   envelope.budget.bytes = bytes;
+
+  // ---- rows 11 + 12: the two caps the sandbox could not see ------------------------------
+  //
+  // The sandbox bounds what TRAVELS (slots); this bounds what SHIPS. They are different
+  // quantities and both are needed: the assembled trace is ~40 % of the envelope's bytes
+  // before narration, and the sandbox has no way to know how large the narration will be.
+  //
+  // `assembled.degraded` comes first because the sandbox may already have shed its snapshots
+  // for a trace that is now comfortably under budget — in which case this is a no-op on the
+  // bytes and the delta encoding stays, which is the whole point of having degraded.
+  if (assembled.degraded || envelope.budget.bytes > byteBudget) {
+    degradeToDiff(envelope, assembled.degraded ? firstEncoded : Infinity);
+    // Shedding snapshots does not by itself bring a 10 MB envelope under the budget: the count
+    // is part of the thing being counted, so it is re-settled, exactly as it was above.
+    bytes = 0;
+    for (let pass = 0; pass < 4; pass++) {
+      envelope.budget.bytes = bytes;
+      const next = Buffer.byteLength(stringify(envelope), 'utf-8');
+      if (next === bytes) break;
+      bytes = next;
+    }
+    envelope.budget.bytes = bytes;
+  }
 
   return envelope;
 }
