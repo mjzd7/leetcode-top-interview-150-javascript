@@ -39,6 +39,8 @@
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^11.17.0",
     "@playwright/test": "^1.63.0",
+    "acorn": "^8.18.0",
+    "acorn-walk": "^8.3.5",
     "playwright": "^1.63.0",
     "puppeteer": "^25.11.0"
   }
