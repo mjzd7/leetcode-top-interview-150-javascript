@@ -87,7 +87,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 1 | `catalog/problems.json`, 150 entries | §7 | pending | | |
 | 2 | Drop `fns` via `sg` | §7 | pending | | |
 | 3 | **41 → 0 syntax-only** | §7 | pending | | |
-| 4 | Validator rejects async/generator/eval | §7 | pending | | |
+| 4 | Validator rejects async/generator/eval | §7 | **done** | `0aceb10` | `npm run test:validate` → 23 assertions, 0 failures (E16 await/generator/yield, E17 eval/new-Function, K7 missing-L3, prose-`await` control). `npm run validate` → 150 scanned, **0 errors, 0 warnings**. Scan is `sg` rules in `.ast-grep/rules/solution-block-sync.yml`; missing `sg`/rules ⇒ `SOLUTION_SCAN_UNAVAILABLE`, unparseable block ⇒ error. |
 | 5 | Envelope v1.1 schema + validator | §7 | pending | | |
 | 6 | Canonical serializer + 9 round-trips | §7 | **done** | `aa6fa3a` | `npm run test:serialize` → E1–E9, 9 cases, 0 failures, exit 0. Compared via `jq -S .` (plan §0.2), not `deepEqual`. Exports `serialize`/`stringify`/`deserialize`/`MAX_DEPTH`. |
 | 7 | `gen-blocks.mjs` → `blocks.json` | §7 | pending | | |
@@ -189,6 +189,19 @@ A row with no test id is a hole. `—` means the test does not exist yet.
   prose comment.
 - `npm run validate` and `npm test` unchanged throughout: 150 files, 109 runtime,
   41 syntax-only, 450 syntax blocks, 828 assertions, 0 failures, 0 errors.
+
+### 2026-10-02 — rows 6 and 4 done
+
+- **Row 6** (`aa6fa3a`) — `scripts/lib/serialize.mjs`, 9 round trips green under
+  `jq -S`. Closes E1–E9 in §5.
+- **Row 4** (`0aceb10`) — `sg`-shaped solution-block scan in `validate-guide.mjs`
+  plus 9 rules and 5 fixtures. Closes E16, E17 and K7. It reads row 0's
+  `selectSolutionBlocks()` rather than defining a second block predicate — the
+  813-vs-450 ambiguity existed precisely because three tools counted fences three
+  ways.
+- New npm scripts `test:serialize` and `test:validate` are registered. **Not yet
+  wired into `verify`** — row 30 owns that, and `verify` deliberately still ends at
+  `build` so no row silently changes CI cost before row 30 measures it.
 
 ### 2026-10-02 — plan v5.1 opened
 
