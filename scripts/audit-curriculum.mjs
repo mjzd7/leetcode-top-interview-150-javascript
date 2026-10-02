@@ -199,6 +199,17 @@ export function readRuntimeTestRegistry() {
   };
 }
 
+/** Row 3's authored case paths, from catalog/cases.json. Read, never written. */
+export function readAuthoredCases() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'catalog', 'cases.json'), 'utf-8'));
+    const { __meta, ...entries } = raw;
+    return Object.keys(entries);
+  } catch (err) {
+    return [];
+  }
+}
+
 /** Every count this script pins. */
 export function measure() {
   const guides = listGuides();
@@ -322,7 +333,13 @@ export function measure() {
 
   const registry = readRuntimeTestRegistry();
   const known = new Set(guides);
-  out.runtimeTested = registry.entries.filter((e) => known.has(e)).length;
+  // Row 3 merged 41 authored cases in from catalog/cases.json at RUN time, so coverage is no
+  // longer the `RUNTIME_TESTS` literal alone. Reading only the literal made 41 executing guides
+  // look syntax-only — the audit under-reporting coverage is exactly how a gap hides.
+  const authored = safe(() => readAuthoredCases(), []);
+  out.runtimeTestedInline = registry.entries.filter((e) => known.has(e)).length;
+  out.runtimeTestedAuthored = authored.filter((e) => known.has(e)).length;
+  out.runtimeTested = out.runtimeTestedInline + out.runtimeTestedAuthored;
   out.runtimeTestsUnknownPaths = registry.entries.filter((e) => !known.has(e));
   out.syntaxOnly = out.guides - out.runtimeTested;
   return out;
@@ -334,8 +351,11 @@ export function measure() {
 // prints claimed-vs-measured so a stale doc is visible, not silently absorbed.
 const PINNED = {
   guides: 150,
-  runtimeTested: 109,
-  syntaxOnly: 41,
+  // Row 3's target: every guide executes. 109 inline + 41 authored from catalog/cases.json.
+  runtimeTested: 150,
+  // Row 3's acceptance criterion: `npm test` reports `syntax-only: 0`. The 41 that had never
+  // been executed now do. A non-zero reading here means coverage regressed.
+  syntaxOnly: 0,
   syntaxBlocks: 450,
   solutionBlocks: 450,
   unfilteredFences: 813,
@@ -403,8 +423,9 @@ export function runSelfCheck() {
 
   const guides = safe(() => listGuides().length, 0);
   check(results, 'guides === 150', guides === PINNED.guides, `measured ${guides}`);
-  check(results, 'runtimeTested === 109', m.runtimeTested === PINNED.runtimeTested, `measured ${m.runtimeTested}`);
-  check(results, 'syntaxOnly === 41', m.syntaxOnly === PINNED.syntaxOnly, `measured ${m.syntaxOnly}`);
+  check(results, 'runtimeTested === 150 (109 inline + 41 authored)', m.runtimeTested === PINNED.runtimeTested, `measured ${m.runtimeTested} = ${m.runtimeTestedInline} inline + ${m.runtimeTestedAuthored} authored`);
+  // Row 3's acceptance criterion, asserted here so the audit fails before `npm test` is even run.
+  check(results, 'syntaxOnly === 0 — every guide executes', m.syntaxOnly === PINNED.syntaxOnly, `measured ${m.syntaxOnly}`);
   check(
     results,
     'runtimeTested + syntaxOnly === guides',
