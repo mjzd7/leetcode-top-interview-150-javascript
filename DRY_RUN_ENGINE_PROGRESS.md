@@ -41,6 +41,31 @@ Opened: 2026-10-02 · Repo HEAD at open: `ab0a678` · Node local `v26.5.0` / CI 
 
 The 41 syntax-only guides are the whole point of W-1. They have never been executed.
 
+### 1.1 Row 0 re-measurement — 16 drifts, none absorbed
+
+`npm run audit` measured the §1 baseline against the repo on 2026-10-02 at `633931e`.
+**16 asserted numbers do not hold.** They are printed as a DRIFT table, not corrected
+in the script. Three change what a later row must do:
+
+| Asserted | Measured | Why it matters |
+|---|---|---|
+| `eval`/`new Function` in guides = 0 | **0** ✓ | K7 invariant holds |
+| async/generator lines inside solution regions = 0 | **1** | `08-linked-list/02-add-two-numbers.md:141` — the word `yield` in a *prose comment* (`// zero must yield one node`), not code. Row 4's `sg` scan is AST-shaped and correctly does **not** flag it. The plan's "0 lines" was right about code and wrong about raw text. |
+| async/generator lines in follow-ups = 159 across 70 guides | **188 across 72** | risk is larger than the plan recorded, still bounded |
+| `RUNTIME_TESTS` = 109 keys, 81 `fns`+`cases` / 28 `script` | **56 / 53** | the 81/28 split is wrong by 25/25. **Row 2 drops `fns` from 56 entries, not 109.** |
+| thin tables = 22 in 19 guides (2 empty) | **27 in 23 guides (3 empty)** | **row 21 and row 29 have 5 more tables to repair than the plan assumed.** All 23 named in the audit output. |
+| ` ```javascript ` fences = 813 | **807** | the 813 figure counted fences outside the 150-guide set |
+| `Level 3` headings = 153 · 4-field header = 151 | **150 · 150** | earlier counts included non-guide files |
+| dry-run tables = 453 | **450** | ditto — 453 was never 150-guide-only |
+| `Map`/`Set` = 64 · `Math.random`/`Date` = 3 | **64 · 3** ✓ | serializer scope (E5) is right |
+| typed arrays = 19 · BigInt literals = 14 | **23 · 15** | E6 scope larger than recorded |
+| self-recursive guides = 87–152 | **78–85** | heuristic is pinned in the script; the old range was wider than reality |
+| guide size = 20 KB / 556 lines | **16.5 KB / 430 lines** | |
+| guides / 450 blocks / 109 / 41 / 828 | **150 / 450 / 109 / 41 / 828** ✓ | the numbers rows 3 and 7 build on all hold |
+
+Row 3's kill criterion (**>15 wrong of 41**) is unaffected — that measures execution
+failures, not counts. Nothing in this table blocks row 3.
+
 ---
 
 ## 2. Scope
@@ -57,7 +82,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 
 | Row | Task | Plan § | Status | Commit | Evidence |
 |---|---|---|---|---|---|
-| 0 | `audit-curriculum.mjs` pins every count | §7 | pending | | |
+| 0 | `audit-curriculum.mjs` pins every count | §7 | **done** | `633931e` | `npm run audit` → 150 guides / 450 solution blocks / 109+41 coverage, 16 DRIFT rows printed, exit 0. `node scripts/audit-curriculum.mjs --check` → 16 passed, 0 failed. `selectSolutionBlocks()` exported for rows 4/7/21. |
 | 0b | `guide-quality` rubric (`book-to-skill`) | §7 | pending | | |
 | 1 | `catalog/problems.json`, 150 entries | §7 | pending | | |
 | 2 | Drop `fns` via `sg` | §7 | pending | | |
@@ -152,6 +177,18 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 ---
 
 ## 7. Session log
+
+### 2026-10-02 — row 0 done, and it found 16 wrong numbers
+
+- `scripts/audit-curriculum.mjs` (`633931e`). `npm run audit` measures; `--check`
+  self-verifies the K7 predicate; `--json` feeds rows 21/29.
+- **The gate did its job.** 16 asserted counts in §1 do not hold. Recorded in §1.1.
+  Three change a later row's shape: row 2 drops `fns` from **56** entries (not 109),
+  rows 21/29 repair **27** thin tables in **23** guides (not 22/19), and row 4's `sg`
+  scan is AST-shaped precisely because the one apparent "async line in a solution" is a
+  prose comment.
+- `npm run validate` and `npm test` unchanged throughout: 150 files, 109 runtime,
+  41 syntax-only, 450 syntax blocks, 828 assertions, 0 failures, 0 errors.
 
 ### 2026-10-02 — plan v5.1 opened
 
