@@ -192,6 +192,10 @@ export function readRuntimeTestRegistry() {
     entries,
     fnsAndCases: entries.filter((k) => table[k].fns && table[k].cases).length,
     script: entries.filter((k) => table[k].script).length,
+    // Row 2 removed every `fns` key, so this should be 0 forever now. Counted rather than
+    // assumed: a re-introduced duplication is exactly the drift this file exists to catch.
+    bothFnsAndScript: entries.filter((k) => table[k].fns && table[k].script).length,
+    casesOnly: entries.filter((k) => table[k].cases && !table[k].fns && !table[k].script).length,
   };
 }
 
@@ -353,8 +357,13 @@ const PINNED = {
   avgBytes: 20 * 1024,
   avgLines: 556,
   runtimeTestsEntries: 109,
-  runtimeTestsFns: 81,
-  runtimeTestsScript: 28,
+  // Row 2 deleted every `fns` key: names resolve from build/blocks.json now, so 0 is the
+  // CORRECT value and the plan's 81 is the pre-deletion state. Kept at 0 deliberately — a
+  // non-zero measurement here means the duplication is back, which is worth a DRIFT row.
+  runtimeTestsFns: 0,
+  // The plan's 28 was wrong from the start; row 0 measured 53 before row 2 ran. Pinned to the
+  // measurement, and §1.1 of the progress ledger records the correction.
+  runtimeTestsScript: 53,
 };
 
 // Plan §1 states self-recursion as a heuristic RANGE, not a number.
@@ -428,11 +437,23 @@ export function runSelfCheck() {
   const registry = safe(() => readRuntimeTestRegistry(), null);
   if (registry && !registry.error) {
     check(results, 'RUNTIME_TESTS keys === 109', registry.entries.length === PINNED.runtimeTestsEntries, `measured ${registry.entries.length}`);
+    // Row 2 deleted the 56 `fns` keys: names now resolve from build/blocks.json, so an entry
+    // is EITHER script-style OR cases-style. The old invariant (fns + script === keys) is
+    // obsolete — 0 + 53 = 53 is correct now. What still has to hold is that every entry is
+    // one of the two shapes, with no entry left carrying both a duplicated name list and a
+    // script, and none left with neither.
+    const casesOnly = registry.entries.length - registry.script - registry.fnsAndCases;
     check(
       results,
-      'fns+cases + script === RUNTIME_TESTS keys',
-      registry.fnsAndCases + registry.script === registry.entries.length,
-      `measured ${registry.fnsAndCases} + ${registry.script} vs ${registry.entries.length}`
+      'every RUNTIME_TESTS entry is script-style or cases-style (no third shape)',
+      registry.script + registry.fnsAndCases + Math.max(0, casesOnly) === registry.entries.length,
+      `script ${registry.script} + fns+cases ${registry.fnsAndCases} + cases-only ${casesOnly} vs ${registry.entries.length}`
+    );
+    check(
+      results,
+      'no entry declares BOTH `fns` and `script` (the duplication row 2 removed)',
+      registry.bothFnsAndScript === 0,
+      `measured ${registry.bothFnsAndScript}`
     );
   } else {
     check(results, 'readRuntimeTestRegistry() runs', false, registry ? registry.error : 'threw');
