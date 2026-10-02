@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | pending | | |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | pending | | |
 | 14 | V2 replay determinism | §7 | pending | | |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **done** | `1cf4e0c` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — verdict hollow on 47 guides** | `1cf4e0c` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | pending | | |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -230,6 +230,46 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — **finding: 139 of 450 goldens record a FAILED verdict. Row 15 is partial.**
+
+Found while sizing row 28's head files, not by a test. `validateEnvelope` passed **450/450** and
+`npm test` is green, yet **139 goldens across 47 of 150 guides** carry `verdict.passed === 0`.
+**130 of the 139 have no `error` at all** — they are silently wrong, which is the exact failure
+mode this whole system exists to prevent, and the schema validator is blind to it by construction.
+
+**Blast radius is the verdict only.** The steps are real and non-empty — `merge-sorted-array` L3
+carries **21 genuine steps** — because the traced run builds its own bundle and only the *raw*
+verdict run goes through `buildBundle`. So the traces are usable; the pass/fail numbers are not.
+
+**Two causes, both in `api/_lib/problems.mjs`'s `buildBundle` driver, both reproduced:**
+
+1. **In-place mutators** (`json`, 45 blocks). `01-merge-sorted-array` L3's canonical is
+   `function merge(nums1, m, nums2, n)` with **no `return` statement** — idiomatic LeetCode. The
+   driver does `got = __FN__.apply(null, t.args)` and compares that `undefined` against
+   `expected: [1,2,2,3,5,6]`. It can never pass. The authored case script already knows this: it
+   wraps the call as `(nums1,m,nums2,n) => { merge(nums1,m,nums2,n); return nums1; }`.
+2. **Scalar-returning tree targets** (`tree`, 48 blocks). `maxDepth(root)` returns the **number**
+   `3`, but the driver's tree branch unconditionally encodes the result:
+   `__treeToArray__(3)` → `[null]`, compared against `expected: 3`. Never equal.
+
+`list` (24) and `ops` (22) follow the same shape.
+
+**The deeper problem is a second source of truth.** `buildBundle` carries its own inline
+`__arrayToTree__` / `__treeToArray__` / `__ser__` — a hand-rolled codec that **duplicates row 17's
+`api/_lib/codecs.mjs`**. Plan finding H1/P3 says nothing re-declares a codec; row 18 deleted
+`PILOT_SLUGS` from this file but left the inline conversion behind. So the driver grades answers
+with conversion rules that no test, schema or codec registry ever sees.
+
+**Correction to my own earlier claim.** `1cf4e0c` says "450 goldens, 450 passed `validateEnvelope`".
+That is true and it is not sufficient: `validateEnvelope` checks *shape*, and a golden whose verdict
+is wrong is shape-perfect. I treated a schema pass as a correctness pass. The honest status is
+**rows 15 and 19 are blocked on the driver**, and `npm test`'s green says nothing about either.
+
+**Fix belongs in the driver, not the goldens** — and the smallest correct fix is to delete the
+inline codec from `buildBundle` and route both the traced and raw runs through `codecs.mjs`, so one
+registry decides what a return value means. Rows 11/12's agent is in that file right now; this must
+not be fixed alongside them.
 
 ### 2026-10-02 — row 31 done: a real accessibility bug, invisible at 1440px
 
