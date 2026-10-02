@@ -135,7 +135,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 27 | V9 table↔trace cross-check | §7 | pending | | |
 | 28 | `trace-head.json` per problem | §7 | pending | | |
 | 29 | V8 scan → repair thin tables | §7 | pending | | |
-| 30 | Wire `verify` + CI cache + time budget | §7 | pending | | |
+| 30 | Wire `verify` + CI cache + time budget | §7 | **CI half done** | `159607d` | `pull_request` trigger added — **CI previously ran on `push:[main,master]` only, so every row committed to `DRY_RUN_ENGINE` was never checked once**, which voided the row's own "CI log shows the npm cache hit" criterion. `cache: 'npm'` added. `timeout-minutes: 15` — deliberately **not** sized to the measured ~53 s of steps (that fails a slow runner). Pages steps gated on `push`, verified by parsing all 13 steps. **`verify` wiring still owed.** |
 | 31 | Design pass: timing/contrast/keyboard | §7 | pending | | |
 | 32 | "Unverified" = derived function | §7 | pending | | |
 | 33 | V12 logging-only prediction events | §7 | pending | | |
@@ -230,6 +230,28 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — row 30's CI half: **CI was never running on this branch**
+
+`deploy.yml` triggered on `push: [main, master]` only. Every row of this plan was committed to
+`DRY_RUN_ENGINE` and **CI ran on none of them** — so the plan's own row-30 acceptance criterion,
+"CI log shows the npm cache hit", had no CI log to be evidence in. Found by reading the workflow
+against the plan, not by a failing build.
+
+Fixed in `159607d`: `pull_request` trigger, `cache: 'npm'`, `timeout-minutes: 15`, and the three
+Pages steps gated on `push` so a PR verifies without publishing. Verified by parsing all 13 steps
+— **no deploy step is reachable on a pull_request**. (My first leak-check used a multi-line
+regex lookahead, which JS `.` cannot do; it reported a false LEAK. Re-checked line by line.)
+
+`timeout-minutes: 15` is deliberately **not** the measured step total. Measured on this machine:
+validate 1.36 s · test 15.64 s · judge 4.03 s · chat 14.84 s · e2e (dry-run spec) 16.70 s ≈
+**53 s of steps**, plus `npm ci`, `npx playwright install --with-deps chromium` and `npm run build`.
+Sizing the budget to 53 s would fail a slow runner and ignore install overhead entirely.
+
+**Known residue, not hidden:** the job still declares `environment: github-pages` at job level,
+so a PR run depends on that environment having no protection rules. It does not, so it passes —
+but if a rule is ever added, PRs would block on approval. Splitting verify from deploy would remove
+the coupling; that is a bigger restructure than this row earns.
 
 ### 2026-10-02 — **row 15 done: 450 goldens** (after fixing the two bugs it found)
 
