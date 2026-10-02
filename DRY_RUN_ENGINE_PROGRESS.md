@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | pending | | |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | pending | | |
 | 14 | V2 replay determinism | §7 | pending | | |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **blocked on 2 engine bugs** | — | Generates 446 sound goldens (corpus 34.9 MiB, largest 7.3 MiB), `git check-ignore` verified. **But 4 blocks are invalid** — 3 ZERO-step traces + 1 QuickJS abort — and row 15 found the causes (see §7). 54 assertions 0 failures on its own harness. NOT committed as valid until fixed. |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **done** | `1cf4e0c` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | pending | | |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -230,6 +230,39 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — **row 15 done: 450 goldens** (after fixing the two bugs it found)
+
+**`450 goldens · 450 passed validateEnvelope · empty traces: 0`** — corpus 35.1 MiB, largest
+7.3 MiB. Determinism **proven, not asserted**: two consecutive runs are byte-identical
+(`sha256 76135f71…`). The 3 `Math.random`/`Date` guides are pinned to a deterministic canonical
+case, never a random input (E26). Cases resolve from three authored sources and are never
+invented — a golden whose `expected` came from the code under test could never disagree with it.
+
+Both bugs row 15 surfaced are now fixed, and **neither was where I first blamed**:
+
+- **`dca56fc` — a codec misclassification, not an engine bug.** `codec: tree` has one meaning to
+  the driver: the target consumes a level-order array (`__FN__(__arrayToTree__(t.args[0]))`).
+  But `suggestCodec` fired on merely *mentioning* `TreeNode`, so it also labelled guides that
+  **build** a tree from raw arrays — `buildTreeMap(preorder, inorder)`,
+  `buildTree(inorder, postorder)`, `sortedArrayToBST(nums)`. The driver converted argument one
+  and dropped the rest, so `inorder` arrived undefined. The discriminator is the target's own
+  parameter list: a node-ish name (`root`, `node`, `p`, `q`, `k`) walks a tree; all-raw names
+  (`nums`, `preorder`, `inorder`) allocate their own. **Undecidable stays `tree`** — a heuristic
+  nobody has read must not reclassify 60 blocks on a guess. `tree` 63 → 54, `json` 317 → 326.
+- **`f9f0efe` — the 72-block shared-declaration bug** (previous commit).
+
+**A summary line that contradicted its own list.** `empty traces: 0` printed while three
+zero-step traces were listed three lines below, because `assertNonVacuous` **throws** into
+`failures` while the empty-trace tally only ever saw envelopes that survived. The error is now
+tagged `err.vacuity` and both paths feed one tally. *A summary that contradicts its own list is
+worse than no summary.*
+
+**E32, honestly:** 450 `*.head.json` committed, mean 1255 B, 552 KiB total. **10 exceed the ~2 KB
+plan cap** (largest 2.9 KiB) — recorded, not hidden. Trimming them is row 28's call.
+
+Regression green: `test` 150 files / 1453 assertions / 0 failures · `validate` 150/0 ·
+`test:judge` 64/0 · `audit --check` 17/0 · `test:gen-traces` 54/0 · `gen-blocks --verify` 450/450.
 
 ### 2026-10-02 — row 15 root-caused: a 72-block bug found and fixed, plus a codec defect
 
