@@ -516,8 +516,8 @@ function skippedFenceLines(abs, picked) {
 }
 
 // ---------------------------------------------------------------------------
-// Guide-quality score — row 0b. The rubric is `docs/rubrics/README.md`; read it
-// before touching a weight, it states the same contract in prose.
+// Guide-quality score — row 0b. The rubric is `docs/rubrics/guide-quality.md`;
+// read it before touching a weight, it states the same contract in prose.
 //
 // Every component is a number this file already measures or can count in one
 // line. Nothing here re-derives a fact the DRIFT table above already prints.
@@ -529,7 +529,7 @@ function skippedFenceLines(abs, picked) {
 // number with no reproducer. Upgrade path: T1 wires a threshold over this same
 // score once an LLM drafter exists to fail, and rows 21/29 feed real trace-diff
 // evidence in as `dep` (a table the trace contradicts is worse than a thin one).
-const RUBRIC_PATH = 'docs/rubrics/README.md';
+const RUBRIC_PATH = 'docs/rubrics/guide-quality.md';
 
 // Mirrors the 6 numbered entries of `REQUIRED_SECTIONS` in validate-guide.mjs by
 // symbol, not by line, for the reason the SKIP_DIRS block gives above: it is not
