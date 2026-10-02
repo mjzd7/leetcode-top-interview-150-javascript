@@ -65,6 +65,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 import { executeUserCode } from './sandbox.mjs';
 import { PROBLEMS, buildBundle } from './problems.mjs';
@@ -564,7 +565,7 @@ export async function runBlockTrace({
   // plausible-looking wrong data (plan §3 G1).
   const codec = getCodec(meta.codec, slug ?? guidePath);
 
-  const blockSource = source ?? readBlockSource(guidePath, meta);
+  const blockSource = source ?? composeShared(readBlockSource(guidePath, meta), guidePath, meta);
   const instrumentedSource = instrumented ?? (await importRow9(guidePath, meta));
   const resolvedCases = cases ?? judgeCases(slug, guidePath);
   const tracedCase = resolvedCases[caseIndex];
@@ -719,6 +720,48 @@ function readBlockSource(guidePath, meta) {
 }
 
 /**
+ * Prepend the type declarations an EARLIER level of the same guide declares, when this block
+ * uses them without declaring them.
+ *
+ * Guides write `// TreeNode shared from Level 1` above a block that calls `new TreeNode(...)`.
+ * `npm test` copes because it concatenates all three levels into one harness; this runner
+ * deliberately traces ONE block, so the shared type is undefined and the target throws
+ * "(1 , 2 , 3) is not a function" before emitting a step. Measured: 72 blocks across the corpus,
+ * every linked-list and tree guide's L2 and L3.
+ *
+ * Applied AFTER the block is read and instrumented, never before: the blockHash is the identity
+ * of the block as written (K5) and probe offsets are measured inside it, so a prelude must sit
+ * outside that space. Declarations only — no earlier level's logic — so no step can originate
+ * outside the traced region.
+ *
+ * If row 9's module cannot be loaded this is a no-op and the run reports the underlying "not a
+ * function", which is the honest failure. It must never paper over it.
+ */
+function composeShared(blockSource, guidePath, meta) {
+  const level = meta.level ?? 3;
+  if (level <= 1) return blockSource;
+  const mod = instrumentModuleSync();
+  if (!mod || typeof mod.composeBlockSource !== 'function') return blockSource;
+  try {
+    return mod.composeBlockSource(guidePath, level) || blockSource;
+  } catch {
+    return blockSource;
+  }
+}
+
+/** Row 9's module, synchronously, because the raw path above is not async. */
+let instrumentModuleCache;
+function instrumentModuleSync() {
+  if (instrumentModuleCache !== undefined) return instrumentModuleCache;
+  try {
+    instrumentModuleCache = createRequire(import.meta.url)(path.resolve(here, '../../scripts/instrument.mjs'));
+  } catch {
+    instrumentModuleCache = null;
+  }
+  return instrumentModuleCache;
+}
+
+/**
  * Row 9's instrumenter, when the caller did not hand over instrumented source already.
  *
  * ponytail: this accepts the three plausible export names rather than one, because row 9
@@ -741,7 +784,11 @@ async function importRow9(guidePath, meta) {
 
   let produced = null;
   if (typeof mod.instrumentGuideBlock === 'function') {
-    produced = mod.instrumentGuideBlock(guidePath, meta.level ?? 3)?.instrumented;
+    // `runnable` is instrumentGuideBlock's output with the guide's shared type declarations
+    // (TreeNode, ListNode) spliced around it — see composeShared. Older instrumentGuideBlock
+    // shapes have no `runnable`, so fall back rather than assume.
+    const guided = mod.instrumentGuideBlock(guidePath, meta.level ?? 3);
+    produced = guided?.runnable ?? guided?.instrumented;
   } else if (typeof mod.instrumentBlock === 'function') {
     produced = mod.instrumentBlock(readBlockSource(guidePath, meta), meta);
   } else if (typeof mod.instrument === 'function') {

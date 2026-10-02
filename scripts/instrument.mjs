@@ -738,12 +738,72 @@ export function blockEntry(manifest, guidePath, level) {
 }
 
 /** Re-read one block's source from its guide, via row 0's pinned K7 predicate. */
+/**
+ * Declarations a level shares with the levels before it.
+ *
+ * Guides build on their own Level 1: `// TreeNode shared from Level 1` is written above an L2
+ * block that constructs `new TreeNode(...)` without declaring it. The suite copes because
+ * `npm test` concatenates all three levels into one harness; the tracer deliberately runs ONE
+ * block in isolation, so a shared type is simply undefined there and the target throws
+ * "(1 , 2 , 3) is not a function" before emitting a single step.
+ *
+ * Measured across the corpus: **72 blocks** depend on a type an earlier level declares — every
+ * linked-list and tree guide's L2 and L3. Only four surfaced as empty traces, because the other
+ * guides' drivers happen to receive a ready-made node as a test fixture. Splicing the
+ * declarations in is therefore the fix; patching the four would have hidden the other 68.
+ *
+ * Returns DECLARATION text only, never an earlier level's logic, so the traced region stays
+ * exactly the block under test and no step can originate in Level 1's body.
+ */
+export function sharedDeclarations(source, earlierSources) {
+  const declaredHere = new Set([...source.matchAll(/\b(?:class|function)\s+([A-Za-z_$][\w$]*)/g)].map((m) => m[1]));
+  const referenced = new Set([...source.matchAll(/\b([A-Z][\w$]*)\b/g)].map((m) => m[1]));
+
+  const out = [];
+  const seen = new Set();
+  for (const earlier of earlierSources) {
+    for (const m of earlier.matchAll(/(class\s+[A-Za-z_$][\w$]*[\s\S]*?\n\}|function\s+[A-Za-z_$][\w$]*\([^)]*\)\s*\{[\s\S]*?\n\})/g)) {
+      const name = m[1].match(/(?:class|function)\s+([A-Za-z_$][\w$]*)/)[1];
+      if (!referenced.has(name) || declaredHere.has(name) || seen.has(name)) continue;
+      seen.add(name);
+      out.push(m[1]);
+    }
+  }
+  return out;
+}
+
 export function readBlockSource(guidePath, level) {
   const file = path.join(ROOT_DIR, guidePath);
   if (!fs.existsSync(file)) throw new Error(`readBlockSource: guide ${guidePath} does not exist under ${ROOT_DIR}`);
   const selected = selectSolutionBlocks(fs.readFileSync(file, 'utf-8')).find((s) => s.level === level);
   if (!selected) throw new Error(`readBlockSource: ${guidePath} selects no Level ${level} solution block — the K7 predicate found none.`);
   return selected.code;
+}
+
+/**
+ * A guide level's source with any shared type declarations from EARLIER levels spliced in.
+ *
+ * Applied AFTER instrumentation, deliberately: the blockHash is the identity of the block as
+ * written (K5), and prepending first would both change that hash and shift every probe offset.
+ * A probe addresses a location inside the original block, so the shared declarations must sit
+ * outside the offset space they are measured against.
+ */
+export function composeBlockSource(guidePath, level, instrumented = null) {
+  const file = path.join(ROOT_DIR, guidePath);
+  const blocks = selectSolutionBlocks(fs.readFileSync(file, 'utf-8'));
+  const selected = blocks.find((s) => s.level === level);
+  if (!selected) throw new Error(`composeBlockSource: ${guidePath} selects no Level ${level} block.`);
+  const earlierLevels = blocks.filter((s) => s.level < level);
+  const shared = sharedDeclarations(selected.code, earlierLevels.map((s) => s.code));
+  if (!shared.length) return instrumented ?? selected.code;
+  const body = instrumented ?? selected.code;
+  const banner =
+    `// --- shared declarations from Level ${earlierLevels.map((s) => s.level).join('/')} ---\n` +
+    `// The guide writes "shared from Level 1" above code that uses the type without declaring it.\n` +
+    `// The tracer runs one block in isolation, so the declaration travels with it.\n` +
+    `// Declarations only — no Level 1 logic, so no step can come from outside this block.\n` +
+    `${shared.join('\n\n')}\n// --- end shared declarations ---\n`;
+  return banner + body;
 }
 
 /** Manifest entry + re-read source + instrumented code for one guide level, in one call. */
@@ -753,7 +813,19 @@ export function instrumentGuideBlock(guidePath, level, manifest = loadManifest()
     throw new Error(`instrumentGuideBlock: ${guidePath} L${level} is not in the manifest — regenerate it with \`node ${GENERATOR}\`.`);
   }
   const source = readBlockSource(guidePath, level);
-  return { entry, source, instrumented: instrumentBlock(source, entry) };
+  // Instrument the block AS WRITTEN — the blockHash is its identity and probe offsets are
+  // measured inside it (K5) — then carry any shared type declarations from an earlier level
+  // around the OUTSIDE. See composeBlockSource for why the prelude goes on last.
+  //
+  // `instrumented` keeps instrumentBlock's shape (code/probes/hash/...) so existing consumers
+  // are untouched; the runnable, prelude-carrying source is `runnable`.
+  const instrumented = instrumentBlock(source, entry);
+  return {
+    entry,
+    source,
+    instrumented,
+    runnable: composeBlockSource(guidePath, level, instrumented.code),
+  };
 }
 
 // ---------------------------------------------------------------------------
