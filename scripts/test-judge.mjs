@@ -1,7 +1,7 @@
 import { PROBLEMS, isPilotProblem, buildBundle } from '../api/_lib/problems.mjs';
 import { executeUserCode, parseVerdictEnvelope } from '../api/_lib/sandbox.mjs';
 import { signSession, verifySession, getSession, randomToken, appBaseUrl } from '../api/_lib/session.mjs';
-import { kvConfigured, readProgress, recordPass } from '../api/_lib/kv.mjs';
+import { kvConfigured, readProgress, recordPass, readPredictionEvents, recordPredictionEvents } from '../api/_lib/kv.mjs';
 import runHandler from '../api/judge/run.mjs';
 import loginHandler from '../api/auth/login.mjs';
 import callbackHandler from '../api/auth/callback.mjs';
@@ -490,10 +490,54 @@ function twoSum(nums, target) { return [0, 1]; }`;
         check(r.ok === false && r.done.length === 0, 'KV outage -> degraded empty');
         const w = await recordPass(78, 'two-sum');
         check(w.ok === false, 'write outage -> ok:false');
+        const pe = await readPredictionEvents(78);
+        check(pe.ok === false && pe.events.length === 0, 'prediction read outage -> degraded empty');
+        const pw = await recordPredictionEvents(78, [{ path: 'x', level: 3 }]);
+        check(pw.ok === false, 'prediction write outage -> ok:false');
       } finally {
         restoreFetch();
       }
     });
+  }
+
+  // ---- 18b. Dry-run prediction events (row 33) round-trip and cap ----
+  {
+    await withKvEnv(async () => {
+      const emu = makeKvEmulator();
+      mockFetch(emu.handler);
+      try {
+        const miss = await readPredictionEvents(91);
+        check(miss.ok && miss.events.length === 0, 'missing key -> no events');
+
+        const w1 = await recordPredictionEvents(91, { path: '05-hashmap/06-two-sum.md', level: 3, steps: 7 });
+        check(w1.ok === true, 'recordPredictionEvents writes');
+        const r1 = await readPredictionEvents(91);
+        check(r1.ok && r1.events.length === 1, 'one event round-trips', JSON.stringify(r1.events));
+        check(r1.events[0].path === '05-hashmap/06-two-sum.md' && r1.events[0].level === 3,
+          'event keeps its guide identity', JSON.stringify(r1.events[0]));
+
+        await recordPredictionEvents(91, [{ path: '05-hashmap/06-two-sum.md', level: 1 }]);
+        const r2 = await readPredictionEvents(91);
+        check(r2.events.length === 2, 'appends rather than replaces', `got ${r2.events.length}`);
+
+        const noop = await recordPredictionEvents(91, []);
+        check(noop.ok === true, 'empty batch is a no-op, not an error');
+
+        // The cap is the reason the key cannot grow forever; prove it holds.
+        const many = Array.from({ length: 520 }, (_, i) => ({ path: `g${i}.md`, level: 3 }));
+        await recordPredictionEvents(91, many);
+        const r3 = await readPredictionEvents(91);
+        check(r3.events.length === 500, 'event list capped at 500, oldest dropped', `got ${r3.events.length}`);
+        check(r3.events.at(-1).path === 'g519.md', 'newest event survives the cap', JSON.stringify(r3.events.at(-1)));
+
+        const keys = emu.seen.map((s) => s.key);
+        check(!keys.some((k) => String(k).includes('progress')), 'events do not share the progress key');
+      } finally {
+        restoreFetch();
+      }
+    });
+    const down = await readPredictionEvents(92);
+    check(down.ok === false && down.events.length === 0, 'KV without env -> explicit failure');
   }
 
   // ---- 19. run.mjs persists progress on full pass (mocked KV) ----
