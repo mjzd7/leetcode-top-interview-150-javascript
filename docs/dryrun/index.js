@@ -279,7 +279,30 @@ function guideMarkdown(id) {
  * @param {HTMLTableElement} table the live table this player sits under
  * @returns {HTMLElement}
  */
-function buildPlayer(plan, table) {
+const PREDICTION_KEY = 'lt150:dryrun-events';
+const PREDICTION_KEEP = 500;
+
+/**
+ * Row 33 (V12) — LOGGING ONLY: no score, nothing rendered, nothing that can fail a dry run.
+ * Its only job is to make trigger T-b evaluable — T-b fires on "≥1 guide repair attributable to
+ * the row-33 aggregate", so a gate whose trigger cannot be measured is not a gate. Plan
+ * decision 7: localStorage here, the aggregate in the existing `api/_lib/kv.mjs`.
+ */
+export function recordDryRunEvent(event) {
+  try {
+    const raw = window.localStorage.getItem(PREDICTION_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    const events = Array.isArray(list) ? list : [];
+    events.push(event);
+    window.localStorage.setItem(PREDICTION_KEY, JSON.stringify(events.slice(-PREDICTION_KEEP)));
+    return true;
+  } catch {
+    // Private mode, disabled storage, or a full quota. Telemetry must never break the page.
+    return false;
+  }
+}
+
+function buildPlayer(plan, table, onReachEnd = null) {
   const root = document.createElement('div');
   root.className = 'dr-player';
   root.setAttribute('data-dryrun-player', '');
@@ -304,6 +327,7 @@ function buildPlayer(plan, table) {
   const rows = table.tBodies[0] ? Array.from(table.tBodies[0].rows) : [];
   let step = 0;
   let timer = null;
+  let reachedEnd = false;
 
   const stop = () => {
     if (timer === null) return;
@@ -339,6 +363,13 @@ function buildPlayer(plan, table) {
     root.setAttribute('data-step', String(step));
     root.querySelector('[data-act="prev"]').disabled = step === 0;
     root.querySelector('[data-act="next"]').disabled = step === plan.steps - 1;
+
+    // Row 33 (V12): once per player, no score and nothing rendered. Reached-the-end is the
+    // only honest signal while the prediction UI stays trigger-gated (T-b, unfired).
+    if (!reachedEnd && step === plan.steps - 1) {
+      reachedEnd = true;
+      if (typeof onReachEnd === 'function') onReachEnd({ steps: plan.steps });
+    }
 
     // The row the animation is showing, marked on the table it came from. This is the
     // link between the picture and the row of numbers above it.
@@ -412,9 +443,10 @@ function buildPlayer(plan, table) {
  *
  * @param {HTMLElement} root the article container
  * @param {string} markdown the open guide's markdown
+ * @param {string} [guideId] the guide's path, recorded on prediction events (row 33)
  * @returns {{mounted: number, skipped: number, tables: number}}
  */
-export function mountPlayers(root, markdown) {
+export function mountPlayers(root, markdown, guideId = '') {
   const result = { mounted: 0, skipped: 0, tables: 0 };
   if (!root || typeof root.querySelectorAll !== 'function') return result;
 
@@ -448,7 +480,9 @@ export function mountPlayers(root, markdown) {
     const host = node.parentElement && node.parentElement.classList.contains('table-scroll')
       ? node.parentElement
       : node;
-    const player = buildPlayer(plan, node);
+    const player = buildPlayer(plan, node, (info) => {
+      recordDryRunEvent({ path: guideId, level: plan.level, steps: info.steps, at: Date.now() });
+    });
     host.insertAdjacentElement('afterend', player);
     node.setAttribute('data-dryrun', 'playing');
     result.mounted++;
@@ -462,7 +496,7 @@ function mountOpen() {
   if (!root) return;
   const id = (location.hash || '').replace(/^#/, '');
   if (!id) return;
-  mountPlayers(root, guideMarkdown(id));
+  mountPlayers(root, guideMarkdown(id), id);
 }
 
 /**
