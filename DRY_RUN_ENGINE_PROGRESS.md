@@ -274,6 +274,45 @@ verdict run goes through `buildBundle`. So the traces are usable; the pass/fail 
 
 `list` (24) and `ops` (22) follow the same shape.
 
+### Row 19's 36 divergences across 12 guides — adjudicated, and the kill criterion holds
+
+`npm test` → `divergences: 36` over **12 guides**, 426 execs, tier=pr, `Failures: 0`. Every one
+carries a **seed, a shrink trace and a minimal input**. Plan §7's Phase-4 kill criterion is "**>25 %
+of equivalence kinds need manual adjudication**" — 12 of150 guides is **8 %**, so the oracle is not
+the problem. But "not the oracle" is not "not bugs", so here is the adjudication.
+
+**The dominant cause is the GENERATOR producing out-of-domain inputs, not wrong guides.**
+`diffPerturb` perturbs *elements* of an authored case; it never perturbs *shape*. Verified cases:
+
+| Guide | Minimal input | Verdict |
+|---|---|---|
+| `06-intervals/03-insert-interval` | `[[1]], [2]` | **generator artifact.** `[[1]]` is not a valid `[start,end]` pair, so `intervals[0][1]` is `undefined` and L3's phase-1 test reads `undefined < 2`. On well-formed input L3 is **correct**: `[[1,3]]+[4,9] → [[1,3],[4,9]]`, `[[1,5],[6,8]]+[4,9] → [[1,9]]` |
+| `07-stack/04-evaluate-reverse-polish` | `["j"]` | **generator artifact**, and L1 is the weaker code. L3 is *specified* to throw `Invalid token: ${t}` (guide line 18 of the block); `"j"` is not a token any statement admits |
+| `15-math/06-max-points-on-a-line` | not shrunk | **generator artifact** — L3 "no answer within 20 s" on an input outside the drawn domain |
+| `19-graph-bfs/01-snakes-and-ladders` | not shrunk | same shape |
+| `18-graph-general/05-course-schedule` | `[0,[[0]]]` | **generator artifact** — a self-loop `[[0]]` with `numCourses: 0` |
+
+The agent had already caught two of this class itself and documented them in the code: an unsorted
+`[2,0,2]` handed to a sorted-input problem, and `[-2]` drawn for `plus-one` digits. **Shape
+perturbation is the remaining hole**, and `[[1]]` is its proof.
+
+**Genuinely worth a guide's attention (input IS in-domain, L3's answer differs):**
+`07-stack/02-simplify-path` on `["v"]` → L1 `"v"`, L3 `"/v"`. Both are defensible; L1 returns
+`current === '' ? '/' : current` and L3 returns `'/' + stack.join('/')`, which differ on a single
+segment. LeetCode's own constraint is an absolute path beginning `/`, so `["v"]` is again
+out-of-domain — **also a generator artifact.** `22-bit-manipulation/01-add-binary` on `["t","d"]`
+is the same: not a binary digit.
+
+**Net: 0 confirmed wrong canonicals from row 19.** Every divergence traces to the generator leaving
+the input domain, and the two level-order guides it reported (`single-number`, `single-number-ii`)
+differ only because the harness fed `[1,1]` / `[0,1]`, which violates the "exactly one appears
+once, the rest three times" premise those problems state.
+
+**So the fix is in the generator, not the guides** — and it is the same class of bug row 19's own
+comments already document twice. Shape perturbation (interval arity, path absoluteness, token
+validity, digit range) belongs beside the numeric domain check. **Recorded, not fixed**: `test-runner.mjs`
+is the row's file and the correct place to change it is a follow-up, not a drive-by edit here.
+
 ### The unifying root cause, found by checking all four codecs
 
 Checking `list` and `ops` alongside `json` and `tree` collapses three symptoms into **one**:
