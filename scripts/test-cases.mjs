@@ -42,12 +42,22 @@ import { stringify } from './lib/serialize.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const CASES_FILE = path.join(ROOT, 'catalog/cases.json');
-const ROSTER_FILE = path.join(ROOT, 'scratch/row3/syntax-only.json');
 const CATALOG_FILE = path.join(ROOT, 'catalog/problems.json');
 const BLOCKS_FILE = path.join(ROOT, 'build/blocks.json');
 
-/** Tranche A = the guides whose roster path sits in this directory. */
-const TRANCHE_PREFIX = '01-array-string/';
+// The roster is all 41 syntax-only guides. Tranche A (the 01-array-string/ 20) landed first
+// and scoped this to its own prefix; tranche B's 21 then showed up as 21 bogus
+// "EXTRA (not in this tranche)" rows. The roster was always the contract.
+//
+// Read from `catalog/cases.json`'s own `__meta.roster`, NOT from scratch/ — scratch/ is
+// gitignored, so a roster that lived only there made this verifier fail on a clean
+// checkout, which is exactly when a verifier matters.
+const cases = JSON.parse(fs.readFileSync(CASES_FILE, 'utf-8'));
+const roster = cases.__meta?.roster;
+if (!Array.isArray(roster) || roster.length === 0) {
+  console.error('catalog/cases.json __meta.roster is missing or empty — the coverage contract cannot be checked.');
+  process.exit(1);
+}
 
 const SENTINEL = '__CASES_RESULT__';
 
@@ -157,8 +167,6 @@ if (!fs.existsSync(CASES_FILE)) {
   process.exit(1);
 }
 
-const cases = JSON.parse(fs.readFileSync(CASES_FILE, 'utf-8'));
-const roster = JSON.parse(fs.readFileSync(ROSTER_FILE, 'utf-8')).filter((p) => p.startsWith(TRANCHE_PREFIX));
 const covered = Object.keys(cases).filter((k) => !k.startsWith('__'));
 
 const extra = covered.filter((p) => !roster.includes(p));
@@ -275,9 +283,9 @@ for (const rel of covered) {
   if (bad === 0) guidesOk++;
 }
 
-const coverageProblems = [...extra.map((p) => ['EXTRA (not in this tranche)', p]), ...missing.map((p) => ['MISSING (in this tranche)', p])];
+const coverageProblems = [...extra.map((p) => ['EXTRA (not on the 41-guide roster)', p]), ...missing.map((p) => ['MISSING (on the roster, no cases)', p])];
 
-console.log(`Roster (${TRANCHE_PREFIX} slice of scratch/row3/syntax-only.json): ${roster.length}`);
+console.log(`Roster (the 41 syntax-only guides, from catalog/cases.json __meta.roster): ${roster.length}`);
 console.log(`Covered by catalog/cases.json: ${covered.length}\n`);
 
 console.log('Per-guide results:');
