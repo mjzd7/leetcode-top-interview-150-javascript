@@ -20,6 +20,14 @@ Thumbs.db
 # guides, so committing it means every guide edit lands a second, 450-entry diff.
 build/
 
+# Full goldens are CI artifacts, not source (plan E32). Measured ~300 MB at 150 and
+# unbounded above that, versus a ~2 KB committed footprint per problem. Only the
+# trace HEAD is committed — `judge/traces/*.head.json`, which row 28 generates and which
+# carries the first/last step, stepCount, verdict and hash. Regenerate the full traces
+# with `node scripts/gen-traces.mjs`; diffing them in git is unreadable anyway.
+judge/traces/*.json
+!judge/traces/*.head.json
+
 # Generated web bundle (rebuilt by CI via `npm run build` and locally as needed)
 docs/curriculum-data.js
 # Generated retrieval index for the chat's search_guides tool — same deal, and 3MB
