@@ -136,7 +136,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 28 | `trace-head.json` per problem | §7 | pending | | |
 | 29 | V8 scan → repair thin tables | §7 | pending | | |
 | 30 | Wire `verify` + CI cache + time budget | §7 | **CI half done** | `159607d` | `pull_request` trigger added — **CI previously ran on `push:[main,master]` only, so every row committed to `DRY_RUN_ENGINE` was never checked once**, which voided the row's own "CI log shows the npm cache hit" criterion. `cache: 'npm'` added. `timeout-minutes: 15` — deliberately **not** sized to the measured ~53 s of steps (that fails a slow runner). Pages steps gated on `push`, verified by parsing all 13 steps. **`verify` wiring still owed.** |
-| 31 | Design pass: timing/contrast/keyboard | §7 | pending | | |
+| 31 | Design pass: timing/contrast/keyboard | §7 | **done** | `5630110` | **110 Playwright tests pass** across both viewports (was 100; +5 design-pass × 2 projects). axe-core (devDep, test-only) clean **inside the player**. **Found and fixed a real bug**: `scrollable-region-focusable` at 390px — `.viz-array.dr-array` overflows horizontally with no `tabindex`, so a keyboard user could not scroll it. Fixed at all 3 construction sites with `tabindex`/`role`/`aria-label`. Invisible at 1440px — exactly why F11 wants both viewports. |
 | 32 | "Unverified" = derived function | §7 | pending | | |
 | 33 | V12 logging-only prediction events | §7 | **done** | `ebe75e3` | `npm run test:judge` → **76 assertions, 0 failures** (was 64; **+12** for the event store). Player 40/0, validate 150/0. **Logging only** — no score, nothing rendered. Browser half writes localStorage; aggregate half is `readPredictionEvents`/`recordPredictionEvents` in the **existing** `kv.mjs` (K3 reuse), capped at 500 with the oldest dropped. Records **reached-the-end only** — correctness is deliberately not recorded, since nothing can know it. **No endpoint added**: the plan names none, and a route nobody calls is the surface P1 cuts. |
 
@@ -230,6 +230,44 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — row 31 done: a real accessibility bug, invisible at 1440px
+
+**110 Playwright tests pass** across both configured viewports (100 before; +5 design-pass tests ×
+2 projects). `axe-core` is clean **inside the dry-run player**.
+
+**The bug row 31 found is mine and was viewport-dependent.** axe's `scrollable-region-focusable`
+failed at **390px only**: `.viz-array.dr-array` overflows horizontally, and with no `tabindex` a
+keyboard user could not scroll it at all. Fixed at all three construction sites — the array
+primitive, the Tier-1/2 stage, and the Tier-2 overlay — with `tabindex="0"` + `role="group"` + an
+`aria-label`, so the region is both reachable and announced. **Invisible at 1440px**, which is
+precisely why plan F11 insists on both viewports rather than the one a developer is looking at.
+
+**Three pre-existing `serious` violations found and deliberately NOT adopted.** A whole-page axe
+run reports them; none is in `docs/dryrun/`:
+
+| Rule | Target | Where |
+|---|---|---|
+| `aria-hidden-focus` | `#ltcPanel` | chat widget (`docs/chat-widget.js`, last touched `71d9feb`) |
+| `color-contrast` | `.ltc-empty-privacy` | chat widget |
+| `scrollable-region-focusable` | `.code-wrap … > pre` | portal chrome |
+
+They are real and they predate this project. Fixing them inside a dry-run commit would bury another
+subsystem's a11y debt in someone else's change, and the chat widget carries **395 assertions** whose
+show/hide logic owns that `aria-hidden`. The axe run is therefore **scoped to the player**, and
+widening it is a one-word change once the debt is paid. **This is a deferral, not a pass** — the
+portal as a whole is not yet WCAG-clean, and this ledger says so.
+
+**Two of my own tests were wrong before the code was:**
+- Asserting a focus outline after programmatic `.focus()` tests nothing — `:focus-visible`
+  deliberately does not match it. That test failed against a *correct* player. It now navigates by
+  `Tab`, which is what a keyboard user does.
+- `prev` is `disabled` at step 0, and a disabled button is correctly not focusable. Asserted as
+  its own contract rather than "fixed".
+
+Contrast was not hand-rolled: axe's `color-contrast` rule resolves the real background through the
+ancestor chain, which is the part a hand-written WCAG ratio gets wrong on a page with translucent
+panels.
 
 ### 2026-10-02 — row 30's CI half: **CI was never running on this branch**
 
