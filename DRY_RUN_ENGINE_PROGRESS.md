@@ -138,7 +138,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 30 | Wire `verify` + CI cache + time budget | §7 | **CI half done** | `159607d` | `pull_request` trigger added — **CI previously ran on `push:[main,master]` only, so every row committed to `DRY_RUN_ENGINE` was never checked once**, which voided the row's own "CI log shows the npm cache hit" criterion. `cache: 'npm'` added. `timeout-minutes: 15` — deliberately **not** sized to the measured ~53 s of steps (that fails a slow runner). Pages steps gated on `push`, verified by parsing all 13 steps. **`verify` wiring still owed.** |
 | 31 | Design pass: timing/contrast/keyboard | §7 | pending | | |
 | 32 | "Unverified" = derived function | §7 | pending | | |
-| 33 | V12 logging-only prediction events | §7 | pending | | |
+| 33 | V12 logging-only prediction events | §7 | **done** | `ebe75e3` | `npm run test:judge` → **76 assertions, 0 failures** (was 64; **+12** for the event store). Player 40/0, validate 150/0. **Logging only** — no score, nothing rendered. Browser half writes localStorage; aggregate half is `readPredictionEvents`/`recordPredictionEvents` in the **existing** `kv.mjs` (K3 reuse), capped at 500 with the oldest dropped. Records **reached-the-end only** — correctness is deliberately not recorded, since nothing can know it. **No endpoint added**: the plan names none, and a route nobody calls is the surface P1 cuts. |
 
 **Gated — do not build unprompted.**
 
