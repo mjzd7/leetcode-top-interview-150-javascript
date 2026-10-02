@@ -107,8 +107,8 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 0 | `audit-curriculum.mjs` pins every count | §7 | **done** | `633931e` | `npm run audit` → 150 guides / 450 solution blocks / 109+41 coverage, 16 DRIFT rows printed, exit 0. `node scripts/audit-curriculum.mjs --check` → 16 passed, 0 failed. `selectSolutionBlocks()` exported for rows 4/7/21. |
 | 0b | `guide-quality` rubric (`book-to-skill`) | §7 | **done** | `2e7c4b9` | `docs/rubrics/guide-quality.md` (323 lines) + `npm run audit --scores` → **150 scores, mean 96.4, min 80, max 100 (96 guides)**; bands reference 96 / sound 44 / incomplete-evidence 10 / draft 0. Thin-table cross-check: the 23 thin-table guides score **9.1/15** on the depth component vs 15/15 for the other 127, **23/23 below the median**. **Deliberately NO gate, NO threshold, exit 0** — row 0b is `[Y]` and the gate belongs to T1. |
 | 1 | `catalog/problems.json`, 150 entries | §7 | **done** | `1e2c9a4` | `npm run gen:catalog` → **150 entries, 150 unique paths, all exist on disk** (keyed by `path` per E30). Difficulty 40/92/18 E/M/H · codec `json` 101, `tree` 20, `list` 13, `graph` 9, `ops` 7 — **5 implemented codecs only, no 6th** · equivalence `exact` 123, `ops-terminal` 15, `order-insensitive` 9, `int-with-tolerance` 2, `multiset` 1. **`lcId` is `null` for all 150** — see §1.2. |
-| 2 | Drop `fns` via `sg` | §7 | **agent no-op** | — | First attempt returned in 3m43s having edited **nothing**: `test-runner.mjs` byte-identical to HEAD, no `sg` rule added, all 56 `fns` keys intact. It DID establish the facts: `fns` is an **array** `[l1,l2,l3]` not an object, the split is **56/53** (not 81/28), and all 56 arrays equal `[targetFn L1,L2,L3]` with **0 mismatches**. Re-run in flight. |
-| 3 | **41 → 0 syntax-only** | §7 | pending | | |
+| 2 | Drop `fns` via `sg` | §7 | **done** | `0ed65d4` | **86 insertions / 70 deletions**, `grep -c "fns:"` → **0**. Done by an ast-grep rule (`kind: pair` + scoped regex — `fns: [...]` at statement position parses as a **labelled statement**, so a bare pattern matches nothing). `npm test` → **828 assertions unchanged, 0 failures**; validate 150/0. 53 `script` entries untouched. Manifest-missing fails naming `node scripts/gen-blocks.mjs`. |
+| 3 | **41 → 0 syntax-only** | §7 | **cases done, splice pending** | `47ef4fe` | `catalog/cases.json` → **41/41 covered, 0 mismatches, 0 unverifiable**. Two tranches (20 + 21). Roster now committed as `__meta.roster` (was gitignored scratch). **The splice into `RUNTIME_TESTS` is still owed** — `npm test` must reach `syntax-only: 0`. |
 | 4 | Validator rejects async/generator/eval | §7 | **done** | `0aceb10` | `npm run test:validate` → 23 assertions, 0 failures (E16 await/generator/yield, E17 eval/new-Function, K7 missing-L3, prose-`await` control). `npm run validate` → 150 scanned, **0 errors, 0 warnings**. Scan is `sg` rules in `.ast-grep/rules/solution-block-sync.yml`; missing `sg`/rules ⇒ `SOLUTION_SCAN_UNAVAILABLE`, unparseable block ⇒ error. |
 | 5 | Envelope v1.1 schema + validator | §7 | **done** | `b3d44c1` | `npm run test:envelope` → **129 assertions, 0 failures**; 7 bad fixtures rejected by name across I1–I7 (+10 in-test mutations), good fixture exits 0. `docs/trace-schema.json` documents each field's meaning; caps taken from `sandbox.mjs` (1 MB / 3 s / 16 MB), not asserted. **Freeze point is row 13.** |
 | 6 | Canonical serializer + 9 round-trips | §7 | **done** | `aa6fa3a` | `npm run test:serialize` → E1–E9, 9 cases, 0 failures, exit 0. Compared via `jq -S .` (plan §0.2), not `deepEqual`. Exports `serialize`/`stringify`/`deserialize`/`MAX_DEPTH`. |
@@ -230,6 +230,32 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — row 2 delivered on retry; all 41 guides have cases
+
+- **Row 2** (`0ed65d4`) — the retry edited the file: 86 insertions / 70 deletions, **0 `fns`
+  keys left**, and critically **`npm test` still reports exactly 828 assertions with 0
+  failures**. That number not moving was the entire risk, and it was verified before the
+  deletion, not after.
+- **Row 3** (`47ef4fe`) — **41/41 covered, 0 mismatches.** Tranche B completed the roster.
+  Two defects found in the *verifier* while checking it, both fixed rather than tolerated:
+  it was scoped to tranche A's `01-array-string/` prefix (so tranche B's 21 entries showed as
+  21 bogus "EXTRA" rows — the data was right, the check was stale), and its roster lived only
+  in gitignored `scratch/`, which would have failed on a clean checkout. Roster is now
+  committed as `__meta.roster`.
+- **Row 0's self-check** (`7b58219`) — row 2 invalidated the invariant `fns+cases + script ===
+  keys`. Replaced with two **stronger** checks: every entry is script- or cases-style (which
+  proves the 56 migrated entries resolve names from the manifest), and no entry declares both
+  `fns` and `script`. DRIFT 16 → 14; `--check` now **17 assertions, 0 failed**.
+
+**Kill criterion: 0 wrong canonicals of 41.** Not close to the >15 halt. Verified twice —
+tranche A's harness compares executed output against independently authored expectations
+(structurally non-tautological), and the hardest case's provenance traces to the guide's own
+Level 3 dry-run table.
+
+**Still owed on row 3:** the splice. The 41 entries exist in `catalog/cases.json` but are not
+yet in `RUNTIME_TESTS`, so `npm test` still says `syntax-only: 41`. That is one commit away
+and is the next thing to do.
 
 ### 2026-10-02 — wave 4: rows 9, 10, 23 done; row 2 was a no-op
 
