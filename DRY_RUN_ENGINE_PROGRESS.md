@@ -112,8 +112,8 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 4 | Validator rejects async/generator/eval | §7 | **done** | `0aceb10` | `npm run test:validate` → 23 assertions, 0 failures (E16 await/generator/yield, E17 eval/new-Function, K7 missing-L3, prose-`await` control). `npm run validate` → 150 scanned, **0 errors, 0 warnings**. Scan is `sg` rules in `.ast-grep/rules/solution-block-sync.yml`; missing `sg`/rules ⇒ `SOLUTION_SCAN_UNAVAILABLE`, unparseable block ⇒ error. |
 | 5 | Envelope v1.1 schema + validator | §7 | **done** | `b3d44c1` | `npm run test:envelope` → **129 assertions, 0 failures**; 7 bad fixtures rejected by name across I1–I7 (+10 in-test mutations), good fixture exits 0. `docs/trace-schema.json` documents each field's meaning; caps taken from `sandbox.mjs` (1 MB / 3 s / 16 MB), not asserted. **Freeze point is row 13.** |
 | 6 | Canonical serializer + 9 round-trips | §7 | **done** | `aa6fa3a` | `npm run test:serialize` → E1–E9, 9 cases, 0 failures, exit 0. Compared via `jq -S .` (plan §0.2), not `deepEqual`. Exports `serialize`/`stringify`/`deserialize`/`MAX_DEPTH`. |
-| 7 | `gen-blocks.mjs` → `blocks.json` | §7 | pending | | |
-| 8 | RED: golden differ catches a mutation | §7 | pending | | |
+| 7 | `gen-blocks.mjs` → `blocks.json` | §7 | **done** | `32fdb5f` | `node scripts/gen-blocks.mjs --verify` → **450/450 hashes re-derived from source, 0 follow-up fences selected, 0 orphans on disk**, 150/150/150 per level. `regionTable` verified on `08-linked-list/11-lru-cache.md` L3: `LRUCache` depth 0 + its 5 methods, `DLinkedNode` helper suppressed at depth 1 (**E11/E13**). **102 blocks `selfRecursive`** for row 20. `targetFn` null on **0/450**. `build/` untracked. |
+| 8 | RED: golden differ catches a mutation | §7 | **done** | `9b3fbbe` | `npm run test:trace` → **59 assertions, 0 failures**; 6 fixtures all generated from `expected.json` via `--mutate` (no hand-drift). Mutated step → **named step diff by index + field**; stale `blockHash` → **E19 named failure**, categorically separate. Truncation vs degrade kept distinct (K2). Row 13 flips this green and freezes v1.1. |
 | 9 | Runtime instrumenter (Acorn) | §7 | pending | | |
 | 10 | `trace-runner.mjs` region gate + chunking | §7 | pending | | |
 | 11 | Byte budget + degrade-to-`diff` | §7 | pending | | |
@@ -122,12 +122,12 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 14 | V2 replay determinism | §7 | pending | | |
 | 15 | `gen-traces.mjs` → 150 goldens | §7 | pending | | |
 | 16 | `docs/traces/*.json` static copies | §7 | pending | | |
-| 17 | Codec registry + 5 codecs | §7 | pending | | |
-| 18 | Widen or delete `problems.mjs` | §7 | pending | | |
+| 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
+| 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
 | 19 | V4 differential harness | §7 | pending | | |
 | 20 | V11 region isolation + non-vacuity | §7 | pending | | |
 | 21 | Tier-1 table player | §7 | **done** | `f4e7a3d` | `docs/dryrun/table.js` → **450 tables parsed across 150 guides**; thin = **27 tables / 23 guides, matching row 0's list exactly** (reconciled by me, diff empty). Dependency-free, browser-safe: **no `node:`/`fs`/`require`**, exports `parseGuide`/`parseAll`/`findThinTables`/`THIN_ROW_LIMIT`. `$…$` cells preserved verbatim. |
-| 22 | `array` primitive — **first pixels** | §7 | pending | | |
+| 22 | `array` primitive — **first pixels** | §7 | **done** | `2f2a7b6` | `npm run test:dryrun-player` → **40 checks, 0 failures**. Playwright passes at **both** configured viewports (1440×900 + Pixel 7); screenshots `scratch/dryrun/*.png` (untracked). Spec clicks forward ×2 asserting the array **changed**, then back. All 3 levels animate (decision 2). Thin tables say so rather than rendering an empty frame. |
 | 23 | Tier-1 presets: stack/matrix/window/bits | §7 | pending | | |
 | 24 | Tier-2 presets + overlay | §7 | pending | | |
 | 25 | One table-driven Playwright spec | §7 | pending | | |
@@ -230,6 +230,31 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — wave 3: rows 7, 8, 17, 18, 22 done
+
+- **Row 7** (`32fdb5f`) — 450-block manifest. `--verify` re-derives 450/450 from source,
+  0 follow-up fences, 0 orphans. `targetFn` resolved on **0 nulls**. The `regionTable`
+  is the row: on the LRU-cache guide `LRUCache` sits at depth 0 with its five methods
+  and the `DLinkedNode` helper is suppressed at depth 1, which is exactly why plan
+  finding U3 demanded a static table — a runtime depth counter would have emptied
+  every recursive trace and V11 would have passed vacuously.
+- **Row 8** (`9b3fbbe`) — golden differ reports the first differing step by index and
+  field. E19 gets its own category: a stale `blockHash` says "regenerate", not
+  "450 steps differ".
+- **Row 17** (`81f0ee8`) — 5 codecs, no default branch, covering the catalog 150/150.
+- **Row 18** (`3af029d`) — the deletion row, and it deleted. `PILOT_SLUGS` and the
+  `['json','tree']` whitelist are both gone; judge specs now declare only their cases.
+- **Row 22** (`2f2a7b6`) — **first pixels.** A two-sum table steps as a four-cell array
+  with working controls, at both configured viewports. Screenshots retained.
+
+All five verified by hand before commit. Regression held at every commit:
+`npm run validate` 150/0 errors · `npm test` 150 files / 109 runtime / 41 syntax-only /
+450 blocks / 828 assertions / 0 failures · `npm run test:judge` 64/0 · `audit --check` 16/0.
+
+**Note for row 2:** `blocks.json` now resolves `fnName` for all 450 blocks with 0 nulls,
+so dropping `fns` from `RUNTIME_TESTS` has a source to resolve against. Measured split
+remains **56 `fns`+`cases` / 53 `script`**, not the plan's 81/28.
 
 ### 2026-10-02 — rows 6 and 4 done
 
