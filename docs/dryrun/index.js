@@ -312,7 +312,7 @@ function buildPlayer(plan, table, onReachEnd = null) {
   root.innerHTML =
     `<div class="dr-head"><span class="dr-title">Level ${plan.level || '—'} · array</span>` +
     `<span class="dr-col">${plain(plan.label)}</span></div>` +
-    '<div class="viz-array dr-array"><div class="viz-grid"></div></div>' +
+    '<div class="viz-array dr-array" tabindex="0" role="group" aria-label="Array state at this step"><div class="viz-grid"></div></div>' +
     '<div class="dr-bar">' +
     `<button type="button" class="dr-btn" data-act="prev" aria-label="Previous step">${ICON_PREV}</button>` +
     `<button type="button" class="dr-btn" data-act="play" aria-label="Play the dry run" aria-pressed="false">${ICON_PLAY}</button>` +

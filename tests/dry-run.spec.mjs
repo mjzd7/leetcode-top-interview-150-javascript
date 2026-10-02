@@ -768,3 +768,127 @@ test.describe('Tier 2 screenshots', () => {
     });
   }
 });
+/**
+ * Row 31 — design pass: accessibility, keyboard, contrast and motion, on the shipped player.
+ *
+ * Contrast is NOT hand-rolled here. axe-core's colour-contrast rule resolves the real
+ * background through the ancestor chain, which is the part a hand-rolled ratio gets wrong on a
+ * page with translucent panels. So one tool answers contrast and every other WCAG rule at once.
+ *
+ * `:focus-visible` on `.dr-btn` and `.dr-range` and the reduced-motion guard already exist in
+ * `docs/index.html` (written by rows 22/23). This row's contribution is PROOF that they work:
+ * a style nobody exercises is a style nobody knows is broken.
+ */
+test.describe('design pass (row 31)', () => {
+  test('axe-core reports no violations inside the dry-run player', async ({ page }) => {
+    await openGuide(page);
+    await expect(page.locator(player).first()).toBeVisible();
+
+    await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+
+    // Scoped to the player, and deliberately so. A whole-page scan reports three `serious`
+    // violations that all predate this project and sit outside docs/dryrun/ — `aria-hidden-focus`
+    // and a contrast miss in the chat widget (`docs/chat-widget.js`), and a scrollable code block
+    // without keyboard access in the portal chrome. Adopting them here would put another
+    // subsystem's a11y debt inside a dry-run commit; they are recorded in the progress ledger
+    // as a finding instead. Widening the scope is a one-word change once they are fixed.
+    const players = await page.locator(player).all();
+    const violations = [];
+    for (const [index, node] of players.entries()) {
+      // eslint-disable-next-line no-undef
+      const run = await node.evaluate(async (el) => globalThis.axe.run(el, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] },
+      }));
+      for (const v of run.violations) {
+        violations.push({
+          id: v.id,
+          impact: v.impact,
+          player: index,
+          target: v.nodes[0]?.target?.join(' ') ?? '',
+          help: v.help,
+        });
+      }
+    }
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('every player control is keyboard reachable and labelled', async ({ page }) => {
+    await openGuide(page);
+    const first = page.locator(player).first();
+
+    // `prev` is `disabled` at step 0 and a disabled button is correctly not focusable — that is
+    // the control working, not failing. Asserted as its own contract so the distinction survives
+    // a future edit that "helpfully" focuses it anyway.
+    await expect(first.locator('[data-act="prev"]')).toBeDisabled();
+    await first.locator('[data-act="next"]').click();
+    await expect(first.locator('[data-act="prev"]')).toBeEnabled();
+
+    // Reach the controls with the KEYBOARD, not `.focus()`. `:focus-visible` deliberately does
+    // not match programmatic focus, so asserting an outline after `.focus()` tests nothing —
+    // it fails against a correct player and passes against a broken one.
+    await first.locator('[data-act="prev"]').focus();
+    await page.keyboard.press('Tab');
+    await expect(first.locator('[data-act="play"]')).toBeFocused();
+
+    for (const act of ['play', 'next']) {
+      await expect(first.locator(`[data-act="${act}"]`)).toBeFocused();
+      // A keyboard-focused control must show a visible ring, or a keyboard user cannot see
+      // where they are.
+      const outline = await first.locator(`[data-act="${act}"]`).evaluate((el) => {
+        const s = getComputedStyle(el);
+        return { width: s.outlineWidth, style: s.outlineStyle };
+      });
+      expect(outline.style, `${act} has no outline style`).not.toBe('none');
+      expect(parseFloat(outline.width), `${act} outline is invisible`).toBeGreaterThan(0);
+      if (act !== 'next') await page.keyboard.press('Tab');
+    }
+
+    await page.keyboard.press('Tab');
+    await expect(first.locator('.dr-range')).toBeFocused();
+
+    await first.locator('.dr-range').focus();
+    await expect(first.locator('.dr-range')).toBeFocused();
+
+    const name = await first.locator('[data-act="play"]').getAttribute('aria-label');
+    expect(name).toBeTruthy();
+    await first.locator('[data-act="play"]').focus();
+    await page.keyboard.press('Enter');
+    await expect(first.locator('[data-act="play"]')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('the scrubber is operable from the keyboard alone', async ({ page }) => {
+    await openGuide(page);
+    const first = page.locator(player).first();
+    const range = first.locator('.dr-range');
+
+    await range.focus();
+    await range.fill('0');
+    await page.keyboard.press('ArrowRight');
+    await expect(first).toHaveAttribute('data-step', '1');
+    await page.keyboard.press('ArrowLeft');
+    await expect(first).toHaveAttribute('data-step', '0');
+  });
+
+  test('reduced motion disables the step animation', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openGuide(page);
+    const first = page.locator(player).first();
+
+    await first.locator('[data-act="next"]').click();
+    await expect(first).not.toHaveAttribute('data-step', '0');
+
+    const animated = await first.locator('.viz-cell.is-active').evaluate((el) => getComputedStyle(el).animationName);
+    expect(animated).toBe('none');
+  });
+
+  test('motion IS present without the reduced-motion preference', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await openGuide(page);
+    const first = page.locator(player).first();
+    await first.locator('[data-act="next"]').click();
+    await expect(first).not.toHaveAttribute('data-step', '0');
+
+    const animated = await first.locator('.viz-cell.is-active').evaluate((el) => getComputedStyle(el).animationName);
+    expect(animated).not.toBe('none');
+  });
+});
