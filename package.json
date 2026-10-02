@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "validate": "node scripts/validate-guide.mjs",
+    "audit": "node scripts/audit-curriculum.mjs",
     "build": "node scripts/build-site.mjs",
     "test": "node scripts/test-runner.mjs",
     "test:judge": "node scripts/test-judge.mjs",
