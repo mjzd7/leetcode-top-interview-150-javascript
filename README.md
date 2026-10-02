@@ -7,6 +7,7 @@ Crack MAANG JavaScript interviews with **150 problems, each solved 3 ways** — 
 ![150 guides](https://img.shields.io/badge/guides-150-C8FA4B) ![JavaScript](https://img.shields.io/badge/language-JavaScript_ES2024-F7DF1E) ![tests](https://img.shields.io/badge/assertions-828-34D399) ![license](https://img.shields.io/badge/license-MIT-8B94A7)
 
 > Stats provenance: guide count from the curriculum table below (sums to 150); assertion count from `npm test`. Re-run both before editing this file.
+> Every curriculum count — guides, fences, dry-run tables, coverage — is measured by `scripts/audit-curriculum.mjs`: run `npm run audit`.
 
 ## What's inside
 
