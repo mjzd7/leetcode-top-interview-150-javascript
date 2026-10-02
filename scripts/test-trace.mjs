@@ -1346,6 +1346,29 @@ async function main() {
       `misShaped said [${misShaped(realHead, 'first')}] on an unmodified head`);
 
     console.log(`S15 head: ${headNames.length} heads · mean ${Math.round(headBytes / headNames.length)}B · max ${headMax.bytes}B (${headMax.file}) · over ${HEAD_BYTE_CAP}B cap: ${oversized.length}`);
+
+    // ---- S16 · row 15 — a tree target's arity must survive the harvest ----
+    // The spy's level-order preference exists so `maxDepth(arrayToTree([…]))` records the
+    // level-order array the codec can marshal instead of a live node graph. It was
+    // first-wins, so a target taking a SECOND tree argument lost it:
+    // `isSameTree(arrayToTree(A), arrayToTree(B))` recorded `[A]` and called
+    // `isSameTree(A, undefined)` — "cannot read property 'val' of undefined". Same for the
+    // scalar second argument of `kthSmallest(arrayToTree([…]), 1)`, which lost the `k`.
+    // Two named guides, because a gate that names the two it fixed is falsifiable and one
+    // that names all 12 tree failures cannot go green until the other mechanisms land.
+    const ARITY_GUIDES = [
+      ['09-binary-tree-general__02-same-tree', 'isSameTree(p, q) takes two trees'],
+      ['11-binary-search-tree__02-kth-smallest-element', 'kthSmallest(root, k) takes a tree and an int'],
+    ];
+    for (const [stem, why] of ARITY_GUIDES) {
+      const g = names.find((n) => n.startsWith(`${stem}.L3.json`));
+      const golden = g ? readGolden(g) : null;
+      check(golden !== null && golden.verdict.failed === 0,
+        `S16 arity: ${stem} L3 passes every case — ${why}`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed}${golden.verdict.failed ? ` — first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '').split('\n')[0]}` : ''}`
+          : `no golden named ${stem}.L3.json — run \`npm run gen:traces\``);
+    }
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
