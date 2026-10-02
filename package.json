@@ -13,6 +13,8 @@
     "test:validate": "node scripts/test-validate.mjs",
     "test:envelope": "node scripts/test-envelope.mjs",
     "gen:catalog": "node scripts/gen-catalog.mjs",
+    "gen:traces": "node scripts/gen-traces.mjs",
+    "test:gen-traces": "node scripts/test-gen-traces.mjs",
     "test:chat": "node scripts/test-chat.mjs",
     "test:chat:live": "node scripts/test-chat-live.mjs",
     "test:e2e": "playwright test",
