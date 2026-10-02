@@ -287,12 +287,20 @@ FUNCTION groupAnagrams(strs):
 ```
 
 ### Step-by-Step Dry Run
-`strs = ["bat", "tab"]`
+`strs = ["eat", "tea", "tan", "ate", "nat", "bat"]`
+
+<!-- ponytail: the real key is 26 `#n` fields (100 chars); the `…` cells show only the
+     three non-zero buckets so the row fits a table. Raise to the full key when a reader
+     needs to hash two keys by hand. -->
 
 | String | 26-Bucket Tally | Serialized Hash Key | Action on Map |
 | :--- | :--- | :--- | :--- |
-| `"bat"` | `a:1, b:1, t:1, others:0` | `"#1#1#0...#1...#0"` | Create group: `[ "bat" ]` |
-| `"tab"` | `a:1, b:1, t:1, others:0` | `"#1#1#0...#1...#0"` | Append to group: `[ "bat", "tab" ]` |
+| `"eat"` | `a:1, e:1, t:1, others:0` | `"#1#0#0#0#1#…#1#…#0"` | `map.get(key)` = `undefined` — create group `[ "eat" ]` |
+| `"tea"` | `a:1, e:1, t:1, others:0` | `"#1#0#0#0#1#…#1#…#0"` | `map.get(key)` = `[ "eat" ]` — append `[ "eat", "tea" ]` |
+| `"tan"` | `a:1, n:1, t:1, others:0` | `"#1#0#…#1#…#1#…#0"` | New key — create group `[ "tan" ]` |
+| `"ate"` | `a:1, e:1, t:1, others:0` | `"#1#0#0#0#1#…#1#…#0"` | `map.get(key)` = `[ "eat", "tea" ]` — append `[ "eat", "tea", "ate" ]` |
+| `"nat"` | `a:1, n:1, t:1, others:0` | `"#1#0#…#1#…#1#…#0"` | `map.get(key)` = `[ "tan" ]` — append `[ "tan", "nat" ]` |
+| `"bat"` | `a:1, b:1, t:1, others:0` | `"#1#1#0#…#1#…#0"` | New key — create `[ "bat" ]`; `i === 6` ends the loop, `return Array.from(map.values())` |
 
 ### Modern JavaScript Implementation
 ```javascript
