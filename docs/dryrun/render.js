@@ -1744,6 +1744,9 @@ const setText = (node, text) => {
 function buildStage(preset, plan) {
   const stage = el('div', 'viz-array dr-array');
   stage.setAttribute('data-preset-stage', preset);
+  stage.setAttribute('tabindex', '0');
+  stage.setAttribute('role', 'group');
+  stage.setAttribute('aria-label', `${preset} state at this step`);
   const grid = el('div', 'viz-grid');
   const row = el('div', 'viz-row');
   stage.appendChild(grid);
@@ -2212,6 +2215,9 @@ function buildOverlay(overlay, plan) {
   const stage = el('div', 'viz-array dr-array');
   stage.setAttribute('data-preset-stage', overlay);
   stage.setAttribute('data-overlay', overlay);
+  stage.setAttribute('tabindex', '0');
+  stage.setAttribute('role', 'group');
+  stage.setAttribute('aria-label', `${overlay} overlay at this step`);
   stage.style.width = '100%';
   const grid = el('div', 'viz-grid');
   const row = el('div', 'viz-row');
