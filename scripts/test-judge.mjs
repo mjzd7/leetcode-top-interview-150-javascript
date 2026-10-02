@@ -597,6 +597,153 @@ function twoSum(nums, target) { return [0, 1]; }`;
     );
   }
 
+  // ---- 22. the driver's four mechanisms, one per codec ----------------------------
+  //
+  // These are the four shapes the old `if (__CODEC__ === 'tree')` branch could not express,
+  // and each one is a REAL guide's canonical L3 signature — not a synthetic toy. Measured on
+  // the pre-fix driver: 139 of 450 goldens recorded `verdict.passed === 0`, 130 of them with
+  // no `error` at all — silently wrong, because the verdict came from this driver.
+  //
+  // Every fixture below is its own inverse arm too: each asserts the CORRECT solution passes
+  // AND the wrong one fails, so a driver that passed everything would fail here.
+  const MECHANISMS = [
+    {
+      label: 'json / in-place mutator',
+      // 01-array-string/01-merge-sorted-array L3: no `return` — the answer is the mutated arg.
+      codec: 'json',
+      fnName: 'merge',
+      tests: [{ name: 'two sorted halves', args: [[1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3], expected: [1, 2, 2, 3, 5, 6] }],
+      good: `function merge(nums1, m, nums2, n) {
+        let i = m - 1, j = n - 1, k = m + n - 1;
+        while (j >= 0 && k >= 0) {
+          if (i >= 0 && nums1[i] > nums2[j]) nums1[k--] = nums1[i--];
+          else nums1[k--] = nums2[j--];
+        }
+      }`,
+      bad: `function merge(nums1, m, nums2, n) { nums1.length = 0; }`,
+    },
+    {
+      label: 'tree / scalar return',
+      // 09-binary-tree-general/01-maximum-depth L3: returns the NUMBER 3. Encoding that
+      // through `tree` yields `[null]`, so the old driver compared `[null]` with `3`.
+      codec: 'tree',
+      fnName: 'maxDepth',
+      tests: [{ name: 'balanced depth 3', args: [[3, 9, 20, null, null, 15, 7]], expected: 3 }],
+      good: `function maxDepth(root) {
+        if (root === null) return 0;
+        return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
+      }`,
+      bad: `function maxDepth(root) { return root === null ? 0 : [null]; }`,
+    },
+    {
+      label: 'tree / node return',
+      // The same codec must still ENCODE a value it owns: this arm fails if `owns` is dropped.
+      codec: 'tree',
+      fnName: 'invertTree',
+      tests: [{ name: 'full mirror', args: [[4, 2, 7, 1, 3, 6, 9]], expected: [4, 7, 2, 9, 6, 3, 1] }],
+      good: `function invertTree(root) {
+        if (root === null) return root;
+        const tmp = root.left;
+        root.left = invertTree(root.right);
+        root.right = invertTree(tmp);
+        return root;
+      }`,
+      bad: `function invertTree(root) { return root; }`,
+    },
+    {
+      label: 'list / ListNode both ways',
+      // 08-linked-list/02-add-two-numbers L3: ListNode in, ListNode out.
+      codec: 'list',
+      fnName: 'addTwoNumbers',
+      tests: [{ name: '342 + 465', args: [[2, 4, 3], [5, 6, 4]], expected: [7, 0, 8] }],
+      good: `function addTwoNumbers(l1, l2) {
+        const dummy = { val: 0, next: null };
+        let cur = dummy, carry = 0;
+        while (l1 || l2 || carry) {
+          const sum = (l1 ? l1.val : 0) + (l2 ? l2.val : 0) + carry;
+          cur.next = { val: sum % 10, next: null };
+          carry = Math.floor(sum / 10);
+          cur = cur.next;
+          if (l1) l1 = l1.next;
+          if (l2) l2 = l2.next;
+        }
+        return dummy.next;
+      }`,
+      bad: `function addTwoNumbers(l1, l2) { return l1; }`,
+    },
+    {
+      label: 'ops / class target',
+      // 01-array-string/12-insert-delete-getrandom-o1 L3: `new RandomizedSet()`, which the
+      // old driver reached with `.apply` -> "class constructors must be invoked with 'new'".
+      // `expected` is the instance's OWN FIELDS, and it carries the constructor's argument,
+      // so a pass proves `Reflect.construct(FN, args)` ran the constructor WITH the harvested
+      // args rather than `Reflect.construct(FN, [])`.
+      codec: 'ops',
+      fnName: 'RandomizedSet',
+      tests: [{ name: 'capacity is remembered', args: [512], expected: { capacity: 512 } }],
+      good: `class RandomizedSet {
+        constructor(capacity) { this.capacity = capacity; }
+        insert() { return true; }
+      }`,
+      // A plain function of the same name must NOT be constructed — the driver picks the call
+      // form from the target itself, not from the codec.
+      bad: `function RandomizedSet(capacity) { this.capacity = -1; }`,
+    },
+  ];
+
+  for (const m of MECHANISMS) {
+    const run = async (code) => {
+      const exec = await executeUserCode(buildBundle({
+        userCode: code, fnName: m.fnName, codec: m.codec, tests: m.tests,
+      }), { timeoutMs: 3000 });
+      return { exec, env: parseEnvelope(exec) };
+    };
+    const { exec: goodExec, env: goodEnv } = await run(m.good);
+    check(
+      goodExec.ok && goodEnv && goodEnv.failed === 0 && goodEnv.passed === m.tests.length && !goodEnv.error,
+      `driver mechanism: ${m.label} — the correct solution passes`,
+      JSON.stringify(goodEnv),
+    );
+    const { exec: badExec, env: badEnv } = await run(m.bad);
+    check(
+      badExec.ok && badEnv && badEnv.failed > 0,
+      `driver mechanism: ${m.label} — the wrong solution fails`,
+      JSON.stringify(badEnv),
+    );
+    // A class target must never reach the sandbox as an `.apply`. This is the exact error the
+    // pre-fix driver produced for every `ops` guide, and it is the one failure mode a wrong
+    // fix could reintroduce while still passing everything above.
+    check(
+      !/without 'new'|must be invoked with/.test(JSON.stringify(goodEnv ?? {})),
+      `driver mechanism: ${m.label} — the correct solution raised no class-invocation error`,
+      JSON.stringify(goodEnv),
+    );
+  }
+
+  // ---- 23. the driver carries the registry, and refuses outside it -----------------
+  {
+    const src = buildBundle({ userCode: 'function f() { return 1; }', fnName: 'f', codec: 'json', tests: [] });
+    check(!/__treeToArray__\(/.test(src) || /arrayToTree/.test(src), 'driver emits the registry source');
+    check(src.includes('Reflect.construct'), 'driver can construct a class target');
+    check(!/__CODEC__ === 'tree'/.test(src), "driver has no hard-coded per-codec branch left");
+
+    let threw = null;
+    try {
+      buildBundle({ userCode: '', fnName: 'f', codec: 'nope', tests: [] });
+    } catch (e) {
+      threw = e.name;
+    }
+    check(threw === 'CodecNotImplementedError', 'an unimplemented codec throws at BUILD time', String(threw));
+
+    let eqThrew = null;
+    try {
+      buildBundle({ userCode: '', fnName: 'f', codec: 'json', equivalence: 'sort-of', tests: [] });
+    } catch (e) {
+      eqThrew = e.message;
+    }
+    check(/unknown equivalence kind/.test(String(eqThrew)), 'an unknown equivalence kind throws at BUILD time', String(eqThrew));
+  }
+
   console.log(`\n========================================`);
   console.log(`Assertions: ${assertions} | Failures: ${failures}`);
   console.log(`========================================\n`);

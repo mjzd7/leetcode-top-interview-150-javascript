@@ -108,7 +108,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 import { executeUserCode } from './sandbox.mjs';
-import { PROBLEMS, buildBundle } from './problems.mjs';
+import { PROBLEMS, buildBundle, catalogFor } from './problems.mjs';
 import { getCodec } from './codecs.mjs';
 import { serialize, deserialize, stringify } from '../../scripts/lib/serialize.mjs';
 // Row 5 owns the caps and says so in its own header: "defined ONCE here so the runner cannot
@@ -785,10 +785,21 @@ export function degradeToDiff(envelope, encodedFrom = Infinity) {
   return envelope;
 }
 
-/** The traced call's return value, canonical and codec-encoded (plan §5 `result`). */
+/**
+ * The traced call's return value, canonical and codec-encoded (plan §5 `result`).
+ *
+ * `owns` gates the codec, for the same reason it gates the driver: encoding a value the
+ * codec does not own produces a shape that is plausible-looking and wrong rather than an
+ * error. Measured on the pre-fix corpus: `09-binary-tree-general/01-maximum-depth.md` shipped
+ * `result: [{"__u":1}]` — a one-element array holding `undefined` — as the answer to
+ * Maximum Depth of Binary Tree, whose target returns the number 3. A value the codec does
+ * not own is therefore encoded as what it is (row 6's plain canonical form), which is the
+ * only honest statement available.
+ */
 function encodeResult(codec, wire) {
   try {
-    return codec.encode(deserialize(wire));
+    const value = deserialize(wire);
+    return codec.owns(value) ? codec.encode(value) : getCodec('json').encode(value);
   } catch (err) {
     throw new TraceAssemblyError(
       `codec "${codec.name}" cannot encode the traced return value (${err.message}). The value `
@@ -863,6 +874,11 @@ export async function runBlockTrace({
   if (!tracedCase) {
     throw new Error(`${guidePath}: no case at index ${caseIndex} (the spec has ${resolvedCases.length})`);
   }
+  // E28's declared comparison kind. `build/blocks.json` says WHICH function a level traces;
+  // `catalog/problems.json` says what comparing its answer means, and the driver needs the
+  // second. A path the catalog does not carry keeps `buildBundle`'s `'exact'` default, which
+  // is the strictest kind — an unlisted guide can lose a pass, never gain one.
+  const equivalence = catalogFor(guidePath)?.equivalence ?? 'exact';
 
   // A class target cannot be `.apply`'d by the driver; see `buildWrapper`.
   const isClass = new RegExp(`(^|\\n)\\s*(export\\s+)?class\\s+${escapeForRegExp(meta.targetFn)}\\b`).test(blockSource);
@@ -884,6 +900,7 @@ export async function runBlockTrace({
       ].join('\n'),
       fnName: meta.targetFn,
       codec: meta.codec,
+      equivalence,
       // Exactly one case. The trace is a narrative for ONE input, and the verdict comes from
       // the raw run over all of them — mixing the two would make `result` disagree with the
       // steps above it.
@@ -911,9 +928,10 @@ export async function runBlockTrace({
   const rawExec = await executeUserCode(
     buildBundle({
       userCode: blockSource,
-      fnName: meta.targetFn,
-      codec: meta.codec,
-      tests: resolvedCases,
+fnName: meta.targetFn,
+    codec: meta.codec,
+    equivalence,
+    tests: resolvedCases,
     }),
     { timeoutMs, memoryLimitBytes },
   );

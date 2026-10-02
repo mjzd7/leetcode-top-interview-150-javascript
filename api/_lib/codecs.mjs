@@ -51,10 +51,96 @@ const isRef = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 
 const ref = (at) => ({ __ref: at });
 
+// ---- the four questions every caller has to ask a value ---------------------------
+//
+// `encode`/`decode` answer "what is this value's WIRE?". They cannot answer "is this value
+// even mine?", and that omission is the whole class of bug row 15 measured: a driver that
+// applies a codec unconditionally turns a scalar into a structure and then compares the
+// structure against a scalar. `maxDepth(root)` returns the number 3; `tree.encode(3)` is
+// `[null]`, and `[null] !== 3` is a verdict that can never be anything but wrong.
+//
+// So each codec also answers, for ONE definition of its own domain:
+//
+//   owns(wire)         this value is already my live form -> do NOT decode it again
+//   acceptsWire(wire)  this value is a WIRE of mine, in canonical form -> decode it
+//   toWire(live)       the shape half of `encode` (row 6's `serialize` applied on top)
+//   fromWire(wire)     the shape half of `decode`
+//
+// `encode` is then COMPOSED from `toWire`, never a second implementation, so the sandbox
+// driver and the host agree by construction rather than by review. `api/_lib/problems.mjs`
+// inlines these four through `driverCodecSource()` — the sandbox has no module loader, so the
+// ONLY way to keep one implementation is to ship the implementation's own source text.
+//
+// ponytail: `owns` is deliberately SHALLOW — a non-null, non-array object for `tree`/`list`,
+// because that is exactly the set `treeToArray`/`listToArray` can read, and a deeper rule
+// ("has a `val` AND is reachable from a `left`/`right`") would need a walk per comparison for
+// no corpus case. Ceiling: an object that is not a node but IS a bare object (a returned
+// `{a:1}` on a tree guide) is treated as a node and encodes to `[undefined]`. Upgrade path:
+// a per-codec `nodeShape` predicate once a guide needs it — never a mode flag on `owns`.
+
+/** A live `tree`/`list` node graph: what `treeToArray` / `listToArray` can actually read. */
+export function isNodeLive(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+/**
+ * A value the `tree` codec owns — a node graph, or NIL.
+ *
+ * Nil is in `tree`'s domain because the encoder puts it there: `treeToArray(null)` returns
+ * `[]`, so an empty tree IS `null` on this wire, and a target that returns `null` for an
+ * empty tree is answering in this codec's own vocabulary. Leaving nil unowned made
+ * `invertTree(null)` compare as `null` against an expected `[]` — the driver reading a
+ * correct answer as a wrong one, which is the whole bug class this registry now owns.
+ *
+ * ponytail: `list` deliberately does NOT take nil, even though `listToArray(null)` is `[]`
+ * in exactly the same way. The corpus authored BOTH answers for a null list head —
+ * `08-linked-list/07-remove-nth-node-from-end.md` expects `[]` (its script went through
+ * `listToArray`) and `08-linked-list/04-copy-list-with-random-pointer.md` expects `null`
+ * (its script compared the raw head) — and no rule can satisfy both. `tree` is encoded
+ * because it is the pilot's own codec (`judge/tests/invert-binary-tree.json` asserts the
+ * empty tree as `[]`); `list` is not because doing so costs `copy-list-with-random-pointer`
+ * its only passing case. Ceiling: a `list` guide whose target returns a null head and whose
+ * expectation is `[]` needs that one case to fail. Upgrade path: make the corpus state one
+ * convention — `catalog/cases.json` is the place, and it is authored data, not a codec rule.
+ */
+export function isNodeValue(v) {
+  return isNil(v) || isNodeLive(v);
+}
+
+/**
+ * A value is a WIRE of this codec only if decoding and re-encoding it is the IDENTITY —
+ * i.e. the value is already in the canonical encoding, not merely array-shaped.
+ *
+ * That round-trip requirement is the load-bearing half. Without it a tree guide whose
+ * target takes a plain array (`sortedArrayToBST(nums)`, `buildTree(preorder, inorder)`) has
+ * that array silently rewritten into a node graph before the call, and the solution is then
+ * asked a question nobody asked. `[3,9,20,15,7]` decodes to a tree that re-encodes as
+ * `[3,9,20,null,null,15,7]`, so it is NOT this codec's wire and is passed through untouched;
+ * `[3,9,20,null,null,15,7]` round-trips exactly, so it is.
+ *
+ * The structural half (`isNodeWire`) is what keeps a nested array — `[[3],[9,20]]`, a level
+ * ORDER result — from being read as a node wire in the first place.
+ */
+function acceptsNodeWire(fromWire, toWire, wire) {
+  if (!Array.isArray(wire)) return false;
+  for (let i = 0; i < wire.length; i++) {
+    const cell = wire[i];
+    if (cell === null || cell === undefined) continue;
+    if (typeof cell === 'object') return false; // nested array or a node: not a level-order wire
+  }
+  return stringify(toWire(fromWire(wire))) === stringify(wire);
+}
+
 // ---- 1. json: plain values; row 6 for the five JSON cannot carry ------------------
 // This codec IS row 6. Nothing is reimplemented here on purpose — plan §1 U5 measured
 // all five losses in this repo's own guides, and a second serializer would be a second
 // answer to the same question.
+//
+// `owns` is unconditionally true and `toWire`/`fromWire` are the identity: `json` is the
+// wire format itself, so every value is already in its final form and re-encoding it would
+// only lose information.
+
+const identity = (v) => v;
 
 const json = Object.freeze({
   name: 'json',
@@ -62,6 +148,10 @@ const json = Object.freeze({
   encode: (value) => serialize(value),
   /** canonical wire -> the live value, tokens resolved (Map is a Map again). */
   decode: (wire) => deserialize(wire),
+  toWire: identity,
+  fromWire: identity,
+  owns: () => true,
+  acceptsWire: () => true,
 });
 
 // ---- 2. tree: binary tree <-> LeetCode level-order array --------------------------
@@ -135,6 +225,8 @@ function arrayToTree(arr) {
 
 const tree = Object.freeze({
   name: 'tree',
+  toWire: treeToArray,
+  fromWire: arrayToTree,
   encode: (root) => serialize(treeToArray(root)),
   // No `deserialize` here, and that is load-bearing: this codec MINTS `__ref` tokens in
   // its own position space, and row 6's deserializer would read them as ITS ref table
@@ -144,6 +236,8 @@ const tree = Object.freeze({
   // value — therefore stays a token after decode instead of being re-inflated; absurd
   // input for a tree, and `ops` is where that case is carried.
   decode: (wire) => arrayToTree(wire),
+  owns: isNodeValue,
+  acceptsWire: (wire) => acceptsNodeWire(arrayToTree, treeToArray, wire),
 });
 
 // ---- 3. list: ListNode chain <-> array -------------------------------------------
@@ -198,8 +292,12 @@ function arrayToList(arr) {
 
 const list = Object.freeze({
   name: 'list',
+  toWire: listToArray,
+  fromWire: arrayToList,
   encode: (head) => serialize(listToArray(head)),
   decode: (wire) => arrayToList(wire), // no `deserialize` — see the note on `tree.decode`
+  owns: isNodeLive, // NOT isNodeValue — see the nil-asymmetry note there
+  acceptsWire: (wire) => acceptsNodeWire(arrayToList, listToArray, wire),
 });
 
 // ---- 4. ops: terminal field-state + outputs (plan F6) -----------------------------
@@ -220,7 +318,7 @@ const list = Object.freeze({
 // constructor from a wire would need a class registry, which is a second registry.
 
 /** Own enumerable, non-function fields of a terminal state. */
-function fieldState(value) {
+export function fieldState(value) {
   if (value === null || typeof value !== 'object') return value;
   const out = {};
   for (const key of Object.keys(value).sort()) {
@@ -231,13 +329,24 @@ function fieldState(value) {
   return out;
 }
 
+/** The `{state, outputs}` shape this codec's whole domain is. */
+const opsWire = (terminal) => ({ state: fieldState(terminal?.state), outputs: terminal?.outputs });
+
 const ops = Object.freeze({
   name: 'ops',
-  encode: (terminal) => serialize({ state: fieldState(terminal?.state), outputs: terminal?.outputs }),
+  toWire: opsWire,
+  fromWire: identity,
+  encode: (terminal) => serialize(opsWire(terminal)),
   decode: (wire) => {
     const w = deserialize(wire);
     return { state: w.state, outputs: w.outputs };
   },
+  // A freshly-constructed class instance is NOT this codec's value — it is the `state`
+  // half, and only a runner that recorded an operation sequence can build the `outputs`
+  // half. Saying so here is what keeps a driver from "helpfully" wrapping an instance into
+  // `{state, outputs: undefined}` and reporting the result as a comparison it never made.
+  owns: (v) => isNodeLive(v) && 'state' in v && 'outputs' in v,
+  acceptsWire: () => true,
 });
 
 // ---- 5. graph: nodes + edges -----------------------------------------------------
@@ -256,12 +365,16 @@ const ops = Object.freeze({
 // codec. Node payloads are opaque and canonicalised by `serialize`. Upgrade path for a
 // labelled/weighted edge is a wider edge tuple, which needs no new codec.
 
+const graphWire = (g) => ({
+  nodes: [...(g?.nodes ?? [])],
+  edges: [...(g?.edges ?? [])].map(([from, to]) => [from, to]).sort((a, b) => a[0] - b[0] || a[1] - b[1]),
+});
+
 const graph = Object.freeze({
   name: 'graph',
-  encode: (g) => serialize({
-    nodes: [...(g?.nodes ?? [])],
-    edges: [...(g?.edges ?? [])].map(([from, to]) => [from, to]).sort((a, b) => a[0] - b[0] || a[1] - b[1]),
-  }),
+  toWire: graphWire,
+  fromWire: identity,
+  encode: (g) => serialize(graphWire(g)),
   decode: (wire) => {
     const { nodes, edges } = deserialize(wire);
     for (const [from, to] of edges) {
@@ -274,7 +387,99 @@ const graph = Object.freeze({
     }
     return { nodes, edges };
   },
+  owns: (v) => isNodeLive(v) && Array.isArray(v.nodes) && Array.isArray(v.edges),
+  acceptsWire: () => true,
 });
+
+// ---- the sandbox driver runtime ---------------------------------------------------
+
+/**
+ * The registry, as SOURCE TEXT, for a sandbox that has no module loader.
+ *
+ * `api/_lib/problems.mjs` builds a single self-contained string that QuickJS evaluates: the
+ * user's guide code plus a verdict driver. There is no `import` in there and there cannot be
+ * one, so the ONLY way for the driver to share this module's behaviour instead of forking it
+ * is to hand over the implementation's own text — `Function.prototype.toString()` of the very
+ * function objects `getCodec` returns. A second hand-written copy is the failure mode this
+ * whole module exists to prevent (plan §1 U2: a second source of truth renders as
+ * plausible-looking wrong data), so there is deliberately no way to write one here.
+ *
+ * Everything emitted lives inside the CALLER's IIFE, so `stringify` — the one name the
+ * comparators below close over — cannot collide with a guide solution that happens to be
+ * called `stringify`. That is why the comparators are inlined too: E28's six kinds are the
+ * catalog's declared comparison contract, and a driver that compared with `===` on JSON text
+ * would silently disagree with `catalog/problems.json` on every `order-insensitive` guide
+ * (measured: `20-trie/03-word-search-ii`, whose L1 returns `["oath","eat"]` for an expected
+ * `["eat","oath"]`).
+ *
+ * ponytail: `stringify` here is `JSON.stringify` over the codec's wire, NOT row 6's
+ * `serialize`. Row 6 lives in `scripts/lib/serialize.mjs`, whose `toPlain` closure
+ * (`leaf`, `isContainer`, `put`, `shortCtorName`, `TOKEN_KEYS`) is not exported, so its
+ * source cannot be lifted the way the codec bodies are. Ceiling: a verdict that hinges on
+ * `undefined`-in-array, `NaN`, `-0` or an empty `Map` comparing equal to a different value
+ * inside the SANDBOX — the HOST side (envelope `result`, golden differ) still goes through
+ * `serialize`, because `encode` composes it. Upgrade path: export `toPlain`'s closure from
+ * row 6 and have `stringify` here be `serialize`'s own text; nothing else changes.
+ */
+let driverSourceCache = null;
+
+export function driverCodecSource() {
+  if (driverSourceCache !== null) return driverSourceCache;
+  // A named `function`/`class` carries its own name in `toString()`; an arrow does not, so
+  // it has to be re-bound. Both forms are emitted under their REGISTRY name so the closures
+  // the lifted bodies reference (`isNil`, `isRef`, `nearEqual`, `stringify`) resolve inside
+  // the caller's scope.
+  const emit = (name, body) => {
+    const src = body.toString();
+    return /^\s*(function|class)\b/.test(src) ? src : `var ${name} = ${src};`;
+  };
+  const table = {};
+  for (const name of IMPLEMENTED_CODECS) {
+    const c = getCodec(name);
+    table[name] = c;
+  }
+  driverSourceCache = [
+    'function stringify(v) { return v === undefined ? "__undefined__" : JSON.stringify(v); }',
+    emit('isNil', isNil),
+    emit('isRef', isRef),
+    emit('ref', ref),
+    emit('isNodeLive', isNodeLive),
+    emit('isNodeValue', isNodeValue),
+    emit('acceptsNodeWire', acceptsNodeWire),
+    emit('fieldState', fieldState),
+    emit('treeToArray', treeToArray),
+    emit('arrayToTree', arrayToTree),
+    emit('listToArray', listToArray),
+    emit('arrayToList', arrayToList),
+    emit('orderFree', orderFree),
+    emit('leaves', leaves),
+    emit('shape', shape),
+    'var EPS = 1e-9;',
+    emit('nearEqual', nearEqual),
+    emit('tolerantEqual', tolerantEqual),
+    emit('EXACT', EXACT),
+    emit('opsTerminalEqual', opsTerminalEqual),
+    'var __COMPARATORS__ = {',
+    '  "exact": EXACT,',
+    '  "order-insensitive": function (a, b) { return EXACT(orderFree(a), orderFree(b)); },',
+    '  "multiset": function (a, b) { var x = leaves(a); var y = leaves(b); return x.length === y.length && x.sort().join("\\u0000") === y.sort().join("\\u0000"); },',
+    '  "shape-only": function (a, b) { return EXACT(shape(a), shape(b)); },',
+    '  "int-with-tolerance": tolerantEqual,',
+    '  "ops-terminal-state-and-outputs": opsTerminalEqual,',
+    '};',
+    'var __CODECS__ = {',
+    ...Object.entries(table).flatMap(([name, c]) => [
+      `  ${JSON.stringify(name)}: {`,
+      `toWire: ${c.toWire.toString()},`,
+      `fromWire: ${c.fromWire.toString()},`,
+      `owns: ${c.owns.toString()},`,
+      `acceptsWire: ${c.acceptsWire.toString()},`,
+      '},',
+    ]),
+    '};',
+  ].join('\n');
+  return driverSourceCache;
+}
 
 // ---- the registry ----------------------------------------------------------------
 

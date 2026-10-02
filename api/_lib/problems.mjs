@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { getCodec, driverCodecSource, equivalent } from './codecs.mjs';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const TESTS_DIR = path.resolve(here, '../../judge/tests');
 const CATALOG_PATH = path.resolve(here, '../../catalog/problems.json');
@@ -40,11 +42,40 @@ for (const file of fs.readdirSync(TESTS_DIR)) {
   if (!Array.isArray(tests) || tests.length === 0) {
     throw new Error(`Invalid test spec for problem: ${slug}`);
   }
-  PROBLEMS[slug] = { slug, path: entry.path, fnName: entry.fnName.L3, codec: entry.codec, tests };
+  PROBLEMS[slug] = {
+    slug,
+    path: entry.path,
+    fnName: entry.fnName.L3,
+    codec: entry.codec,
+    equivalence: entry.equivalence,
+    returnType: entry.returnType,
+    tests,
+  };
 }
 
 export function isPilotProblem(problemId) {
   return Object.prototype.hasOwnProperty.call(PROBLEMS, problemId);
+}
+
+/**
+ * The catalog's declaration for one guide path — the identity `problems.mjs` does not own.
+ *
+ * `build/blocks.json` owns which function a LEVEL traces; `catalog/problems.json` owns what
+ * comparing that function's answer MEANS (`equivalence`) and what it gives back
+ * (`returnType`). The driver needs the second and never had it, which is why it fell back to
+ * `===` on JSON text and why `void` had nowhere to go.
+ *
+ * @returns {{path: string, codec: string, equivalence: string, returnType: string}|null}
+ */
+export function catalogFor(guidePath) {
+  const entry = BY_PATH.get(guidePath);
+  if (!entry) return null;
+  return {
+    path: entry.path,
+    codec: entry.codec,
+    equivalence: entry.equivalence,
+    returnType: entry.returnType,
+  };
 }
 
 /**
@@ -55,82 +86,108 @@ export function isPilotProblem(problemId) {
  * - `__JUDGE_LOG__` snapshots the pristine console.log BEFORE user code runs,
  *   so user reassignments cannot swallow the verdict envelope.
  * - `fnName` comes from the catalog (never user input) — safe to inline.
- * - Tree codec converts level-order arrays to/from linked node objects.
- * - ponytail: `tree` is the ONLY codec this driver marshals; `list`/`graph`/`ops` fall
- *   through to the raw-args branch, so their verdicts are wrong until row 17 routes every
- *   codec through `codecs.mjs`. Nothing here gates them — that silence is the bug surface.
+ * - The driver carries NO codec of its own. `driverCodecSource()` hands it this
+ *   registry's own bodies (`toWire`/`fromWire`/`owns`/`acceptsWire` plus E28's six
+ *   comparators) as source text, because the sandbox has no module loader and a
+ *   hand-written second copy is the second source of truth plan §1 U2 forbids.
+ *
+ * Four mechanisms this driver used to get wrong, all now decided by the codec that owns the
+ * value rather than by a hard-coded branch:
+ *
+ * 1. IN-PLACE MUTATOR — `merge(nums1, m, nums2, n)` has no `return`. When the call yields
+ *    `undefined` AND the case states an expectation, the answer is the first argument the
+ *    call changed, snapshotted through the same `toWire` the return path uses.
+ * 2. SCALAR RETURN — `maxDepth(root)` returns the number `3`. Encoding that through `tree`
+ *    yields `[null]`, and `[null] === 3` is a verdict that can never be anything but wrong,
+ *    so `owns` gates it: a value the codec does not own is compared as it is.
+ * 3. LIST NODE — `addTwoNumbers` wants `ListNode`s and returns one; the codec both decodes
+ *    the argument and encodes the result, so the comparison is array-to-array.
+ * 4. CLASS TARGET — `new RandomizedSet()` cannot be `.apply`'d. Detected from the target's
+ *    own source (`String(__FN__)`), which is also why the traced run still works: row 10's
+ *    `buildWrapper` replaces the class with a plain function, so that run correctly applies.
+ *
+ * ponytail: `equivalence` defaults to `'exact'`, the STRICTEST of E28's six, so a caller that
+ * states nothing can never manufacture a pass it would not otherwise earn — and all five
+ * pilot specs are `exact` or `order-insensitive` over already-canonical answers. Ceiling: the
+ * driver does not take `returnType`, because "the call returned `undefined`" is the same fact
+ * observed directly rather than read from a catalog field. Upgrade path: a guide whose target
+ * returns `undefined` while ALSO stating an expectation about something other than a mutated
+ * argument needs an explicit `expect: 'arg'|'return'` per case; no corpus case needs it.
  */
-export function buildBundle({ userCode, fnName, codec, tests }) {
-  return (
-    `var __JUDGE_LOG__ = console.log.bind(console);\n` +
-    `${userCode}\n` +
-    `;(function () {\n` +
-    `  var __TESTS__ = ${JSON.stringify(tests)};\n` +
-    `  var __FN_NAME__ = ${JSON.stringify(fnName)};\n` +
-    `  var __CODEC__ = ${JSON.stringify(codec)};\n` +
-    `  var __RESULT__ = { passed: 0, failed: 0, tests: [], error: null };\n` +
-    `  function __ser__(v) { return typeof v === 'undefined' ? '__undefined__' : JSON.stringify(v); }\n` +
-  `  function __errText__(e) {\n` +
-  `    if (e && typeof e === 'object') {\n` +
-  `      var head = (e.name ? e.name + ': ' : '') + (e.message || '');\n` +
-  `      var st = e.stack || '';\n` +
-  `      if (st && head && st.indexOf(head) === -1) return head + '\\n' + st;\n` +
-  `      return st || head || String(e);\n` +
-  `    }\n` +
-  `    return String(e);\n` +
-  `  }\n` +
-    `  function __arrayToTree__(arr) {\n` +
-    `    if (!arr || arr.length === 0 || arr[0] === null || arr[0] === undefined) return null;\n` +
-    `    function N(val, left, right) { return { val: val, left: left === undefined ? null : left, right: right === undefined ? null : right }; }\n` +
-    `    var root = N(arr[0], null, null);\n` +
-    `    var queue = [root];\n` +
-    `    var i = 1;\n` +
-    `    while (i < arr.length) {\n` +
-    `      var node = queue.shift();\n` +
-    `      if (i < arr.length && arr[i] !== null && arr[i] !== undefined) { node.left = N(arr[i], null, null); queue.push(node.left); }\n` +
-    `      i++;\n` +
-    `      if (i < arr.length && arr[i] !== null && arr[i] !== undefined) { node.right = N(arr[i], null, null); queue.push(node.right); }\n` +
-    `      i++;\n` +
-    `    }\n` +
-    `    return root;\n` +
-    `  }\n` +
-    `  function __treeToArray__(root) {\n` +
-    `    if (root === null || root === undefined) return [];\n` +
-    `    var out = [];\n` +
-    `    var queue = [root];\n` +
-    `    while (queue.length > 0) {\n` +
-    `      var node = queue.shift();\n` +
-    `      if (node === null || node === undefined) { out.push(null); continue; }\n` +
-    `      out.push(node.val);\n` +
-    `      queue.push(node.left === undefined ? null : node.left);\n` +
-    `      queue.push(node.right === undefined ? null : node.right);\n` +
-    `    }\n` +
-    `    while (out.length > 0 && out[out.length - 1] === null) out.pop();\n` +
-    `    return out;\n` +
-    `  }\n` +
-    `  try {\n` +
-    `    var __FN__ = eval(__FN_NAME__);\n` +
-    `    if (typeof __FN__ !== 'function') throw new Error('Function ' + __FN_NAME__ + ' is not defined');\n` +
-    `    for (var ti = 0; ti < __TESTS__.length; ti++) {\n` +
-    `      var t = __TESTS__[ti];\n` +
-    `      var got;\n` +
-    `      var ok = false;\n` +
-    `      var errText = null;\n` +
-    `      try {\n` +
-    `        if (__CODEC__ === 'tree') {\n` +
-    `          got = __treeToArray__(__FN__(__arrayToTree__(t.args[0])));\n` +
-    `        } else {\n` +
-    `          got = __FN__.apply(null, t.args);\n` +
-    `        }\n` +
-    `        ok = __ser__(got) === __ser__(t.expected);\n` +
-    `      } catch (e) { errText = __errText__(e); }\n` +
-    `      if (ok) { __RESULT__.passed++; } else { __RESULT__.failed++; }\n` +
-    `      __RESULT__.tests.push({ name: t.name, ok: ok, expected: t.expected, got: errText !== null ? undefined : got, error: errText });\n` +
-    `    }\n` +
-    `  } catch (e) {\n` +
-    `    __RESULT__.error = __errText__(e);\n` +
-    `  }\n` +
-    `  __JUDGE_LOG__('__VERDICT__' + JSON.stringify(__RESULT__));\n` +
-    `})();\n`
-  );
+export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exact' }) {
+  // Both names are validated HOST-side, before a byte of driver is emitted: an unimplemented
+  // codec or an unknown E28 kind throws here, loudly, exactly as `getCodec`/`equivalent` do
+  // everywhere else. There is no default branch in the sandbox either — see `__CODEC__`.
+  getCodec(codec, fnName);
+  equivalent(equivalence, null, null);
+  return [
+    `var __JUDGE_LOG__ = console.log.bind(console);`,
+    userCode,
+    `;(function () {`,
+    `  var __TESTS__ = ${JSON.stringify(tests)};`,
+    `  var __FN_NAME__ = ${JSON.stringify(fnName)};`,
+    `  var __KIND__ = ${JSON.stringify(equivalence)};`,
+    driverCodecSource(),
+    `  var __CODEC__ = __CODECS__[${JSON.stringify(codec)}];`,
+    `  var __CMP__ = __COMPARATORS__[__KIND__];`,
+    `  if (!__CODEC__ || !__CMP__) {`,
+    `    throw new Error('driver: codec ' + ${JSON.stringify(codec)} + ' with equivalence ' + __KIND__ + ' is not in the registry');`,
+    `  }`,
+    `  function __errText__(e) {`,
+    `    if (e && typeof e === 'object') {`,
+    `      var head = (e.name ? e.name + ': ' : '') + (e.message || '');`,
+    `      var st = e.stack || '';`,
+    `      if (st && head && st.indexOf(head) === -1) return head + '\\n' + st;`,
+    `      return st || head || String(e);`,
+    `    }`,
+    `    return String(e);`,
+    `  }`,
+    // One snapshot rule for every codec: a value the codec owns is reduced to its WIRE first,
+    // so comparing "did this argument change" cannot be answered by an object graph that
+    // stringifies to `{}`.
+    `  function __snap__(v) { return stringify(__CODEC__.owns(v) ? __CODEC__.toWire(v) : v); }`,
+    `  var __RESULT__ = { passed: 0, failed: 0, tests: [], error: null };`,
+    `  try {`,
+    `    var __FN__ = eval(__FN_NAME__);`,
+    `    if (typeof __FN__ !== 'function') throw new Error('Function ' + __FN_NAME__ + ' is not defined');`,
+    `    var __IS_CLASS__ = false;`,
+    `    try { __IS_CLASS__ = /^\\s*class[\\s{]/.test(String(__FN__)); } catch (e) { __IS_CLASS__ = false; }`,
+    `    for (var ti = 0; ti < __TESTS__.length; ti++) {`,
+    `      var t = __TESTS__[ti];`,
+    `      var got;`,
+    `      var ok = false;`,
+    `      var errText = null;`,
+    `      try {`,
+    // Only a value that IS this codec's canonical wire is decoded. A tree guide whose target
+    // takes a plain array (`buildTree(preorder, inorder)`, `sortedArrayToBST(nums)`) keeps it.
+    `        var args = (t.args || []).map(function (a) { return __CODEC__.acceptsWire(a) ? __CODEC__.fromWire(a) : a; });`,
+    `        var before = args.map(__snap__);`,
+    `        var r = __IS_CLASS__ ? Reflect.construct(__FN__, args) : __FN__.apply(null, args);`,
+    `        if (r === undefined && t.expected !== undefined) {`,
+    // A void target's answer is an ARGUMENT. Prefer the one the call actually changed, and
+    // fall back to the first: `merge([1], 1, [], 0)` has nothing to merge, so it changes
+    // nothing, and the authored edge case still expects the argument back (`[1]`). The
+    // fallback is only reachable when NO argument moved, so it can never overrule evidence.
+    `          var __ai__ = 0;`,
+    `          while (__ai__ < args.length && __snap__(args[__ai__]) === before[__ai__]) __ai__++;`,
+    `          if (args.length > 0) {`,
+    `            var __a__ = args[__ai__ < args.length ? __ai__ : 0];`,
+    `            got = __CODEC__.owns(__a__) ? __CODEC__.toWire(__a__) : __a__;`,
+    `          } else {`,
+    `            got = undefined;`,
+    `          }`,
+    `        } else {`,
+    `          got = __CODEC__.owns(r) ? __CODEC__.toWire(r) : r;`,
+    `        }`,
+    `        ok = __CMP__(t.expected, got);`,
+    `      } catch (e) { errText = __errText__(e); }`,
+    `      if (ok) { __RESULT__.passed++; } else { __RESULT__.failed++; }`,
+    `      __RESULT__.tests.push({ name: t.name, ok: ok, expected: t.expected, got: errText !== null ? undefined : got, error: errText });`,
+    `    }`,
+    `  } catch (e) {`,
+    `    __RESULT__.error = __errText__(e);`,
+    `  }`,
+    `  __JUDGE_LOG__('__VERDICT__' + JSON.stringify(__RESULT__));`,
+    `})();`,
+  ].join('\n');
 }

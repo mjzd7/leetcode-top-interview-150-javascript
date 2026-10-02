@@ -78,7 +78,15 @@ export default async function handler(req, res) {
   }
 
   const entry = PROBLEMS[problemId];
-  const bundle = buildBundle({ userCode: code, fnName: entry.fnName, codec: entry.codec, tests: entry.tests });
+  const bundle = buildBundle({
+    userCode: code,
+    fnName: entry.fnName,
+    codec: entry.codec,
+    // E28's declared comparison kind, from the catalog. `two-sum` is `order-insensitive`,
+    // so the route compares the way the catalog says or not at all.
+    equivalence: entry.equivalence,
+    tests: entry.tests,
+  });
 
   let exec;
   try {
