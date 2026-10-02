@@ -14,15 +14,21 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 //
 // Key: problem file path relative to repo root.
 // Value: either
-//   { fns: [level1Name, level2Name, level3Name],
-//     cases: [{ args: [...jsonValues], expect: jsonValue }] }
-//     — each listed function is called with a fresh deep clone of args and
-//       its return value must deep-equal expect, or
+//   { cases: [{ args: [...jsonValues], expect: jsonValue }] }
+//     — the guide's Level 1, 2 and 3 functions are each called with a fresh deep
+//       clone of args and their return value must deep-equal expect, or
 //   { script: `raw JS appended after the Level 1-3 blocks` }
 //     — for class-based / in-place-mutating APIs. Use assertEq(actual,
 //       expected, label) and end with console.log('ASSERT-OK n').
 // Files with no entry get syntax checks only (reported as SYNTAX-ONLY).
 // To extend coverage, add one entry per file following the examples below.
+//
+// Function NAMES are not declared here. They live once, in the guide's own
+// Level 1-3 blocks, and gen-blocks.mjs publishes them in build/blocks.json as
+// each block's `targetFn` — see loadTargetFns(). Re-declaring them here made one
+// fact live in three places (guide, registry, manifest); plan invariant 2 says
+// nothing re-declares a slug or fn name. .ast-grep/rules/no-runtime-tests-fns.yml
+// fails the build if an `fns` key ever comes back.
 // ---------------------------------------------------------------------------
 const RUNTIME_TESTS = {
   '07-stack/03-min-stack.md': {
@@ -38,7 +44,6 @@ for (const C of [MinStackBruteForce, MinStackOptimized, MinStack]) {
 console.log('ASSERT-OK 9');`,
   },
   '07-stack/04-evaluate-reverse-polish-notation.md': {
-    fns: ['evalRPNBruteForce', 'evalRPNOptimized', 'evalRPN'],
     cases: [
       { args: [['2', '1', '+', '3', '*']], expect: 9 },
       { args: [['4', '13', '5', '/', '+']], expect: 6 },
@@ -46,7 +51,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '07-stack/05-basic-calculator.md': {
-    fns: ['calculateBruteForce', 'calculateOptimized', 'calculate'],
     cases: [
       { args: ['1 + 1'], expect: 2 },
       { args: [' 2-1 + 2 '], expect: 3 },
@@ -54,7 +58,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '07-stack/01-valid-parentheses.md': {
-    fns: ['isValidBruteForce', 'isValidStack', 'isValid'],
     cases: [
       { args: ['()[]{}'], expect: true },
       { args: ['(]'], expect: false },
@@ -62,49 +65,42 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '02-two-pointers/01-valid-palindrome.md': {
-    fns: ['isPalindromeBruteForce', 'isPalindromeOptimized', 'isPalindrome'],
     cases: [
       { args: ['A man, a plan, a canal: Panama'], expect: true },
       { args: ['race a car'], expect: false },
     ],
   },
   '02-two-pointers/04-container-with-most-water.md': {
-    fns: ['maxAreaBruteForce', 'maxAreaPruned', 'maxArea'],
     cases: [
       { args: [[1, 8, 6, 2, 5, 4, 8, 3, 7]], expect: 49 },
       { args: [[1, 1]], expect: 1 },
     ],
   },
   '05-hashmap/06-two-sum.md': {
-    fns: ['twoSumBruteForce', 'twoSumTwoPass', 'twoSum'],
     cases: [
       { args: [[2, 7, 11, 15], 9], expect: [0, 1] },
       { args: [[3, 2, 4], 6], expect: [1, 2] },
     ],
   },
   '05-hashmap/04-valid-anagram.md': {
-    fns: ['isAnagramSort', 'isAnagramMap', 'isAnagram'],
     cases: [
       { args: ['anagram', 'nagaram'], expect: true },
       { args: ['rat', 'car'], expect: false },
     ],
   },
   '05-hashmap/09-longest-consecutive-sequence.md': {
-    fns: ['longestConsecutiveBruteForce', 'longestConsecutiveSorted', 'longestConsecutive'],
     cases: [
       { args: [[100, 4, 200, 1, 3, 2]], expect: 4 },
       { args: [[0]], expect: 1 },
     ],
   },
   '01-array-string/19-length-of-last-word.md': {
-    fns: ['lengthOfLastWordBruteForce', 'lengthOfLastWordRegex', 'lengthOfLastWord'],
     cases: [
       { args: ['Hello World'], expect: 5 },
       { args: ['   fly me   to   the moon  '], expect: 4 },
     ],
   },
   '01-array-string/17-roman-to-integer.md': {
-    fns: ['romanToIntBruteForce', 'romanToIntOptimized', 'romanToInt'],
     cases: [
       { args: ['III'], expect: 3 },
       { args: ['LVIII'], expect: 58 },
@@ -112,20 +108,17 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '01-array-string/07-best-time-to-buy-and-sell-stock.md': {
-    fns: ['maxProfitBruteForce', 'maxProfitOptimized', 'maxProfit'],
     cases: [
       { args: [[7, 1, 5, 3, 6, 4]], expect: 5 },
       { args: [[7, 6, 4, 3, 1]], expect: 0 },
     ],
   },
   '01-array-string/16-trapping-rain-water.md': {
-    fns: ['trapBruteForce', 'trapDP', 'trap'],
     cases: [
       { args: [[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]], expect: 6 },
     ],
   },
   '03-sliding-window/02-longest-substring-without-repeating-characters.md': {
-    fns: ['lengthOfLongestSubstringBruteForce', 'lengthOfLongestSubstringSet', 'lengthOfLongestSubstring'],
     cases: [
       { args: ['abcabcbb'], expect: 3 },
       { args: ['bbbbb'], expect: 1 },
@@ -487,7 +480,6 @@ for (const fn of [getMinimumDifferenceBruteForce, getMinimumDifferenceIterative,
 console.log('ASSERT-OK 6');`,
   },
   '12-binary-search/01-search-insert-position.md': {
-    fns: ['searchInsertBruteForce', 'searchInsertRecursive', 'searchInsert'],
     cases: [
       { args: [[1, 3, 5, 6], 5], expect: 2 },
       { args: [[1, 3, 5, 6], 2], expect: 1 },
@@ -495,7 +487,6 @@ console.log('ASSERT-OK 6');`,
     ],
   },
   '12-binary-search/02-search-2d-matrix.md': {
-    fns: ['searchMatrixBruteForce', 'searchMatrixStaircase', 'searchMatrix'],
     cases: [
       { args: [[[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]], 3], expect: true },
       { args: [[[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]], 13], expect: false },
@@ -516,7 +507,6 @@ for (const fn of [findPeakElementBruteForce, findPeakElementRecursive, findPeakE
 console.log('ASSERT-OK 9');`,
   },
   '12-binary-search/04-search-rotated-sorted-array.md': {
-    fns: ['rotatedSearchBruteForce', 'rotatedSearchPivot', 'search'],
     cases: [
       { args: [[4, 5, 6, 7, 0, 1, 2], 0], expect: 4 },
       { args: [[4, 5, 6, 7, 0, 1, 2], 3], expect: -1 },
@@ -524,7 +514,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '12-binary-search/05-first-and-last-position.md': {
-    fns: ['searchRangeBruteForce', 'searchRangeExpand', 'searchRange'],
     cases: [
       { args: [[5, 7, 7, 8, 8, 10], 8], expect: [3, 4] },
       { args: [[5, 7, 7, 8, 8, 10], 6], expect: [-1, -1] },
@@ -532,7 +521,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '12-binary-search/06-find-minimum-rotated.md': {
-    fns: ['findMinBruteForce', 'findMinRecursive', 'findMin'],
     cases: [
       { args: [[3, 4, 5, 1, 2]], expect: 1 },
       { args: [[4, 5, 6, 7, 0, 1, 2]], expect: 0 },
@@ -540,7 +528,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '12-binary-search/07-median-of-two-sorted-arrays.md': {
-    fns: ['findMedianSortedArraysBruteForce', 'findMedianSortedArraysKth', 'findMedianSortedArrays'],
     cases: [
       { args: [[1, 3], [2]], expect: 2 },
       { args: [[1, 2], [3, 4]], expect: 2.5 },
@@ -548,21 +535,18 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '13-heap/01-kth-largest-element.md': {
-    fns: ['findKthLargestBruteForce', 'findKthLargestHeap', 'findKthLargest'],
     cases: [
       { args: [[3, 2, 1, 5, 6, 4], 2], expect: 5 },
       { args: [[3, 2, 3, 1, 2, 4, 5, 5, 6], 4], expect: 4 },
     ],
   },
   '13-heap/02-ipo.md': {
-    fns: ['findMaximizedCapitalBruteForce', 'findMaximizedCapitalSorted', 'findMaximizedCapital'],
     cases: [
       { args: [2, 0, [1, 2, 3], [0, 1, 1]], expect: 4 },
       { args: [3, 0, [1, 2, 3], [0, 1, 2]], expect: 6 },
     ],
   },
   '13-heap/03-k-pairs-smallest-sums.md': {
-    fns: ['kSmallestPairsBruteForce', 'kSmallestPairsHeap', 'kSmallestPairs'],
     cases: [
       { args: [[1, 7, 11], [2, 4, 6], 3], expect: [[1, 2], [1, 4], [1, 6]] },
       { args: [[1, 1, 2], [1, 2, 3], 2], expect: [[1, 1], [1, 1]] },
@@ -587,7 +571,6 @@ console.log('ASSERT-OK 3');`,
   },
   '14-backtracking/01-letter-combinations.md': {
     // PHONE_MAP comes from the Level 1 block.
-    fns: ['letterCombinationsBruteForce', 'letterCombinationsRecursive', 'letterCombinations'],
     cases: [
       { args: ['23'], expect: ['ad', 'ae', 'af', 'bd', 'be', 'bf', 'cd', 'ce', 'cf'] },
       { args: ['2'], expect: ['a', 'b', 'c'] },
@@ -627,7 +610,6 @@ for (const fn of [combinationSumBruteForce, combinationSumReuse, combinationSum]
 console.log('ASSERT-OK 6');`,
   },
   '14-backtracking/05-n-queens-ii.md': {
-    fns: ['totalNQueensBruteForce', 'totalNQueensSets', 'totalNQueens'],
     cases: [
       { args: [4], expect: 2 },
       { args: [1], expect: 1 },
@@ -647,7 +629,6 @@ console.log('ASSERT-OK 6');`,
   },
   '14-backtracking/07-word-search.md': {
     // In-place levels mutate the board: fresh deep clone per call.
-    fns: ['existBruteForce', 'existInPlace', 'exist'],
     cases: [
       {
         args: [[['A', 'B', 'C', 'E'], ['S', 'F', 'C', 'S'], ['A', 'D', 'E', 'E']], 'ABCCED'],
@@ -664,7 +645,6 @@ console.log('ASSERT-OK 6');`,
     ],
   },
   '15-math/01-palindrome-number.md': {
-    fns: ['isPalindromeBruteForce', 'isPalindromeReversed', 'isPalindrome'],
     cases: [
       { args: [121], expect: true },
       { args: [-121], expect: false },
@@ -672,7 +652,6 @@ console.log('ASSERT-OK 6');`,
     ],
   },
   '15-math/02-plus-one.md': {
-    fns: ['plusOneBruteForce', 'plusOneCarry', 'plusOne'],
     cases: [
       { args: [[1, 2, 3]], expect: [1, 2, 4] },
       { args: [[4, 3, 2, 1]], expect: [4, 3, 2, 2] },
@@ -680,7 +659,6 @@ console.log('ASSERT-OK 6');`,
     ],
   },
   '15-math/03-factorial-trailing-zeroes.md': {
-    fns: ['trailingZeroesBruteForce', 'trailingZeroesFactorCount', 'trailingZeroes'],
     cases: [
       { args: [3], expect: 0 },
       { args: [5], expect: 1 },
@@ -688,7 +666,6 @@ console.log('ASSERT-OK 6');`,
     ],
   },
   '15-math/04-sqrtx.md': {
-    fns: ['mySqrtBruteForce', 'mySqrtBinarySearch', 'mySqrt'],
     cases: [
       { args: [4], expect: 2 },
       { args: [8], expect: 2 },
@@ -712,7 +689,6 @@ for (const fn of [myPowBruteForce, myPowRecursive, myPow]) {
 console.log('ASSERT-OK 12');`,
   },
   '15-math/06-max-points-on-a-line.md': {
-    fns: ['maxPointsBruteForce', 'maxPointsSlopes', 'maxPoints'],
     cases: [
       { args: [[[1, 1], [2, 2], [3, 3]]], expect: 3 },
       {
@@ -722,7 +698,6 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '16-one-dp/01-climbing-stairs.md': {
-    fns: ['climbStairsBruteForce', 'climbStairsMemo', 'climbStairs'],
     cases: [
       { args: [2], expect: 2 },
       { args: [3], expect: 3 },
@@ -730,14 +705,12 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '16-one-dp/02-house-robber.md': {
-    fns: ['robBruteForce', 'robMemo', 'rob'],
     cases: [
       { args: [[1, 2, 3, 1]], expect: 4 },
       { args: [[2, 7, 9, 3, 1]], expect: 12 },
     ],
   },
   '16-one-dp/03-word-break.md': {
-    fns: ['wordBreakBruteForce', 'wordBreakMemo', 'wordBreak'],
     cases: [
       { args: ['leetcode', ['leet', 'code']], expect: true },
       { args: ['applepenapple', ['apple', 'pen']], expect: true },
@@ -748,7 +721,6 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '16-one-dp/04-coin-change.md': {
-    fns: ['coinChangeBruteForce', 'coinChangeMemo', 'coinChange'],
     cases: [
       { args: [[1, 2, 5], 11], expect: 3 },
       { args: [[2], 3], expect: -1 },
@@ -756,7 +728,6 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '16-one-dp/05-longest-increasing-subsequence.md': {
-    fns: ['lengthOfLISBruteForce', 'lengthOfLISDP', 'lengthOfLIS'],
     cases: [
       { args: [[10, 9, 2, 5, 3, 7, 101, 18]], expect: 4 },
       { args: [[0, 1, 0, 3, 2, 3]], expect: 4 },
@@ -764,25 +735,18 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '17-multi-dp/01-triangle.md': {
-    fns: ['minimumTotalBruteForce', 'minimumTotalMemo', 'minimumTotal'],
     cases: [
       { args: [[[2], [3, 4], [6, 5, 7], [4, 1, 8, 3]]], expect: 11 },
       { args: [[[-10]]], expect: -10 },
     ],
   },
   '17-multi-dp/02-minimum-path-sum.md': {
-    fns: ['minPathSumBruteForce', 'minPathSumMemo', 'minPathSum'],
     cases: [
       { args: [[[1, 3, 1], [1, 5, 1], [4, 2, 1]]], expect: 7 },
       { args: [[[1, 2, 3], [4, 5, 6]]], expect: 12 },
     ],
   },
   '17-multi-dp/03-unique-paths-ii.md': {
-    fns: [
-      'uniquePathsWithObstaclesBruteForce',
-      'uniquePathsWithObstaclesMemo',
-      'uniquePathsWithObstacles',
-    ],
     cases: [
       { args: [[[0, 0, 0], [0, 1, 0], [0, 0, 0]]], expect: 2 },
       { args: [[[0, 1], [0, 0]]], expect: 1 },
@@ -801,14 +765,12 @@ for (const fn of [longestPalindromeBruteForce, longestPalindromeExpand, longestP
 console.log('ASSERT-OK 9');`,
   },
   '17-multi-dp/05-edit-distance.md': {
-    fns: ['minDistanceBruteForce', 'minDistanceMemo', 'minDistance'],
     cases: [
       { args: ['horse', 'ros'], expect: 3 },
       { args: ['intention', 'execution'], expect: 5 },
     ],
   },
   '17-multi-dp/06-interleaving-string.md': {
-    fns: ['isInterleaveBruteForce', 'isInterleaveMemo', 'isInterleave'],
     cases: [
       { args: ['aabcc', 'dbbca', 'aadbbcbcac'], expect: true },
       { args: ['aabcc', 'dbbca', 'aadbbbaccc'], expect: false },
@@ -816,7 +778,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '17-multi-dp/07-stock-iii.md': {
-    fns: ['maxProfitBruteForce', 'maxProfitMemo', 'maxProfit'],
     cases: [
       { args: [[3, 3, 5, 0, 0, 3, 1, 4]], expect: 6 },
       { args: [[1, 2, 3, 4, 5]], expect: 4 },
@@ -824,14 +785,12 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '17-multi-dp/08-stock-iv.md': {
-    fns: ['maxProfitBruteForce', 'maxProfitMemo', 'maxProfit'],
     cases: [
       { args: [2, [2, 4, 1]], expect: 2 },
       { args: [2, [3, 2, 6, 5, 0, 3]], expect: 7 },
     ],
   },
   '17-multi-dp/09-maximal-square.md': {
-    fns: ['maximalSquareBruteForce', 'maximalSquareMemo', 'maximalSquare'],
     cases: [
       {
         args: [[['1', '0', '1', '0', '0'], ['1', '0', '1', '1', '1'], ['1', '1', '1', '1', '1'], ['1', '0', '0', '1', '0']]],
@@ -843,7 +802,6 @@ console.log('ASSERT-OK 9');`,
   },
   '18-graph-general/01-number-of-islands.md': {
     // Sink levels mutate the grid: fresh deep clone per call (harness clones).
-    fns: ['numIslandsBruteForce', 'numIslandsSink', 'numIslands'],
     cases: [
       {
         args: [[['1', '1', '1', '1', '0'], ['1', '1', '0', '1', '0'], ['1', '1', '0', '0', '0'], ['0', '0', '0', '0', '0']]],
@@ -929,7 +887,6 @@ for (const fn of [calcEquationBruteForce, calcEquationBFS, calcEquation]) {
 console.log('ASSERT-OK 3');`,
   },
   '18-graph-general/05-course-schedule.md': {
-    fns: ['canFinishBruteForce', 'canFinishDFS', 'canFinish'],
     cases: [
       { args: [2, [[1, 0]]], expect: true },
       { args: [2, [[1, 0], [0, 1]]], expect: false },
@@ -954,7 +911,6 @@ for (const fn of [findOrderBruteForce, findOrderDFS, findOrder]) {
 console.log('ASSERT-OK 12');`,
   },
   '19-graph-bfs/01-snakes-and-ladders.md': {
-    fns: ['snakesAndLaddersBruteForce', 'snakesAndLaddersBFS', 'snakesAndLadders'],
     cases: [
       {
         args: [[[-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [-1, 35, -1, -1, 13, -1], [-1, -1, -1, -1, -1, -1], [-1, 15, -1, -1, -1, -1]]],
@@ -964,7 +920,6 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '19-graph-bfs/02-minimum-genetic-mutation.md': {
-    fns: ['minMutationBruteForce', 'minMutationBFS', 'minMutation'],
     cases: [
       { args: ['AACCGGTT', 'AACCGGTA', ['AACCGGTA']], expect: 1 },
       {
@@ -975,7 +930,6 @@ console.log('ASSERT-OK 12');`,
     ],
   },
   '19-graph-bfs/03-word-ladder.md': {
-    fns: ['ladderLengthBruteForce', 'ladderLengthBFS', 'ladderLength'],
     cases: [
       {
         args: ['hit', 'cog', ['hot', 'dot', 'dog', 'lot', 'log', 'cog']],
@@ -1080,7 +1034,6 @@ for (const fn of [mergeKListsBruteForce, mergeKListsDivideConquer, mergeKLists])
 console.log('ASSERT-OK 9');`,
   },
   '22-bit-manipulation/01-add-binary.md': {
-    fns: ['addBinaryBruteForce', 'addBinaryPrepend', 'addBinary'],
     cases: [
       { args: ['11', '1'], expect: '100' },
       { args: ['1010', '1011'], expect: '10101' },
@@ -1088,14 +1041,12 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '22-bit-manipulation/02-reverse-bits.md': {
-    fns: ['reverseBitsBruteForce', 'reverseBitsLoop', 'reverseBits'],
     cases: [
       { args: [43261596], expect: 964176192 },
       { args: [4294967293], expect: 3221225471 },
     ],
   },
   '22-bit-manipulation/03-number-of-1-bits.md': {
-    fns: ['hammingWeightBruteForce', 'hammingWeightLoop', 'hammingWeight'],
     cases: [
       { args: [11], expect: 3 },
       { args: [128], expect: 1 },
@@ -1103,7 +1054,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '22-bit-manipulation/04-single-number.md': {
-    fns: ['singleNumberBruteForce', 'singleNumberSet', 'singleNumber'],
     cases: [
       { args: [[2, 2, 1]], expect: 1 },
       { args: [[4, 1, 2, 1, 2]], expect: 4 },
@@ -1111,14 +1061,12 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '22-bit-manipulation/05-single-number-ii.md': {
-    fns: ['singleNumberIIBruteForce', 'singleNumberIIMap', 'singleNumberII'],
     cases: [
       { args: [[2, 2, 3, 2]], expect: 3 },
       { args: [[0, 1, 0, 1, 0, 1, 99]], expect: 99 },
     ],
   },
   '22-bit-manipulation/06-bitwise-and-range.md': {
-    fns: ['rangeBitwiseAndBruteForce', 'rangeBitwiseAndShifts', 'rangeBitwiseAnd'],
     cases: [
       { args: [5, 7], expect: 4 },
       { args: [0, 0], expect: 0 },
@@ -1127,7 +1075,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '23-kadanes-algorithm/01-maximum-subarray.md': {
-    fns: ['maxSubArrayBruteForce', 'maxSubArrayDivideConquer', 'maxSubArray'],
     cases: [
       { args: [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], expect: 6 },
       { args: [[1]], expect: 1 },
@@ -1135,11 +1082,6 @@ console.log('ASSERT-OK 9');`,
     ],
   },
   '23-kadanes-algorithm/02-maximum-sum-circular-subarray.md': {
-    fns: [
-      'maxSubarraySumCircularBruteForce',
-      'maxSubarraySumCircularTwoPass',
-      'maxSubarraySumCircular',
-    ],
     cases: [
       { args: [[1, -2, 3, -2]], expect: 3 },
       { args: [[5, -3, 5]], expect: 10 },
@@ -1157,6 +1099,68 @@ function assertEq(actual, expected, label) {
   }
 }
 `;
+
+const MANIFEST_PATH = path.join(ROOT_DIR, 'build', 'blocks.json');
+const REGEN_HINT = 'regenerate it with: node scripts/gen-blocks.mjs';
+
+// ponytail: the whole 450-block manifest is parsed on every run (~190 KB, ~10ms)
+// and cached for the process. Cache it once `npm test` starts paying for
+// gen-blocks on fresh clones; until then a per-entry read would be pure cost.
+let targetFnCache = null;
+
+/** guide path -> [level1Name, level2Name, level3Name], from build/blocks.json. */
+function loadTargetFns() {
+  if (targetFnCache) return targetFnCache;
+
+  if (!fs.existsSync(MANIFEST_PATH)) {
+    // build/ is gitignored, so a fresh clone has no manifest and `npm test` is
+    // the only thing that would ever build it. Regenerate instead of failing
+    // bare: the alternative is an ENOENT that tells nobody what to run. Never
+    // fall back to "no fns" — that would silently run 399 of 828 assertions and
+    // still print Failures: 0.
+    console.log(`📦 ${path.relative(ROOT_DIR, MANIFEST_PATH)} missing — building it (${REGEN_HINT})`);
+    try {
+      execFileSync('node', [path.join(__dirname, 'gen-blocks.mjs')], { stdio: 'inherit' });
+    } catch (err) {
+      throw new Error(
+        `missing ${path.relative(ROOT_DIR, MANIFEST_PATH)} and scripts/gen-blocks.mjs could not build it — ${REGEN_HINT}\n` +
+          `${(err.stderr?.toString() || err.message).trim()}`
+      );
+    }
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf-8'));
+  } catch (err) {
+    throw new Error(`unreadable ${path.relative(ROOT_DIR, MANIFEST_PATH)} — ${REGEN_HINT}\n${err.message}`);
+  }
+  if (!Array.isArray(manifest?.blocks)) {
+    throw new Error(`${path.relative(ROOT_DIR, MANIFEST_PATH)} has no \`blocks\` array — ${REGEN_HINT}`);
+  }
+
+  const byPath = new Map();
+  for (const block of manifest.blocks) {
+    if (!byPath.has(block.path)) byPath.set(block.path, {});
+    byPath.get(block.path)[block.level] = block.targetFn;
+  }
+  targetFnCache = byPath;
+  return byPath;
+}
+
+/** The three functions to exercise for `rel`, or a hard error naming the fix. */
+function targetFnsFor(rel, byPath) {
+  const levels = byPath.get(rel);
+  if (!levels) {
+    throw new Error(`no block manifest entry for ${rel} — ${REGEN_HINT}`);
+  }
+  const fns = [levels[1], levels[2], levels[3]];
+  const missing = fns.map((n, i) => (n ? null : `level ${i + 1}`)).filter(Boolean);
+  if (missing.length) {
+    throw new Error(`manifest has no targetFn for ${rel} (${missing.join(', ')}) — ${REGEN_HINT}`);
+  }
+  return fns;
+}
 
 function buildFnHarness(fns, cases) {
   const fnMap = fns.map((n) => `  ${JSON.stringify(n)}: ${n}`).join(',\n');
@@ -1250,6 +1254,11 @@ export function runFullTests(filter = null) {
   console.log('🧪 Starting Executable Code Verification (syntax + runtime)...\n');
   const files = collectProblemFiles().filter((f) => !filter || f.includes(filter));
 
+  // Resolved once, up front, and fatally: the 56 `cases` entries need their
+  // function names from build/blocks.json, and a runner that cannot name them
+  // must say so rather than quietly assert less.
+  const manifestFns = loadTargetFns();
+
   let syntaxChecked = 0;
   let runtimeFiles = 0;
   let syntaxOnlyFiles = 0;
@@ -1296,7 +1305,7 @@ export function runFullTests(filter = null) {
     try {
       const harness = entry.script
         ? ASSERT_PRELUDE + entry.script
-        : buildFnHarness(entry.fns, entry.cases);
+        : buildFnHarness(targetFnsFor(rel, manifestFns), entry.cases);
       const n = runRuntimeHarness(levelBlocks, harness, rel);
       assertions += n;
       runtimeFiles++;
@@ -1318,5 +1327,12 @@ export function runFullTests(filter = null) {
 
 const cliFilter = process.argv[2] && !process.argv[2].startsWith('-') ? process.argv[2] : null;
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  runFullTests(cliFilter);
+  // A missing/unusable manifest is a setup problem, not a bug to debug: print the
+  // message and the fix, not a stack trace through loadTargetFns.
+  try {
+    runFullTests(cliFilter);
+  } catch (err) {
+    console.error(`\n❌ ${err.message.split('\n').join('\n   ')}\n`);
+    process.exit(1);
+  }
 }

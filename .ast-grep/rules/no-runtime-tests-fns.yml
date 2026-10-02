@@ -1,0 +1,33 @@
+# Plan v5 row 2 / invariant 2: a guide's function names are declared ONCE, in the
+# guide's own Level 1-3 blocks. `scripts/test-runner.mjs` used to re-declare them a
+# second time as `fns: [level1Name, level2Name, level3Name]` in its RUNTIME_TESTS
+# registry, and `build/blocks.json` (gen-blocks.mjs, the K7 block manifest) already
+# publishes them per block as `targetFn`. Three declarations of one fact is what
+# invariant 2 forbids, so the registry keeps only `cases` and the runner resolves
+# the names from the manifest.
+#
+# This rule is the gate that keeps it that way: re-adding an `fns:` key is a
+# regression, not a style preference.
+#
+# Syntax-shaped, not text-shaped. `fns: [...]` at statement position parses as a
+# LABELLED STATEMENT, so a bare `fns: $A` pattern silently matches zero nodes —
+# the node we want is the object-literal `pair`, selected by kind. The regex is
+# scoped to that one node's own text, so the header comment that once documented
+# the `fns` shape is never reported.
+id: no-runtime-tests-fns
+message: >-
+  RUNTIME_TESTS must not declare `fns` — function names live in the guide blocks
+  and are published by build/blocks.json as each block's `targetFn` (plan
+  invariant 2: nothing re-declares a slug or fn name)
+severity: error
+language: JavaScript
+rule:
+  kind: pair
+  regex: '^\s*fns\s*:'
+  # stopBy: end is load-bearing. A pair's immediate parent is the object literal,
+  # not the declarator, and `inside` defaults to stopBy: neighbor — which reports
+  # zero matches. Walking to the end of the ancestor chain is what scopes this to
+  # `const RUNTIME_TESTS = {...}`.
+  inside:
+    kind: variable_declarator
+    stopBy: end
