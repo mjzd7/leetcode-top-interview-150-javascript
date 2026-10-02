@@ -703,6 +703,861 @@ export function planBits(table) {
   return { preset: 'bits', level, column, label: table.columns[column], width, steps: frames.length, frames };
 }
 
+/* ================================================================== *
+ * Tier 2 — the canonical-level presets and the two overlays (row 24)
+ * ================================================================== */
+
+/**
+ * The level Tier 2 animates, and nothing else.
+ *
+ * Plan §9 decision 2, verbatim: "all three for Tier 1, **canonical level only for
+ * Tier 2**". Tier 1's four presets are about a SHAPE (a stack is LIFO whatever the level
+ * says), so mounting them at L1 shows the same lesson a beginner already has. Tier 2's four
+ * are about a DATA STRUCTURE the canonical solution is built on — a linked list, a tree, a
+ * graph, an object's field-state — and the brute-force and optimized levels do not carry that
+ * structure at all. So the level is the gate, checked before the readers run, and every
+ * planner below returns `null` on anything that is not level 3.
+ *
+ * The gate lives here rather than in `mountPresets` so the pure planners carry it with them:
+ * a planner called from Node, from a future trace adapter, or from the Playwright spec, is
+ * gated identically to the one the portal calls.
+ */
+export const TIER2_LEVEL = 3;
+
+/**
+ * Tier 2's four presets, in the order they outrank one another.
+ *
+ * `graph` first because it is the only one whose structure is not derivable from the rows'
+ * order — nodes and edges need union-find. `tree` next: a level-order wire is a shape, but
+ * the parent/child edges inside it are the lesson. `statecard` before `linkedlist` because a
+ * state column also parses as a chain of values (`[10, 30]`) and only the op column beside
+ * it says which reading is right. `array` (row 22) stays last, in `PRESETS`.
+ */
+export const TIER2_PRESETS = ['graph', 'tree', 'statecard', 'linkedlist'];
+
+/**
+ * The two overlays, which are NOT presets and do not compete for a table.
+ *
+ * `dp-table` and `recursion-tree` add a second panel to a player that already exists — they
+ * have no stage of their own and they never take a table away from a preset. `pickOverlays`
+ * is a separate pass over the same rows for exactly that reason: a DP guide that also recurses
+ * gets both panels, and `pickPreset` still answers `null` if nothing else claims it.
+ */
+export const OVERLAYS = ['dp-table', 'recursion-tree'];
+
+/** One planner per Tier-2 preset name, and one per overlay name. */
+const TIER2_PLANNERS = {};
+const OVERLAY_PLANNERS = {};
+
+/** A bare identifier: a node name, a key, a field label. Digits may follow the first letter (`1a`). */
+const NAME = /^[A-Za-z_][\w']*$/;
+
+/** Strip the authored layer and drop backticks — a chain node and a read value are both labels. */
+const bare = (s) => String(s == null ? '' : s).replace(/[`*]/g, '').trim();
+
+/** `1a`, `…`, `∞`, `2.5`, `H` — everything a `next` chain may hold as one node. */
+const CHAIN_TOKEN = /^-?\d+(?:\.\d+)?$|^[A-Za-z_0-9][\w.]*$|^∞$|^(…|\.\.\.)$/;
+
+/** The tokens that end a chain, when a guide writes one. */
+const TERMINATOR = /^(null|nil|none|∅|ø)$/i;
+
+/** The level a table belongs to, or 0 when it is not the canonical one. */
+const tier2 = (table) => (table && Number(table.level) === TIER2_LEVEL ? TIER2_LEVEL : 0);
+
+/* ------------------------------------------------------------------ *
+ * linkedlist — nodes joined by `next`
+ * ------------------------------------------------------------------ */
+
+/** One authored chain into `{values, terminated, unreachable}`, or null when it is not one. */
+function chainOf(tokens) {
+  const clean = tokens.map((t) => t.trim()).filter((t) => t !== '');
+  if (!clean.length) return null;
+  const stop = clean.findIndex((t) => TERMINATOR.test(t));
+  return {
+    values: stop === -1 ? clean : clean.slice(0, stop),
+    terminated: stop !== -1,
+    unreachable: stop === -1 ? [] : clean.slice(stop + 1),
+  };
+}
+
+/**
+ * The `next` chain one cell states, or null.
+ *
+ * Two authored spellings, because the corpus uses both: the linked form
+ * (`` `2 -> null` ``, `` `... -> 1b` ``) and the value form (`` `[1, 2, null, 5, 6]` ``).
+ *
+ * A `null` is a TERMINATOR, not a gap, and everything written past it is reported in
+ * `unreachable` rather than dropped. That is the `list` codec's own rule —
+ * `api/_lib/codecs.mjs:184`, "a decode stops at the first null cell" — so the preset and
+ * the thing that will eventually drive it agree about where a chain ends. The empty list is
+ * zero nodes with `terminated: true`, which is why `null`, `∅`, `[]` and `—` all read.
+ *
+ * Refused: a set literal (`seen = {3,2,0}` has no `next`), two bracket groups joined by `+`
+ * (two lists, not one chain), and anything without an arrow or a bracket.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|{values: string[], terminated: boolean, unreachable: string[]}}
+ */
+export function readChain(cell) {
+  const b = math(strip(cell));
+  if (!b) return null;
+  if (/^(—|-|∅|ø|null|nil|none|empty)$/i.test(b)) return { values: [], terminated: true, unreachable: [] };
+
+  const pairs = bracketPairs(b);
+  if (pairs && pairs.length) {
+    if (pairs.length !== 1 || pairs[0][0] !== 0 || pairs[0][1] !== b.length - 1) return null;
+    const inner = b.slice(1, -1).trim();
+    if (!inner) return { values: [], terminated: true, unreachable: [] };
+    const items = splitTop(inner);
+    if (items.length > CELL_CAP || items.some((item) => !CHAIN_TOKEN.test(item.trim()))) return null;
+    return chainOf(items);
+  }
+
+  if (!/->|→/.test(b)) return null;
+  const tokens = b.split(/\s*(?:->|→)\s*/);
+  if (tokens.some((token) => !CHAIN_TOKEN.test(token.trim()))) return null;
+  return chainOf(tokens);
+}
+
+/**
+ * What one step did to a chain, from two consecutive states.
+ *
+ * `push` is a node added at the HEAD (the previous chain is still a suffix), `pop` is a node
+ * lost from it, and anything else that differs is a `rewrite` — named, not drawn as a push,
+ * because calling a rewire a push is the lie this preset exists to avoid. Unchanged is
+ * `same`, and a row that wrote no chain is `carried`.
+ *
+ * @param {string[]|null} previous null on step 0
+ * @param {string[]} next
+ * @returns {{op: string, moved: number[]}}
+ */
+export function chainOp(previous, next) {
+  if (!previous) return { op: 'start', moved: [] };
+  if (previous.length === next.length && previous.every((v, i) => v === next[i])) return { op: 'same', moved: [] };
+  const tail = next.slice(next.length - previous.length);
+  if (next.length > previous.length && tail.every((v, i) => v === previous[i])) {
+    return { op: 'push', moved: span(0, next.length - previous.length - 1) };
+  }
+  if (next.length < previous.length && previous.slice(previous.length - next.length).every((v, i) => v === next[i])) {
+    return { op: 'pop', moved: span(next.length, previous.length - 1) };
+  }
+  return { op: 'rewrite', moved: next.map((_, i) => i).filter((i) => previous[i] !== next[i]) };
+}
+
+/**
+ * One playable chain table, or null.
+ *
+ * Claims a column when either half of the evidence holds: at least `COL_MIN_PARSE_RATIO` of
+ * its rows parse AND at least that many wrote an explicit `next` arrow (the linked spelling,
+ * which is proof the author meant a chain), or they parse and its HEADER names a list
+ * (`list`, `chain`, `node`, `next`, `link`, `order`). Both halves are needed, because
+ * `In-Place State` on 08-linked-list/11-lru-cache.md holds `[H,2,1,T]` — which parses as a
+ * four-node chain and is in fact a doubly-linked list with two sentinels. That table belongs
+ * to `statecard`, which can see the `put(1,1)` beside it; a chain cannot.
+ *
+ * @param {{level?: number, columns: string[], rows: string[][]}} table a `parseGuide` entry
+ * @returns {null|{preset: string, level: number, column: number, label: string, steps: number,
+ *   frames: Array<{n: number, values: string[], terminated: boolean, unreachable: string[],
+ *     op: string, moved: number[], source: string}>}}
+ */
+export function planLinkedList(table) {
+  const level = tier2(table);
+  if (!level) return null;
+  if (!Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+
+  let column = -1;
+  let best = 0;
+  for (let c = 0; c < table.columns.length; c++) {
+    const parsed = table.rows.map((row) => readChain(row[c]));
+    const ratio = parsed.filter(Boolean).length / table.rows.length;
+    if (ratio < COL_MIN_PARSE_RATIO) continue;
+    const arrows = table.rows.filter((row) => /->|→/.test(math(strip(row[c])))).length / table.rows.length;
+    const named = /list|chain|node|next|link|order/i.test(table.columns[c]) ? 1 : 0;
+    if (arrows < COL_MIN_PARSE_RATIO && !named) continue;
+    if (ratio > best) {
+      best = ratio;
+      column = c;
+    }
+  }
+  if (column === -1) return null;
+
+  const frames = [];
+  let previous = null;
+  for (let i = 0; i < table.rows.length; i++) {
+    const written = readChain(table.rows[i][column]);
+    const values = written ? written.values : previous || [];
+    const move = written ? chainOp(previous, values) : { op: 'carried', moved: [] };
+    frames.push({
+      n: i,
+      values,
+      terminated: written ? written.terminated : true,
+      unreachable: written ? written.unreachable : [],
+      op: move.op,
+      moved: move.moved,
+      source: written ? 'cell' : 'carried',
+    });
+    if (written) previous = values;
+  }
+  return { preset: 'linkedlist', level, column, label: table.columns[column], steps: frames.length, frames };
+}
+
+TIER2_PLANNERS.linkedlist = planLinkedList;
+
+/* ------------------------------------------------------------------ *
+ * tree — a level order is not a tree until the edges are drawn
+ * ------------------------------------------------------------------ */
+
+/**
+ * The levels of a level-order tree, or null when the cell is not one.
+ *
+ * The corpus writes a tree the way its BFS walks it — as nested levels, `out = [[3],[20,9]]` —
+ * which is also the `tree` codec's wire (`api/_lib/codecs.mjs:68`). One rule separates a tree
+ * from the other nested arrays: **every level but the last must be full**. A binary tree's
+ * level `d` holds 2^d slots, so `[[3],[9,20]]` is a tree, `[[1,3],[6,9]]` is a rectangle — which
+ * is the one shape `matrix` already owns and the reason `insert-interval`'s `result` state is
+ * not claimed here — and `[[3],[20,9],[15,7]]` is a tree whose last level is half empty,
+ * which is the shape the level-order guides actually write.
+ *
+ * A single level parses: it is what step 0 of a growing tree says, and `planTree` separately
+ * requires one row that opens a second level, so a table of `[[3]]` is still not a tree.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|{levels: string[][]}}
+ */
+export function readTreeWire(cell) {
+  const b = math(strip(cell));
+  const start = b.indexOf('[');
+  const end = b.lastIndexOf(']');
+  if (start === -1 || end <= start) return null;
+  const body = b.slice(start, end + 1);
+  const pairs = bracketPairs(body);
+  const outer = pairs && pairs.find((pair) => pair[0] === 0);
+  // A tree is written in LEVELS, so the cell must hold groups inside the outermost brackets.
+  // One flat group is an array, and `matrix`/`array` own those.
+  const nested = outer ? pairs.filter((pair) => pair[0] > 0 && pair[1] < outer[1]) : [];
+  if (!nested.length || nested.length > CELL_CAP) return null;
+  const levels = [];
+  for (const [from, to] of nested) {
+    const row = rowOf(body.slice(from, to + 1));
+    if (row === null || !row.length) return null;
+    levels.push(row);
+  }
+  for (let d = 0; d < levels.length - 1; d++) if (levels[d].length !== 2 ** d) return null;
+  return { levels };
+}
+
+/**
+ * Lay a level-order wire out as a tree: a parent for every node, and the edges between them.
+ *
+ * The layout is the wire's own, which is what makes the edges correct rather than guessed:
+ * index `i`'s parent is `(i - 1) / 2`, its depth is `floor(log2(i + 1))`, and its slot inside
+ * its level is `i - 2^depth + 1`. An absent child is `null` on the wire and gets `present:
+ * false` — it is a hole, and no edge is emitted to it. This is `treeToArray`'s BFS inverted
+ * one-for-one (`api/_lib/codecs.mjs:82`), so the tree drawn here is the tree the codec holds.
+ *
+ * @param {Array<string|null>} wire level-order values, `null` for an absent node
+ * @returns {null|{height: number, width: number,
+ *   nodes: Array<{i: number, value: string|null, depth: number, parent: number|null, present: boolean}>,
+ *   edges: Array<[number, number]>}}
+ */
+export function treeLayout(wire) {
+  if (!Array.isArray(wire) || !wire.length || wire.length > CELL_CAP) return null;
+  const nodes = wire.map((value, i) => ({
+    i,
+    value: value == null ? null : String(value),
+    depth: i === 0 ? 0 : Math.floor(Math.log2(i + 1)),
+    parent: i === 0 ? null : Math.floor((i - 1) / 2),
+    present: value != null,
+  }));
+  const edges = [];
+  for (const node of nodes) {
+    if (node.parent !== null && node.present && nodes[node.parent].present) edges.push([node.parent, node.i]);
+  }
+  return {
+    height: Math.max(...nodes.map((n) => n.depth)) + 1,
+    width: 2 ** Math.max(...nodes.map((n) => n.depth)),
+    nodes,
+    edges,
+  };
+}
+
+/**
+ * One playable tree table, or null.
+ *
+ * Claims a column at least `COL_MIN_PARSE_RATIO` of whose rows are levels of a level-order,
+ * and requires one of them to open a second level. Frame `n` draws the tree as the guide had
+ * written it by step `n`, and `added` names the nodes that step introduced — so the animation
+ * is a tree gaining nodes, which is the thing a flat row of cells cannot show.
+ *
+ * @param {{level?: number, columns: string[], rows: string[][]}} table a `parseGuide` entry
+ * @returns {null|{preset: string, level: number, column: number, label: string, steps: number,
+ *   frames: Array<{n: number, levels: string[][], layout: object, added: number[], source: string}>}}
+ */
+export function planTree(table) {
+  const level = tier2(table);
+  if (!level) return null;
+  if (!Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+
+  let column = -1;
+  let best = 0;
+  for (let c = 0; c < table.columns.length; c++) {
+    const parsed = table.rows.map((row) => readTreeWire(row[c]));
+    const ratio = parsed.filter((tree) => tree && tree.levels.length > 1).length / table.rows.length;
+    const anyParsed = parsed.filter(Boolean).length / table.rows.length;
+    if (anyParsed < COL_MIN_PARSE_RATIO || !ratio) continue;
+    if (anyParsed > best) {
+      best = anyParsed;
+      column = c;
+    }
+  }
+  if (column === -1) return null;
+
+  const frames = [];
+  let previous = null;
+  let previousLayout = null;
+  for (let i = 0; i < table.rows.length; i++) {
+    const written = readTreeWire(table.rows[i][column]);
+    const levels = written ? written.levels : previous || [];
+    const layout = (written ? treeLayout([].concat(...levels)) : null) || previousLayout;
+    const added = layout
+      ? layout.nodes.filter((n) => n.present && (!previousLayout || n.i >= previousLayout.nodes.length)).map((n) => n.i)
+      : [];
+    frames.push({ n: i, levels, layout, added, source: written ? 'cell' : 'carried' });
+    if (written) {
+      previous = levels;
+      previousLayout = layout;
+    }
+  }
+  return { preset: 'tree', level, column, label: table.columns[column], steps: frames.length, frames };
+}
+
+TIER2_PLANNERS.tree = planTree;
+
+/* ------------------------------------------------------------------ *
+ * graph — nodes, edges, and the components they do not form
+ * ------------------------------------------------------------------ */
+
+/** The node set one cell holds, in any of the three spellings the corpus uses. */
+function nodeSet(cell) {
+  const b = math(String(cell == null ? '' : cell).replace(/[`*]/g, ''))
+    .replace(/^\s*(expand|visit|dequeue|pop|founds?|neighbors?\s+of|discovers?)\b[:\s]*/i, '')
+    .trim();
+  if (!b) return null;
+  const group = /^([{[])([^[\]{}]*)([\]}])(?![A-Za-z0-9_'])/.exec(b);
+  if (!group) return null;
+  const items = splitTop(group[2]).map((t) => t.trim()).filter(Boolean);
+  return items.length && items.every((item) => NAME.test(item)) ? items : null;
+}
+
+/**
+ * The edges one row states: the frontier it expanded times the neighbours it found.
+ *
+ * The frontier is the FIRST cell that names an expansion — the guide may put it in any column
+ * (19-graph-bfs/03-word-ladder.md L3 step 3 has `expand {cog}` in `Pointer R` and the
+ * neighbours it found in `Pointer L`, the other way round from every other step) — and the
+ * neighbours are every OTHER node set on the row. A cell saying a node is `in endSet` is a
+ * terminal, not an edge, and is returned as `terminal` instead.
+ *
+ * Only a BRACKETED group counts as a neighbour list. A bare word is prose — `unwind` is not
+ * a node the guide found — and every authored set in this corpus is braced (`{hot}`,
+ * `{dot,lot}`, `{dog,log}`).
+ *
+ * @param {string[]} cells one row, verbatim
+ * @returns {null|{from: string[], to: string[], terminal: string|null}} `to` may be empty, and
+ *   `terminal` may be set on a row that adds no edge
+ */
+export function readEdge(cells) {
+  if (!Array.isArray(cells)) return null;
+  const clean = cells.map((cell) => math(strip(cell)));
+
+  let terminal = null;
+  for (const cell of clean) {
+    const isEnd = /in endSet|contact|equals end/i.test(cell);
+    if (!isEnd || /neither|\bnot\b/i.test(cell)) continue;
+    const node = cell.match(/([A-Za-z_][\w']*)/);
+    terminal = node ? node[1] : null;
+    break;
+  }
+
+  let fromAt = -1;
+  const from = [];
+  for (let i = 0; i < clean.length; i++) {
+    if (!/\b(expand|visit|dequeue|pop|discover)\b/i.test(clean[i])) continue;
+    const set = nodeSet(clean[i]);
+    if (set && set.length) {
+      from.push(...set);
+      fromAt = i;
+      break;
+    }
+  }
+  if (fromAt === -1) return null;
+
+  const to = [];
+  for (let i = 0; i < clean.length; i++) {
+    if (i === fromAt) continue;
+    if (/in endSet|contact|equals end/i.test(clean[i])) continue;
+    const set = nodeSet(clean[i]);
+    if (set && set.length) to.push(...set);
+  }
+  return { from, to, terminal };
+}
+
+/**
+ * Group nodes into connected components by the edges between them, union-find style.
+ *
+ * Disconnection is the point. A graph preset that drew one blob for a graph the guide's own
+ * edges leave in two pieces would be lying about the data structure it exists to teach, so
+ * components are computed rather than assumed, each is sorted, and the list is ordered by
+ * smallest member so two runs of the same graph draw the same way. An edge to a node no row
+ * mentioned still joins that node — it was discovered by being an endpoint.
+ *
+ * @param {string[]} nodes
+ * @param {Array<[string, string]>} edges
+ * @returns {string[][]} components, each sorted, the list sorted by first member
+ */
+export function graphComponents(nodes, edges) {
+  const parent = new Map();
+  const find = (x) => {
+    let at = x;
+    while (parent.get(at) !== at) at = parent.get(at);
+    let root = x;
+    while (parent.get(root) !== root) {
+      const next = parent.get(root);
+      parent.set(root, at);
+      root = next;
+    }
+    return at;
+  };
+  for (const node of nodes || []) parent.set(node, node);
+  for (const [a, b] of edges || []) {
+    for (const node of [a, b]) if (!parent.has(node)) parent.set(node, node);
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  }
+  const groups = new Map();
+  for (const node of parent.keys()) {
+    const root = find(node);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(node);
+  }
+  return [...groups.values()].map((group) => group.sort()).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+}
+
+/**
+ * One playable graph table, or null.
+ *
+ * A row that states edges contributes them, and the frame shows every edge found SO FAR — so
+ * the graph grows the way a BFS or a union-find discovers it, and `components` is recomputed
+ * each step. On 19-graph-bfs/03-word-ladder.md L3 that is the real shape of the guide's own
+ * data: after step 3 the edges form two components (`hit—hot—{dot,lot}` and
+ * `cog—{dog,log}`) and a renderer that drew one blob would be wrong, not merely untidy.
+ *
+ * @param {{level?: number, columns: string[], rows: string[][]}} table a `parseGuide` entry
+ * @returns {null|{preset: string, level: number, label: string, steps: number,
+ *   frames: Array<{n: number, nodes: string[], edges: Array<[string, string]>, added: Array<[string, string]>,
+ *     components: string[][], terminal: string|null, source: string}>}}
+ */
+export function planGraph(table) {
+  const level = tier2(table);
+  if (!level) return null;
+  if (!Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+
+  const read = table.rows.map((row) => readEdge(row));
+  if (read.filter(Boolean).length / table.rows.length < COL_MIN_PARSE_RATIO) return null;
+
+  const edges = [];
+  const frames = [];
+  let terminal = null;
+  for (let i = 0; i < table.rows.length; i++) {
+    const edge = read[i];
+    const added = [];
+    if (edge) {
+      if (edge.terminal) terminal = edge.terminal;
+      for (const from of edge.from) {
+        for (const to of edge.to) {
+          edges.push([from, to]);
+          added.push([from, to]);
+        }
+      }
+    }
+    const nodes = [...new Set(edges.flat())].sort();
+    frames.push({
+      n: i,
+      nodes,
+      edges: edges.slice(),
+      added,
+      components: graphComponents(nodes, edges),
+      terminal,
+      source: edge ? 'cell' : 'carried',
+    });
+  }
+  const label = table.columns.find((name) => /state|graph|edge|neighbor|frontier|queue|adjacen/i.test(name)) || '';
+  return { preset: 'graph', level, label, steps: frames.length, frames };
+}
+
+TIER2_PLANNERS.graph = planGraph;
+
+/* ------------------------------------------------------------------ *
+ * statecard — an object's state after each operation, plus its output
+ * ------------------------------------------------------------------ */
+
+/**
+ * The operations one cell calls, or null when it calls none.
+ *
+ * A cell may name more than one (`put(1,1), put(2,2)` on 08-linked-list/11-lru-cache.md L3
+ * step 1) and all of them are kept, because two `put`s are two operations and collapsing
+ * them into one step would hide the eviction they cause. The names may not be dotted, which
+ * is what keeps a statement column (`map.set(10, 0); list.push(10)`) from posing as an op
+ * column.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|string[]} calls, whitespace collapsed
+ */
+export function readOp(cell) {
+  const b = math(strip(cell));
+  if (!b) return null;
+  if (!/^[A-Za-z_]\w*\s*\([^()]*\)(\s*,\s*[A-Za-z_]\w*\s*\([^()]*\))*$/.test(b)) return null;
+  const calls = b.match(/[A-Za-z_]\w*\s*\([^()]*\)/g);
+  return calls ? calls.map((call) => call.replace(/\s+/g, '')) : null;
+}
+
+/**
+ * The field state one cell holds — the FIRST bracketed group in it — or null.
+ *
+ * A bracketed group anywhere in the cell counts, because the corpus writes the state and the
+ * output in the same cell (`[H,3,1,T]`, `get(2)=-1`) and requiring the group to BE the cell
+ * would read exactly the two LRU rows that carry the state. Both `[…]` and `{…}` are read:
+ * `ops` snapshots an object's own enumerable fields (`api/_lib/codecs.mjs:223`), and in this
+ * corpus that is a list, a stack, a queue and a map.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|string} the group, verbatim
+ */
+export function readState(cell) {
+  const b = math(strip(cell));
+  const m = /[[{]([^[\]{}]*)[\]}]/.exec(b);
+  if (!m || !m[1].trim()) return null;
+  return m[0];
+}
+
+/**
+ * What the row says the operation returned, or null.
+ *
+ * Read from the STATE columns, never from the prose around them: 11-lru-cache.md L3 step 3
+ * writes `Evict tail.prev = 2` in `Invariant Checked` and `get(2)=-1` in the state column,
+ * and only the second is what the call returned. The state group is removed first so a cell
+ * that is nothing but state has no output to report.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|string}
+ */
+export function readOutput(cell) {
+  const b = String(cell == null ? '' : cell)
+    .replace(/[`*]/g, '')
+    .replace(/[[{][^[\]{}]*[\]}]/, '')
+    .replace(/\$/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/^[\s,]+|[\s,]+$/g, '')
+    .trim();
+  if (!b) return null;
+  return /^(return|returns|yield|yields|median|emit|emits|output|outputs)\b/i.test(b) || /=[^=]/.test(b) ? b : null;
+}
+
+/**
+ * The state columns a table worth a state card carries, and why the floor is what it is.
+ *
+ * `COL_MIN_PARSE_RATIO` is the floor for the OP column, which is the table's spine. The state
+ * fields use `TIER2_STATE_RATIO` instead, because a state card's whole subject is a field an
+ * operation did not touch: on 08-linked-list/11-lru-cache.md L3 the state column is written on
+ * 2 of 4 rows, with `Returns 1` and `get(2)=-1` on the rows between. A floor that demanded a
+ * written state on most rows would refuse precisely the table a state card exists for.
+ */
+const TIER2_STATE_RATIO = 0.4;
+
+/**
+ * One playable ops table, or null.
+ *
+ * Claims the op column at row 22's parse ratio, then every state column beside it. Each
+ * frame carries the operations that step performed, the value of every field AFTER them, and
+ * the output the guide states — so the animation is a state TRANSITION, not the final answer.
+ * A field the step did not write is carried forward and tagged `carried`, which is what makes
+ * the `ops-terminal-state-and-outputs` equivalence (`api/_lib/codecs.mjs:200`) visible: the
+ * outputs are in one place on screen and the state they left behind in another.
+ *
+ * @param {{level?: number, columns: string[], rows: string[][]}} table a `parseGuide` entry
+ * @returns {null|{preset: string, level: number, opColumn: number, opLabel: string,
+ *   fields: Array<{column: number, label: string}>, steps: number,
+ *   frames: Array<{n: number, ops: string[], state: Array<{label: string, value: string|null, source: string}>,
+ *     output: string|null, source: string}>}}
+ */
+export function planStatecard(table) {
+  const level = tier2(table);
+  if (!level) return null;
+  if (!Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+
+  let opColumn = -1;
+  let best = 0;
+  for (let c = 0; c < table.columns.length; c++) {
+    const ratio = table.rows.filter((row) => readOp(row[c])).length / table.rows.length;
+    if (ratio >= COL_MIN_PARSE_RATIO && ratio > best) {
+      best = ratio;
+      opColumn = c;
+    }
+  }
+  if (opColumn === -1) return null;
+
+  const fields = [];
+  for (let c = 0; c < table.columns.length; c++) {
+    if (c === opColumn || !/state|stack|queue|heap|list|map|tree|set/i.test(table.columns[c])) continue;
+    const written = table.rows.map((row) => readState(row[c]));
+    const count = written.filter(Boolean).length;
+    if (count >= 2 && count / table.rows.length >= TIER2_STATE_RATIO) fields.push({ column: c, label: table.columns[c], written });
+  }
+  if (!fields.length) return null;
+
+  const carried = fields.map(() => null);
+  const frames = [];
+  for (let i = 0; i < table.rows.length; i++) {
+    const ops = readOp(table.rows[i][opColumn]) || [];
+    const state = fields.map((field, k) => {
+      const own = field.written[i];
+      if (own) carried[k] = own;
+      return { label: field.label, value: carried[k], source: own ? 'cell' : 'carried' };
+    });
+    let output = null;
+    for (const field of fields) {
+      const found = readOutput(table.rows[i][field.column]);
+      if (found) {
+        output = found;
+        break;
+      }
+    }
+    frames.push({ n: i, ops, state, output, source: ops.length ? 'cell' : 'carried' });
+  }
+
+  return {
+    preset: 'statecard',
+    level,
+    opColumn,
+    opLabel: table.columns[opColumn],
+    fields: fields.map((field) => ({ column: field.column, label: field.label })),
+    steps: frames.length,
+    frames,
+  };
+}
+
+TIER2_PLANNERS.statecard = planStatecard;
+
+/* ------------------------------------------------------------------ *
+ * dp-table — the overlay
+ * ------------------------------------------------------------------ */
+
+/**
+ * The cells one step writes into a DP row, or null when it writes none.
+ *
+ * Three authored spellings, all of which the corpus uses: a whole row from the left edge
+ * (`dp = [1,1,1]`, 17-multi-dp/03-unique-paths-ii.md L3 step 1), a range
+ * (`dp[6..10] = [2,2,3,3,2]`, 16-one-dp/04-coin-change.md L3 step 2) and a single cell
+ * (`Return dp[2] = 2`, unique-paths-ii L3 step 3).
+ *
+ * A READ is not a write. `min(dp[10],dp[9],dp[6]) + 1` names three cells and assigns none, so
+ * it returns null and the frame carries the row forward — which is the honest reading, since a
+ * frame that "wrote" the minimum it just read would be showing an arithmetic result as a
+ * stored value.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|{lo: number, hi: number, values: string[]}}
+ */
+export function readDpWrite(cell) {
+  const b = math(strip(cell));
+
+  const range = /\bdp\s*\[\s*(\d+)\s*(?:\.\.\.?|\\to\b|→)\s*(\d+)\s*\]\s*=\s*\[([^\[\]]*)\]/.exec(b);
+  if (range) {
+    const values = splitTop(range[3]).map((v) => v.trim()).filter(Boolean);
+    const lo = Number(range[1]);
+    const hi = Number(range[2]);
+    if (!values.length || hi < lo || hi - lo + 1 !== values.length) return null;
+    return { lo, hi, values };
+  }
+
+  const whole = /\bdp\s*=\s*\[([^\[\]]*)\]/.exec(b);
+  if (whole) {
+    const values = splitTop(whole[1]).map((v) => v.trim()).filter(Boolean);
+    return values.length ? { lo: 0, hi: values.length - 1, values } : null;
+  }
+
+  const one = /\bdp\s*\[\s*(\d+)\s*\]\s*=\s*([^=,;]+)/.exec(b);
+  if (one) {
+    const at = Number(one[1]);
+    const value = bare(one[2]);
+    return value ? { lo: at, hi: at, values: [value] } : null;
+  }
+  return null;
+}
+
+/**
+ * The DP row this table fills, cell by cell, with the cell each step wrote marked.
+ *
+ * The overlay — it adds a panel to a player and never takes the table from a preset. Cells
+ * keep their position across steps, so a reader sees the same row fill rather than a new row
+ * each time, and `changed` is diffed against the previous frame exactly as `planStack` diffs
+ * its entries. `cursor` is the FIRST cell the step changed: on step 0 nothing has changed yet,
+ * so nothing is marked.
+ *
+ * @param {{level?: number, columns: string[], rows: string[][]}} table a `parseGuide` entry
+ * @returns {null|{overlay: string, level: number, column: number, label: string, width: number,
+ *   steps: number, frames: Array<{n: number, cells: Array<string|null>, changed: number[],
+ *     cursor: number, source: string}>}}
+ */
+export function planDpTable(table) {
+  const level = tier2(table);
+  if (!level) return null;
+  if (!Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+
+  let column = -1;
+  let best = 0;
+  for (let c = 0; c < table.columns.length; c++) {
+    const written = table.rows.map((row) => readDpWrite(row[c]));
+    const count = written.filter(Boolean).length;
+    if (count >= 2 && count / table.rows.length >= COL_MIN_PARSE_RATIO && count > best) {
+      best = count;
+      column = c;
+    }
+  }
+  if (column === -1) return null;
+
+  const frames = [];
+  let cells = [];
+  let width = 0;
+  for (let i = 0; i < table.rows.length; i++) {
+    const written = readDpWrite(table.rows[i][column]);
+    const changed = [];
+    if (written) {
+      const at = Math.max(cells.length, written.hi + 1);
+      while (cells.length < at) cells.push(null);
+      for (let k = 0; k < written.values.length; k++) {
+        const index = written.lo + k;
+        if (cells[index] !== written.values[k]) {
+          cells[index] = written.values[k];
+          if (i > 0) changed.push(index);
+        }
+      }
+      width = Math.max(width, at);
+    }
+    frames.push({
+      n: i,
+      cells: cells.slice(),
+      changed,
+      cursor: changed.length ? changed[0] : 0,
+      source: written ? 'cell' : 'carried',
+    });
+  }
+  return { overlay: 'dp-table', level, column, label: table.columns[column], width, steps: frames.length, frames };
+}
+
+OVERLAY_PLANNERS['dp-table'] = planDpTable;
+
+/* ------------------------------------------------------------------ *
+ * recursion-tree — the overlay
+ * ------------------------------------------------------------------ */
+
+/**
+ * The call one cell names, or null.
+ *
+ * Refuses an argument that is itself an expression (`max(0, 0+2)` on 16-one-dp/02-house-robber.md
+ * L3 is a `max` call, not a recursion the guide is unfolding) and refuses anything with no
+ * call at all, so a bottom-up DP table's arithmetic column is not read as a call spine.
+ *
+ * @param {string} cell one verbatim cell from `parseGuide`
+ * @returns {null|{name: string, args: string[]}}
+ */
+export function readCall(cell) {
+  const b = math(strip(cell));
+  const m = /^([A-Za-z_]\w*)\s*\(([^()]*)\)$/.exec(b);
+  if (!m) return null;
+  const args = m[2].split(',').map((arg) => arg.trim()).filter(Boolean);
+  if (!args.length || args.some((arg) => /[+\-*/=<>^|&]/.test(arg))) return null;
+  return { name: m[1], args };
+}
+
+/** A row that returns, unwinds, or pops. */
+const RETURNS = /\breturn|unwind|back up|\bup\b/i;
+/** A row that opens a nested call: the guide says it recursed, expanded or enqueued. */
+const DESCENDS = /\brecurse|descend|expand|enqueue|child|subtree|deeper|dive/i;
+/** A row that hit a base case: a leaf, a bottom, an empty child. */
+const BASE_CASE = /\blea(f|v)|\bbase\b|\bbottom\b|no children|\bnone\b/i;
+
+/**
+ * The recursion this table unfolds: a call spine with a depth, and the base case on it.
+ *
+ * The depth is the guide's own, not a guess about how deep recursion "usually" goes. A row
+ * that names a call and says it recursed pushes one frame onto the spine; a row that names a
+ * call and says it is returning has come back up to the nearest open frame, so the call it
+ * makes next is that frame's child, at the same depth as the one it replaced; a row that names
+ * a call and says neither is a sibling and replaces the top frame. A row with no call is the
+ * function returning, and the spine collapses to the root. On 09-binary-tree-general/03-invert-binary-tree.md L3 that is
+ * depths 0, 1, 1, 0 with the base case on step 2 — `invert(7)`, which the guide's own
+ * `Invariant Checked` cell calls `Leaves swap nulls`.
+ *
+ * This is the overlay that makes the 102 `selfRecursive` blocks legible: the static region
+ * table the player sits under says WHICH block recurses; this says what recursing looks like
+ * at that depth, and where it stops.
+ *
+ * @param {{level?: number, columns: string[], rows: string[][]}} table a `parseGuide` entry
+ * @returns {null|{overlay: string, level: number, column: number, label: string, height: number,
+ *   steps: number, frames: Array<{n: number, call: string|null, depth: number, base: boolean,
+ *     spine: Array<string|null>, source: string}>}}
+ */
+export function planRecursion(table) {
+  const level = tier2(table);
+  if (!level) return null;
+  if (!Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+
+  let column = -1;
+  let best = 0;
+  for (let c = 0; c < table.columns.length; c++) {
+    const ratio = table.rows.filter((row) => readCall(row[c])).length / table.rows.length;
+    if (ratio >= COL_MIN_PARSE_RATIO && ratio > best) {
+      best = ratio;
+      column = c;
+    }
+  }
+  if (column === -1) return null;
+
+  const frames = [];
+  const spine = [];
+  let height = 0;
+  for (let i = 0; i < table.rows.length; i++) {
+    const row = table.rows[i];
+    const call = readCall(row[column]);
+    const prose = row.map((cell) => math(strip(cell))).join(' ');
+    let frame;
+    if (call) {
+      // A returning row has just come back to the frame below, and a descending row opens one
+      // deeper. A row that says NEITHER is a sibling call — the ops guides write `insert(10)`
+      // then `insert(20)` and nest nothing — so the top frame is replaced rather than pushed.
+      // Without that rule four unrelated `insert` calls render as a four-deep recursion.
+      const returning = RETURNS.test(prose);
+      if (returning) while (spine.length > 1) spine.pop();
+      const label = `${call.name}(${call.args.join(',')})`;
+      const entry = { call: label, base: BASE_CASE.test(prose) };
+      if (!returning && !DESCENDS.test(prose) && spine.length) spine[spine.length - 1] = entry;
+      else spine.push(entry);
+      frame = { n: i, call: label, depth: spine.length - 1, base: entry.base, spine: [], source: 'cell' };
+    } else {
+      while (spine.length > 1) spine.pop();
+      frame = { n: i, call: null, depth: 0, base: true, spine: [], source: 'carried' };
+    }
+    height = Math.max(height, spine.length);
+    frame.spine = spine.map((entry) => entry.call);
+    frames.push(frame);
+  }
+  return { overlay: 'recursion-tree', level, column, label: table.columns[column], height, steps: frames.length, frames };
+}
+
+OVERLAY_PLANNERS['recursion-tree'] = planRecursion;
+
 /* ------------------------------------------------------------------ *
  * Choosing
  * ------------------------------------------------------------------ */
@@ -723,12 +1578,37 @@ export function planBits(table) {
  */
 export function pickPreset(table) {
   if (!table || !Array.isArray(table.columns) || !Array.isArray(table.rows)) return null;
+  for (const name of TIER2_PRESETS) {
+    const plan = TIER2_PLANNERS[name](table);
+    if (plan) return { preset: name, plan };
+  }
   for (const name of PRESETS) {
     if (name === 'array') break;
     const plan = PLANNERS[name](table);
     if (plan) return { preset: name, plan };
   }
   return null;
+}
+
+/**
+ * Every overlay this table earns, in {@link OVERLAYS} order.
+ *
+ * A separate pass from {@link pickPreset}, on purpose: an overlay ADDS a panel to whatever
+ * player is there and never competes for the table, so a canonical-level table whose only
+ * shape is a DP row still gets a player — one with no preset stage, which is why
+ * `mountPresets` mounts on `picked || overlays.length`.
+ *
+ * @param {{level?: number, columns?: string[], rows?: string[][]}|null} table a `parseGuide` entry
+ * @returns {Array<{overlay: string, plan: object}>}
+ */
+export function pickOverlays(table) {
+  if (!table || !Array.isArray(table.columns) || !Array.isArray(table.rows)) return [];
+  const out = [];
+  for (const name of OVERLAYS) {
+    const plan = OVERLAY_PLANNERS[name](table);
+    if (plan) out.push({ overlay: name, plan });
+  }
+  return out;
 }
 
 /* ------------------------------------------------------------------ *
@@ -776,6 +1656,38 @@ function el(name, className, text) {
   const node = document.createElement(name);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * The portal's own tokens, read once. Row 23 already borrows them inline (`AXIS_CELL`) rather
+ * than adding a stylesheet, and `docs/index.html` is not this row's to edit — so the SVG stages
+ * paint themselves from the same values the stylesheet declares.
+ */
+const INK = {
+  line: 'rgba(148, 163, 184, 0.13)',
+  lineStrong: 'rgba(148, 163, 184, 0.42)',
+  surface: '#121724',
+  ink: '#E9EDF4',
+  muted: '#8B94A7',
+  accent: '#C8FA4B',
+  violet: '#8B5CF6',
+  rose: '#FB7185',
+  mono: '"JetBrains Mono", ui-monospace, monospace',
+};
+
+/** A flex row that wraps, matching `.viz-row`'s box metrics without the class. */
+const FLEX_ROW = 'display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;';
+
+/** `display:flex` for a vertical stack of labelled lines. */
+const STACK = 'display:flex;flex-direction:column;gap:.3rem;margin-bottom:.45rem;';
+
+/** One SVG element with its attributes set. `class` and `transform` are as common as x/y. */
+function svgEl(name, attrs) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const key of Object.keys(attrs || {})) node.setAttribute(key, String(attrs[key]));
   return node;
 }
 
@@ -949,27 +1861,435 @@ function buildStage(preset, plan) {
     };
   }
 
-  /* bits — most significant digit leftmost, the tested bit lit. */
+  /* ── bits — most significant digit leftmost, the tested bit lit. ────────────── */
+  if (preset === 'bits') {
+    return {
+      el: stage,
+      paint(step) {
+        const frame = frameAt(step);
+        fill(grid, plan.width);
+        for (let i = 0; i < plan.width; i++) {
+          const cell = grid.children[i];
+          setText(cell, frame.value[i] || '·');
+          // Cell i is the digit for bit `width - 1 - i`, counting from the right.
+          const tested = frame.tested === plan.width - 1 - i;
+          cell.classList.toggle('is-active', tested);
+          if (tested) cell.setAttribute('data-bit', String(plan.width - 1 - i));
+          else cell.removeAttribute('data-bit');
+          pop(cell, tested);
+        }
+        row.textContent = '';
+        row.appendChild(readout([{ kind: 'label', text: 'bits' }, { kind: 'live', text: frame.value || '—' }]));
+        row.appendChild(el('span', 'viz-pair', frame.tested === -1 ? 'no bit under test' : `bit ${frame.tested} under test`));
+        row.appendChild(el('span', 'viz-pair', `${frame.ones} set`));
+        if (frame.source === 'carried') row.appendChild(el('span', 'viz-arrow', 'carried forward — this row writes no word'));
+      },
+    };
+  }
+
+  /* ── linkedlist — nodes with a `next`, and a terminator you can see ─────────── */
+  if (preset === 'linkedlist') {
+    stage.style.width = '100%';
+    return {
+      el: stage,
+      paint(step) {
+        const frame = frameAt(step);
+        const nodes = frame.values.length + (frame.terminated ? 1 : 0);
+        const columns = Math.max(1, nodes * 2 - 1 + frame.unreachable.length * 2);
+        fill(grid, columns);
+        grid.style.minWidth = '0';
+        grid.style.gridTemplateColumns = `repeat(${columns}, minmax(26px, auto))`;
+        for (let i = 0; i < columns; i++) {
+          const cell = grid.children[i];
+          if (i % 2 === 1) {
+            cell.className = 'viz-arrow';
+            setText(cell, i < columns - 1 ? '→' : '');
+            continue;
+          }
+          const at = i >> 1;
+          if (at < frame.values.length) {
+            cell.className = 'viz-cell';
+            setText(cell, frame.values[at]);
+            cell.setAttribute('data-node', String(at));
+            cell.removeAttribute('data-terminator');
+            const moved = frame.moved.indexOf(at) !== -1;
+            cell.classList.toggle('is-active', moved);
+            pop(cell, moved);
+          } else if (at === frame.values.length && frame.terminated) {
+            cell.className = 'viz-cell';
+            cell.removeAttribute('data-node');
+            cell.setAttribute('data-terminator', '');
+            setText(cell, '∅');
+          } else {
+            cell.className = 'viz-cell is-done';
+            cell.removeAttribute('data-node');
+            cell.removeAttribute('data-terminator');
+            setText(cell, frame.unreachable[at - frame.values.length - (frame.terminated ? 1 : 0)] || '');
+          }
+        }
+        row.textContent = '';
+        row.appendChild(readout([
+          { kind: 'label', text: 'chain' },
+          { kind: 'live', text: `${frame.values.length} node${frame.values.length === 1 ? '' : 's'}` },
+        ]));
+        row.appendChild(el('span', 'viz-pair', frame.op));
+        if (frame.terminated && frame.values.length) row.appendChild(el('span', 'viz-k', 'next = null'));
+        if (!frame.values.length) row.appendChild(el('span', 'viz-arrow', 'empty list'));
+        if (frame.unreachable.length) {
+          row.appendChild(el('span', 'viz-arrow', `${frame.unreachable.join(', ')} written past the terminator — unreachable`));
+        }
+        if (frame.source === 'carried') row.appendChild(el('span', 'viz-arrow', 'carried forward — this row writes no chain'));
+      },
+    };
+  }
+
+  /* ── tree — nodes, and the parent/child edges a flat list cannot show ───────── */
+  if (preset === 'tree') {
+    const box = document.createElementNS(SVG_NS, 'svg');
+    box.setAttribute('class', 'dr-graph');
+    box.setAttribute('role', 'img');
+    stage.replaceChild(box, grid);
+    const edgeLayer = document.createElementNS(SVG_NS, 'g');
+    const nodeLayer = document.createElementNS(SVG_NS, 'g');
+    box.appendChild(edgeLayer);
+    box.appendChild(nodeLayer);
+    const CELL = 30;
+    const STEP = 52;
+    const PAD = 8;
+    const edgeStyle = { stroke: INK.lineStrong, 'stroke-width': 1.25 };
+    const slotOf = (node) => node.i - 2 ** node.depth + 1;
+    const cx = (node) => PAD + slotOf(node) * STEP + CELL / 2;
+    const cy = (node) => PAD + node.depth * STEP + CELL / 2;
+
+    return {
+      el: stage,
+      paint(step) {
+        const frame = frameAt(step);
+        const layout = frame.layout;
+        edgeLayer.textContent = '';
+        nodeLayer.textContent = '';
+        if (!layout) {
+          row.textContent = '';
+          row.appendChild(readout([{ kind: 'label', text: 'tree' }, { kind: 'live', text: '—' }]));
+          return;
+        }
+        const width = PAD * 2 + layout.width * STEP - (STEP - CELL);
+        const height = PAD * 2 + layout.height * STEP - (STEP - CELL);
+        box.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        box.setAttribute('width', String(width));
+        box.setAttribute('height', String(height));
+        box.style.maxWidth = '100%';
+
+        for (const [from, to] of layout.edges) {
+          edgeLayer.appendChild(svgEl('line', {
+            x1: cx(layout.nodes[from]),
+            y1: cy(layout.nodes[from]),
+            x2: cx(layout.nodes[to]),
+            y2: cy(layout.nodes[to]),
+            ...edgeStyle,
+          }));
+        }
+        for (const node of layout.nodes) {
+          if (!node.present) continue;
+          const added = frame.added.indexOf(node.i) !== -1;
+          const group = svgEl('g');
+          group.setAttribute('data-node', String(node.i));
+          if (added) group.setAttribute('data-added', '');
+          group.appendChild(svgEl('rect', {
+            x: cx(node) - CELL / 2,
+            y: cy(node) - CELL / 2,
+            width: CELL,
+            height: CELL,
+            rx: 5,
+            fill: added ? 'rgba(200, 250, 75, 0.1)' : INK.surface,
+            stroke: added ? INK.accent : INK.line,
+            'stroke-width': added ? 2 : 1,
+          }));
+          const text = svgEl('text', {
+            x: cx(node),
+            y: cy(node),
+            'dominant-baseline': 'central',
+            'text-anchor': 'middle',
+            fill: added ? INK.accent : INK.ink,
+            'font-family': INK.mono,
+            'font-size': 12,
+          });
+          text.textContent = node.value;
+          group.appendChild(text);
+          nodeLayer.appendChild(group);
+        }
+
+        row.textContent = '';
+        row.appendChild(readout([
+          { kind: 'label', text: 'tree' },
+          { kind: 'live', text: `${layout.height} level${layout.height === 1 ? '' : 's'}` },
+        ]));
+        row.appendChild(el('span', 'viz-pair', `${layout.edges.length} edge${layout.edges.length === 1 ? '' : 's'}`));
+        row.appendChild(el('span', 'viz-pair', `${layout.nodes.filter((n) => n.present).length} nodes`));
+        row.appendChild(el('span', 'viz-pair', `+${frame.added.length} this step`));
+        if (frame.source === 'carried') row.appendChild(el('span', 'viz-arrow', 'carried forward — this row writes no level'));
+      },
+    };
+  }
+
+  /* ── graph — nodes and edges, and each component kept apart ────────────────── */
+  if (preset === 'graph') {
+    const box = document.createElementNS(SVG_NS, 'svg');
+    box.setAttribute('class', 'dr-graph');
+    box.setAttribute('role', 'img');
+    stage.replaceChild(box, grid);
+    const edgeLayer = document.createElementNS(SVG_NS, 'g');
+    const nodeLayer = document.createElementNS(SVG_NS, 'g');
+    box.appendChild(edgeLayer);
+    box.appendChild(nodeLayer);
+    const R = 9;
+    const COL = 74;
+    const LINE = 38;
+    const PAD = 12;
+    const edgeStyle = { stroke: INK.lineStrong, 'stroke-width': 1.25 };
+
+    // Deterministic BFS layout inside each component, one component per band. Correctness of
+    // the adjacency is what matters here; the geometry only has to be stable across steps.
+    const position = (frame) => {
+      const at = new Map();
+      const bands = [];
+      let y = PAD + R;
+      for (const component of frame.components) {
+        const depth = new Map([[component[0], 0]]);
+        const queue = [component[0]];
+        while (queue.length) {
+          const node = queue.shift();
+          for (const [from, to] of frame.edges) {
+            const other = from === node ? to : to === node ? from : null;
+            if (other === null || !component.includes(other) || depth.has(other)) continue;
+            depth.set(other, depth.get(node) + 1);
+            queue.push(other);
+          }
+        }
+        const rows = [];
+        for (const node of component) {
+          const d = depth.get(node) || 0;
+          if (!rows[d]) rows[d] = [];
+          rows[d].push(node);
+        }
+        const widest = Math.max(...rows.map((r) => r.length));
+        const startX = PAD + Math.max(0, (widest - component.length) / 2) * COL;
+        component.forEach((node) => {
+          const d = depth.get(node) || 0;
+          const at2 = rows[d];
+          at.set(node, { x: startX + at2.indexOf(node) * COL + COL / 2, y: y + d * LINE });
+        });
+        bands.push({ component, rows: rows.length, y });
+        y += (rows.length - 1) * LINE + LINE + 14;
+      }
+      return { at, height: Math.max(PAD * 2 + R, y) };
+    };
+
+    return {
+      el: stage,
+      paint(step) {
+        const frame = frameAt(step);
+        edgeLayer.textContent = '';
+        nodeLayer.textContent = '';
+        const { at, height } = position(frame);
+        const width = PAD * 2 + Math.max(1, frame.nodes.length) * COL;
+        box.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        box.setAttribute('width', String(width));
+        box.setAttribute('height', String(height));
+        box.style.maxWidth = '100%';
+
+        for (const [from, to] of frame.edges) {
+          const a = at.get(from);
+          const b = at.get(to);
+          if (!a || !b) continue;
+          edgeLayer.appendChild(svgEl('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...edgeStyle }));
+        }
+        for (const node of frame.nodes) {
+          const point = at.get(node);
+          if (!point) continue;
+          const terminal = frame.terminal === node;
+          const fresh = frame.added.some(([, to]) => to === node);
+          const group = svgEl('g', { transform: `translate(${point.x} ${point.y})` });
+          group.setAttribute('data-node', node);
+          if (fresh) group.setAttribute('data-added', '');
+          if (terminal) group.setAttribute('data-terminal', '');
+          group.appendChild(svgEl('circle', {
+            r: String(R),
+            fill: terminal ? 'rgba(200, 250, 75, 0.16)' : INK.surface,
+            stroke: terminal ? INK.accent : fresh ? INK.violet : INK.line,
+            'stroke-width': terminal || fresh ? 2 : 1,
+          }));
+          const text = svgEl('text', {
+            y: R + 12,
+            'text-anchor': 'middle',
+            fill: terminal || fresh ? INK.accent : INK.muted,
+            'font-family': INK.mono,
+            'font-size': 10,
+          });
+          text.textContent = node;
+          group.appendChild(text);
+          nodeLayer.appendChild(group);
+        }
+
+        row.textContent = '';
+        row.appendChild(readout([
+          { kind: 'label', text: 'graph' },
+          { kind: 'live', text: `${frame.nodes.length} nodes · ${frame.edges.length} edges` },
+        ]));
+        row.appendChild(el('span', 'viz-pair', `${frame.components.length} component${frame.components.length === 1 ? '' : 's'}`));
+        row.appendChild(el('span', 'viz-pair', `+${frame.added.length} this step`));
+        if (frame.terminal) row.appendChild(el('span', 'viz-k', `${frame.terminal} reached the target`));
+        if (frame.source === 'carried') row.appendChild(el('span', 'viz-arrow', 'carried forward — this row states no edge'));
+      },
+    };
+  }
+
+  /* ── statecard — the ops case: what the object holds AFTER the call ─────────── */
+  if (preset === 'statecard') {
+    stage.style.width = '100%';
+    const fields = el('div', 'dr-fields');
+    fields.style.cssText = STACK;
+    return {
+      el: stage,
+      paint(step) {
+        const frame = frameAt(step);
+        stage.replaceChildren(fields, row);
+        row.textContent = '';
+        row.appendChild(readout([
+          { kind: 'label', text: 'op' },
+          { kind: 'live', text: frame.ops.length ? frame.ops.join(', ') : '—' },
+        ]));
+        if (fields.childElementCount !== frame.state.length) {
+          fields.textContent = '';
+          for (const _ of frame.state) {
+            const line = el('div', 'dr-field');
+            line.appendChild(el('span', 'viz-row-label', ''));
+            line.appendChild(el('span', 'viz-pair', ''));
+            fields.appendChild(line);
+          }
+        }
+        frame.state.forEach((field, i) => {
+          const line = fields.children[i];
+          const name = line.children[0];
+          const value = line.children[1];
+          setText(name, plain(field.label));
+          setText(value, field.value === null ? '∅' : field.value);
+          value.setAttribute('data-field', plain(field.label));
+          value.setAttribute('data-source', field.source);
+          value.classList.toggle('is-done', field.source === 'carried');
+        });
+        if (frame.output) {
+          const out = el('span', 'viz-k', `→ ${frame.output}`);
+          out.setAttribute('data-output', '');
+          row.appendChild(out);
+        } else {
+          row.appendChild(el('span', 'viz-arrow', 'no output on this step'));
+        }
+      },
+    };
+  }
+
+  return { el: stage, paint() {} };
+}
+
+/* ------------------------------------------------------------------ *
+ * The two overlays
+ * ------------------------------------------------------------------ */
+
+/**
+ * Build the panels an overlay adds: a second stage below the preset's own, following the same
+ * step. There is no separate control bar and no second transport — an overlay is a lens on the
+ * same authored rows, not another player.
+ *
+ * @param {Array<{overlay: string, plan: object}>} overlays `pickOverlays`' output
+ * @returns {Array<{el: HTMLElement, paint: (step: number) => void}>}
+ */
+export function buildPanels(overlays) {
+  return (overlays || []).map(({ overlay, plan }) => buildOverlay(overlay, plan));
+}
+
+function buildOverlay(overlay, plan) {
+  const stage = el('div', 'viz-array dr-array');
+  stage.setAttribute('data-preset-stage', overlay);
+  stage.setAttribute('data-overlay', overlay);
+  stage.style.width = '100%';
+  const grid = el('div', 'viz-grid');
+  const row = el('div', 'viz-row');
+  stage.appendChild(grid);
+  stage.appendChild(row);
+  const frameAt = (step) => plan.frames[Math.max(0, Math.min(step, plan.frames.length - 1))];
+
+  if (overlay === 'dp-table') {
+    return {
+      el: stage,
+      paint(step) {
+        const frame = frameAt(step);
+        fill(grid, Math.max(plan.width, frame.cells.length, 1));
+        grid.style.minWidth = '0';
+        grid.style.gridTemplateColumns = `repeat(${grid.childElementCount}, minmax(28px, 1fr))`;
+        for (let i = 0; i < grid.childElementCount; i++) {
+          const cell = grid.children[i];
+          setText(cell, frame.cells[i] === null || frame.cells[i] === undefined ? '·' : frame.cells[i]);
+          cell.setAttribute('data-dp', String(i));
+          const here = frame.cursor === i;
+          cell.classList.toggle('is-active', here);
+          cell.classList.toggle('is-done', !here && frame.cells[i] != null);
+          if (here) cell.setAttribute('data-cursor', '');
+          else cell.removeAttribute('data-cursor');
+        }
+        row.textContent = '';
+        row.appendChild(readout([
+          { kind: 'label', text: 'dp' },
+          { kind: 'live', text: frame.cursor === null ? '—' : `dp[${frame.cursor}]` },
+        ]));
+        row.appendChild(el('span', 'viz-pair', `${frame.cells.filter((c) => c != null).length} of ${plan.width} filled`));
+        row.appendChild(el('span', 'viz-pair', `${frame.changed.length} written`));
+        if (frame.source === 'carried') row.appendChild(el('span', 'viz-arrow', 'carried forward — this row reads, it does not write'));
+      },
+    };
+  }
+
+  // recursion-tree — the call spine, the deepest frame open at the bottom.
+  const spine = el('div', 'dr-spine');
+  spine.style.cssText = STACK;
   return {
     el: stage,
     paint(step) {
       const frame = frameAt(step);
-      fill(grid, plan.width);
-      for (let i = 0; i < plan.width; i++) {
-        const cell = grid.children[i];
-        setText(cell, frame.value[i] || '·');
-        // Cell i is the digit for bit `width - 1 - i`, counting from the right.
-        const tested = frame.tested === plan.width - 1 - i;
-        cell.classList.toggle('is-active', tested);
-        if (tested) cell.setAttribute('data-bit', String(plan.width - 1 - i));
-        else cell.removeAttribute('data-bit');
-        pop(cell, tested);
+      if (spine.parentElement !== stage) stage.replaceChildren(spine, row);
+      if (spine.childElementCount !== frame.spine.length) {
+        spine.textContent = '';
+        for (let i = 0; i < frame.spine.length; i++) {
+          const line = el('div', 'dr-frame');
+          line.appendChild(el('span', 'viz-row-label', ''));
+          line.appendChild(el('span', 'viz-arrow', i > 0 ? '↳' : ''));
+          line.appendChild(el('span', 'viz-pair', ''));
+          line.appendChild(el('span', 'viz-k', ''));
+          spine.appendChild(line);
+        }
       }
+      frame.spine.forEach((call, i) => {
+        const line = spine.children[i];
+        const deepest = i === frame.spine.length - 1;
+        setText(line.children[0], `depth ${i}`);
+        const cell = line.children[2];
+        setText(cell, call);
+        cell.setAttribute('data-call', call);
+        cell.classList.toggle('is-active', deepest);
+        const badge = line.children[3];
+        const base = deepest && frame.base;
+        setText(badge, base ? 'base case' : '');
+        if (base) badge.setAttribute('data-base', '');
+        else badge.removeAttribute('data-base');
+      });
       row.textContent = '';
-      row.appendChild(readout([{ kind: 'label', text: 'bits' }, { kind: 'live', text: frame.value || '—' }]));
-      row.appendChild(el('span', 'viz-pair', frame.tested === -1 ? 'no bit under test' : `bit ${frame.tested} under test`));
-      row.appendChild(el('span', 'viz-pair', `${frame.ones} set`));
-      if (frame.source === 'carried') row.appendChild(el('span', 'viz-arrow', 'carried forward — this row writes no word'));
+      row.appendChild(readout([
+        { kind: 'label', text: 'recursion' },
+        { kind: 'live', text: `depth ${frame.depth}` },
+      ]));
+      row.appendChild(el('span', 'viz-pair', frame.call || 'returning'));
+      row.appendChild(el('span', 'viz-pair', `${frame.spine.length} frame${frame.spine.length === 1 ? '' : 's'} open`));
+      if (frame.base) row.appendChild(el('span', 'viz-k', 'base case hit'));
     },
   };
 }
@@ -990,25 +2310,40 @@ function hostOf(table) {
  * all stay row 22's. This module observes that one attribute and redraws — which is why a preset
  * cannot drift from the transport's behaviour: there is only one transport.
  *
+ * `picked` may be null: a table whose only claim is an overlay keeps row 22's own array stage
+ * and gains the overlay panels, because there is no preset picture to swap in and inventing one
+ * would be drawing a shape the guide never claimed.
+ *
  * @param {HTMLElement} player row 22's `.dr-player`
- * @param {string} preset
- * @param {object} plan a `pickPreset` plan
+ * @param {null|{preset: string, plan: object}} picked
+ * @param {Array<{overlay: string, plan: object}>} overlays
  * @returns {HTMLElement} the same player
  */
-function adoptPlayer(player, preset, plan) {
-  player.setAttribute('data-preset', preset);
+function adoptPlayer(player, picked, overlays) {
+  const panels = buildPanels(overlays);
+  let stage = null;
+  if (picked) {
+    player.setAttribute('data-preset', picked.preset);
+    const title = player.querySelector('.dr-title');
+    if (title) title.textContent = `Level ${picked.plan.level || '—'} · ${picked.preset}`;
+    const label = player.querySelector('.dr-col');
+    if (label) label.textContent = plain(picked.plan.label);
+    stage = buildStage(picked.preset, picked.plan);
+    const old = player.querySelector(':scope > .viz-array');
+    if (old) old.replaceWith(stage.el);
+    else player.insertBefore(stage.el, player.querySelector('.dr-bar'));
+  }
   player.setAttribute('data-chrome', 'adopted');
-  const title = player.querySelector('.dr-title');
-  if (title) title.textContent = `Level ${plan.level || '—'} · ${preset}`;
-  const label = player.querySelector('.dr-col');
-  if (label) label.textContent = plain(plan.label);
+  if (panels.length) {
+    player.setAttribute('data-overlays', panels.map((panel) => panel.el.getAttribute('data-overlay')).join(' '));
+    for (const panel of panels) player.insertBefore(panel.el, player.querySelector('.dr-bar'));
+  }
 
-  const stage = buildStage(preset, plan);
-  const old = player.querySelector('.viz-array');
-  if (old) old.replaceWith(stage.el);
-  else player.insertBefore(stage.el, player.querySelector('.dr-bar'));
-
-  const paint = () => stage.paint(Number(player.getAttribute('data-step')) || 0);
+  const paint = () => {
+    const step = Number(player.getAttribute('data-step')) || 0;
+    if (stage) stage.paint(step);
+    for (const panel of panels) panel.paint(step);
+  };
   paint();
   new MutationObserver(paint).observe(player, { attributes: true, attributeFilter: ['data-step'] });
   return player;
@@ -1023,25 +2358,30 @@ function adoptPlayer(player, preset, plan) {
  * row 22 exports `buildPlayer` this function deletes itself and every preset keeps working,
  * because {@link adoptPlayer} already proved the two interchangeable.
  *
- * @param {{preset: string, plan: object}} picked
+ * @param {null|{preset: string, plan: object}} picked null when only an overlay claims the table
+ * @param {Array<{overlay: string, plan: object}>} overlays
  * @param {HTMLTableElement} table
  * @returns {HTMLElement}
  */
-function buildPresetPlayer(picked, table) {
-  const plan = picked.plan;
+function buildPresetPlayer(picked, overlays, table) {
+  const plan = picked ? picked.plan : overlays[0].plan;
+  const panels = buildPanels(overlays);
+  const name = picked ? picked.preset : overlays.map((o) => o.overlay).join(' + ');
   const player = el('div', 'dr-player');
   player.setAttribute('data-dryrun-player', '');
   player.setAttribute('data-level', String(plan.level || 0));
   player.setAttribute('data-steps', String(plan.steps));
-  player.setAttribute('data-preset', picked.preset);
+  if (picked) player.setAttribute('data-preset', picked.preset);
+  if (overlays.length) player.setAttribute('data-overlays', overlays.map((o) => o.overlay).join(' '));
   player.setAttribute('data-chrome', 'own');
 
   const head = el('div', 'dr-head');
-  head.appendChild(el('span', 'dr-title', `Level ${plan.level || '—'} · ${picked.preset}`));
+  head.appendChild(el('span', 'dr-title', `Level ${plan.level || '—'} · ${name}`));
   head.appendChild(el('span', 'dr-col', plain(plan.label)));
   player.appendChild(head);
-  const stage = buildStage(picked.preset, plan);
+  const stage = picked ? buildStage(picked.preset, plan) : { el: el('div'), paint() {} };
   player.appendChild(stage.el);
+  for (const panel of panels) player.appendChild(panel.el);
   const bar = el('div', 'dr-bar');
   bar.innerHTML =
     `<button type="button" class="dr-btn" data-act="prev" aria-label="Previous step">${ICON_PREV}</button>` +
@@ -1067,6 +2407,7 @@ function buildPresetPlayer(picked, table) {
 
   const paint = () => {
     stage.paint(step);
+    for (const panel of panels) panel.paint(step);
     count.textContent = `${step + 1} / ${plan.steps}`;
     range.value = String(step);
     player.setAttribute('data-step', String(step));
@@ -1128,19 +2469,25 @@ function buildPresetPlayer(picked, table) {
  * ------------------------------------------------------------------ */
 
 /**
- * Put the right preset under every dry-run table of `root` that one of the four claims.
+ * Put the right preset, and every overlay, under every dry-run table of `root` that one claims.
  *
  * Paired with `parseGuide`'s output by document order, exactly as row 22 pairs its tables: both
- * count the same `### Step-by-Step Dry Run` headings in the same sequence. A table no preset
- * claims is left entirely alone — row 22's `array` player, or its `data-dryrun="skipped"` marker,
- * stays exactly as it was.
+ * count the same `### Step-by-Step Dry Run` headings in the same sequence. A table nothing
+ * claims is left entirely alone — row 22's `array` player, or its `data-dryrun="skipped"`
+ * marker, stays exactly as it was.
+ *
+ * Tier 2 mounts on the canonical level only (plan §9 decision 2), which every Tier-2 planner
+ * enforces itself, so this function does not repeat the test. What it does add is the overlay
+ * pass: a table whose only claim is a `dp-table` or a `recursion-tree` still gets a player,
+ * because a panel with no transport to follow is not a panel.
  *
  * @param {HTMLElement} root the article container
  * @param {string} markdown the open guide's markdown
- * @returns {{tables: number, mounted: number, adopted: number, presets: Record<string, number>}}
+ * @returns {{tables: number, mounted: number, adopted: number, presets: Record<string, number>,
+ *   overlays: Record<string, number>}}
  */
 export function mountPresets(root, markdown) {
-  const result = { tables: 0, mounted: 0, adopted: 0, presets: {} };
+  const result = { tables: 0, mounted: 0, adopted: 0, presets: {}, overlays: {} };
   if (!root || typeof root.querySelectorAll !== 'function') return result;
 
   const tables = parseGuide(String(markdown || ''));
@@ -1161,21 +2508,24 @@ export function mountPresets(root, markdown) {
     pending = false;
 
     const picked = pickPreset(tables[index]);
+    const overlays = pickOverlays(tables[index]);
     result.tables++;
-    if (!picked) continue;
+    if (!picked && !overlays.length) continue;
 
     node.removeAttribute('data-dryrun-current');
     const next = hostOf(node).nextElementSibling;
     const existing = next && next.getAttribute && next.hasAttribute('data-dryrun-player') && !next.hasAttribute('data-preset') ? next : null;
     if (existing) {
-      adoptPlayer(existing, picked.preset, picked.plan);
+      adoptPlayer(existing, picked, overlays);
       result.adopted++;
     } else {
-      hostOf(node).insertAdjacentElement('afterend', buildPresetPlayer(picked, node));
+      hostOf(node).insertAdjacentElement('afterend', buildPresetPlayer(picked, overlays, node));
     }
     node.setAttribute('data-dryrun', 'playing');
     result.mounted++;
-    result.presets[picked.preset] = (result.presets[picked.preset] || 0) + 1;
+    const names = picked ? [picked.preset, ...overlays.map((o) => o.overlay)] : overlays.map((o) => o.overlay);
+    for (const name of names) result.presets[name] = (result.presets[name] || 0) + 1;
+    for (const { overlay } of overlays) result.overlays[overlay] = (result.overlays[overlay] || 0) + 1;
   }
   return result;
 }

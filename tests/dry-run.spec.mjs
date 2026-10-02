@@ -83,7 +83,12 @@ async function openPreset(page, row) {
  * and a different readout would pass a text-only check.
  */
 async function signature(player) {
-  return `${(await player.locator('.viz-cell').allTextContents()).join('|')}#${await player.locator('.viz-row').innerText()}`;
+  // A Tier-2 player can carry a preset stage AND overlay panels, so every readout counts: the
+  // generic "stepping moves the picture" assertion has to see all of them to mean anything.
+  const cells = await player.locator('.viz-cell').allTextContents();
+  const rows = await player.locator('.viz-row').allInnerTexts();
+  const nodes = await player.locator('[data-preset-stage] [data-node], [data-preset-stage] [data-call]').allTextContents();
+  return `${cells.join('|')}#${rows.join('#')}#${nodes.join('|')}`;
 }
 
 test.describe('dry-run array player', () => {
@@ -497,6 +502,266 @@ test.describe('preset screenshots', () => {
 
       // And the table above it, which is the unit a reader actually reads.
       await testInfo.attach(`${row.preset}-${testInfo.project.name}`, {
+        body: await target.locator('xpath=preceding-sibling::*[1]').screenshot(),
+        contentType: 'image/png',
+      });
+    });
+  }
+});
+
+/* ------------------------------------------------------------------ *
+ * Row 24 — Tier 2: the canonical level only, plus the two overlays
+ * ------------------------------------------------------------------ */
+
+/**
+ * The four Tier-2 presets and the two overlays, each on the guide whose `catalog/problems.json`
+ * entry names its shape — not on the module directory:
+ *
+ *   graph            19-graph-bfs/03-word-ladder        codec graph, patterns Graph BFS|Implicit Word Graph
+ *   tree             10-binary-tree-bfs/04-zigzag-…     codec tree,  patterns Binary Tree BFS|Alternating Direction
+ *   statecard        01-array-string/12-insert-delete-… codec ops,   patterns Array|Hash Table|Design
+ *   linkedlist       08-linked-list/05-reverse-linked-…  codec list,  patterns Linked List|Segment Reversal
+ *   dp-table         17-multi-dp/03-unique-paths-ii     overlay, Multidimensional DP|Obstacle-Aware Counting
+ *   recursion-tree   09-binary-tree-general/03-invert-… codec tree,  patterns Binary Tree|Mirror Swap
+ *
+ * `level` is `'3'` for every row and that is the point: plan §9 decision 2 says Tier 1 animates
+ * all three levels and Tier 2 animates the canonical level only, so each case asserts the player
+ * it found carries `data-level="3"` and that its L1 and L2 tables carry no Tier-2 player at all.
+ */
+const TIER2_CASES = [
+  { preset: 'graph', id: '19-graph-bfs_03-word-ladder', title: 'Word Ladder', level: '3' },
+  { preset: 'tree', id: '10-binary-tree-bfs_04-zigzag-level-order', title: 'Binary Tree Zigzag Level Order', level: '3' },
+  { preset: 'statecard', id: '01-array-string_12-insert-delete-getrandom-o1', title: 'Insert Delete GetRandom', level: '3' },
+  { preset: 'linkedlist', id: '08-linked-list_05-reverse-linked-list-ii', title: 'Reverse Linked List II', level: '3' },
+];
+
+const OVERLAY_CASES = [
+  { overlay: 'dp-table', id: '17-multi-dp_03-unique-paths-ii', title: 'Unique Paths II' },
+  { overlay: 'recursion-tree', id: '09-binary-tree-general_03-invert-binary-tree', title: 'Invert Binary Tree' },
+];
+
+/** Open a Tier-2 guide, load the module, and wait for the level-3 player of that name. */
+async function openTier2(page, row) {
+  await page.goto(`/#${row.id}`);
+  await expect(page.locator('h1')).toContainText(row.title);
+  await page.addScriptTag({ type: 'module', url: '/dryrun/render.js' });
+  const target = page.locator(`${player}[data-preset="${row.preset}"][data-level="3"]`);
+  await expect(target).toBeVisible();
+  return target;
+}
+
+/** Open a guide whose L3 table carries only an overlay, and wait for that panel. */
+async function openOverlay(page, row) {
+  await page.goto(`/#${row.id}`);
+  await expect(page.locator('h1')).toContainText(row.title);
+  await page.addScriptTag({ type: 'module', url: '/dryrun/render.js' });
+  const target = page.locator(`${player}[data-level="3"][data-overlays~="${row.overlay}"]`);
+  await expect(target).toBeVisible();
+  return target;
+}
+
+test.describe('dry-run Tier 2 (row 24)', () => {
+  for (const row of TIER2_CASES) {
+    test(`${row.preset}: mounts on the canonical level of ${row.title}, and steps`, async ({ page }) => {
+      const target = await openTier2(page, row);
+      expect(await target.getAttribute('data-steps')).toMatch(/^\d$/);
+      await expect(target.locator('[data-count]')).toHaveText(/^1 \/ \d+$/);
+      await expect(target.locator('xpath=preceding-sibling::*[1]')).toHaveClass(/table-scroll/);
+
+      const before = await signature(target);
+      await target.locator('[data-act="next"]').click();
+      await expect(target.locator('[data-count]')).not.toHaveText(/^1 \//);
+      expect(await signature(target)).not.toBe(before);
+      await target.locator('[data-act="prev"]').click();
+      await expect(target.locator('[data-count]')).toHaveText(/^1 \//);
+      expect(await signature(target)).toBe(before);
+    });
+  }
+
+  test('plan decision 2: Tier 2 mounts on the canonical level ONLY', async ({ page }) => {
+    // word-ladder has three dry-run tables. Tier 2 claims the L3 one and nothing else — a
+    // Tier-2 player on L1 or L2 would either be dead UI or a constraint the reader did not ask
+    // for, and this is the assertion that says which.
+    await page.goto('/#19-graph-bfs_03-word-ladder');
+    await expect(page.locator('h1')).toContainText('Word Ladder');
+    await page.addScriptTag({ type: 'module', url: '/dryrun/render.js' });
+
+    const tiers = await page.locator(player).evaluateAll((nodes) => nodes.map((n) => n.dataset.level));
+    expect(tiers.filter((level) => level === '3').length).toBe(1);
+    await expect(page.locator(`${player}[data-preset="graph"]`)).toHaveCount(1);
+    await expect(page.locator(`${player}[data-preset="graph"]`)).toHaveAttribute('data-level', '3');
+  });
+
+  test('graph: nodes, edges, and the components the guide never joins', async ({ page }) => {
+    const target = await openTier2(page, TIER2_CASES[0]);
+
+    // Step 4 is the frame the guide's own edges leave in two pieces: hit—hot—{dot,lot} and
+    // cog—{dog,log}. One node per SVG <g>, one line per edge, and the count says 2.
+    await target.locator('.dr-range').fill('3');
+    expect(await target.locator('[data-preset-stage="graph"] [data-node]').allTextContents())
+      .toEqual(['cog', 'dog', 'dot', 'hit', 'hot', 'log', 'lot']);
+    await expect(target.locator('[data-preset-stage="graph"] line')).toHaveCount(5);
+    await expect(target.locator('[data-preset-stage="graph"] .viz-row')).toContainText('2 components');
+
+    // The node the guide says reached the target is marked, and it is the only one.
+    await expect(target.locator('[data-terminal]')).toHaveCount(1);
+    await expect(target.locator('[data-terminal]')).toHaveText('dot');
+  });
+
+  test('tree: parent/child edges, drawn — a flat list would have none', async ({ page }) => {
+    const target = await openTier2(page, TIER2_CASES[1]);
+
+    // Level 1 is [20, 9] as the guide authored it, so the edge count is the tell: 3 nodes
+    // joined by 2 edges is a list, 4 edges is a tree.
+    await target.locator('.dr-range').fill('2');
+    expect(await target.locator('[data-preset-stage="tree"] [data-node]').allTextContents())
+      .toEqual(['3', '20', '9', '15', '7']);
+    await expect(target.locator('[data-preset-stage="tree"] line')).toHaveCount(4);
+    await expect(target.locator('[data-preset-stage="tree"] .viz-row')).toContainText('3 levels');
+
+    // Step 2 is `out = [[3],[20,9]]`: 3 nodes and 2 edges. A flat list of the same three values
+    // would have 0 edges, which is the difference this assertion is here to catch.
+    await target.locator('.dr-range').fill('1');
+    expect(await target.locator('[data-preset-stage="tree"] [data-node]').allTextContents())
+      .toEqual(['3', '20', '9']);
+    await expect(target.locator('[data-preset-stage="tree"] line')).toHaveCount(2);
+    await expect(target.locator('[data-preset-stage="tree"] .viz-row')).toContainText('2 levels');
+  });
+
+  test('statecard: the field-state after each op, and the op\'s own output', async ({ page }) => {
+    const target = await openTier2(page, TIER2_CASES[2]);
+
+    // Two state fields, both written by the first op — this is `ops` shape, not an array.
+    await expect(target.locator('[data-preset-stage="statecard"] [data-field]')).toHaveCount(2);
+    expect(await target.locator('[data-preset-stage="statecard"] [data-field]').allTextContents())
+      .toEqual(['[10]', '{ 10 => 0 }']);
+    await expect(target.locator('[data-preset-stage="statecard"] .viz-row')).toContainText('insert(10)');
+
+    // Three ops later the map field has changed twice: the swap is the state transition, not
+    // just the final answer.
+    await target.locator('.dr-range').fill('3');
+    expect(await target.locator('[data-preset-stage="statecard"] [data-field]').allTextContents())
+      .toEqual(['[10, 30]', '{ 10 => 0, 30 => 1 }']);
+
+    // `getRandom()` emits, and the emission is its own element.
+    await target.locator('.dr-range').fill('4');
+    await expect(target.locator('[data-output]')).toHaveCount(1);
+    await expect(target.locator('[data-output]')).toContainText('Yields 10 or 30');
+    await expect(target.locator('[data-field][data-source="carried"]')).toHaveCount(1);
+  });
+
+  test('linkedlist: a chain, and a null that ends it visibly', async ({ page }) => {
+    const target = await openTier2(page, TIER2_CASES[3]);
+
+    // reverse-linked-list-ii L3 step 2 is `2 -> null`: one node and a terminator box.
+    await target.locator('.dr-range').fill('1');
+    expect(await target.locator('[data-preset-stage="linkedlist"] .viz-cell').allTextContents()).toEqual(['2', '∅']);
+    await expect(target.locator('[data-terminator]')).toHaveText('∅');
+    await expect(target.locator('[data-preset-stage="linkedlist"] .viz-row')).toContainText('next = null');
+
+    // Step 3 is `3 -> 2` — the terminator is gone because the chain grew past it, which is
+    // exactly what `next = null` means.
+    await target.locator('.dr-range').fill('2');
+    expect(await target.locator('[data-preset-stage="linkedlist"] .viz-cell').allTextContents()).toEqual(['3', '2']);
+    await expect(target.locator('[data-terminator]')).toHaveCount(0);
+    await expect(target.locator('[data-preset-stage="linkedlist"] .viz-row')).toContainText('push');
+  });
+
+  test('dp-table overlay: the grid filling, with the current cell marked', async ({ page }) => {
+    const target = await openOverlay(page, OVERLAY_CASES[0]);
+
+    // unique-paths-ii L3 writes [1,1,1], then [1,0,1] (the wall), then dp[2] = 2.
+    expect(await target.locator('[data-overlay="dp-table"] .viz-cell').allTextContents()).toEqual(['1', '1', '1']);
+    await expect(target.locator('[data-overlay="dp-table"] [data-cursor]')).toHaveText('1');
+
+    await target.locator('.dr-range').fill('1');
+    expect(await target.locator('[data-overlay="dp-table"] .viz-cell').allTextContents()).toEqual(['1', '0', '1']);
+    await expect(target.locator('[data-overlay="dp-table"] [data-cursor]')).toHaveText('0');
+    await expect(target.locator('[data-overlay="dp-table"] .viz-row')).toContainText('dp[1]');
+  });
+
+  test('recursion-tree overlay: depth, and where the base case is hit', async ({ page }) => {
+    const target = await openOverlay(page, OVERLAY_CASES[1]);
+
+    // invert-binary-tree L3: invert(4) at depth 0, invert(7) at depth 1 and a leaf.
+    await target.locator('.dr-range').fill('1');
+    expect(await target.locator('[data-overlay="recursion-tree"] [data-call]').allTextContents())
+      .toEqual(['invert(4)', 'invert(7)']);
+    await expect(target.locator('[data-overlay="recursion-tree"] .viz-row')).toContainText('depth 1');
+    await expect(target.locator('[data-base]')).toHaveCount(1);
+    await expect(target.locator('[data-base]')).toHaveText('base case');
+    await expect(target.locator('[data-overlay="recursion-tree"] .viz-row')).toContainText('base case hit');
+  });
+
+  test('an overlay needs a transport, so an overlay-only table still gets a player', async ({ page }) => {
+    const target = await openOverlay(page, OVERLAY_CASES[0]);
+    await expect(target.locator('.dr-bar')).toHaveCount(1);
+    await expect(target.locator('.dr-btn')).toHaveCount(3);
+    // Nothing claimed the table as a preset, so there is no preset stage — the panel IS the
+    // stage, and it still follows the scrubber.
+    await expect(target.locator(`${player}[data-preset]`)).toHaveCount(0);
+  });
+
+  test('the overlays ride on a preset without taking the table from it', async ({ page }) => {
+    // 01-array-string/12-insert-delete-getrandom-o1 L3 is a statecard AND a call spine: every
+    // row names an op, so recursion-tree rides along without taking the preset away.
+    await openTier2(page, TIER2_CASES[2]);
+    const both = page.locator(`${player}[data-preset="statecard"][data-overlays~="recursion-tree"]`);
+    await expect(both).toHaveCount(1);
+    await expect(both.locator('[data-preset-stage="statecard"]')).toHaveCount(1);
+    await expect(both.locator('[data-overlay="recursion-tree"]')).toHaveCount(1);
+    // One transport between them, not two: three buttons, one scrubber.
+    await expect(both.locator('.dr-bar')).toHaveCount(1);
+    await expect(both.locator('.dr-range')).toHaveCount(1);
+    // And the two panels follow the same step.
+    // Four independent `insert`s are four sibling calls, not a four-deep recursion, so the
+    // spine holds one frame and it follows the scrubber to the op of this step.
+    await both.locator('.dr-range').fill('3');
+    expect(await both.locator('[data-overlay="recursion-tree"] [data-call]').allTextContents())
+      .toEqual(['remove(20)']);
+  });
+
+  test('reduced motion removes the pop without removing the highlight', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const target = await openTier2(page, TIER2_CASES[3]);
+    await target.locator('[data-act="next"]').click();
+    await target.locator('.dr-range').fill('2');
+    await expect(target.locator('.viz-cell[data-node].is-active')).toHaveCount(1);
+    await expect(target.locator('.dr-pop')).toHaveCount(0);
+  });
+
+  test('Tier 1 is untouched: row 22 still owns all three levels on a Tier-2-free guide', async ({ page }) => {
+    await openGuide(page);
+    await page.addScriptTag({ type: 'module', url: '/dryrun/render.js' });
+    await expect(page.locator(player)).toHaveCount(3);
+    await expect(page.locator(`${player}[data-preset]`)).toHaveCount(0);
+    await expect(page.locator('[data-preset-stage]')).toHaveCount(0);
+    const l2 = page.locator(`${player}[data-level="2"]`);
+    await l2.locator('[data-act="next"]').click();
+    expect(await cells(l2)).toEqual(['1', '2', '0', '0']);
+  });
+
+  test('the Tier-2 module adds no global', async ({ page }) => {
+    await openTier2(page, TIER2_CASES[0]);
+    const leaked = await page.evaluate(() => Object.keys(window).filter((k) => /^dryrun|^DryRun|^dr[A-Z]/.test(k)));
+    expect(leaked).toEqual([]);
+  });
+});
+
+test.describe('Tier 2 screenshots', () => {
+  for (const row of [...TIER2_CASES.map((r) => ({ ...r, kind: 'preset' })), ...OVERLAY_CASES.map((r) => ({ ...r, kind: 'overlay' }))]) {
+    test(`${row.kind} ${row.preset || row.overlay} on ${row.title}`, async ({ page }, testInfo) => {
+      const target = row.kind === 'preset' ? await openTier2(page, row) : await openOverlay(page, row);
+      const selector = `[data-preset-stage="${row.preset || row.overlay}"]`;
+      await target.locator('.dr-range').fill(String(Number(await target.getAttribute('data-steps')) - 1));
+      await expect(target.locator('[data-count]')).not.toHaveText(/^1 \//);
+
+      const stage = await target.locator(selector).screenshot();
+      await target.locator(selector).screenshot({
+        path: `scratch/row24/${row.preset || row.overlay}-${testInfo.project.name}.png`,
+      });
+      expect(stage.byteLength).toBeGreaterThan(1500);
+      await testInfo.attach(`${row.preset || row.overlay}-${testInfo.project.name}`, {
         body: await target.locator('xpath=preceding-sibling::*[1]').screenshot(),
         contentType: 'image/png',
       });
