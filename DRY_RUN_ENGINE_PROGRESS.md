@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | pending | | |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | pending | | |
 | 14 | V2 replay determinism | §7 | pending | | |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | pending | | |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **blocked on 2 engine bugs** | — | Generates 446 sound goldens (corpus 34.9 MiB, largest 7.3 MiB), `git check-ignore` verified. **But 4 blocks are invalid** — 3 ZERO-step traces + 1 QuickJS abort — and row 15 found the causes (see §7). 54 assertions 0 failures on its own harness. NOT committed as valid until fixed. |
 | 16 | `docs/traces/*.json` static copies | §7 | pending | | |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -129,7 +129,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 21 | Tier-1 table player | §7 | **done** | `f4e7a3d` | `docs/dryrun/table.js` → **450 tables parsed across 150 guides**; thin = **27 tables / 23 guides, matching row 0's list exactly** (reconciled by me, diff empty). Dependency-free, browser-safe: **no `node:`/`fs`/`require`**, exports `parseGuide`/`parseAll`/`findThinTables`/`THIN_ROW_LIMIT`. `$…$` cells preserved verbatim. |
 | 22 | `array` primitive — **first pixels** | §7 | **done** | `2f2a7b6` | `npm run test:dryrun-player` → **40 checks, 0 failures**. Playwright passes at **both** configured viewports (1440×900 + Pixel 7); screenshots `scratch/dryrun/*.png` (untracked). Spec clicks forward ×2 asserting the array **changed**, then back. All 3 levels animate (decision 2). Thin tables say so rather than rendering an empty frame. |
 | 23 | Tier-1 presets: stack/matrix/window/bits | §7 | **done** | `c5b6469` | `node scripts/test-dryrun-render.mjs` → **90 checks, 0 failures**. `npx playwright test tests/dry-run.spec.mjs` → **56 passed** across desktop + mobile. Each preset shows its own concept, verified by eye: `stack` renders a **call stack with a depth**; `window` shows **bounds 1..4, size, and a per-step delta (+4/-0)** with in-window lit and out-of-window dimmed — not an array in disguise. Screenshots in `scratch/row23/` (untracked). **Tier 1 complete.** |
-| 24 | Tier-2 presets + overlay | §7 | pending | | |
+| 24 | Tier-2 presets + overlay | §7 | **done** | `7f75941` | `node scripts/test-dryrun-render.mjs` → **141 checks, 0 failures** (Tier 1's 90 still green). `npx playwright test tests/dry-run.spec.mjs` → **100 passed** both viewports. 4 presets + `dp-table`/`recursion-tree` overlays, **canonical level only** (decision 2). Screenshots `scratch/row24/` (12, untracked). Verified by eye: `tree` draws real edges + a level readout; `recursion-tree` shows depth, open frames and the base-case hit. |
 | 25 | One table-driven Playwright spec | §7 | pending | | |
 | 26 | V5 event-floor gate | §7 | pending | | |
 | 27 | V9 table↔trace cross-check | §7 | pending | | |
@@ -230,6 +230,39 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — row 24 done; **row 15 found two real engine bugs**
+
+- **Row 24** (`7f75941`) — Tier 2 complete: 4 presets + 2 overlays, canonical level only.
+  141 checks, 100 Playwright tests both viewports.
+
+- **Row 15 is deliberately NOT committed as valid.** It generates 446 sound goldens and loudly
+  reports 4 broken blocks — which is the generator behaving correctly. Two distinct defects,
+  both root-caused by hand rather than taken from the agent's report:
+
+**Bug A — region alignment by name (2 blocks).** `scripts/instrument.mjs:376` aligns acorn's walk
+to row 7's `regionTable` **by function name**. `05-construct-from-preorder-inorder` L2 and
+`06-construct-from-inorder-postorder` L2 declare **two** functions but the table has **three**
+rows — the extra is `{"kind":"arrow-fn","name":null}`, an `inorder.map((v,i)=>…)` callback
+artifact acorn never sees. The null row consumes nothing, alignment shifts, `helper` inherits
+**depth 1**, and its body is suppressed. **This is precisely the K4/U3 vacuity failure the static
+region table was built to prevent, reintroduced through the alignment heuristic.** Fix belongs
+in the aligner (match document position, not name).
+
+**Bug B — argument shape at the harvest boundary (2 blocks).** `runRaw` on
+`01-sorted-array-to-bst` L3 returns `"(1 , 2 , 3 , 4 , 5) is not a function"`. I initially
+blamed Bug A here too; **that was wrong** — instrumenting directly shows **8 probes correctly
+placed, both depth 0, nothing skipped**. Rows 7 and 9 are correct for this block. The failure is
+downstream: the authored case is an `assertEq(sortedArrayToBST([1,2,3,4,5]), …)` *script*, and
+gen-traces harvests scripts into `{args, expected}`; the harvested `args` is not in the shape
+`runRaw` expects.
+
+**A summary line that contradicts its own list is worse than no summary.** gen-traces printed
+`empty traces: 0` while listing 3 ZERO-step traces. The count must include the listed failures.
+
+**Method note:** measuring `instrumentBlock()` directly overturned my own first diagnosis. The
+agent's summary was directionally right (4 bad blocks) and its cause was wrong; had I trusted the
+report I would have "fixed" the instrumenter and left bug B in place.
 
 ### 2026-10-02 — **row 3 complete: 150/150 guides execute, syntax-only 0**
 
