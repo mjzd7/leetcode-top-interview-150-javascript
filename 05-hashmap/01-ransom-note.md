@@ -71,12 +71,17 @@ FUNCTION canConstructBruteForce(ransomNote, magazine):
 ```
 
 ### Step-by-Step Dry Run
-`ransomNote = "aa"`, `magazine = "ab"`
+`ransomNote = "aa"`, `magazine = "aab"`
 
 | Step | `char` in Ransom | `magChars` State | `indexOf(char)` | Action | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | `'a'` | `['a', 'b']` | 0 | `magChars.splice(0, 1)` | `magChars = ['b']` |
-| 2 | `'a'` | `['b']` | -1 | Not found! | Return `false` |
+| 0 | — | `["a", "a", "b"]` | — | Guard: `ransomNote.length (2) > magazine.length (3)` is `false` | Continue |
+| 1 | `'a'` | `["a", "a", "b"]` | 0 | `magChars.splice(0, 1)` | `magChars = ["a", "b"]` |
+| 2 | `'a'` | `["a", "b"]` | 0 | `magChars.splice(0, 1)` — the second `'a'` consumes the *other* copy | `magChars = ["b"]` |
+| 3 | — | `["b"]` | — | `i === 2` ends the loop | Return `true` |
+
+`splice` is what stops one magazine character from paying for two ransom characters: each
+`'a'` removes a **different** element, and the leftover `'b'` is simply not needed.
 
 ### Modern JavaScript Implementation
 ```javascript

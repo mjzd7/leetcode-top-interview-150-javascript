@@ -74,7 +74,9 @@ FUNCTION twoSumBruteForce(nums, target):
 
 | `i` | `nums[i]` | `j` | `nums[j]` | `sum = nums[i] + nums[j]` | `sum === target`? | Action |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 0 | 2 | 1 | 7 | $2 + 7 = 9$ | Yes ($9 == 9$) | Return `[0, 1]` |
+| 0 | — | — | — | — | — | `n = 4`; outer loop head `i = 0 < n - 1 = 3` |
+| 0 | 2 | 1 | 7 | $2 + 7 = 9$ | Yes ($9 === 9$) | Inner loop head `j = i + 1 = 1` |
+| 0 | 2 | 1 | 7 | $2 + 7 = 9$ | Yes ($9 === 9$) | Return `[i + 1, j + 1] = [1, 2]` |
 
 ### Modern JavaScript Implementation
 ```javascript
@@ -238,12 +240,16 @@ FUNCTION twoSum(nums, target):
 ```
 
 ### Step-by-Step Dry Run
-`nums = [3, 3]`, `target = 6`
+`nums = [2, 7, 11, 15]`, `target = 9`
 
-| `i` | `nums[i]` | `complement = 6 - nums[i]` | In `seen`? | Action | `seen` State After |
+| `i` | `nums[i]` | `complement = 9 - nums[i]` | In `seen`? | Action | `seen` State After |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 0 | 3 | $6 - 3 = 3$ | No | Store `3 -> 0` | `{3: 0}` |
-| 1 | 3 | $6 - 3 = 3$ | **Yes!** (at index 0) | Return `[0, 1]` | Done! |
+| — | — | — | — | `const seen = new Map()` — empty on entry | `{}` |
+| 0 | 2 | $9 - 2 = 7$ | No — `seen` has no key `7` | `seen.set(nums[i], i)` stores `2 -> 0` | `{2: 0}` |
+| 1 | 7 | $9 - 7 = 2$ | **Yes!** (`2` is a key, value `0`) | Return `[seen.get(complement), i] = [0, 1]` | `{2: 0}` |
+
+The match lands on `i = 1`, not later, because the complement `7` was already paid for by
+the *previous* element — one pass, two cells.
 
 ### Modern JavaScript Implementation
 ```javascript
