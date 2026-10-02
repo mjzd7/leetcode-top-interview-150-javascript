@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **agent no-op** | — | Attempt returned in 11m14s having edited **nothing**: `scripts/test-trace.mjs` byte-identical to row 13's `4c06aa1`, assertion count still **85**, and **no V2 gate exists in the file**. Its trace shows it spent the run measuring the corpus (450 goldens / 72 228 steps) and reading, and never wrote a gate. Not retried: the owner directed that no further subagents be spawned. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — verdict hollow on 47 guides** | `1cf4e0c` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 58/450 verdicts still wrong** | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -273,6 +273,35 @@ verdict run goes through `buildBundle`. So the traces are usable; the pass/fail 
    `__treeToArray__(3)` → `[null]`, compared against `expected: 3`. Never equal.
 
 `list` (24) and `ops` (22) follow the same shape.
+
+### Driver fix landed — 139 → 58 zero-pass. **Row 15 is still PARTIAL.**
+
+`api/_lib/problems.mjs` no longer carries its own inline codec. `api/_lib/codecs.mjs` now owns
+decode, encode and the void/in-place case, and the driver consults it. **`6a194d6`.**
+
+| Codec | zero-pass before | after |
+|---|---|---|
+| `list` | 24 | **0 — fixed** |
+| `tree` | 48 | 12 |
+| `json` | 45 | 24 |
+| `ops` | 22 | 22 — untouched |
+| **total** | **139** | **58** (silent 130 → 49) |
+
+Suites held: `test:judge` 76 → **96 (+8, −0 removed — coverage added, nothing weakened)** ·
+`test-trace-runner` 269/0 · `npm test` **1898 unchanged** · frozen envelope 85/0 · validate 150/0 ·
+audit --check 17/0.
+
+**The residual 58 is characterised, not excused.** All **20** residual guides fail *every* case,
+which says the harness never lands one, rather than nearly landing one. Measured:
+- the **22 `ops`** residuals are all class targets (`RandomizedSet`, `MinStack`, …) — the
+  `Reflect.construct` case, still outstanding;
+- the **12 `tree`** residuals include `isSameTree(p, q)`, whose canonical takes **two** tree args
+  while the harvested args carry one, so it fails on **arity** (`cannot read property 'val' of
+  undefined`) before any comparison happens.
+
+So a residual is a case shape the driver cannot yet express. Both remaining classes need the
+**harvest** in `scripts/gen-traces.mjs` to record arity and the op list — which this row did not
+edit and should not, since row 15's harvest is the thing to change. **Row 15 stays PARTIAL.**
 
 ### Row 19's 36 divergences across 12 guides — adjudicated, and the kill criterion holds
 
