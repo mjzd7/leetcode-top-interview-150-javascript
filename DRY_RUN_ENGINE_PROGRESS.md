@@ -274,6 +274,16 @@ verdict run goes through `buildBundle`. So the traces are usable; the pass/fail 
 
 `list` (24) and `ops` (22) follow the same shape.
 
+**Proof the guides are correct and the DRIVER is wrong — same guide, two harnesses, opposite
+results.** `npm test 01-array-string/01-merge-sorted-array.md` → `✅ [PASS] (6 assertions)`, using
+the same canonical code and the same authored cases through `test-runner.mjs`'s harness. The golden
+for that guide records `verdict {passed: 0, failed: 6}`. The guide cannot be both. It passes under
+one driver and fails under the other, so the defect is in the driver and nowhere else.
+
+**Not level-specific.** The four representative failures all happened to be L1/BruteForce variants,
+which looked like a pattern. Measured across all 450: L1 **47/150 (31%)**, L2 **46/150 (31%)**, L3
+**46/150 (31%)**. Uniform, so the cause is the driver's return-value comparison, not the level.
+
 **The deeper problem is a second source of truth.** `buildBundle` carries its own inline
 `__arrayToTree__` / `__treeToArray__` / `__ser__` — a hand-rolled codec that **duplicates row 17's
 `api/_lib/codecs.mjs`**. Plan finding H1/P3 says nothing re-declares a codec; row 18 deleted
