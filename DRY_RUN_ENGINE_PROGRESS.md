@@ -231,6 +231,25 @@ row 0/4/6's committed exports instead of re-deriving them. That is the direct pa
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
 
+### 2026-10-02 — finding: **S1–S5 are referenced 62 times and defined nowhere**
+
+Plan §7 tags almost every row with a scenario id (`S1`, `S2`, `S3`, `S4`, `S5`), §10 lists
+"Playwright evidence: **S1–S5** + every preset" as a definition-of-done line, and rows 21/22/25/31
+name them in their Verify columns. Counts across the file: **S1 ×18, S3 ×16, S2 ×11, S5 ×11, S4 ×6**.
+
+**There is no legend.** No section defines them, and they are not in this ledger either. So §10's
+finish line names five criteria that do not exist as written artefacts.
+
+This matters more than a missing convenience, because the ids are the *only* thing that ties a row
+to its acceptance evidence. A reader cannot tell whether row 22 is done — the ledger can point at
+"40 checks" but cannot say which of the five scenarios that was. It is the same defect as the
+813-vs-450 fence lie in a different costume: a predicate nobody pinned.
+
+**Not invented here.** Writing five definitions mid-build would let me grade my own work against a
+standard I chose after the fact, which is exactly how a vacuous check gets in. Row 25 and §10 need
+the owner to say what S1–S5 are, or to ratify the reading inferred from each row's Verify column.
+Until then the Playwright evidence is filed per-row, not per-scenario, and this gap stays open.
+
 ### 2026-10-02 — **finding: 139 of 450 goldens record a FAILED verdict. Row 15 is partial.**
 
 Found while sizing row 28's head files, not by a test. `validateEnvelope` passed **450/450** and
