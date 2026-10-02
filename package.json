@@ -18,7 +18,17 @@
     "test:chat": "node scripts/test-chat.mjs",
     "test:chat:live": "node scripts/test-chat-live.mjs",
     "test:e2e": "playwright test",
-    "verify": "npm run validate && npm test && npm run test:judge && npm run test:chat && npm run test:e2e && npm run build"
+    "verify": "npm run audit:check && npm run gen:traces && npm run validate && npm test && npm run test:judge && npm run test:chat && npm run test:trace && npm run test:envelope && npm run test:serialize && npm run test:validate && npm run test:codecs && npm run test:instrument && npm run test:cases && npm run test:doc-traces && npm run test:dryrun-player && npm run test:dryrun-render && npm run test:e2e && npm run build",
+    "audit:check": "node scripts/audit-curriculum.mjs --check",
+    "gen:blocks": "node scripts/gen-blocks.mjs",
+    "test:trace": "node scripts/test-trace.mjs",
+    "test:trace-runner": "node scripts/test-trace-runner.mjs",
+    "test:codecs": "node scripts/test-codecs.mjs",
+    "test:instrument": "node scripts/test-instrument.mjs",
+    "test:cases": "node scripts/test-cases.mjs",
+    "test:doc-traces": "node scripts/test-doc-traces.mjs",
+    "test:dryrun-player": "node scripts/test-dryrun-player.mjs",
+    "test:dryrun-render": "node scripts/test-dryrun-render.mjs"
   },
   "keywords": [
     "leetcode",
