@@ -1102,11 +1102,55 @@ function assertEq(actual, expected, label) {
 
 const MANIFEST_PATH = path.join(ROOT_DIR, 'build', 'blocks.json');
 const REGEN_HINT = 'regenerate it with: node scripts/gen-blocks.mjs';
+const CASES_PATH = path.join(ROOT_DIR, 'catalog', 'cases.json');
 
 // ponytail: the whole 450-block manifest is parsed on every run (~190 KB, ~10ms)
 // and cached for the process. Cache it once `npm test` starts paying for
 // gen-blocks on fresh clones; until then a per-entry read would be pure cost.
 let targetFnCache = null;
+
+/**
+ * Row 3: the 41 guides that had no RUNTIME_TESTS entry, merged in from
+ * catalog/cases.json at load rather than pasted in as 41 more object literals.
+ *
+ * Two reasons it is a merge and not an edit. A hand-pasted entry rots the moment a guide is
+ * renamed, which is the exact rot this file has been shedding all project — the `fns` keys row
+ * 2 deleted were the same disease. And the cases are *authored*, so they live in their own
+ * reviewable file instead of being buried in a 130 KB literal.
+ *
+ * An explicit RUNTIME_TESTS entry still wins: a guide listed in both gets the inline one, so
+ * this can never silently override a hand-tuned case.
+ */
+let authoredCasesCache = null;
+function loadAuthoredCases() {
+  if (authoredCasesCache) return authoredCasesCache;
+  if (!fs.existsSync(CASES_PATH)) {
+    throw new Error(
+      `${path.relative(ROOT_DIR, CASES_PATH)} missing — row 3's authored cases live there. ` +
+        'Restore it from git (it is committed); regenerate coverage with: node scripts/test-cases.mjs'
+    );
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(CASES_PATH, 'utf-8'));
+  } catch (err) {
+    throw new Error(`unreadable ${path.relative(ROOT_DIR, CASES_PATH)}\n${err.message}`);
+  }
+  const { __meta, ...entries } = parsed;
+  if (!__meta?.roster) {
+    throw new Error(
+      `${path.relative(ROOT_DIR, CASES_PATH)} has no __meta.roster — without it nothing checks that ` +
+        'the 41 syntax-only guides stay covered. Regenerate with: node scripts/test-cases.mjs'
+    );
+  }
+  authoredCasesCache = entries;
+  return authoredCasesCache;
+}
+
+/** RUNTIME_TESTS plus row 3's authored cases, keyed by guide path. */
+function runtimeEntryFor(rel) {
+  return RUNTIME_TESTS[rel] || loadAuthoredCases()[rel] || null;
+}
 
 /** guide path -> [level1Name, level2Name, level3Name], from build/blocks.json. */
 function loadTargetFns() {
@@ -1296,7 +1340,7 @@ export function runFullTests(filter = null) {
     }
 
     // Phase 3: runtime LeetCode-sample assertions (registry entries only).
-    const entry = RUNTIME_TESTS[rel];
+    const entry = runtimeEntryFor(rel);
     if (!entry) {
       console.log(`⚪ [SYNTAX-ONLY] ${rel} — no runtime entry yet`);
       syntaxOnlyFiles++;
