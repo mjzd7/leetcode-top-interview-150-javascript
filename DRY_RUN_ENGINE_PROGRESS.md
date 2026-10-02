@@ -133,7 +133,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 25 | One table-driven Playwright spec | §7 | pending | | |
 | 26 | V5 event-floor gate | §7 | **done** | `2f1b9cd` | Floor is **derived from data**: **83 distinct values** across 150 problems (min 1, max 1962), pinned per level in `judge/traces/manifest.json`. No golden below its own floor (450 compared); dropping one step from any would fall under it. |
 | 27 | V9 table↔trace cross-check | §7 | **done** | `2f1b9cd` | **140/150 authored L3 tables share a value with their trace.** **10 reported UNCOMPARABLE, not counted as agreement** — a table with no numeric tokens or a trace under 3 steps has nothing to cross-check, and calling that drift would be dishonest the other way. `override` guard rejects a declared-but-unwatched identifier, judged against the code's declared names, not every English word. |
-| 28 | `trace-head.json` per problem | §7 | pending | | |
+| 28 | `trace-head.json` per problem | §7 | **done** | `HEAD` | **450 heads, mean 766 B, max 1392 B, 0 over the 2048 B cap** (was mean 1255 B, 11 over, max 2993 B). `npm run test:trace` → **117 assertions, 0 failures** (was 107). See the 2026-10-02 section at the end. |
 | 29 | V8 scan → repair thin tables | §7 | **done — 25 of 27** | `971b344` | `npm run audit` → thin tables **27 → 2**. Rows derived from golden-trace steps with cited indices; where a table's input disagreed with the trace's canonical case, the trace won. **2 left deliberately** (`length-of-last-word` L2, `kth-largest-element` L1): each traces to exactly **2 steps**, so 3 rows cannot be derived and a padded row looks like evidence while being none. validate 150/0 · player 40/0 · **110 Playwright green**. Also surfaced L1 code defects (`rotate-array` L1 never returns) — reported, not patched. |
 | 30 | Wire `verify` + CI cache + time budget | §7 | **done** | `159607d` `0e05af2` | **`npm run verify` green end to end for the first time: exit 0, 224 s measured, 450 goldens, 256 Playwright tests.** CI half earlier (`159607d`): `pull_request` trigger, `cache: 'npm'`, `timeout-minutes: 15`, Pages steps gated on `push`. `0e05af2`: 11 npm scripts registered, `verify` runs audit:check → gen:traces → validate → test → judge → chat → trace/envelope/serialize/validate/codecs/instrument/cases/doc-traces/renderers → e2e → build. `gen:traces` precedes `test:trace` because goldens are gitignored (E32). **Wiring the gates caught 2 real defects**: `gen:traces` flaked under load (flatten-binary-tree L1 TLE; generator now widens only its OWN budget to 9 s, judge stays 3 s) and `test-codecs` was pinning a stale codec interface (row 17's `name/encode/decode` vs row 15's added `owns`/`acceptsWire`/`toWire`/`fromWire` — assertion moved with the contract, still pins a CLOSED uniform surface). |
 | 31 | Design pass: timing/contrast/keyboard | §7 | **done** | `5630110` | **110 Playwright tests pass** across both viewports (was 100; +5 design-pass × 2 projects). axe-core (devDep, test-only) clean **inside the player**. **Found and fixed a real bug**: `scrollable-region-focusable` at 390px — `.viz-array.dr-array` overflows horizontally with no `tabindex`, so a keyboard user could not scroll it. Fixed at all 3 construction sites with `tabindex`/`role`/`aria-label`. Invisible at 1440px — exactly why F11 wants both viewports. |
@@ -742,3 +742,46 @@ remains **56 `fns`+`cases` / 53 `script`**, not the plan's 81/28.
 - Closed all 9 owner decisions on defaults + 7 process decisions (§4).
 - Scope set: 150 guides now, expansion gated (§2).
 - **Next: row 0** — `scripts/audit-curriculum.mjs`.
+
+### 2026-10-02 — row 28 done: every committed head is a summary, under E32's cap
+
+Row 15's note said 10 heads over / 2.9 KiB. **Re-measured, and it was stale**: the truth
+before this row was **450 heads, mean 1255 B, 11 over the 2048 B cap, largest 2993 B**
+(`09-binary-tree-general__10-lowest-common-ancestor.L2.head.json`). After: **mean 766 B,
+max 1392 B, 0 over cap** — met by the artefact's shape, not by moving the cap.
+
+**The size driver was measured, not guessed.** The head embedded the WHOLE step
+(`first: envelope.steps[0]`). `snap` — the serialised watch state — is the blowup: on the
+binary-tree and trie guides it is a nested Map of hundreds of bytes, and `operands` rides with
+it. `out` is already the truncated human summary (`"Step 1 · const parent = new Map(…"`), so
+it is the payload that survives; `delta`/`cond`/`override` are per-step state and belong in
+the full golden. The head step is now `{n, line, out}`, every value COPIED — see the second
+defect. Head size was re-measured across three candidate shapes before settling on this one.
+
+**A second, unrelated defect the new gate caught: `{"__ref":N}`.** Row 6's `stringify` spends
+one id table per call and emits `{"__ref":N}` on the second sighting of a live object. When a
+golden has exactly ONE step, `steps[0]` and `steps.at(-1)` are the same object — so **6 of the
+450 committed heads shipped `last: {"__ref":2}`**: an artefact that cannot be read without the
+stringifier that wrote it, and that no consumer can parse into a step. Fixed by copying each
+value in `headStep` instead of aliasing the step object. **0 `__ref` tokens remain.**
+
+`npm run test:trace` → **117 assertions, 0 failures** (was 107; **+10** — six over the 450
+heads, four negatives). Every head is compared against its own full golden **on disk**; a
+golden that is missing is reported BY NAME, never silently skipped, because checking 449 of 450
+is how a gate becomes a gate that proves nothing. **The gate was proven red by hand**: bumping
+`stepCount` in `05-hashmap__06-two-sum.L3.head.json` turned it
+`1 drifted: 05-hashmap__06-two-sum.L3.head.json: stepCount` and exited 1; `git checkout`
+restored it.
+
+Suites held: `gen:traces` **450 goldens / 450 `validateEnvelope` / `empty traces: 0`**, and two
+runs byte-identical (`shasum judge/traces/*.head.json | shasum` → `c82b8e1a…` twice) ·
+`npm test` **1898 unchanged** · `test:envelope` **129** · `test:judge` **96** · `validate`
+150/0 · `test:doc-traces` **17** (its two "heads over the cap exist" assertions moved with the
+contract — `overCap === 0` now, and the index's over-cap count is checked against the heads it
+lists, a stronger claim than `> 0`).
+
+**The envelope did not move.** A head is not the envelope: it is a row-28-owned summary, and
+the frozen v1.1 envelope and step are byte-identical to `2be142d`.
+
+Row 28's Commit cell reads `HEAD`: a commit cannot contain its own hash, and this section
+shipped in that commit.
