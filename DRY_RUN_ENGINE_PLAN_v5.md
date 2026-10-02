@@ -322,9 +322,11 @@ Every row is a required test. Grouped by the failure it prevents.
 
 ---
 
-## 7. Task table (serial; one atomic action per row)
+## 7. Task table (Dependency-Aware for Parallel Execution)
 
 Ladder applied per row: `[Y]` = deleted by rung 1 (does it need to exist), `[R]` = reused existing repo code, `[S]` = smallest thing that works, `[P]` = carry a `ponytail:` ceiling comment.
+
+While rows are listed numerically, they are **not strictly serial**. Agents can execute tasks in parallel based on the dependency graph below.
 
 | # | Task | Files / Target | Scenario | Verify by | Ponytail | Status |
 |---|---|---|---|---|---|---|
@@ -368,24 +370,26 @@ Ladder applied per row: `[Y]` = deleted by rung 1 (does it need to exist), `[R]`
 | T-b | Prediction scoring UI + S4 target picker | `docs/dryrun/index.js` | S4 | *trigger:* ≥1 guide repair attributable to the row-33 aggregate | [Y] P4 | deferred |
 | T-c | V13 degraded interview mode | `docs/dryrun/index.js` | S4 | *trigger:* owner decision 6 = default-on **and** ≥20 sessions observed | [Y] | deferred |
 
-### Waves
+### Execution DAG & Parallel Phases
 
-| Wave | Rows | Exit criterion | Visible? |
+To maximize agent throughput, tasks are restructured into parallel phases. A phase can begin once its dependencies are met. Within a phase, agents can take unblocked tasks concurrently.
+
+| Phase | Description | Parallel/Independent Tasks | Sequential/Dependency Chains |
 |---|---|---|---|
-| **W-1 Truth** | 0–4 | audit pinned; **0 syntax-only**; registry 150/150 | No UI — finds real bugs |
-| **W0 Schema + goldens** | 5–20 | envelope v1.1 frozen at row 13; 150 goldens; V1/V2/V3/V4/V6/V11 green | No UI |
-| **W1 First pixels** | 21–23, 29 | table player + `array` primitive; 0 thin tables; static traces, **no server** | **Yes** |
-| **W2 Tier 2 render** | 24–26 | all 5 primitives + overlay; S1–S5 evidenced | **Yes** |
-| **W3 Integrity** | 27, 28, 30–32 | floors + cross-check enforced; `verify` green; label auto-derived | Indirect |
+| **Phase 1** | **Foundations** (Data, Specs, Base UI) | `0`, `0b`, `1`, `3`, `4`, `5`, `6`, `7`, `8`, `21`, `31` | All tasks in Phase 1 can be started immediately and concurrently. |
+| **Phase 2** | **Engine & UI Primitives** | `22`, `23` | **Engine Chain:** `9` → `10` → `11` → `12`.<br>**Cleanup Chain:** `7` → `2`. |
+| **Phase 3** | **Trace Freeze & Goldens** | `24`, `29` | **Freeze Chain:** (`8`, `12`) → `13` → `14`.<br>**Trace Gen:** (`1`, `7`, `13`) → `15` → (`16`, `28`, `17`). |
+| **Phase 4** | **Validation Guards & Logic** | `20`, `26`, `30` | **Codec Chain:** `17` → `18` → `19`.<br>**Cross-check:** `15` → `27`. |
+| **Phase 5** | **Final UI Polish** | `25`, `33` | **Label Chain:** (`25`, `27`) → `32`. |
 
 **Kill criteria.**
-- W-1: if executing the 41 previously-unexecuted guides surfaces **> 15**
+- Phase 1: if executing the 41 previously-unexecuted guides surfaces **> 15**
   genuinely wrong canonical solutions → **stop the visual product**, fix code
   first. (This is v4's kill criterion, moved earlier — it fires sooner and
   cheaper.)
-- W0: if the differential oracle needs **> 25 %** manual adjudication of its own
+- Phase 4: if the differential oracle needs **> 25 %** manual adjudication of its own
   equivalence kinds, the oracle is wrong, not the solutions.
-- W2: if the static path serves < 10 users/week after a month, T-a stays deferred
+- Phase 5: if the static path serves < 10 users/week after a month, T-a stays deferred
   indefinitely.
 
 ---
