@@ -15,6 +15,11 @@ node_modules/
 Thumbs.db
 *.log
 
+# Dry-run engine build artifacts (regenerable: `node scripts/gen-blocks.mjs`, and the
+# cached instrumented blocks row 9 writes beside them). A manifest is derived from the
+# guides, so committing it means every guide edit lands a second, 450-entry diff.
+build/
+
 # Generated web bundle (rebuilt by CI via `npm run build` and locally as needed)
 docs/curriculum-data.js
 # Generated retrieval index for the chat's search_guides tool — same deal, and 3MB
