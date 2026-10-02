@@ -107,15 +107,15 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 0 | `audit-curriculum.mjs` pins every count | §7 | **done** | `633931e` | `npm run audit` → 150 guides / 450 solution blocks / 109+41 coverage, 16 DRIFT rows printed, exit 0. `node scripts/audit-curriculum.mjs --check` → 16 passed, 0 failed. `selectSolutionBlocks()` exported for rows 4/7/21. |
 | 0b | `guide-quality` rubric (`book-to-skill`) | §7 | **done** | `2e7c4b9` | `docs/rubrics/guide-quality.md` (323 lines) + `npm run audit --scores` → **150 scores, mean 96.4, min 80, max 100 (96 guides)**; bands reference 96 / sound 44 / incomplete-evidence 10 / draft 0. Thin-table cross-check: the 23 thin-table guides score **9.1/15** on the depth component vs 15/15 for the other 127, **23/23 below the median**. **Deliberately NO gate, NO threshold, exit 0** — row 0b is `[Y]` and the gate belongs to T1. |
 | 1 | `catalog/problems.json`, 150 entries | §7 | **done** | `1e2c9a4` | `npm run gen:catalog` → **150 entries, 150 unique paths, all exist on disk** (keyed by `path` per E30). Difficulty 40/92/18 E/M/H · codec `json` 101, `tree` 20, `list` 13, `graph` 9, `ops` 7 — **5 implemented codecs only, no 6th** · equivalence `exact` 123, `ops-terminal` 15, `order-insensitive` 9, `int-with-tolerance` 2, `multiset` 1. **`lcId` is `null` for all 150** — see §1.2. |
-| 2 | Drop `fns` via `sg` | §7 | pending | | |
+| 2 | Drop `fns` via `sg` | §7 | **agent no-op** | — | First attempt returned in 3m43s having edited **nothing**: `test-runner.mjs` byte-identical to HEAD, no `sg` rule added, all 56 `fns` keys intact. It DID establish the facts: `fns` is an **array** `[l1,l2,l3]` not an object, the split is **56/53** (not 81/28), and all 56 arrays equal `[targetFn L1,L2,L3]` with **0 mismatches**. Re-run in flight. |
 | 3 | **41 → 0 syntax-only** | §7 | pending | | |
 | 4 | Validator rejects async/generator/eval | §7 | **done** | `0aceb10` | `npm run test:validate` → 23 assertions, 0 failures (E16 await/generator/yield, E17 eval/new-Function, K7 missing-L3, prose-`await` control). `npm run validate` → 150 scanned, **0 errors, 0 warnings**. Scan is `sg` rules in `.ast-grep/rules/solution-block-sync.yml`; missing `sg`/rules ⇒ `SOLUTION_SCAN_UNAVAILABLE`, unparseable block ⇒ error. |
 | 5 | Envelope v1.1 schema + validator | §7 | **done** | `b3d44c1` | `npm run test:envelope` → **129 assertions, 0 failures**; 7 bad fixtures rejected by name across I1–I7 (+10 in-test mutations), good fixture exits 0. `docs/trace-schema.json` documents each field's meaning; caps taken from `sandbox.mjs` (1 MB / 3 s / 16 MB), not asserted. **Freeze point is row 13.** |
 | 6 | Canonical serializer + 9 round-trips | §7 | **done** | `aa6fa3a` | `npm run test:serialize` → E1–E9, 9 cases, 0 failures, exit 0. Compared via `jq -S .` (plan §0.2), not `deepEqual`. Exports `serialize`/`stringify`/`deserialize`/`MAX_DEPTH`. |
 | 7 | `gen-blocks.mjs` → `blocks.json` | §7 | **done** | `32fdb5f` | `node scripts/gen-blocks.mjs --verify` → **450/450 hashes re-derived from source, 0 follow-up fences selected, 0 orphans on disk**, 150/150/150 per level. `regionTable` verified on `08-linked-list/11-lru-cache.md` L3: `LRUCache` depth 0 + its 5 methods, `DLinkedNode` helper suppressed at depth 1 (**E11/E13**). **102 blocks `selfRecursive`** for row 20. `targetFn` null on **0/450**. `build/` untracked. |
 | 8 | RED: golden differ catches a mutation | §7 | **done** | `9b3fbbe` | `npm run test:trace` → **59 assertions, 0 failures**; 6 fixtures all generated from `expected.json` via `--mutate` (no hand-drift). Mutated step → **named step diff by index + field**; stale `blockHash` → **E19 named failure**, categorically separate. Truncation vs degrade kept distinct (K2). Row 13 flips this green and freezes v1.1. |
-| 9 | Runtime instrumenter (Acorn) | §7 | pending | | |
-| 10 | `trace-runner.mjs` region gate + chunking | §7 | pending | | |
+| 9 | Runtime instrumenter (Acorn) | §7 | **done** | `c675ae2` | `node scripts/test-instrument.mjs` → **246 assertions, 0 failures**. 12 fixtures (E10–E15×4, E18) + 2 real guides + a sweep of all 450 blocks. Emits `{h: blockHash, off: block-relative}` — **no absolute guide lines** (K5). Asserts instrumented == uninstrumented results (I2). acorn + acorn-walk as devDeps. |
+| 10 | `trace-runner.mjs` region gate + chunking | §7 | **done** | `998d15d` | `node scripts/test-trace-runner.mjs` → **167 assertions, 0 failures**. Region gate is **data**: the prelude receives the manifest `regionTable` and the probe tests one integer (`depth !== 0`) — **zero counters in the module**, verified by grep. A chunk gap is a hard error. `truncated.trace` is its own flag. Budget from measured constants (1 MB slot × 12 chunks), not a 4 MB wish. |
 | 11 | Byte budget + degrade-to-`diff` | §7 | pending | | |
 | 12 | Execution/display caps, verdict isolation | §7 | pending | | |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | pending | | |
@@ -128,7 +128,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 20 | V11 region isolation + non-vacuity | §7 | pending | | |
 | 21 | Tier-1 table player | §7 | **done** | `f4e7a3d` | `docs/dryrun/table.js` → **450 tables parsed across 150 guides**; thin = **27 tables / 23 guides, matching row 0's list exactly** (reconciled by me, diff empty). Dependency-free, browser-safe: **no `node:`/`fs`/`require`**, exports `parseGuide`/`parseAll`/`findThinTables`/`THIN_ROW_LIMIT`. `$…$` cells preserved verbatim. |
 | 22 | `array` primitive — **first pixels** | §7 | **done** | `2f2a7b6` | `npm run test:dryrun-player` → **40 checks, 0 failures**. Playwright passes at **both** configured viewports (1440×900 + Pixel 7); screenshots `scratch/dryrun/*.png` (untracked). Spec clicks forward ×2 asserting the array **changed**, then back. All 3 levels animate (decision 2). Thin tables say so rather than rendering an empty frame. |
-| 23 | Tier-1 presets: stack/matrix/window/bits | §7 | pending | | |
+| 23 | Tier-1 presets: stack/matrix/window/bits | §7 | **done** | `c5b6469` | `node scripts/test-dryrun-render.mjs` → **90 checks, 0 failures**. `npx playwright test tests/dry-run.spec.mjs` → **56 passed** across desktop + mobile. Each preset shows its own concept, verified by eye: `stack` renders a **call stack with a depth**; `window` shows **bounds 1..4, size, and a per-step delta (+4/-0)** with in-window lit and out-of-window dimmed — not an array in disguise. Screenshots in `scratch/row23/` (untracked). **Tier 1 complete.** |
 | 24 | Tier-2 presets + overlay | §7 | pending | | |
 | 25 | One table-driven Playwright spec | §7 | pending | | |
 | 26 | V5 event-floor gate | §7 | pending | | |
@@ -230,6 +230,32 @@ A row with no test id is a hole. `—` means the test does not exist yet.
 row 0/4/6's committed exports instead of re-deriving them. That is the direct payoff of
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
+
+### 2026-10-02 — wave 4: rows 9, 10, 23 done; row 2 was a no-op
+
+- **Row 9** (`c675ae2`) — Acorn instrumenter. 246 assertions, 12 fixtures, 450-block sweep.
+  Step addresses are `{blockHash, block-relative offset}`; no absolute guide lines anywhere.
+- **Row 10** (`998d15d`) — trace-runner. 167 assertions. **The region gate is data, not
+  arithmetic**: the prelude carries the manifest's `regionTable` and the probe compares one
+  integer. Grepped both files for `depth++`/`callDepth`/`stackDepth` — absent. That is the
+  U3 fix holding, and it is what keeps 102 recursive blocks from producing empty traces.
+- **Row 23** (`c5b6469`) — **Tier 1 complete.** 90 logic checks, 56 Playwright tests across
+  both viewports. Read the screenshots rather than trusting the report: `stack` shows a call
+  stack with a depth, `window` shows bounds, size and a per-step delta with in-window cells
+  lit — the two presets where a bare array would have been a plausible fake.
+- **Row 3 tranche A** (`1902631`) — 20 of the 41 now executable. **0 mismatches**, verified
+  twice over: the harness compares executed output against independently authored values, and
+  the hardest case's provenance traces back to the guide's own dry-run table. The kill
+  criterion (>15 wrong of 41) is not close.
+
+**Row 2 failed and is recorded as failed.** Its agent returned in 3m43s having edited nothing
+— `test-runner.mjs` byte-identical to HEAD, no `sg` rule written, all 56 `fns` keys intact.
+Investigating was not the same as delivering. It did establish the facts the re-run needs:
+`fns` is an **array**, the split is **56/53**, and all 56 equal `[targetFn L1,L2,L3]` with
+**0 mismatches** — so the deletion is safe and the assertion count cannot move.
+
+Regression held: `validate` 150/0 · `test` 150 files / 109 runtime / 41 syntax-only / 450
+blocks / 828 assertions / 0 failures · `test:judge` 64/0 · six row suites green.
 
 ### 2026-10-02 — regression caught and fixed: `docs/` walked as curriculum
 
