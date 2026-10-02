@@ -23,8 +23,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    # Not sized to the measured ~53s of steps: that would fail a slow runner. Headroom for
-    # a normal run, a hard stop for a hung QuickJS/Playwright one.
+    # Measured step total is now ~250 s (validate 1.4 · test 15.6 · judge 4.0 · chat 14.8 ·
+    # trace 3.0 · trace-runner 190 · the rest <3), plus `npm ci`, `playwright install` and
+    # `npm run build`. NOT sized to that sum — it would fail a slow runner. Headroom for a
+    # normal run, a hard stop for a hung QuickJS or Playwright one.
     timeout-minutes: 15
     steps:
       - name: Checkout Repository
@@ -50,6 +52,21 @@ jobs:
 
       - name: Run Chat Backend Unit Tests
         run: npm run test:chat
+
+      - name: Audit Curriculum Counts
+        run: npm run audit:check
+
+      - name: Generate Golden Traces
+        run: npm run gen:traces
+
+      - name: Golden Differ, Envelope Freeze & Trace Gates
+        run: npm run test:trace
+
+      # 190 s measured — the most expensive step by an order of magnitude, because every case
+      # boots a QuickJS sandbox. Kept as its own step so the cost is attributable in the log
+      # rather than hidden inside a chain, and so a slow runner shows which step paid for it.
+      - name: Trace Runner (sandbox: chunking, budget, caps, verdict isolation)
+        run: npm run test:trace-runner
 
       - name: Build Web Portal Data Bundle
         run: npm run build

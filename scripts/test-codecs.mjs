@@ -30,6 +30,9 @@ import { stringify } from './lib/serialize.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CATALOG = path.join(__dirname, '..', 'catalog', 'problems.json');
 
+/** The agreed codec surface, sorted. Every codec must expose exactly this, no more, no less. */
+const CODEC_INTERFACE = 'acceptsWire,decode,encode,fromWire,name,owns,toWire';
+
 let assertions = 0;
 let failures = 0;
 
@@ -119,8 +122,15 @@ for (const name of IMPLEMENTED_CODECS) {
     `uniform: ${name} has encode() and decode()`);
   check(Object.isFrozen(codec), `uniform: ${name} is frozen`);
   check(getCodec(name) === codec, `uniform: getCodec(${name}) is stable across calls (row 15 can cache)`);
-  check(Object.keys(codec).sort().join() === 'decode,encode,name',
-    `uniform: ${name} exposes only name/encode/decode`, `keys: ${Object.keys(codec).sort().join()}`);
+  // Row 15's driver fix (6a194d6) widened the interface on purpose, and uniformly: `owns` /
+  // `acceptsWire` / `toWire` / `fromWire` are what let ONE registry decide whether a value is
+  // already live, is a wire to decode, or is something the codec does not own — which is how
+  // 139 goldens stopped grading wrong. So the assertion moved with the contract rather than
+  // being deleted: it still pins a CLOSED interface, identical across all five codecs, so the
+  // next person to bolt a method onto one codec and not the other still trips it.
+  check(Object.keys(codec).sort().join() === CODEC_INTERFACE,
+    `uniform: ${name} exposes exactly the agreed codec interface (${CODEC_INTERFACE.split(',').length} members)`,
+    `keys: ${Object.keys(codec).sort().join()}`);
 }
 
 // ---- 2. G1's hard rule: an unmapped codec name fails LOUDLY ----------------------
