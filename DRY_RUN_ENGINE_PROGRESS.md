@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 58/450 verdicts still wrong** | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 52/450 verdicts still wrong** (was 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -976,3 +976,47 @@ probe cannot rot into a tautology.
 Baselines unmoved: `npm test` **1898** · `Files: 150 / syntax-only: 0` · `test:envelope` **129** ·
 `test:judge` **96** · `test:doc-traces` **17** · `validate` **150/0**. Regeneration touched exactly
 **1** of 450 heads, which is the receipt that the other 449 were already correct.
+
+### 2026-10-02 — row 15, part 1: the tree arity bug is fixed. **58 → 52.**
+
+The handoff called the residual "22 `ops` + 12 `tree`". Re-measured, the 58 are **one** defect
+with four surface shapes (see the section above): the harvest records what the authored script
+asserted *after its own derivation*, and the driver compares the target's raw return. 24 blocks
+normalise (`normCombos(fn(4,2))`), 22 assert a method on a constructed instance, 6 hit a real
+arity bug, 6 derive an argument too.
+
+**Shipped here: the 6 arity blocks.** The spy's level-order preference was first-wins — it kept
+ONE recording and dropped every other argument. So `isSameTree(arrayToTree(A), arrayToTree(B))`
+recorded `[A]` and was called `isSameTree(A, undefined)` ("cannot read property 'val' of
+undefined"), and `kthSmallest(arrayToTree([…]), 1)` lost its `k`. The preference is now
+**positional**: every argument that is a node graph is replaced by the level-order recording the
+script made for that position, and a scalar passes through. `__GRAPH__` is what separates the
+two — `__LE__` says only "not a level-order array", which is true of a graph *and* of an integer,
+so without it the repair loop demands a recording for `k` and abandons the whole call.
+
+Two placement bugs found by running it, not by reading it:
+
+- the capture sat inside a guard that a second `arrayToTree` never reaches, so it fixed
+  `isSameTree` only after `same-tree` went green and `kth-smallest` stayed red in the same run;
+- and the first version demanded a recording for *every* non-array argument.
+
+A call with a node-graph argument that has no recording falls back to the old first-wins rule,
+so no case that already worked can regress — which is why 392 goldens are byte-identical.
+
+`npm run test:trace` → **122 assertions, 0 failures** (was 120). The new S16 gate names the two
+guides it fixes, because a gate naming all 12 tree failures could not go green until the other
+mechanisms land — a gate that cannot go green is a gate that proves nothing. RED first: both
+named `passed 0, failed 9` / `passed 0, failed 6`.
+
+**Zero-pass 58 → 52** (`ops` 22, `json` 24, `tree` **12 → 6**), guides affected 20 → 18, heads
+over E32's cap still **0**, and two `gen:traces` runs byte-identical (`shasum 7b5621ea…` twice).
+Suites held: `npm test` **1898 unchanged** · `Files: 150 / syntax-only: 0` · `test:envelope`
+**129** · `test:judge` **96** · `test:doc-traces` **17** · `validate` **150/0**.
+
+**Not shipped, and why.** The remaining 52 need mechanisms this row does not have: a `via` replay
+for the ~30 uniform wrappers, a **class op list** for the 22 statement-sequence blocks, argument
+derivation for 6, and input derivation for 2. One of the 22 (`insert-delete-getrandom-o1`) stubs
+`Math.random` before constructing, so its driver case would need a **global stub**, not an
+argument list — a trust expansion on the component the plan fences hardest. Owner decision C3
+chose replay-over-record in principle; the measurement shows it is 3–4 mechanisms, not 1, so the
+slicing is still open. **Row 15 stays PARTIAL.**

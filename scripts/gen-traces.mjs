@@ -396,19 +396,35 @@ const SPY_RUNTIME = `
 function __SPY__(name, target, isCtor) {
   return function () {
     var __isTarget = __TARGETS__.indexOf(name) !== -1;
+    // Positional level-order evidence, collected for EVERY call in call order and BEFORE any
+    // of the first-wins bookkeeping below. It has to sit here: a second arrayToTree([...])
+    // arrives when __F__ is already occupied, so the guarded block below never runs for it —
+    // which is exactly how isSameTree(A, B) lost its B.
+    if (__TREE__ && __LE__(arguments[0])) __FL__.push([arguments[0]]);
     if (!__isTarget || __A__ === null) {
       if (__isTarget || __F__ === null) {
         var __args = null;
         try { __args = JSON.parse(JSON.stringify(Array.prototype.slice.call(arguments))); } catch (e) { __args = null; }
         if (__isTarget) {
-          // Prefer the recording the DRIVER can accept. For a tree guide the target's own
-          // arguments are a JSON node graph, and __arrayToTree__ reads that as null — so the
-          // traced call becomes maxDepth(null): two steps, non-empty, and vacuous. When a
-          // level-order recording is already pending, it is the usable one and this one is
-          // dropped. This has to be decided HERE, at record time: the helper that produces the
-          // level-order array runs first, so __F__ is already populated by the time the target
-          // is called.
-          if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
+          // Positional repair, tree guides only. Every argument that is a live node graph is
+          // replaced by the level-order recording the script made for THAT POSITION, and a
+          // scalar argument passes through untouched — kthSmallest(arrayToTree([…]), 1)
+          // keeps its k. First-wins could not do this: it kept ONE recording and dropped
+          // every other argument, so isSameTree(A, B) was called as isSameTree(A, undefined).
+          // If some node-graph argument has no recording the whole call falls back to the old
+          // rule, so a case that already worked cannot regress.
+          var __fixed = null;
+          if (__TREE__ && __args !== null) {
+            __fixed = __args.slice();
+            for (var __i = 0; __i < __args.length; __i++) {
+              if (!__GRAPH__(__args[__i])) continue;
+              if (__i < __FL__.length && __FL__[__i] && __LE__(__FL__[__i][0])) __fixed[__i] = __FL__[__i][0];
+              else { __fixed = null; break; }
+            }
+          }
+          if (__fixed !== null) {
+            __A__ = __fixed; __AN__ = name;
+          } else if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
             // keep the level-order recording
           } else {
             __A__ = __args; __AN__ = name;
@@ -421,7 +437,7 @@ function __SPY__(name, target, isCtor) {
     }
     if (__ASSERTERS__.indexOf(name) !== -1) {
       __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__ });
-      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0;
+      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = [];
     }
     if (isCtor) return Reflect.construct(target, Array.prototype.slice.call(arguments));
     return target.apply(this, arguments);
@@ -539,6 +555,7 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     `var __FN__ = null;`,
     `var __TX__ = 0;`,
     `var __TREE__ = ${JSON.stringify(codec === 'tree')};`,
+    `var __FL__ = [];`,
     `var __TARGETS__ = ${JSON.stringify(targets)};`,
     `var __ASSERTERS__ = ${JSON.stringify(asserterNames)};`,
     // A level-order encoding: scalars/null, or nested arrays of them. This is the ONLY shape
@@ -549,6 +566,11 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     // tree whose level-order encoding is itself ambiguous (a node whose value is an array) is
     // rejected. Upgrade path: row 17 routes every codec through `codecs.mjs`, at which point the
     // codec encodes its own input and this predicate moves there with it.
+    // A node graph is the one argument shape a tree guide must never hand the codec raw: a
+    // plain object, so exactly what a scalar is not. __LE__ only says "not a level-order
+    // array", which is true of a graph AND of kthSmallest's integer k — without this the
+    // repair loop demands a recording for the scalar and gives up on the whole call.
+    `function __GRAPH__(a) { return a !== null && typeof a === 'object' && !Array.isArray(a); }`,
     `function __LE__(a) {`,
     `  if (!Array.isArray(a)) return false;`,
     `  for (var i = 0; i < a.length; i++) {`,
