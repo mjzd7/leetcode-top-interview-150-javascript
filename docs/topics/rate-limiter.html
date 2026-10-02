@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design a Rate Limiter — system design chapter + top 50 questions</title>
+<meta name="description" content="Rate limiter system design: 5 algorithms, distributed architecture, atomicity, 429 contract, failure modes, and 50 interview questions." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#08090D; --surface:#0D1017; --raised:#121724;
+    --line:rgba(148,163,184,.13); --ink:#E9EDF4; --muted:#8B94A7;
+    --accent:#C8FA4B; --accent-ink:#101303;
+    --warn:#F5A524; --bad:#F4557A; --good:#4ADE80; --info:#7DD3FC;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--bg);scroll-behavior:smooth}
+  body{
+    margin:0;color:#C6CDDB;font:400 15px/1.7 Inter,system-ui,sans-serif;
+    background:
+      radial-gradient(1100px 420px at 85% -10%, rgba(200,250,75,.055), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(139,92,246,.06), transparent 60%),
+      var(--bg);
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 120px}
+  header.top{padding:56px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .kicker{font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(28px,5vw,44px);font-weight:700;color:#fff;letter-spacing:-.02em;margin:14px 0 10px}
+  .sub{color:var(--muted);max-width:70ch;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font:500 11px/1 var(--mono);border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted);background:var(--surface)}
+  .chip b{color:var(--accent);font-weight:500}
+  nav.toc{margin:26px 0 0;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  nav.toc b{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:10px}
+  nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px}
+  nav.toc li{margin:3px 0;font-size:13px}
+  nav.toc a{color:#C6CDDB;text-decoration:none;border-bottom:1px solid transparent}
+  nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+  h2{font-family:"Space Grotesk",sans-serif;font-size:21px;color:#fff;font-weight:600;letter-spacing:-.01em;
+     margin:56px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+  h2 .num{color:var(--accent);font-family:var(--mono);font-size:13px;margin-right:10px}
+  h3{font-size:15px;font-weight:600;color:var(--accent);margin:26px 0 8px}
+  h4{font-size:13px;font-weight:600;color:#fff;margin:18px 0 6px;letter-spacing:.02em}
+  p{margin:0 0 12px}
+  a{color:var(--info)}
+  ul,ol{margin:0 0 14px;padding-left:22px}
+  li{margin:5px 0}
+  li::marker{color:var(--accent)}
+  code:not(pre code){background:rgba(200,250,75,.09);color:var(--accent);padding:2px 6px;border-radius:6px;font:400 12.5px/1.5 var(--mono)}
+  pre{background:#0A0D13;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;font:400 12.5px/1.65 var(--mono);color:#D6DEEB;margin:0 0 16px}
+  pre .c{color:#5C677D} pre .k{color:#C8FA4B} pre .s{color:#7DD3FC} pre .n{color:#F5A524}
+  .tbl{border:1px solid var(--line);border-radius:12px;overflow-x:auto;margin:0 0 18px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:660px}
+  th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:rgba(200,250,75,.06);color:var(--accent);font:600 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td.n{font-family:var(--mono);color:var(--muted);width:38px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin:0 0 18px}
+  .card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px 18px}
+  .card h4{margin:0 0 8px}
+  .card p:last-child{margin:0}
+  .tag{display:inline-block;font:500 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+       padding:5px 8px;border-radius:6px;margin-bottom:10px}
+  .t-easy{background:rgba(74,222,128,.13);color:var(--good)}
+  .t-med{background:rgba(245,165,36,.13);color:var(--warn)}
+  .t-hard{background:rgba(244,85,122,.13);color:var(--bad)}
+  .t-core{background:rgba(200,250,75,.13);color:var(--accent)}
+  figure{margin:0 0 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font:400 11.5px/1.6 var(--mono);color:var(--muted);margin-top:12px;text-align:center}
+  .callout{border-left:3px solid var(--accent);background:rgba(200,250,75,.045);border-radius:0 12px 12px 0;
+           padding:14px 18px;margin:0 0 18px}
+  .callout.warn{border-color:var(--warn);background:rgba(245,165,36,.05)}
+  .callout.bad{border-color:var(--bad);background:rgba(244,85,122,.05)}
+  .callout p:last-child{margin:0}
+  .callout b{color:#fff}
+  .check{list-style:none;padding:0}
+  .check li{padding-left:26px;position:relative;margin:7px 0}
+  .check li:before{content:"";position:absolute;left:0;top:5px;width:14px;height:14px;
+                    border:1px solid var(--line);border-radius:4px;background:var(--raised)}
+  .plan{border:1px solid var(--line);border-radius:12px;overflow-x:auto}
+  .qa{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0;overflow:hidden;margin:0 0 18px}
+  .qa details{border-bottom:1px solid var(--line)}
+  .qa details:last-child{border-bottom:none}
+  .qa summary{cursor:pointer;padding:11px 16px;display:flex;gap:12px;align-items:baseline;font-size:13.5px;color:#DCE3EE}
+  .qa summary:hover{background:rgba(200,250,75,.045)}
+  .qa summary .num{font:500 11px/1.4 var(--mono);color:var(--muted);min-width:26px}
+  .qa summary .why{margin-left:auto;font:400 11px/1.4 var(--mono);color:var(--muted);text-align:right}
+  .qa details[open] summary{color:#fff}
+  .qa .ans{padding:0 16px 14px 54px;font-size:13px;color:#B9C2D2}
+  .qa .ans b{color:var(--accent);font-weight:500}
+  footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);font:400 11.5px/1.8 var(--mono);color:var(--muted)}
+  @media(max-width:640px){nav.toc ol{columns:1}.sim-row{gap:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="kicker">System design deep dive · chapter 04 · mock page</div>
+  <h1>Design a Rate Limiter</h1>
+  <p class="sub">
+    A rate limiter is a bucket with a rule attached. One of the most asked system design questions at
+    every tier, and the only one where the interviewer grades whether you understand
+    <em>failure</em> as much as <em>flow</em>. This page carries the important parts: the five algorithms,
+    the distributed shape, the atomicity problem, the 429 contract, the failure modes that actually
+    page you at 3am — then 50 questions interviewers actually ask about it.
+  </p>
+  <div class="chips">
+    <span class="chip"><b>SDE-1</b> LLD: parking lot + bucket classes</span>
+    <span class="chip"><b>SDE-2</b> HLD round: 1 of ~5 rounds decides level</span>
+    <span class="chip"><b>Senior</b> cost + failure-mode depth</span>
+    <span class="chip">45–60 min round</span>
+    <span class="chip">Tier 1 question</span>
+  </div>
+
+  <nav class="toc">
+    <b>Contents</b>
+    <ol>
+      <li><a href="#tl">TL;DR + analogy</a></li>
+      <li><a href="#why">Why companies care</a></li>
+      <li><a href="#where">Where does it live</a></li>
+      <li><a href="#algos">The five algorithms</a></li>
+      <li><a href="#pick">Which one to pick</a></li>
+      <li><a href="#arch">Distributed architecture</a></li>
+      <li><a href="#atomic">Atomicity: the actual hard part</a></li>
+      <li><a href="#code">Code: Lua + JS</a></li>
+      <li><a href="#contract">The 429 contract</a></li>
+      <li><a href="#numbers">Back-of-the-envelope numbers</a></li>
+      <li><a href="#failure">Failure modes</a></li>
+      <li><a href="#narrate">How to narrate the round</a></li>
+      <li><a href="#bank">Top 50 questions</a></li>
+      <li><a href="#know">What you must know</a></li>
+      <li><a href="#plan">7-day plan + what to skip</a></li>
+      <li><a href="#src">Sources</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- 1 -->
+<h2 id="tl"><span class="num">01</span>TL;DR + analogy</h2>
+<div class="callout">
+  <p><b>The bucket with a hole in it.</b> A reservoir drips water into your bucket at a fixed rate
+  (the <b>refill rate</b>). Your bucket has a maximum size (<b>capacity</b>). Every request spends one
+  unit from the bucket. If the bucket is empty, the request is <b>rejected with 429</b>.
+  A tall bucket lets you save up credit while idle and then spend it in one burst — that is why token
+  bucket is the default choice for APIs: it smooths the <em>average</em> rate without punishing
+  <em>bursts</em>.</p>
+</div>
+<p>
+Two knobs and they mean completely different things, which is the single most misunderstood point in
+every interview: <b>capacity controls burst</b>, <b>refill rate controls sustained throughput</b>.
+A bucket of 100 refilling at 1/s allows 100 requests instantly and then exactly 1/s forever after.
+An interviewer who hears "rate limit of 100" and does not hear which of the two you mean will assume
+you do not know.
+</p>
+<p>
+The whole system is three things: <b>a key</b> (whose bucket — user, IP, API key, tenant, endpoint),
+<b>an algorithm</b> (how tokens are counted), and <b>a decision</b> (allow or 429). Everything else is
+plumbing. Interviewers score the first three, then hunt the plumbing.
+</p>
+
+<!-- 2 -->
+<h2 id="why"><span class="num">02</span>Why companies care</h2>
+<div class="grid">
+  <div class="card"><h4>Abuse + DoS</h4><p>The cheapest defence you can put in front of a database. A scraper
+    issuing 50k req/s does not get to choose how much of your database it eats.</p></div>
+  <div class="card"><h4>Cost control</h4><p>Every third-party call costs money. A runaway retry loop from one
+    customer is your AWS bill. Limits make spend predictable per tenant.</p></div>
+  <div class="card"><h4>Cascading failure</h4><p>A slow dependency turns into a queue, a queue turns into
+    memory exhaustion, and every other endpoint on the box dies with it. A limiter plus load shedding
+    is what keeps one sick dependency local.</p></div>
+  <div class="card"><h4>Fairness + quotas</h4><p>Free tier gets 10 rpm, enterprise gets 1000. Same code
+    path, different bucket size — the limit <em>is</em> the product tiering.</p></div>
+  <div class="card"><h4>Downstream protection</h4><p>Stripe, OpenAI, your own ML inference box all publish
+    limits. Your limiter is the shim that makes you a well-behaved client instead of a banned one.</p></div>
+  <div class="card"><h4>Revenue + product</h4><p>Concurrency caps protect expensive resources; signup /
+    post / claim / coupon endpoints are rate limited specifically because they are abusable and directly
+    tied to money.</p></div>
+</div>
+
+<!-- 3 -->
+<h2 id="where"><span class="num">03</span>Where does it live</h2>
+<figure>
+<svg viewBox="0 0 900 290" role="img" aria-label="Three placement options for a rate limiter">
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0 0 L7 3 L0 6 z" fill="#8B94A7"/></marker></defs>
+  <g font-family="JetBrains Mono,monospace" font-size="12">
+    <text x="20" y="28" fill="#8B94A7">OPTION A · CLIENT-SIDE</text>
+    <rect x="20" y="40" width="150" height="44" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="60" y="67" fill="#C6CDDB">Client</text>
+    <line x1="170" y1="62" x2="240" y2="62" stroke="#8B94A7" marker-end="url(#a)"/>
+    <text x="178" y="52" fill="#F4557A">✗ trivially bypassed</text>
+
+    <text x="330" y="28" fill="#8B94A7">OPTION B · APP / MIDDLEWARE</text>
+    <rect x="330" y="40" width="130" height="44" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="360" y="67" fill="#C6CDDB">Client</text>
+    <line x1="460" y1="62" x2="510" y2="62" stroke="#8B94A7" marker-end="url(#a)"/>
+    <rect x="512" y="40" width="170" height="44" rx="8" fill="#121724" stroke="#C8FA4B"/>
+    <text x="536" y="67" fill="#C8FA4B">Middleware (limiter)</text>
+    <line x1="682" y1="62" x2="732" y2="62" stroke="#8B94A7" marker-end="url(#a)"/>
+    <rect x="734" y="40" width="120" height="44" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="766" y="67" fill="#C6CDDB">API</text>
+    <text x="512" y="106" fill="#8B94A7">✓ policy next to the code, per-route rules</text>
+
+    <text x="20" y="160" fill="#8B94A7">OPTION C · EDGE / API GATEWAY (microservices)</text>
+    <rect x="20" y="172" width="120" height="44" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="46" y="199" fill="#C6CDDB">Client</text>
+    <line x1="140" y1="194" x2="196" y2="194" stroke="#8B94A7" marker-end="url(#a)"/>
+    <rect x="198" y="172" width="190" height="44" rx="8" fill="#121724" stroke="#C8FA4B"/>
+    <text x="222" y="199" fill="#C8FA4B">Gateway / LB (limiter)</text>
+    <line x1="388" y1="194" x2="440" y2="194" stroke="#8B94A7" marker-end="url(#a)"/>
+    <g font-size="11">
+      <rect x="442" y="150" width="110" height="30" rx="6" fill="#121724" stroke="#8B94A7"/><text x="458" y="169" fill="#C6CDDB">svc users</text>
+      <rect x="442" y="188" width="110" height="30" rx="6" fill="#121724" stroke="#8B94A7"/><text x="458" y="207" fill="#C6CDDB">svc orders</text>
+      <rect x="442" y="226" width="110" height="30" rx="6" fill="#121724" stroke="#8B94A7"/><text x="458" y="245" fill="#C6CDDB">svc search</text>
+    </g>
+    <line x1="552" y1="194" x2="620" y2="194" stroke="#8B94A7" marker-end="url(#a)"/>
+    <rect x="622" y="172" width="258" height="44" rx="8" fill="#0A0D13" stroke="#C8FA4B"/>
+    <text x="640" y="192" fill="#C8FA4B">Redis cluster</text>
+    <text x="640" y="208" fill="#8B94A7">shared counter state</text>
+    <text x="198" y="272" fill="#8B94A7">✓ one policy for every service, no code changes per route</text>
+  </g>
+</svg>
+<figcaption>Placement decides blast radius. Client-side is a suggestion. Gateway-side is one policy for every service; app-side is per-route precision. Most real systems run the gateway as the default tier and one app-level limiter for the money endpoints.</figcaption>
+</figure>
+<p>
+The interviewer's tell: if you place the limiter only at the edge, you have not protected anything
+downstream that is also reachable internally, and a single bug in your key extraction (IPv6 rotation,
+NAT, proxies) lets one attacker hold many buckets. Placement question they will always ask —
+<b>"where does this run, and what happens to the limits if that component is down?"</b>
+</p>
+
+<!-- 4 -->
+<h2 id="algos"><span class="num">04</span>The five algorithms</h2>
+<p>
+Memorising five names is worthless. What you must be able to do is <b>draw the shape of each one and
+name the specific failure it fixes and the specific cost it introduces</b>. That is the whole question.
+</p>
+
+<h3>4.1 Token bucket <span class="tag t-core">default answer</span></h3>
+<figure>
+<svg viewBox="0 0 860 240" role="img" aria-label="Token bucket: refill at fixed rate, spend one per request, capacity caps the burst">
+  <defs><marker id="b" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 z" fill="#8B94A7"/></marker></defs>
+  <g font-family="JetBrains Mono,monospace" font-size="12">
+    <path d="M150 60 L170 78 L170 168 L150 186 L130 168 L130 78 Z" fill="#0A0D13" stroke="#C8FA4B" stroke-width="1.5"/>
+    <path d="M132 120 L168 120 L168 166 L132 166 Z" fill="rgba(200,250,75,.22)" stroke="none"/>
+    <text x="100" y="200" fill="#8B94A7">bucket</text>
+    <text x="196" y="126" fill="#C8FA4B">tokens</text>
+    <text x="196" y="144" fill="#8B94A7">= min(capacity,</text>
+    <text x="196" y="160" fill="#8B94A7">prev + elapsed×rate)</text>
+
+    <line x1="150" y1="60" x2="150" y2="36" stroke="#8B94A7" marker-end="url(#b)"/>
+    <text x="164" y="46" fill="#7DD3FC">refill rate = R tokens/sec</text>
+    <line x1="104" y1="66" x2="104" y2="180" stroke="#8B94A7" marker-start="url(#b)" marker-end="url(#b)"/>
+    <text x="24" y="126" fill="#8B94A7">capacity</text>
+    <text x="24" y="142" fill="#8B94A7">= B</text>
+
+    <rect x="470" y="40" width="340" height="150" rx="10" fill="#121724" stroke="#8B94A7"/>
+    <text x="488" y="62" fill="#fff">state per key: (tokens, last_refill)</text>
+    <text x="488" y="86" fill="#8B94A7">1. lazy refill: elapsed = now − last_refill</text>
+    <text x="488" y="106" fill="#8B94A7">2. tokens = min(B, tokens + elapsed×R)</text>
+    <text x="488" y="126" fill="#8B94A7">3. if tokens ≥ cost → tokens −= cost, ALLOW</text>
+    <text x="488" y="146" fill="#8B94A7">4. else → 429 + Retry-After</text>
+    <text x="488" y="170" fill="#C8FA4B">5. write back, EXPIRE the key when idle</text>
+    <text x="24" y="228" fill="#8B94A7">no background timer — refill is computed on arrival, so an idle bucket costs nothing</text>
+  </g>
+</svg>
+<figcaption>Lazy refill: you compute the accrued tokens from the elapsed timestamp at request time. No timer, no per-second write. This is the single most important implementation detail.</figcaption>
+</figure>
+<ul>
+  <li><b>Parameters:</b> capacity (burst ceiling) and refill rate (sustained rate). Also <i>cost per request</i> — a search endpoint can cost 10 tokens, a health check 1.</li>
+  <li><b>Pros:</b> absorbs bursts up to capacity, enforces a hard long-run average, O(1) memory per key (two numbers), trivial to reason about and to explain.</li>
+  <li><b>Cons:</b> two knobs to tune, no smoothing of output (a burst is let through instantly), and an idle-then-return user gets a full bucket.</li>
+  <li><b>Use when:</b> API gateways, payment/auth endpoints, LLM APIs, anything with legitimate burstiness. This is what AWS API Gateway and Stripe use.</li>
+</ul>
+
+<h3>4.2 Leaking bucket</h3>
+<p>
+Same rate, opposite philosophy: instead of allowing bursts, it <b>smooths the outflow</b>. Requests go
+into a FIFO queue; a worker releases them at exactly R per second. Memory stays O(1) because you only
+hold the queue head plus a timer.
+</p>
+<ul>
+  <li><b>Pros:</b> perfectly smooth output rate — protects a downstream that cannot absorb spikes (a
+    warehouse robot, a payment processor, a batch job).</li>
+  <li><b>Cons:</b> adds queueing latency; a burst gets <i>delayed</i> rather than served; queue overflow
+    needs a policy (reject newest vs reject oldest vs grow) and that policy is itself a design question.</li>
+  <li><b>Use when:</b> the downstream has a hard physical rate limit. Uber's open-source Go
+    <code>ratelimit</code> is a rate <i>smoother</i> of this family — a good thing to have read.</li>
+</ul>
+
+<h3>4.3 Fixed window counter</h3>
+<figure>
+<svg viewBox="0 0 860 220" role="img" aria-label="Fixed window counter boundary burst problem: two windows each allow the full quota">
+  <g font-family="JetBrains Mono,monospace" font-size="11">
+    <text x="24" y="26" fill="#8B94A7">quota = 100 / minute</text>
+    <rect x="24" y="40" width="380" height="70" fill="rgba(125,211,252,.10)" stroke="#7DD3FC"/>
+    <text x="40" y="80" fill="#7DD3FC">window 1  [12:00:00 – 12:01:00)</text>
+    <text x="40" y="98" fill="#C6CDDB">100 requests — counter maxes at 100</text>
+    <rect x="404" y="40" width="380" height="70" fill="rgba(125,211,252,.10)" stroke="#7DD3FC"/>
+    <text x="420" y="80" fill="#7DD3FC">window 2  [12:01:00 – 12:02:00)</text>
+    <text x="420" y="98" fill="#C6CDDB">100 more requests — counter resets to 0</text>
+    <text x="24" y="136" fill="#F4557A">✗ 200 requests served in 2 seconds, quota says 100/min</text>
+    <text x="24" y="164" fill="#8B94A7">the burst lands exactly on the boundary — attacker controlled: pick the</text>
+    <text x="24" y="180" fill="#8B94A7">boundary deliberately and you get a guaranteed 2× quota.</text>
+    <text x="24" y="206" fill="#C8FA4B">✓ one extra line fixes it: keep the PREVIOUS window's count and weight it</text>
+  </g>
+</svg>
+<figcaption>The boundary burst is the whole reason sliding window exists. Name it unprompted — it is the classic "gotcha" the interviewer is listening for.</figcaption>
+</figure>
+<ul>
+  <li><b>Pros:</b> one counter per key, O(1), trivially cheap — the right answer for coarse internal limits.</li>
+  <li><b>Cons:</b> the 2× boundary burst above; also not smooth inside the window.</li>
+  <li><b>Use when:</b> quota is a business entitlement (1000/day) rather than a protective rate. Then the boundary burst does not matter.</li>
+</ul>
+
+<h3>4.4 Sliding window log</h3>
+<p>
+The accurate one: store the <b>timestamp of every accepted request</b> in a sorted set (Redis
+<code>ZSET</code>), and on each request drop everything older than <i>now − window</i> then count what
+remains. Perfectly correct rolling window, no boundary, no approximation.
+</p>
+<ul>
+  <li><b>Pros:</b> exact; no boundary artifact; naturally supports "log of what was allowed" for audit.</li>
+  <li><b>Cons:</b> memory O(requests in window) — at 10k req/s/user that is 600k entries; plus
+  <code>ZREMRANGEBYSCORE</code> + <code>ZCARD</code> + <code>ZADD</code> per request.</li>
+  <li><b>Use when:</b> high-value, low-volume endpoints (payments, login attempts, coupon claim) where
+  accuracy beats memory.</li>
+</ul>
+
+<h3>4.5 Sliding window counter</h3>
+<p>
+The pragmatic compromise, and the answer that reads as "I know the tradeoffs". Keep the current window's
+count <i>and</i> the previous window's count; estimate the rolling window as
+<code>current + previous × (1 − fractionElapsed)</code>. Constant memory per key, and the 2× boundary
+burst collapses to ~1.5× worst case in the pathological case, tunable by keeping 2 or 3 sub-windows.
+</p>
+<ul>
+  <li><b>Pros:</b> two integers per key, O(1), smooths the boundary.</li>
+  <li><b>Cons:</b> an approximation — it can still admit slightly more than the true quota; you must
+  state that honestly rather than claiming it is exact.</li>
+  <li><b>Use when:</b> high-throughput general-purpose API throttling. Most production systems land here.</li>
+</ul>
+
+<!-- 5 -->
+<h2 id="pick"><span class="num">05</span>Which one to pick</h2>
+<div class="tbl">
+<table>
+<thead><tr><th>Algorithm</th><th>Allows burst</th><th>Smooths output</th><th>Accuracy</th><th>Memory / key</th><th>Ops cost</th><th>Reach for it when</th></tr></thead>
+<tbody>
+<tr><td>Token bucket</td><td>yes, up to capacity</td><td>no</td><td>exact on average</td><td>2 numbers</td><td>low</td><td>API gateway, payments, LLM APIs — <b>the default</b></td></tr>
+<tr><td>Leaking bucket</td><td>no (queues it)</td><td>yes</td><td>exact rate</td><td>queue head</td><td>medium</td><td>downstream has a hard physical rate limit</td></tr>
+<tr><td>Fixed window</td><td>yes, 2× at boundary</td><td>no</td><td>approximate</td><td>1 counter</td><td>lowest</td><td>coarse daily/monthly quotas</td></tr>
+<tr><td>Sliding log</td><td>no</td><td>yes</td><td><b>exact</b></td><td>O(requests)</td><td>highest</td><td>login, payments, coupon claim</td></tr>
+<tr><td>Sliding counter</td><td>small</td><td>partly</td><td>approximate</td><td>2 counters</td><td>low</td><td>high-throughput general throttling</td></tr>
+</tbody></table>
+</div>
+<div class="callout">
+  <p><b>Say this out loud in the interview:</b> "I'd start with token bucket because it handles bursts,
+  which is how real traffic behaves, and because it costs two integers per key. If the requirement is
+  'no more than 10 per second ever, smoothly', I'd switch to a leaky bucket. If it's a hard security
+  boundary like login attempts, I'd pay for the sliding log. If it's a monthly plan quota, fixed window
+  is enough." Naming <i>when you would change your mind</i> is the difference between a candidate who
+  memorised and one who designs.</p>
+</div>
+
+<!-- 6 -->
+<h2 id="arch"><span class="num">06</span>Distributed architecture</h2>
+<figure>
+<svg viewBox="0 0 900 300" role="img" aria-label="Distributed rate limiter pipeline: client to edge load balancer to limiter to Redis cluster, then allow to services or reject with 429">
+  <defs><marker id="c" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 z" fill="#8B94A7"/></marker></defs>
+  <g font-family="JetBrains Mono,monospace" font-size="11.5">
+    <rect x="16" y="110" width="118" height="56" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="34" y="134" fill="#C6CDDB">Client</text><text x="26" y="152" fill="#8B94A7">ip / key / jwt</text>
+    <line x1="134" y1="138" x2="164" y2="138" stroke="#8B94A7" marker-end="url(#c)"/>
+
+    <rect x="166" y="110" width="118" height="56" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="184" y="134" fill="#C6CDDB">Edge LB</text><text x="176" y="152" fill="#8B94A7">anycast / L4</text>
+    <line x1="284" y1="138" x2="314" y2="138" stroke="#8B94A7" marker-end="url(#c)"/>
+
+    <rect x="316" y="110" width="150" height="56" rx="8" fill="#121724" stroke="#C8FA4B"/>
+    <text x="338" y="134" fill="#C8FA4B">Limiter</text><text x="326" y="152" fill="#8B94A7">key + policy + algo</text>
+    <line x1="466" y1="138" x2="496" y2="138" stroke="#8B94A7" marker-end="url(#c)"/>
+
+    <rect x="498" y="110" width="160" height="56" rx="8" fill="#0A0D13" stroke="#C8FA4B" stroke-dasharray="4 3"/>
+    <text x="518" y="134" fill="#C8FA4B">Redis Cluster</text><text x="512" y="152" fill="#8B94A7">EVALSHA · hash-tag</text>
+
+    <path d="M658 132 L694 100" stroke="#4ADE80" stroke-width="1.5" marker-end="url(#c)" fill="none"/>
+    <text x="662" y="88" fill="#4ADE80">allow</text>
+    <rect x="698" y="72" width="186" height="56" rx="8" fill="#121724" stroke="#8B94A7"/>
+    <text x="714" y="96" fill="#C6CDDB">Services</text><text x="710" y="114" fill="#8B94A7">user / order / search</text>
+
+    <path d="M658 144 L694 190" stroke="#F4557A" stroke-width="1.5" marker-end="url(#c)" fill="none"/>
+    <text x="656" y="212" fill="#F4557A">reject</text>
+    <rect x="698" y="176" width="186" height="56" rx="8" fill="#0A0D13" stroke="#F4557A"/>
+    <text x="712" y="200" fill="#F4557A">429 Too Many Requests</text>
+    <text x="712" y="218" fill="#8B94A7">Retry-After + RateLimit-*</text>
+
+    <text x="16" y="264" fill="#8B94A7">key = scope · tenant · route-class · identity   e.g.  rl:{t_42}:search:s</text>
+    <text x="16" y="282" fill="#8B94A7">{…} hash tag pins related keys to one slot so the Lua script stays single-node atomic</text>
+  </g>
+</svg>
+<figcaption>Redis is the only stateful piece. It sits in the request path, so its latency budget and its failure behaviour become your design problem — see §11.</figcaption>
+</figure>
+<h4>What to say about each box</h4>
+<div class="tbl">
+<table>
+<thead><tr><th>Decision</th><th>Answer</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>State store</td><td>Redis (or Memcached for pure counters)</td><td>sub-millisecond, in-memory, atomic scripting, key TTL for free cleanup</td></tr>
+<tr><td>Atomicity</td><td>Lua script via <code>EVAL</code>/<code>EVALSHA</code>, or a Redis Function</td><td>check-and-decrement must be one indivisible step, see §7</td></tr>
+<tr><td>Multi-key scope</td><td>one Lua script handling all tiers, keys hash-tagged <code>{tenant}</code></td><td>a cross-slot MULTI/EXEC is not the same as one atomic bucket; tagging keeps it on one node</td></tr>
+<tr><td>Scaling</td><td>Redis Cluster + sharded keys; limiter service is stateless, scale horizontally</td><td>the limiter must never be the reason a request fails</td></tr>
+<tr><td>Local cache</td><td>per-node in-memory fallback for graceful degradation</td><td>see fail-open in §11</td></tr>
+<tr><td>Config</td><td>limits as data (per tier × endpoint class), pushed not redeployed</td><td>you will change limits in production; a deploy is the wrong channel</td></tr>
+<tr><td>Observability</td><td>emit allow/reject rate, reject-reason, per-scope saturation, Redis latency</td><td>an unexplained 429 spike is a self-inflicted outage</td></tr>
+</tbody></table>
+</div>
+
+<!-- 7 -->
+<h2 id="atomic"><span class="num">07</span>Atomicity: the actual hard part</h2>
+<p>
+Naive limiter: <code>GET counter</code>, if under limit then <code>INCR</code>. In a single process with one
+thread that is fine. Everywhere else it is broken, and the bug is not subtle — it is a classic
+time-of-check-to-time-of-use race. Two requests arrive at the same instant, both read <code>499</code>
+with a limit of 500, both conclude "allowed", both increment → 501 requests went through a 500 limit.
+At scale you do not get 1% overshoot, you get a proportion of your peak QPS overshoot.
+</p>
+<div class="callout bad">
+  <p><b>The three ways to fix it, and what each costs.</b><br>
+  1. <code>INCR</code> then check — atomic in one command, but the counter is already incremented when you
+  reject, so a client hammering you inflates its own penalty and, with multiple keys, you get partial
+  tiers consumed on a request you then reject.<br>
+  2. Distributed lock around read-modify-write — correct but you now have a lock service in your hot path,
+  a lock-expiry failure mode, and a latency hop.<br>
+  3. <b>Lua script / Redis Function</b> — the whole read-refill-check-write runs inside Redis, single
+  threaded, indivisible, one round trip. This is the answer to give.</p>
+</div>
+<p>
+Say the words <b>"check and decrement must be atomic, and Redis executes a Lua script as one
+indivisible operation, so the whole decision is a single round trip"</b>. Interviewers are listening for
+exactly that sentence. Then mention the cluster caveat yourself — it is the follow-up they were already
+going to ask.
+</p>
+
+<!-- 8 -->
+<h2 id="code"><span class="num">08</span>Code</h2>
+<h4>Token bucket in Lua (the production answer)</h4>
+<pre><span class="c">-- KEYS[1] = rl:{tenant}:user:42
+-- ARGV[1] = capacity   (burst ceiling)
+-- ARGV[2] = refill rate, tokens per second
+-- ARGV[3] = cost of this request
+-- ARGV[4] = now, ms  (passed in: never trust the client's clock)
+-- returns { allowed, remaining, retry_after_ms }</span>
+<span class="k">local</span> capacity, rate, cost, now =
+  tonumber(ARGV[<span class="n">1</span>]), tonumber(ARGV[<span class="n">2</span>]), tonumber(ARGV[<span class="n">3</span>]), tonumber(ARGV[<span class="n">4</span>])
+
+<span class="k">local</span> b = redis.call(<span class="s">'HMGET'</span>, KEYS[<span class="n">1</span>], <span class="s">'tokens'</span>, <span class="s">'ts'</span>)
+<span class="k">local</span> tokens = tonumber(b[<span class="n">1</span>]) <span class="k">or</span> capacity
+<span class="k">local</span> ts     = tonumber(b[<span class="n">2</span>]) <span class="k">or</span> now
+
+<span class="k">local</span> elapsed   = math.max(<span class="n">0</span>, now - ts) / <span class="n">1000</span>          <span class="c">-- negative = clock went backwards</span>
+<span class="k">local</span> refilled = math.min(capacity, tokens + elapsed * rate) <span class="c">-- cap: idle time is not free credit</span>
+
+<span class="k">local</span> allowed, retry_after = <span class="n">0</span>, <span class="n">0</span>
+<span class="k">if</span> refilled &gt;= cost <span class="k">then</span>
+  tokens = refilled - cost
+  allowed = <span class="n">1</span>
+<span class="k">else</span>
+  tokens = refilled
+  retry_after = math.ceil((cost - refilled) / rate * <span class="n">1000</span>) <span class="c">-- honest Retry-After, not a guess</span>
+<span class="k">end</span>
+
+redis.call(<span class="s">'HSET'</span>, KEYS[<span class="n">1</span>], <span class="s">'tokens'</span>, tokens, <span class="s">'ts'</span>, now)
+<span class="c">-- key can die once a full bucket's worth of refill time has passed</span>
+redis.call(<span class="s">'PEXPIRE'</span>, KEYS[<span class="n">1</span>], math.ceil(capacity / rate * <span class="n">1000</span>) + <span class="n">1000</span>)
+<span class="k">return</span> { allowed, math.floor(tokens), retry_after }</pre>
+<div class="callout">
+  <p>Four details that separate a real implementation from a toy: <b>(1)</b> pass <code>now</code> in from
+  the caller so every node agrees; <b>(2)</b> clamp elapsed to ≥ 0 so an NTP step backwards cannot mint
+  free tokens; <b>(3)</b> cap refill at capacity so an hour-idle key does not become a huge burst;
+  <b>(4)</b> compute <code>Retry-After</code> from the deficit so the client's backoff is correct instead
+  of a guess.</p>
+</div>
+
+<h4>Sliding window log in JS (accuracy where it matters)</h4>
+<pre><span class="c">// login attempts: exact rolling window, bounded memory by capping the log</span>
+<span class="k">const</span> Lua = `
+<span class="k">local</span> k, now, win, cap = KEYS[1], tonumber(ARGV[1]), tonumber(ARGV[2]), tonumber(ARGV[3])
+redis.call('ZREMRANGEBYSCORE', k, '-inf', now - win)   <span class="c">-- drop expired</span>
+<span class="k">local</span> n = redis.call('ZCARD', k)
+<span class="k">if</span> n &gt;= cap <span class="k">then return</span> {0, n, now + win - redis.call('ZRANGE', k, 0, 0, 'WITHSCORES')[2]} <span class="k">end</span>
+redis.call('ZADD', k, now, now)
+redis.call('PEXPIRE', k, win)
+<span class="k">return</span> {1, n + 1, 0}`;
+
+<span class="k">async function</span> allow(key, { limit, windowMs }) {
+  <span class="k">const</span> now = Date.now()
+  <span class="k">const</span> [allowed, remaining, retryAfter] =
+    <span class="k">await</span> redis.eval(Lua, <span class="n">1</span>, key, now, windowMs, limit)
+  <span class="k">return</span> { allowed: allowed === <span class="n">1</span>, remaining, retryAfter }
+}</pre>
+<p>
+Node-side middleware, JS-flavoured, same contract — note how the response is built from the limiter's
+decision rather than the middleware inventing numbers.
+</p>
+<pre><span class="k">import</span> { RateLimiter } <span class="k">from</span> <span class="s">'./limiter.js'</span>
+
+<span class="k">const</span> limiter = <span class="k">new</span> RateLimiter({ capacity: <span class="n">100</span>, refillPerSec: <span class="n">10</span>, cost: <span class="n">1</span> })
+
+<span class="k">export</span> <span class="k">async function</span> rateLimitMiddleware(req, res, next) {
+  <span class="k">const</span> key = <span class="s">`rl:{${tenantOf(req)}}:${routeClass(req)}:${identityOf(req)}`</span>
+  <span class="k">const</span> { allowed, remaining, retryAfter } = <span class="k">await</span> limiter.take(key)
+
+  res.set(<span class="s">'RateLimit-Limit'</span>, limiter.capacity)
+  res.set(<span class="s">'RateLimit-Remaining'</span>, remaining)
+  res.set(<span class="s">'RateLimit-Reset'</span>, Math.ceil((Date.now() + retryAfter) / <span class="n">1000</span>))
+
+  <span class="k">if</span> (!allowed) {
+    res.set(<span class="s">'Retry-After'</span>, Math.ceil(retryAfter / <span class="n">1000</span>))
+    <span class="k">return</span> res.status(<span class="n">429</span>).json({
+      error: { code: <span class="s">'rate_limit_exceeded'</span>, retryAfter: Math.ceil(retryAfter / <span class="n">1000</span>), scope: routeClass(req) }
+    })
+  }
+  next()
+}</pre>
+
+<!-- 9 -->
+<h2 id="contract"><span class="num">09</span>The 429 contract</h2>
+<p>
+A rate limiter that rejects without telling the client how to behave is a bug. This section is pure
+scoring: almost every real API exposes some variant of these headers, and naming them unprompted is a
+cheap way to look like you have shipped one.
+</p>
+<div class="tbl">
+<table>
+<thead><tr><th>Header</th><th>Meaning</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td><code>429</code></td><td>Too Many Requests (RFC 6585)</td><td>the only correct status for throttling — not 503, not 403</td></tr>
+<tr><td><code>Retry-After</code></td><td>seconds (or HTTP-date) to wait</td><td><b>takes precedence over</b> any reset header when both present</td></tr>
+<tr><td><code>RateLimit-Limit</code><br><code>-Remaining</code><br><code>-Reset</code></td><td>IETF draft standard names</td><td>send on <b>every</b> response, not only 429, so clients can self-throttle</td></tr>
+<tr><td><code>X-RateLimit-*</code></td><td>legacy de-facto names</td><td>still what most APIs ship; harmless to send both</td></tr>
+<tr><td><code>RateLimit-Scope</code></td><td>which limit tripped: <code>api-key</code> / <code>organization</code> / <code>ip</code></td><td>tells the client whether to slow down or split its keys</td></tr>
+<tr><td><code>RateLimit-Reset</code></td><td>epoch seconds when capacity returns</td><td>never a duration — clients compute wrong if you send "60"</td></tr>
+</tbody></table>
+</div>
+<ul>
+  <li><b>Body:</b> machine-readable code + retry hint. Modern APIs return
+  <code>application/problem+json</code> (RFC 9457) with <code>type</code>, <code>title</code>,
+  <code>status</code>, plus your own <code>retry_after</code> and <code>scope</code>.</li>
+  <li><b>Include the limit that actually tripped</b> when several scopes apply, otherwise clients cannot
+  tell whether to retry slower or get a bigger plan.</li>
+  <li><b>Client guidance you should be able to state:</b> honour <code>Retry-After</code>, add
+  <b>jitter</b> (10–30%) so a fleet does not retry in lockstep, cap attempts, pre-emptively slow down
+  when <code>Remaining/Limit &lt; 10%</code>, and send an <b>idempotency key</b> on retried writes so a
+  retry never double-charges.</li>
+</ul>
+
+<!-- 10 -->
+<h2 id="numbers"><span class="num">10</span>Back-of-the-envelope numbers</h2>
+<div class="tbl">
+<table>
+<thead><tr><th>Quantity</th><th>Formula</th><th>Worked example</th></tr></thead>
+<tbody>
+<tr><td>Average QPS</td><td>DAU × requests/user/day ÷ 86400</td><td>1M DAU × 100 req = <b>~1.2k QPS</b></td></tr>
+<tr><td>Peak QPS</td><td>avg × 3–5 (diurnal)</td><td><b>~6k QPS</b> at peak</td></tr>
+<tr><td>Limiter lookups</td><td>1+ Redis op per request per tier</td><td>6k QPS × 2 tiers = <b>12k ops/s</b></td></tr>
+<tr><td>Sliding-log memory</td><td>rate × window × ~80 B/entry</td><td>10k req/s × 60 s × 80 B = <b>~48 MB per hot key</b></td></tr>
+<tr><td>Token-bucket memory</td><td>~100 B per key (hash + TTL)</td><td>10M active users = <b>~1 GB</b> — trivially sharded</td></tr>
+<tr><td>Latency budget</td><td>limiter must be &lt; 1 ms of a 100 ms request</td><td>budget <b>~1–2 ms</b> for the Redis round trip</td></tr>
+<tr><td>Availability maths</td><td>99.9% = 8.8 h/yr down · 99.99% = 53 min/yr</td><td>state your own target's cost of an hour of downtime</td></tr>
+</tbody></table>
+</div>
+<p>
+The scoring point: token bucket state is <b>tiny</b> (two numbers per key) while sliding log state is
+<b>proportional to traffic</b> — that one sentence justifies your algorithm choice quantitatively, which
+is what interviewers mean by "back of the envelope". Arithmetic accuracy is not graded; the reasoning
+that produced the number is.
+</p>
+
+<!-- 11 -->
+<h2 id="failure"><span class="num">11</span>Failure modes</h2>
+<p>
+This is the section that separates SDE-2 from SDE-1 answers, and it is where the chapter is thin in most
+notes. If you only add one thing to your preparation, add this.
+</p>
+<div class="tbl">
+<table>
+<thead><tr><th>Failure</th><th>Symptom</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td>Redis down / slow</td><td>every request now depends on a store that is failing</td><td><b>Fail open</b> for reads/feed (availability first, plus a local per-node cap), <b>fail closed</b> for payments/login/writes that cost money. Decide per endpoint class, write it down, alert on it. Add an in-memory fallback limiter so degradation is graceful rather than a hard outage.</td></tr>
+<tr><td>Retry storm</td><td>throttle → clients retry in lockstep → thundering herd on the limiter</td><td>client-side jitter + exponential backoff; <b>retry budget</b> (cap attempts, e.g. 3, and cap the fraction of traffic that may be retries, e.g. 10%)</td></tr>
+<tr><td>Thundering herd at reset</td><td>fixed window flips, every client retries at the same instant</td><td>jittered reset / sliding window; spread client retries</td></tr>
+<tr><td>Clock skew</td><td>NTP step, multi-node clocks → free tokens or permanent lockout</td><td>single time source (Redis <code>TIME</code> or injected <code>now</code>), clamp negative elapsed, never use the client's clock</td></tr>
+<tr><td>Hot keys</td><td>one whale tenant hammers one shard</td><td>per-tier keys, sub-bucketing by a hash of identity, request coalescing, or a dedicated shard for whales</td></tr>
+<tr><td>Key explosion</td><td>attacker rotates IPs, millions of keys, memory exhaustion</td><td>TTL on every key, cap the cardinality you will track, prefer user/API-key identity over IP where possible</td></tr>
+<tr><td>Bad policy</td><td>legit traffic throttled, revenue lost, no one knows why</td><td>shadow-mode (count but don't reject) before enabling a new rule; per-limit dashboards; every rejection carries a scope so it is attributable</td></tr>
+<tr><td>Limiter is now SPOF</td><td>a limiter bug takes down all traffic</td><td>bounded timeout on the Redis call (fail fast to open), local fallback, and never make the limiter the only thing between a client and a read-only page</td></tr>
+</tbody></table>
+</div>
+<div class="callout warn">
+  <p><b>Related but distinct — load shedding and backpressure.</b> Rate limiting caps <i>rate</i>;
+  shedding drops <i>work</i> when the system is already overloaded; a circuit breaker stops calling a
+  sick dependency at all; a queue absorbs the difference. Interviewers love a candidate who can say
+  "this is a rate limiter, not a circuit breaker — for the sick-downstream case I would add a breaker
+  here and shed excess load here", and can sketch client-side adaptive throttling (slow down when the
+  server's accept queue grows) as the client-side complement to all of it.</p>
+</div>
+
+<!-- 12 -->
+<h2 id="narrate"><span class="num">12</span>How to narrate the round (45 min)</h2>
+<div class="tbl">
+<table>
+<thead><tr><th>Time</th><th>Do this</th><th>Say</th></tr></thead>
+<tbody>
+<tr><td>0–8 min</td><td>Scope it. Write assumptions down.</td><td>"Who is limited — IP, user, API key, tenant? Which endpoints? What happens on exceed — 429, queue, or drop? What is the limit, per what window? Is it global across regions?"</td></tr>
+<tr><td>8–15 min</td><td>Estimate, then pick placement + algorithm out loud.</td><td>"At 6k QPS peak with 10M active identities, token bucket state is ~1 GB, so Redis sharded is comfortable; sliding log would be hundreds of GB — rejected."</td></tr>
+<tr><td>15–30 min</td><td>Draw the box diagram, then deep dive on <b>atomicity</b>.</td><td>"Check-and-decrement must be atomic. GET then INCR races; a Lua script makes it one indivisible op."</td></tr>
+<tr><td>30–40 min</td><td>Deep dive on <b>failure</b> — Redis down, retry storms, hot keys. This is where senior candidates win.</td><td>"If Redis is unavailable I fail open for reads and closed for payments, with a local fallback and an alert."</td></tr>
+<tr><td>40–45 min</td><td>Wrap: tiers, headers, observability, what you'd do with 10× traffic.</td><td>"429 with Retry-After and RateLimit-*; per-tier dashboards; and I'd shard by tenant hash-tag."</td></tr>
+</tbody></table>
+</div>
+<p>
+What is actually graded: whether you <b>ask before you build</b>, whether your numbers are ordered
+correctly, whether you found the race condition, whether you raised a failure mode nobody asked about,
+and whether you said "I don't know, here's how I'd find out" instead of bluffing. Nobody grades your box
+count.
+</p>
+
+<!-- 13 -->
+<h2 id="bank"><span class="num">13</span>Top 50 questions on rate limiting in system design</h2>
+<p>
+The chapter's content, turned into the questions an interviewer actually asks. Grouped by what they are
+testing. Open any row for the answer that gets you through it.
+</p>
+
+<h4>A · Scope and requirements (1–8) <span class="tag t-easy">asked first, always</span></h4>
+<div class="qa">
+<details><summary><span class="num">1</span>Design a rate limiter for our API.<span class="why">the canonical prompt</span></summary><div class="ans">Requirements → placement → algorithm with justification → data model → atomicity → failure modes. Follow §12 for the clock. <b>The prompt is deliberately underspecified; the first 5 minutes are the question.</b></div></details>
+<details><summary><span class="num">2</span>Who do we limit — IP, user, API key, or tenant?<span class="why">key design decision</span></summary><div class="ans">Almost always <b>layered</b>: per-IP (cheap abuse shield) → per-user (fairness) → per-tenant/org (billing) → global (protect the system). First scope to trip returns 429 and you report which via <code>RateLimit-Scope</code>. IP alone is defeated by proxies and botnets; user alone needs auth before you can rate limit, so it cannot protect the login endpoint.</div></details>
+<details><summary><span class="num">3</span>What happens when the limit is hit — reject, queue, or downgrade?<span class="why">reveals product thinking</span></summary><div class="ans">Reject with 429 for APIs (cheap, standard, client-fixable). Queue when the work is deferrable and the queue is bounded (with an explicit overflow policy). Downgrade — serve a cached/stale response — when the endpoint is a read and freshness does not matter. Never silently drop.</div></details>
+<details><summary><span class="num">4</span>Multiple limits on one endpoint: 10/s and 1000/day. How?<span class="why">composite policies</span></summary><div class="ans">All tiers evaluated in <b>one atomic script</b> that returns the first violation and its scope — otherwise a client can consume its daily quota on requests you later reject. Different algorithms per tier is fine: token bucket for the burst, fixed window for the day.</div></details>
+<details><summary><span class="num">5</span>Per-route limits — how do you avoid a config explosion?<span class="why">abstraction judgement</span></summary><div class="ans">Bucket <i>classes</i> (read-light / write-light / expensive / long-running) and assign routes to classes, rather than per-route numbers. Tier × class × scope is a small matrix. Publish the class on the response so clients can reason about it.</div></details>
+<details><summary><span class="num">6</span>Rate limit vs quota vs concurrency limit — what's the difference?<span class="why">precision</span></summary><div class="ans">Rate = requests per window (throughput). Quota = total volume per period (an entitlement/billing concept, often a daily or monthly counter). Concurrency = in-flight requests right now. They are three different dimensions and a real design needs all three: rate protects throughput, concurrency protects expensive resources from slow clients.</div></details>
+<details><summary><span class="num">7</span>Should limits differ per plan tier?<span class="why">product/billing awareness</span></summary><div class="ans">Yes, and it is the same code path with a different capacity and rate — which is the strongest argument for token bucket, since the two knobs map to burst and sustained throughput independently. Exceeding a monetary quota is sometimes 402, not 429 — a billing boundary rather than a throttle.</div></details>
+<details><summary><span class="num">8</span>How do you pick the numbers?<span class="why">data, not vibes</span></summary><div class="ans">From capacity math: what does one unit of downstream resource cost, what does the system sustain, and what fraction is safe for one tenant? Start permissive in shadow mode, watch the distribution, then tighten. Never ship a guessed limit to 100% of traffic on day one.</div></details>
+</div>
+
+<h4>B · The five algorithms (9–20) <span class="tag t-core">the graded core</span></h4>
+<div class="qa">
+<details><summary><span class="num">9</span>Explain token bucket.<span class="why">must be instant</span></summary><div class="ans">Tokens added at a fixed rate up to a capacity; each request spends some; empty → reject. Capacity = burst allowed, rate = sustained average. Lazy refill: compute accrual from elapsed time at request time, no timer.</div></details>
+<details><summary><span class="num">10</span>Explain leaky bucket and when it beats token bucket.<span class="why">distinguishes memorised from understood</span></summary><div class="ans">FIFO queue drained at a constant rate — output is smooth, bursts are delayed not served. Choose it when the downstream has a hard physical rate limit you must not exceed, and you would rather add latency than shed load.</div></details>
+<details><summary><span class="num">11</span>What is the fixed-window boundary problem?<span class="why">the classic gotcha — volunteer it</span></summary><div class="ans">A client sends its full quota at the end of window 1 and again at the start of window 2 → up to 2× the rate in a moment. Attacker-triggerable by timing to the boundary. Fix with sliding window counter/log, or keep the previous window's count and weight it.</div></details>
+<details><summary><span class="num">12</span>Sliding window log — how does it work and what does it cost?<span class="why">accuracy vs memory</span></summary><div class="ans">Sorted set of accepted timestamps; drop entries older than the window, count the rest. Exact, but memory is O(requests in window) — quantify it (~48 MB per hot key at 10k/s over 60s). Use where a hard boundary matters: login, payments.</div></details>
+<details><summary><span class="num">13</span>Sliding window counter — how does it approximate?<span class="why">the practical middle</span></summary><div class="ans">Estimate rolling count as <code>current + previous × (1 − fractionElapsed)</code>. Two integers per key, no boundary burst, not exact. Keep 2–3 sub-windows if you need tighter bounds. Admit the approximation out loud.</div></details>
+<details><summary><span class="num">14</span>Why is token bucket the industry default for API gateways?<span class="why">real-world grounding</span></summary><div class="ans">Real traffic is bursty, so a limiter must permit legitimate bursts; bucket state is two numbers per key (scales to millions of identities); and the two knobs map cleanly onto product concepts (burst ceiling, sustained rate). AWS API Gateway, Stripe and most LLM APIs ship token bucket semantics.</div></details>
+<details><summary><span class="num">15</span>How do you pick between sliding log and token bucket?<span class="why">tradeoff reasoning</span></summary><div class="ans">Ask whether the limit is a security/billing boundary (exactness required → log) or a protective throughput cap (average is enough → bucket), then compare the memory numbers against your traffic. Say the memory math out loud.</div></details>
+<details><summary><span class="num">16</span>Weighted requests — a search costs more than a ping.<span class="why">extending the model</span></summary><div class="ans">Make cost a parameter: tokens ≥ cost → allow and subtract cost. Works in token bucket and sliding counter directly. In fixed window and sliding log use a weighted counter. Also the hook for concurrency caps and cost quotas (dollars per day) in the same engine.</div></details>
+<details><summary><span class="num">17</span>How do you handle a sudden 10× traffic spike?<span class="why">overload specialisation</span></summary><div class="ans">The limiter does not change; the <i>policies</i> do — per-customer budgets, lowered burst capacity, aggressive load shedding, and client-side adaptive throttling so clients slow down before the server has to say no. The limiter is the last line, not the first.</div></details>
+<details><summary><span class="num">18</span>Which algorithm gives the smoothest output?<span class="why">one-liner check</span></summary><div class="ans">Leaking bucket (queue drained at a fixed rate). Sliding log is also smooth but still admits whatever fits inside the window; it does not pace requests.</div></details>
+<details><summary><span class="num">19</span>Why does fixed window still get used in production?<span class="why">pragmatism</span></summary><div class="ans">Because some limits are entitlements, not protections: "1000/day" with a calendar reset. Boundary precision is irrelevant there, and one counter per key is the cheapest thing that can possibly work.</div></details>
+<details><summary><span class="num">20</span>How would you implement this in the LLD version of the question?<span class="why">SDE-1 round</span></summary><div class="ans">A <code>RateLimiter</code> interface with a <code>Strategy</code> per algorithm behind a factory, a <code>KeyStrategy</code> for identity extraction, a <code>Storage</code> interface (in-memory map now, Redis later), and a middleware that returns the 429 envelope. Then say which SOLID principle each extension honours — new algorithm = new strategy, no edits to existing code.</div></details>
+</div>
+
+<h4>C · Distributed design and atomicity (21–33) <span class="why">where SDE-2 is won</span></h4>
+<div class="qa">
+<details><summary><span class="num">21</span>How do you rate limit across 50 app servers?<span class="why">the core distributed question</span></summary><div class="ans">Shared state in Redis keyed by identity; every server reads and writes the same bucket. Stateless limiter service, stateful store. Local in-memory counters are wrong here — each server would grant its own quota, so effective limit = limit × servers.</div></details>
+<details><summary><span class="num">22</span>Why not just use an in-memory Map?<span class="why">the most common mistake to avoid</span></summary><div class="ans">It is per-process state: N servers = N× the limit, plus restarts and deploys reset every user's quota. Fine for LLD/single process, wrong for distributed. Say this before the interviewer does.</div></details>
+<details><summary><span class="num">23</span>How do you avoid a race condition on the counter?<span class="why">atomicity — expect a follow-up</span></summary><div class="ans">Check-and-decrement must be indivisible. <code>GET</code> then <code>INCR</code> is a TOCTOU race: concurrent requests both read the same value and both pass. Fix with a Lua script / Redis Function executed atomically inside Redis, in a single round trip.</div></details>
+<details><summary><span class="num">24</span>Why a Lua script and not a lock?<span class="why">mechanism choice</span></summary><div class="ans">Redis executes a script atomically on its single thread, so you get the guarantee without a lock service, lock expiry, or an extra network hop. A distributed lock adds a failure mode and latency to buy something Redis already gives you for free.</div></details>
+<details><summary><span class="num">25</span>What if the counter needs to span multiple keys (per-IP AND per-user)?<span class="why">cluster subtlety</span></summary><div class="ans">One script evaluating all tiers and returning the first violation. On Redis Cluster the keys must hash to one slot — use a hash tag like <code>rl:{tenant}:user:42</code> so related keys co-locate. Cross-slot operations are not the same atomic unit and can partially apply.</div></details>
+<details><summary><span class="num">26</span>Redis is single-threaded — is that a bottleneck?<span class="why">capacity reasoning</span></summary><div class="ans">At limiter volumes, no: Redis handles hundreds of thousands of ops/s per node, and one script is ~0.1–1 ms. You would be at 12k ops/s in the worked example. Shard by key across the cluster; if you exceed that, you have a design problem, not a threading problem.</div></details>
+<details><summary><span class="num">27</span>How do you handle clock skew across servers?<span class="why">correctness under NTP</span></summary><div class="ans">Never trust per-node clocks for the decision: pass a single <code>now</code> in (or read Redis <code>TIME</code>) so all arithmetic uses one time source, and clamp negative elapsed to zero so a backwards NTP step cannot mint tokens or lock a user out permanently.</div></details>
+<details><summary><span class="num">28</span>How do you avoid unbounded memory?<span class="why">key cardinality attack</span></summary><div class="ans">TTL every key (a token bucket can be deleted once a full refill has elapsed), cap how many identities you will track, and prefer a stable identity (user/API key) over IP. An attacker rotating IPs is a key-explosion attack.</div></details>
+<details><summary><span class="num">29</span>One tenant is 10% of traffic. Problem?<span class="why">hot keys / noisy neighbour</span></summary><div class="ans">Hot shard: hash-tag by tenant means all of their traffic hits one slot. Options: sub-shard the bucket key by a hash of identity, give whales a dedicated bucket/shard, or move them to a separate limiter tier with its own budget. Also worth asking whether they should get a negotiated limit instead.</div></details>
+<details><summary><span class="num">30</span>Multi-region — where does the counter live?<span class="why">global vs regional limits</span></summary><div class="ans">Decide which limit is global and which is regional. Regional Redis per-DC keeps latency low and survives a region outage; a truly global limit needs one authoritative store (cross-region latency, and availability becomes coupled to that region). A common design: hard global cap with generous regional budgets underneath.</div></details>
+<details><summary><span class="num">31</span>How would you deploy this without a maintenance window?<span class="why">operational maturity</span></summary><div class="ans">Limits as configuration data pushed to the limiter service, versioned and hot-reloadable, not baked into a deploy. Shadow mode for new policies: count and alert without rejecting. Then enable per-tenant percentage rollout.</div></details>
+<details><summary><span class="num">32</span>What would you monitor?<span class="why">operability</span></summary><div class="ans">Allow vs reject rate per scope and per limit, Redis latency and error rate, key cardinality, saturation ratio (Remaining/Limit distribution), and a rejection-reason breakdown. Alert on sudden reject-rate spikes — that is either an attack or your own config change.</div></details>
+<details><summary><span class="num">33</span>How would you load test this?<span class="why">verification instinct</span></summary><div class="ans">Replay production-shaped traffic at 2–5× peak against the limiter in isolation and assert the accepted rate matches the configured rate within tolerance, plus a concurrency test proving no over-admission under parallel load on one key (the race). Verify the <i>rejection</i> path too, not just the happy path.</div></details>
+</div>
+
+<h4>D · Client contract and failure behaviour (34–43) <span class="why">real-world polish</span></h4>
+<div class="qa">
+<details><summary><span class="num">34</span>What should the 429 response contain?<span class="why">contract design</span></summary><div class="ans">Status 429 (RFC 6585), <code>Retry-After</code> with an honest value, the limit that tripped (<code>RateLimit-Limit/-Remaining/-Reset</code> on every response, not just the 429), the scope, and a machine-readable body — <code>application/problem+json</code> per RFC 9457 is the modern shape.</div></details>
+<details><summary><span class="num">35</span>Which headers, exactly?<span class="why">name them</span></summary><div class="ans">IETF draft names <code>RateLimit-Limit</code>, <code>-Remaining</code>, <code>-Reset</code> (Reset is epoch seconds, never a duration); <code>Retry-After</code> takes precedence when both are present; legacy <code>X-RateLimit-*</code> is still common. Send them on success too so clients can self-throttle before being rejected.</div></details>
+<details><summary><span class="num">36</span>Should the client retry? How?<span class="why">symmetry</span></summary><div class="ans">Only idempotent operations, or writes carrying an idempotency key. Honour <code>Retry-After</code>, add 10–30% jitter so a fleet does not resynchronise, cap total attempts (≈5), and pre-emptively slow down when Remaining/Limit &lt; 10%. Exponential backoff with jitter, never a fixed sleep.</div></details>
+<details><summary><span class="num">37</span>Redis goes down. Now what?<span class="why">the key failure question</span></summary><div class="ans">Decide per endpoint class and write it down: <b>fail open</b> for reads/feed (availability first, plus a local fallback limiter so you still have some protection), <b>fail closed</b> for anything that costs money or mutates state (payments, login, signup). Bound the Redis call with a short timeout so the limiter itself is never the outage; alert on the degraded path.</div></details>
+<details><summary><span class="num">38</span>Rate limit or circuit breaker — what is the difference?<span class="why">concept boundary</span></summary><div class="ans">A limiter caps <i>rate</i> by policy; a breaker stops <i>calling</i> a failing dependency after a threshold (and is about failure, not fairness). They compose: limiter protects capacity, breaker protects you from a sick downstream. Neither replaces load shedding under overload.</div></details>
+<details><summary><span class="num">39</span>How do you stop a retry storm?<span class="why">cascade prevention</span></summary><div class="ans">Client-side: jitter + exponential backoff + attempt cap. Server-side: a retry budget — cap the fraction of requests that may be retries (≈10%) and attempts per request (≈3), count retry ratio in load-shedding decisions, and make <code>Retry-After</code> accurate so correct clients need few retries.</div></details>
+<details><summary><span class="num">40</span>Thundering herd at a window boundary?<span class="why">classic failure</span></summary><div class="ans">Yes for fixed window: everyone retries at the reset instant. Fix with sliding window, jittered/ incremental resets, and client-side backoff — or for a bucket, the refill is naturally gradual so there is no cliff.</div></details>
+<details><summary><span class="num">41</span>Should clients be allowed to bypass or raise their own limit?<span class="why">abuse thinking</span></summary><div class="ans">No — client-side limiting is advisory and trivially bypassed; the server is the only enforcement point. What you <em>can</em> offer is a negotiated, higher limit tied to a plan/API key, so growth does not require a code change.</div></details>
+<details><summary><span class="num">42</span>Legitimate users keep getting 429s. Debugging order?<span class="why">troubleshooting</span></summary><div class="ans">Check the scope that tripped (they may be behind a shared NAT so it is really the IP limit) → check whether a config change or deploy reset state → check key TTL/cardinality → check for clock skew → check whether a hot key inflated the shard. This requires the per-scope dashboards from Q32.</div></details>
+<details><summary><span class="num">43</span>How do you charge for overage?<span class="why">monetisation tie-in</span></summary><div class="ans">Quota rather than rate: track cumulative volume (tokens/day, dollars) in a counter, warn at 80% and 100% with email, and allow upgrade or an overage price. Hard-throttle only after the quota, and use a distinct status where it is a billing condition.</div></details>
+</div>
+
+<h4>E · Depth, trade-offs and senior framing (44–50) <span class="why">L5+ territory</span></h4>
+<div class="qa">
+<details><summary><span class="num">44</span>Given $X/month, where would you cut cost in this system?<span class="why">cost design — senior filter</span></summary><div class="ans">Cost centres: Redis memory (the big one — state grows with active identities), limiter service CPU, and network hops. Levers: fewer active identities (idle TTLs), smaller buckets/more aggressive expiry, coarser algorithm where accuracy is not needed, sampling for analytics (you do not need to count every request to alert on abuse), and regional limiter instances to cut cross-region latency and egress.</div></details>
+<details><summary><span class="num">45</span>Is a limiter the right tool for preventing a scraper?<span class="why">tool selection</span></summary><div class="ans">Partly. A limiter caps throughput, which raises the cost of abuse but does not identify it. Real defence layers authentication and authorisation, per-account quotas, anomaly detection on access patterns, and WAF/bot scoring. Say that, then place the limiter as the cheap first line.</div></details>
+<details><summary><span class="num">46</span>How does this change with 1000× traffic?<span class="why">scale headroom</span></summary><div class="ans">Sharded Redis (key-space or hash-tag by tenant), the limiter service scaled horizontally behind an LB with no local state, and crucially an algorithmic question: at that volume, do you still need per-request checks, or can you move to periodic/quota accounting with burst tolerance? Also: shed load before the limiter, and cache the decision briefly to cut Redis round trips.</div></details>
+<details><summary><span class="num">47</span>How would you make the limit <i>global</i> across regions?<span class="why">distributed systems depth</span></summary><div class="ans">One authoritative store for the global counter — accepting cross-region latency on the decision path, or a partitioned scheme where each region enforces a share of the global budget (fast, but a region can exceed its share during a failover). Trade regional latency budget vs global correctness; for most APIs regional budgets are the right answer.</div></details>
+<details><summary><span class="num">48</span>What if two regions both reject a legitimate user?<span class="why">failure interaction</span></summary><div class="ans">Availability coupling: a global store's outage becomes everyone's outage. Mitigations — regional budgets with a global reserve, fail-open to the regional budget when the global store is unreachable, and explicit alerting on the degraded path. Decide this deliberately, do not discover it in an incident.</div></details>
+<details><summary><span class="num">49</span>Where does rate limiting sit relative to auth and caching?<span class="why">ordering in the pipeline</span></summary><div class="ans">Order matters and is a real design decision: identity resolution (auth) must precede user-keyed limits; you often want a cheap IP limit in front of auth to protect the auth endpoint itself; a cache hit is cheap so some designs exempt cache hits or limit them separately; and logging/metrics must not be dropped for rejected requests or you cannot debug the rejections.</div></details>
+<details><summary><span class="num">50</span>How do you know your limiter is correct?<span class="why">verification, closing the loop</span></summary><div class="ans">Three properties, each testable: (1) <b>no over-admission</b> — under concurrency, accepted rate never exceeds the configured rate (race-free by construction via atomic script); (2) <b>correct wait</b> — <code>Retry-After</code> is honoured by an independent client implementation; (3) <b>graceful degradation</b> — with Redis killed, the stated fail-open/closed policy is what actually happens. Test all three, and test the rejection path, not just the happy path.</div></details>
+</div>
+
+<!-- 14 -->
+<h2 id="know"><span class="num">14</span>What you must know</h2>
+<p>The checklist. Everything below is examinable, and nothing above it is optional reading.</p>
+<ul class="check">
+  <li>Token bucket: capacity vs refill rate, <b>lazy refill</b> with no timer, per-request cost weighting</li>
+  <li>Leaking bucket: FIFO queue, smooths output, adds latency, needs an overflow policy</li>
+  <li>Fixed window: the <b>2× boundary burst</b>, and the weighted two-window fix</li>
+  <li>Sliding log: sorted set, exact, memory O(requests in window) with the number quantified</li>
+  <li>Sliding counter: the weighted approximation formula, and admitting it is approximate</li>
+  <li>Rate vs quota vs concurrency — three separate dimensions</li>
+  <li>Layered scopes: per-IP → per-user → per-tenant → global; first to trip wins and is reported</li>
+  <li>Placement: client (advisory) vs app middleware vs gateway; blast radius of each</li>
+  <li><b>Atomicity</b>: TOCTOU race in GET-then-INCR; Lua script / Redis Function as the fix</li>
+  <li>Redis Cluster: hash tags so multi-key scripts stay single-slot</li>
+  <li>One time source; clamp negative elapsed (clock skew)</li>
+  <li>TTL + key-cardinality control; hot/whale keys</li>
+  <li>429 + <code>Retry-After</code> + <code>RateLimit-*</code> (IETF draft names) on <b>every</b> response; <code>Retry-After</code> precedence; RFC 9457 body</li>
+  <li>Client behaviour: idempotency key on retried writes, jittered backoff, attempt cap, pre-emptive slowdown</li>
+  <li><b>Fail-open vs fail-closed per endpoint class</b>, with a local fallback and a bounded timeout</li>
+  <li>Retry storms, retry budgets, thundering herd at reset</li>
+  <li>Limiter vs circuit breaker vs load shedding vs backpressure</li>
+  <li>Back-of-envelope: QPS from DAU, and the memory difference between bucket (O(keys)) and log (O(traffic))</li>
+  <li>Observability: per-scope saturation, reject reasons, Redis latency, shadow mode before enforcing</li>
+</ul>
+
+<!-- 15 -->
+<h2 id="plan"><span class="num">15</span>7-day plan, and what to skip</h2>
+<div class="plan tbl">
+<table>
+<thead><tr><th>Day</th><th>Do</th><th>Done when</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>§1–5. Draw all five algorithms from memory on paper; state the failure each fixes</td><td>you can sketch token bucket + the boundary burst without looking</td></tr>
+<tr><td>2</td><td>Build an in-memory token bucket + sliding log in JS with tests for the burst and the boundary case</td><td>your own test proves the 2× boundary burst exists in fixed window</td></tr>
+<tr><td>3</td><td>Run Redis locally; write the Lua script from §8 and verify atomicity with 100 concurrent clients against one key</td><td>accepted count never exceeds the limit — the race test passes</td></tr>
+<tr><td>4</td><td>Add the middleware from §8 with the full 429 header set; <code>curl</code> it until you get a 429 and read the headers</td><td>a real client can throttle itself from your headers alone</td></tr>
+<tr><td>5</td><td>Write the failure-mode table for <i>your</i> implementation; then kill Redis and confirm the behaviour matches your stated policy</td><td>your documented policy is the observed policy</td></tr>
+<tr><td>6</td><td>Mock interview, 45 min, out loud: scope → estimate → boxes → atomicity → failure → wrap. Record it</td><td>you reached the failure section unprompted</td></tr>
+<tr><td>7</td><td>Work the 50 questions above from memory; mark the ones you could not answer and redo those</td><td>you can hit ≥40 cold, and every miss is in the §14 checklist</td></tr>
+</tbody></table>
+</div>
+<div class="callout">
+  <p><b>Skip, for now:</b> implementing your own consistent-hash ring for limiter sharding (Redis Cluster
+  does it), the sliding-log variants beyond ZSET (you will not be asked to code three algorithms), and
+  any rate limiter in a language you will not interview in. <b>Do not skip:</b> the atomicity argument,
+  the failure-mode table, and the 429 contract — those are what interviewers probe and what separates a
+  hire from a pass.</p>
+</div>
+
+<!-- 16 -->
+<h2 id="src"><span class="num">16</span>Sources</h2>
+<p>
+Chapter source: <b>liquidslr/system-design-notes</b>, Chapter 4 — notes on <i>System Design Interview: An
+Insider's Guide</i> (Alex Xu), which is where the five-algorithm taxonomy and the placement discussion
+come from. Everything else on this page — atomicity, the 429 contract, tiered/scope limits, fail-open
+policy, retry budgets, the interview clock — is consolidated from:
+</p>
+<ul>
+  <li><a href="https://redis.io/docs/latest/develop/use-cases/rate-limiter/">Redis docs — token bucket rate limiter with Lua</a> (the atomicity argument and canonical script shape)</li>
+  <li><a href="https://github.com/uber-go/ratelimit">uber-go/ratelimit</a> — the rate <i>smoother</i> family (linked from the chapter)</li>
+  <li><a href="https://martinfowler.com/bliki/CircuitBreaker.html">Martin Fowler — Circuit Breaker</a> (linked from the chapter; the limiter/breaker boundary)</li>
+  <li><a href="https://www.ietf.org/archive/id/draft-polli-ratelimit-headers-02.html">IETF draft — RateLimit Header Fields for HTTP</a> (header names and the <code>Retry-After</code> precedence rule)</li>
+  <li><a href="https://datatracker.ietf.org/doc/html/rfc6585">RFC 6585</a> — 429 Too Many Requests; <a href="https://datatracker.ietf.org/doc/html/rfc9457">RFC 9457</a> — problem details JSON body</li>
+  <li>Google SRE Book ch. 21 + Workbook ch. 11 — overload, client-side adaptive throttling, retry budgets, load shedding</li>
+  <li>Real API contracts observed in production docs: tiered per-key/per-org limits, per-endpoint-class buckets, concurrency caps, cost quotas, "limits are best-effort and fail open" — the shapes customers actually rely on</li>
+</ul>
+</footer>
+</div>
+</body>
+</html>
