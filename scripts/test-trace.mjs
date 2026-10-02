@@ -1243,6 +1243,19 @@ async function main() {
       ['first.n', head.first?.n === 1],
       ['last.n', head.last?.n === golden.stepCount],
     ].filter(([, ok]) => !ok).map(([k]) => k);
+    // The shape is the claim. A head whose `first`/`last` are whole steps still passes every
+    // field check above — its numbers are right, it is just carrying the golden in its pocket,
+    // which is the thing E32 exists to stop. Measured on this corpus at `775016b`: 449
+    // summary-shaped, 1 stale full-step, and nothing caught it, because no assertion read the
+    // keys. So read the keys.
+    const HEAD_STEP_KEYS = ['line', 'n', 'out'];
+    const misShaped = (head, end) => {
+      const step = head[end];
+      if (step === null || step === undefined) return null;
+      const keys = Object.keys(step).sort();
+      return keys.length === HEAD_STEP_KEYS.length && keys.every((k, i) => k === HEAD_STEP_KEYS[i])
+        ? null : `[${keys.join(',')}]`;
+    };
 
     const headNames = fs.readdirSync(GOLDENS_DIR).filter((f) => f.endsWith('.head.json')).sort();
     const noGolden = [];
@@ -1250,6 +1263,7 @@ async function main() {
     const drifted = [];
     const oversized = [];
     const unidentified = [];
+    const bulky = [];
     let headBytes = 0;
     let headMax = { bytes: 0, file: null };
 
@@ -1271,6 +1285,10 @@ async function main() {
         (['stepCount', 'verdict', 'blockHash', 'path', 'level'].includes(field) ? drifted : unidentified)
           .push(`${hf}: ${field}`);
       }
+      for (const end of ['first', 'last']) {
+        const keys = misShaped(head, end);
+        if (keys) bulky.push(`${hf}: ${end} carries ${keys}`);
+      }
     }
 
     check(headNames.length === names.length && headNames.length > 0,
@@ -1291,6 +1309,9 @@ async function main() {
     check(oversized.length === 0,
       `S15 head: E32 — every head is within the ${HEAD_BYTE_CAP}B committed per-problem footprint`,
       `${oversized.length} over cap, largest ${headMax.file} ${headMax.bytes}B: ${oversized.slice(0, 6).join(', ')}`);
+    check(bulky.length === 0,
+      `S15 head: every head's first/last is a {n, line, out} summary, not a whole step`,
+      `${bulky.length} carrying a full step: ${bulky.slice(0, 6).join(', ')}`);
 
     // The negatives, so "does it pass" is never the interesting half: a head that lies about
     // any of the five fields, or about its own endpoints, has to be REJECTED — derived from a
@@ -1313,6 +1334,16 @@ async function main() {
     check(identityOf(shifted, realGolden).includes('last.n'),
       'S15 head negative: a head whose last.n is not stepCount is caught',
       `identityOf said [${identityOf(shifted, realGolden).join(', ')}]`);
+    // The shape check has to bite too, or it is decoration: a head carrying the whole step is
+    // exactly the pre-row-28 artefact, and it passes every field assertion above.
+    const pocketed = clone(realHead);
+    pocketed.first = { ...realGolden.steps[0] };
+    check(misShaped(pocketed, 'first') !== null,
+      'S15 head negative: a head carrying a whole step instead of a summary is caught',
+      `misShaped said [${misShaped(pocketed, 'first')}]`);
+    check(misShaped(clone(realHead), 'first') === null,
+      'S15 head negative: a real shipped head passes the shape check (the probe is not tautological)',
+      `misShaped said [${misShaped(realHead, 'first')}] on an unmodified head`);
 
     console.log(`S15 head: ${headNames.length} heads · mean ${Math.round(headBytes / headNames.length)}B · max ${headMax.bytes}B (${headMax.file}) · over ${HEAD_BYTE_CAP}B cap: ${oversized.length}`);
   }
