@@ -793,6 +793,90 @@
       .ltc-panel[data-streaming="true"] .ltc-status-dot { animation: none; }
       .ltc-scroll-down { transition: none; }
     }
+
+    /* ---------- Dry-run table player (docs/dryrun/index.js) ---------- */
+    /* The array itself is drawn with the .viz-* classes above — the same boxes the
+       chat uses for an array, from this same stylesheet — so this block is only the
+       chrome the chat has no equivalent for: a caption, a transport, a scrubber, and
+       the highlight on the table row the current step came from. Everything is the
+       manual's existing vocabulary: --line borders, --raised fills, --accent for the
+       live value, JetBrains Mono for anything numeric. */
+    .dr-player { margin: 0 0 1.6rem; }
+    .dr-head {
+      display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.7rem;
+      color: var(--muted);
+    }
+    .dr-title {
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em;
+      font-size: 0.62rem;
+    }
+    .dr-col { color: #7C8699; }
+    .dr-player .dr-array { margin: 0.5rem 0 0; width: fit-content; max-width: 100%; }
+    /* In the chat rail a 1fr cell is 40px; in the article it is 165px and the array
+       reads as a table row. Same --viz-cols token, capped track, and the cap falls back
+       to a share of the viewport so a four-element array still fits a phone without the
+       reader having to scroll it sideways. A genuinely wide array overflows into the
+       box's own scroller, which is what `.viz-array`'s overflow-x is already for. */
+    .dr-player .dr-array .viz-grid {
+      grid-template-columns: repeat(var(--viz-cols, 1), minmax(34px, min(108px, 21vw)));
+    }
+    /* Only the highlight animates: a cell that just changed is the whole point of
+       stepping, so it is the one thing allowed to move. transform only, and the
+       global reduced-motion rule above already neutralises it. */
+    .dr-player .viz-cell { transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease; }
+    .dr-player .viz-cell.dr-pop { animation: dr-pop 0.22s cubic-bezier(0.32, 0.72, 0, 1); }
+    @keyframes dr-pop {
+      from { transform: scale(1.16); }
+      to { transform: none; }
+    }
+    .dr-bar {
+      display: flex; align-items: center; gap: 0.4rem; margin-top: 0.55rem;
+    }
+    .dr-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; flex-shrink: 0; padding: 0; border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.18); background: rgba(255, 255, 255, 0.03);
+      color: var(--muted); cursor: pointer;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .dr-btn svg { width: 15px; height: 15px; }
+    .dr-btn:hover:not(:disabled) { color: #E9EDF4; background: rgba(255, 255, 255, 0.07); }
+    .dr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* Disabled, not hidden: a transport whose ends vanish cannot say why it stopped. */
+    .dr-btn:disabled { opacity: 0.32; cursor: default; }
+    .dr-btn[aria-pressed="true"] { color: var(--accent); border-color: rgba(200, 250, 75, 0.4); background: rgba(200, 250, 75, 0.1); }
+    .dr-range {
+      flex: 1 1 auto; min-width: 60px; height: 20px; margin: 0;
+      background: transparent; cursor: pointer;
+    }
+    /* `accent-color` alone is wrong at article width: Chromium fills the ENTIRE
+       track with it, which paints a solid accent bar wider than the array itself and
+       makes the transport the loudest thing in the block. The track is a hairline in
+       the manual's own .mod-bar colour and only the thumb carries the accent. */
+    .dr-range { -webkit-appearance: none; appearance: none; accent-color: var(--accent); }
+    .dr-range::-webkit-slider-runnable-track {
+      height: 3px; border-radius: 999px; background: #1C2333;
+    }
+    .dr-range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 13px; height: 13px; margin-top: -5px; border-radius: 999px;
+      background: var(--accent); border: none;
+      box-shadow: 0 0 0 3px rgba(200, 250, 75, 0.15);
+    }
+    .dr-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .dr-count {
+      flex-shrink: 0; font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    /* The row of the table the current step came from, so the picture and the numbers
+       above it are visibly the same step. */
+    .prose tr[data-dryrun-current] > td { background: rgba(200, 250, 75, 0.07); }
+    .prose tr[data-dryrun-current] > td:first-child { color: var(--accent); }
+    @media (prefers-reduced-motion: reduce) {
+      .dr-player .viz-cell.dr-pop { animation: none; }
+    }
   </style>
 </head>
 <body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh">
@@ -1822,5 +1906,9 @@
     updateProgressBar();
   </script>
   <script src="chat-widget.js"></script>
+  <!-- Row 22: the dry-run table player. A module, imported once, no global (plan G4);
+       it attaches to the existing `lt150:article` event, so openArticle() is untouched.
+       Deferred like every module, hence its own initial mount for the hash article. -->
+  <script type="module" src="dryrun/index.js"></script>
 </body>
 </html>
