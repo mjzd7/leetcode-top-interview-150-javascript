@@ -50,6 +50,11 @@ v4 asserted a §1 audit and built 27 rows on it. Re-measured:
 builds goldens and a differential oracle for 41 guides that have never been
 executed.
 
+**Counts are now measured, not asserted.** `npm run audit`
+(`scripts/audit-curriculum.mjs`, row 0) prints every §1 count as measured-vs-claimed
+and exits non-zero on `--check`; its exported `selectSolutionBlocks()` is the K7
+predicate rows 4, 7 and 21 import instead of re-inventing.
+
 ### 0.1 v3 → v4 delta, re-verified
 
 F1 (delta becomes an envelope field) **survives** and hardens: `full` ⇒ client
