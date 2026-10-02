@@ -170,6 +170,10 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | B1 | Who adjudicates the 41 | agent + owner spot-check | |
 | B2 | Kill threshold | 15 of 41 — fixed, not re-negotiated after counting | |
 | B3 | The 41's cases | derived from guide prose, owner reviews the list | |
+| C1 | S1–S5 are undefined | **they are not** — recovered verbatim from `DRY_RUN_ENGINE_PLAN_v4.md:107-111`; row 25 unblocked, nothing invented | editing this row |
+| C2 | Row 32 unblocked by V9 | **no** — G5/A2 need `V9 ∧ V10`; V10 *is* row 25, so row 32 is downstream of it | editing this row |
+| C3 | Row 15's residual 58: replay the derivation, or record the observed return? | **replay it** — the harvest records which script-declared derivation the assertion applied and `buildBundle` replays it, so all 450 verdicts keep ONE meaning (a human wrote that value). Rejected: stamping a weaker `observed` basis on 58 blocks (mixed semantics nobody can see in the data) | **trust boundary** — authored-script functions now execute inside the driver; needs a threat-model note |
+| C4 | Row 25 covers S4? | **no** — row 25 certifies S1/S2/S3/S5 against `v4:107-111` and reports S4 as deliberately unbuilt (§10 lists the scoring UI as not-built; row 33 shipped logging-only) | owner un-gates the scoring UI |
 
 ---
 
@@ -731,6 +735,84 @@ remains **56 `fns`+`cases` / 53 `script`**, not the plan's 81/28.
   wired into `verify`** — row 30 owns that, and `verify` deliberately still ends at
   `build` so no row silently changes CI cost before row 30 measures it.
 
+### 2026-10-02 — **correction: S1–S5 ARE defined. They are in the repo.**
+
+The finding at line 234 ("referenced 62 times and defined nowhere") is **wrong, and
+it was wrong because only v5 was searched.** The ids are defined in this repo's own
+earlier plan versions, and v5 dropped the scenario *table* while keeping the ids in
+§7's Scenario column:
+
+| Where | Lines | Contents |
+|---|---|---|
+| `DRY_RUN_ENGINE_PLAN_v4.md` | **107–111** | S1 Happy · S2 Edge · S3 Regression · S4 Learning · S5 Fidelity — full pass condition, real-surface artefact, automated test |
+| `DRY_RUN_ENGINE_PLAN_v3.md` | 83–87 | same five ids, same names |
+| `DRY_RUN_ENGINE_PLAN.md` (v1) | 56–58 | S1–S3 only — the original form |
+
+No renumbering ever happened: v3 and v4 agree id-for-id and name-for-name with each
+other, and v5's usages (`S1,S3` / `S1,S2,S4,S5` / `S5` …) are consistent with v4's.
+So the contract is **recovered, not invented** — which was the stated condition for
+reopening row 25. Repeating the measurement: `grep -rn "S[1-5]" DRY_RUN_ENGINE_PLAN_v*.md`.
+
+**Two consequences that were filed wrong:**
+
+1. **Row 25 is not blocked on the owner.** Its scenario column (`S1,S2,S4,S5`) is
+   satisfiable against v4:107–111.
+2. **Row 32 is not unblocked — it is *downstream of row 25*.** G5 and A2 both say the
+   label clears when **`V9 ∧ V10`** are green. V9 is row 27 (`2f1b9cd`, landed). V10 is
+   **"Real-surface QA (Playwright)"** — `v4.md:296` — i.e. **row 25**. The handoff
+   called row 32 unblocked because only V9 was checked.
+
+**S4 remains genuinely out of reach**, for a different reason than "undefined":
+v4:110 requires a *scored prediction UI*, and §10's "Deliberately not built" list names
+the scoring UI, the custom-input form and degraded mode. Row 33 shipped **logging
+only, no UI, no scoring**, by design. So S4's Playwright surface does not exist and
+building it would contradict §10. Row 25 certifies S1/S2/S3/S5 and **reports S4 as
+deliberately unbuilt** — it does not silently drop it.
+
+### 2026-10-02 — **row 15's residual 58 re-measured: ONE root cause, not two**
+
+The handoff names two classes — "22 `ops`" and "12 `tree`". Measured against the
+committed heads at `2be142d`, the 58 zero-pass blocks split **22 `ops` / 24 `json` /
+12 `tree`** across **20 guides**, and the two named classes do not explain the 24.
+
+Every one of the 58 is the same defect, stated once:
+
+> `harvestCases` records `expected` = `arguments[1]` of the asserter — **the value the
+> authored script asserted, after its own derivation**. `buildBundle` compares that
+> against the target's **raw return**. Wherever the script derives before asserting,
+> the two live in different spaces and the verdict can never be anything but wrong.
+
+Evidence: the first argument of every failing block's assertion, read off the AST of
+the authored script (`scripts/test-runner.mjs` `RUNTIME_TESTS[].script` +
+`catalog/cases.json[].script`, 63 scripts extracted):
+
+| First-arg shape | Blocks | Guides | The derivation |
+|---|---|---|---|
+| bare call to a script-declared normaliser | 24 | 8 | `normCombos`, `normPerms`, `isPeakIndex`, `inorderVals`, `treeToArray`, `quadToGrid`, `collectRightChain` |
+| call on / member of a constructed instance | 22 | 8 | `exerciseCache`, `exerciseIterator`, `exerciseMedian`, `exerciseTrie`, `exerciseWD`, `m.getMin()`, `m.top()` |
+| `call:fn` — a **two-argument** target | 12 | 4 | `isSameTree(p, q)`, `kthSmallest` |
+
+Worked example, `14-backtracking/02-combinations`:
+`assertEq(normCombos(fn(4, 2)), EXPECTED_COMBOS)` where
+`EXPECTED_COMBOS = normCombos([[1,2],[1,3],…])`. The harvest records
+`args: [4,2]`, `expected: ['1,2','1,3',…]`. The driver calls `combine(4,2)`, gets
+`[[1,2],[1,3],…]`, and compares it to the **normalised** form. 0/9, every case.
+
+**One genuinely separate bug, also confirmed:** the spy's tree level-order preference
+(`gen-traces.mjs:411`) keeps `__F__` — the *helper's* single argument — and **drops the
+target's second argument**. `assertEq(fn(arrayToTree([1,2,3]), arrayToTree([1,2,3])), true)`
+records `args: [[1,2,3]]`. `isSameTree(p, undefined)` → *"cannot read property 'val' of
+undefined"*, which is the arity failure the ledger recorded. That one is a real
+harvest bug and needs no design decision.
+
+**Not decided here.** Making the driver compare in the space the human asserted in
+requires the harvest to record the derivation and the driver to replay it — which means
+authored-script functions execute inside `buildBundle`. That is a change to what
+`{args, expected}` means and a new trust path, so it is an **owner decision**, taken
+before any code. The alternative (record the observed raw return as `expected`) makes
+those 58 verdicts mean something different from the other 392, which is the
+mixed-semantics failure this ledger has already paid for twice.
+
 ### 2026-10-02 — plan v5.1 opened
 
 - Re-verified every load-bearing fact in §1 against the repo at `ab0a678`. All held;
@@ -869,3 +951,28 @@ same cell as `pending` for the same reason.
 **Row 25 was mid-unblock by a concurrent agent when this row was written.** Its `scripts/`,
 regenerated `judge/traces/*.head.json` and its own ledger sections are **not** in this commit —
 only `tests/dry-run.spec.mjs` and this file's row-25 cell and section are staged.
+
+
+### 2026-10-02 — row 28 follow-up: the gate did not check the shape, and one head was stale
+
+`775016b` shipped the summary shape and the numbers (`450 heads, mean 766 B, max 1392 B,
+0 over cap`) — all of which reproduce. But reading the committed artefacts rather than the
+report found **449 of 450 heads summary-shaped and 1 stale full-step**
+(`05-hashmap__06-two-sum.L3.head.json`, 1082 B), left behind by the hand-edit red-proof.
+
+**The gate could not see it, and that is the finding.** A head carrying the WHOLE step passes
+every field assertion row 28 added: its `stepCount`, `verdict` and `blockHash` are all correct,
+and `first.n`/`last.n` are right too. It simply carries the golden in its pocket — the exact
+thing E32 exists to prevent — while reading as a summary. Its own comment said the sweep
+compares "rather than checking that the summary has the right shape". That was a considered
+choice and it was wrong: **the shape IS the claim.**
+
+One assertion closes it: every head's `first`/`last` keys are exactly `[line, n, out]`.
+`npm run test:trace` → **120 assertions** (was 117), and it went **RED for the right reason**
+before the regeneration, naming that one file; **GREEN after**. Two negatives keep it honest —
+a head carrying a whole step is rejected, and an unmodified shipped head still passes, so the
+probe cannot rot into a tautology.
+
+Baselines unmoved: `npm test` **1898** · `Files: 150 / syntax-only: 0` · `test:envelope` **129** ·
+`test:judge` **96** · `test:doc-traces` **17** · `validate` **150/0**. Regeneration touched exactly
+**1** of 450 heads, which is the receipt that the other 449 were already correct.
