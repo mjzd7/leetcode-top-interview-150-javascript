@@ -25,7 +25,15 @@ export const ROOT_DIR = path.resolve(__dirname, '..');
 // validate-guide.mjs does not export them and row 2 owns that file. If one
 // script's idea of "a guide" moves, all three move together. Cited by symbol, not
 // by line — the validator's line numbers shift as rows land.
-const SKIP_DIRS = new Set(['00-foundations', '24-maang-guides', 'modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap', 'scratch', 'test-results', 'playwright-report']);
+//
+// `docs` is the portal, not the curriculum: page sources and generated bundles live
+// there. It used to need no entry because every markdown file in it was excluded by
+// name (`00-INDEX.md`, `_TEMPLATE-subpage.md`, `00-IA-PLAN.md` via the PLAN rule) —
+// so the walk passed by luck. Row 0b added `docs/rubrics/guide-quality.md`, a real
+// document that is not a guide, and the luck ran out: 151 guides, 4 bogus errors.
+// Name the directory instead of relying on every future file happening to match a
+// skip pattern.
+const SKIP_DIRS = new Set(['00-foundations', '24-maang-guides', 'modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap', 'scratch', 'test-results', 'playwright-report', 'docs']);
 const SKIP_FILES = new Set(['_TEMPLATE-subpage.md', '00-INDEX.md']);
 const SKIP_INDEX_PARENTS = new Set(['modern-engineer-skills', 'fresher-roadmap', 'mid-level-roadmap']);
 
