@@ -68,10 +68,16 @@ FUNCTION rotatedSearchBruteForce(nums, target):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`nums = [4, 5, 6, 7, 0, 1, 2]`, `target = 0`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | `i = 0..3` | `4,5,6,7` | No match | Advance |
-| 1 | `i = 4` | `0 == 0` | Match | Return `4` |
+| 0 | `i = 0` | `nums[0] = 4` | `[4, 5, 6, 7, 0, 1, 2]` | $4 \neq 0$ — advance |
+| 1 | `i = 1` | `nums[1] = 5` | `[4, 5, 6, 7, 0, 1, 2]` | $5 \neq 0$ — advance |
+| 2 | `i = 2` | `nums[2] = 6` | `[4, 5, 6, 7, 0, 1, 2]` | $6 \neq 0$ — advance |
+| 3 | `i = 3` | `nums[3] = 7` | `[4, 5, 6, 7, 0, 1, 2]` | $7 \neq 0$ — advance |
+| 4 | `i = 4` | `nums[4] = 0` | `[4, 5, 6, 7, 0, 1, 2]` | $0 === 0$ ✓ — match |
+| 5 | — | — | — | Return `4` |
 
 ### Modern JavaScript Implementation
 ```javascript

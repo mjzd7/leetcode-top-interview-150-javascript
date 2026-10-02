@@ -66,10 +66,15 @@ FUNCTION findMedianSortedArraysBruteForce(nums1, nums2):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`nums1 = [1, 3]`, `nums2 = [2]`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | merge `[1,3]`, `[2]` | take `1`, `2`, `3` | `merged = [1,2,3]` | Two-pointer merge |
-| 1 | total `3` (odd) | `mid = 1` | `merged[1] = 2` | Return `2` |
+| 0 | `i = 0`, `j = 0` | `nums1[0] = 1`, `nums2[0] = 2` | `merged = []` | $1 \le 2$ ✓ — take `1`, `i` → 1 |
+| 1 | `i = 1`, `j = 0` | `nums1[1] = 3`, `nums2[0] = 2` | `merged = [1]` | $3 \le 2$ is `false` — take `2`, `j` → 1 |
+| 2 | `i = 1`, `j = 1` | — | `merged = [1, 2]` | `j === nums2.length` ends the merge loop |
+| 3 | `i = 1` | `nums1[1] = 3` | `merged = [1, 2, 3]` | Drain `nums1`; `nums2` is already empty |
+| 4 | — | `total = 3`, `mid = 3 >> 1 = 1` | `merged = [1, 2, 3]` | `total % 2 === 1` (odd) → Return `merged[1] = 2` |
 
 ### Modern JavaScript Implementation
 ```javascript

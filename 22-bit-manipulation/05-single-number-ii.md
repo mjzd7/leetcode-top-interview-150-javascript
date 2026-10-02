@@ -114,10 +114,17 @@ FUNCTION singleNumberIIMap(nums):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`nums = [2, 2, 3, 2]`
+
 | Step | Pointers / Window | Hash Map / Auxiliary State | Decision Logic | Output Accumulator |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | values `2,2,3,2` | `freq = {2:3, 3:1}` | Tally | — |
-| 1 | scan entries | `2 → 3` (skip), `3 → 1` | Count-1 found | Return `3` |
+| 0 | values `2, 2, 3, 2` | `freq = Map {}` | Tally pass begins | — |
+| 1 | `v = 2` (1st) | `freq = { 2 → 1 }` | `(freq.get(2) ?? 0) + 1` | — |
+| 2 | `v = 2` (2nd) | `freq = { 2 → 2 }` | `(freq.get(2) ?? 0) + 1` | — |
+| 3 | `v = 3` | `freq = { 2 → 2, 3 → 1 }` | `(freq.get(3) ?? 0) + 1` | — |
+| 4 | `v = 2` (3rd) | `freq = { 2 → 3, 3 → 1 }` | Tally pass ends | — |
+| 5 | scan entry `2 → 3` | — | $c === 1$ is `false` — skip | — |
+| 6 | scan entry `3 → 1` | — | $c === 1$ ✓ — the odd one out | Return `3` |
 
 ### Modern JavaScript Implementation
 ```javascript
