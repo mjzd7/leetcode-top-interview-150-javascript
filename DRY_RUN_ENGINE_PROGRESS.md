@@ -231,6 +231,28 @@ row 0/4/6's committed exports instead of re-deriving them. That is the direct pa
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
 
+### 2026-10-02 — regression caught and fixed: `docs/` walked as curriculum
+
+Row 0b landed the rubric at `docs/rubrics/guide-quality.md`. All three guide scanners
+recurse into `docs/`, and a rubric is a real markdown file that is not a guide — so the
+walk found **151 guides**, `npm run validate` reported **4 bogus errors** against a
+document with no solution blocks, and `npm test` failed on a `[STRUCT]` entry for it.
+
+The walk had been passing by **luck**: every markdown file in `docs/` happened to match a
+skip name (`00-INDEX.md`, `_TEMPLATE-subpage.md`, `00-IA-PLAN.md` via the PLAN rule).
+One real document ended that. Fixed by naming `docs` in `SKIP_DIRS` in all three scanners
+— `validate-guide.mjs`, `test-runner.mjs`, `audit-curriculum.mjs` — in `7722532`.
+
+Restored: `Files: 150 (runtime-tested: 109, syntax-only: 41)`, `Syntax blocks checked:
+450 | Runtime assertions: 828`, `Failures: 0` · `validate` 150/0 errors · `audit --check`
+16/0. **The fix had to land in all three at once**, which is the whole lesson: "a guide"
+must mean the same thing in the validator, the runner and the audit, or the 813-vs-450
+lie is available again.
+
+**Lesson recorded for every later row:** any new file under `docs/`, `scratch/`, `scripts/`
+or a roadmapped directory must be checked against `SKIP_DIRS` before it is committed.
+Rows 16 (`docs/traces/*.json`) and 28 (`judge/traces/`) walk adjacent territory.
+
 ### 2026-10-02 — wave 3: rows 7, 8, 17, 18, 22 done
 
 - **Row 7** (`32fdb5f`) — 450-block manifest. `--verify` re-derives 450/450 from source,
