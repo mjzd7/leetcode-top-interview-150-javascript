@@ -4,29 +4,43 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const TESTS_DIR = path.resolve(here, '../../judge/tests');
+const CATALOG_PATH = path.resolve(here, '../../catalog/problems.json');
 
-const PILOT_SLUGS = [
-  'two-sum',
-  'valid-parentheses',
-  'search-insert-position',
-  'climbing-stairs',
-  'invert-binary-tree',
-];
+// Identity — path, slug, codec, canonical fn name — is owned by catalog/problems.json, and
+// nothing here declares it: no slug list, no codec whitelist. A judge spec owns only its cases.
+// Judging whether a codec is implemented is row 17's `codecs.mjs` job, not this module's.
+//
+// ponytail: reads catalog/ + judge/tests/ off disk at import and parses the 81 KB catalog per
+// cold start, so both directories must ship in the bundle (they do — neither is in
+// .vercelignore). When the pilot outgrows a directory of hand-authored specs, swap the two
+// reads for an import.meta.glob over the row-15 trace corpus.
+const BY_PATH = new Map(
+  JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf-8')).problems.map((p) => [p.path, p]),
+);
 
-function loadTests(slug) {
-  const raw = fs.readFileSync(path.join(TESTS_DIR, `${slug}.json`), 'utf-8');
-  const spec = JSON.parse(raw);
-  if (!spec.fnName || !Array.isArray(spec.tests) || !['json', 'tree'].includes(spec.codec)) {
-    throw new Error(`Invalid test spec for problem: ${slug}`);
-  }
-  return spec;
+// E30: the registry is keyed by path. The route's contract is a slug `problemId`, so the slug
+// index is a lookup convenience only — a shared slug is an error, never a silent overwrite.
+const BY_SLUG = new Map();
+for (const entry of BY_PATH.values()) {
+  const first = BY_SLUG.get(entry.slug);
+  if (first) throw new Error(`Catalog slug "${entry.slug}" is shared by ${first.path} and ${entry.path}`);
+  BY_SLUG.set(entry.slug, entry);
 }
 
-/** Pilot registry: slug -> { slug, fnName, codec, tests }. */
+/** Pilot registry: slug -> { slug, path, fnName, codec, tests }. */
 export const PROBLEMS = {};
-for (const slug of PILOT_SLUGS) {
-  const spec = loadTests(slug);
-  PROBLEMS[slug] = { slug, fnName: spec.fnName, codec: spec.codec, tests: spec.tests };
+for (const file of fs.readdirSync(TESTS_DIR)) {
+  if (!file.endsWith('.json')) continue;
+  const slug = file.replace(/\.json$/, '');
+  const entry = BY_SLUG.get(slug);
+  if (!entry?.fnName?.L3) {
+    throw new Error(`No canonical identity in catalog/problems.json for pilot spec: ${slug}`);
+  }
+  const { tests } = JSON.parse(fs.readFileSync(path.join(TESTS_DIR, file), 'utf-8'));
+  if (!Array.isArray(tests) || tests.length === 0) {
+    throw new Error(`Invalid test spec for problem: ${slug}`);
+  }
+  PROBLEMS[slug] = { slug, path: entry.path, fnName: entry.fnName.L3, codec: entry.codec, tests };
 }
 
 export function isPilotProblem(problemId) {
@@ -40,8 +54,11 @@ export function isPilotProblem(problemId) {
  * Notes:
  * - `__JUDGE_LOG__` snapshots the pristine console.log BEFORE user code runs,
  *   so user reassignments cannot swallow the verdict envelope.
- * - `fnName` comes from OUR registry (never user input) — safe to inline.
+ * - `fnName` comes from the catalog (never user input) — safe to inline.
  * - Tree codec converts level-order arrays to/from linked node objects.
+ * - ponytail: `tree` is the ONLY codec this driver marshals; `list`/`graph`/`ops` fall
+ *   through to the raw-args branch, so their verdicts are wrong until row 17 routes every
+ *   codec through `codecs.mjs`. Nothing here gates them — that silence is the bug surface.
  */
 export function buildBundle({ userCode, fnName, codec, tests }) {
   return (
