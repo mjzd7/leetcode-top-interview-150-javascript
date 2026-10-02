@@ -274,6 +274,32 @@ verdict run goes through `buildBundle`. So the traces are usable; the pass/fail 
 
 `list` (24) and `ops` (22) follow the same shape.
 
+### The unifying root cause, found by checking all four codecs
+
+Checking `list` and `ops` alongside `json` and `tree` collapses three symptoms into **one**:
+
+| Codec | Symptom | Why |
+|---|---|---|
+| `ops` (22) | `TypeError: class constructors cannot be invoked without 'new'` | driver does `__FN__.apply(null, args)`; the traced run uses `Reflect.construct` |
+| `list` (24) | `ok=false`, no error | guide wants `ListNode` objects, harvested args are plain arrays |
+| `json` (45) | `ok=false`, no error | guide mutates in place and returns nothing |
+| `tree` (48) | `ok=false`, no error | guide returns a scalar; driver wraps it in `__treeToArray__` |
+
+**One cause: `buildBundle`'s driver calls the target DIRECTLY with the harvested args, and that
+only works when the target's signature happens to match the args exactly.**
+
+Every authored case is a small **script**, and those scripts routinely *adapt* before calling the
+target — `(nums1,m,nums2,n) => { merge(nums1,m,nums2,n); return nums1; }` converts a mutation into a
+return value; `new SubsequenceMatcher(t).isSubsequence(s)` constructs a class; an add-two-numbers
+script builds `ListNode`s from arrays. The harvest records the args **as the script received them**,
+then the driver replays them against the **bare target**, skipping the adaptation the script
+performed. Row 3 wrote those adapting wrappers by hand; the driver cannot see them.
+
+So this is not four bugs. It is one bug with four faces, and the fix is correspondingly smaller
+than it looked: **the verdict must come from running the authored script, not from re-invoking the
+target behind its back.** Everything else — the class wrapper, the in-place comparison, the tree
+encode — falls out of that.
+
 **Proof the guides are correct and the DRIVER is wrong — same guide, two harnesses, opposite
 results.** `npm test 01-array-string/01-merge-sorted-array.md` → `✅ [PASS] (6 assertions)`, using
 the same canonical code and the same authored cases through `test-runner.mjs`'s harness. The golden
