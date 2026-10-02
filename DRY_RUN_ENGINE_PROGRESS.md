@@ -231,6 +231,41 @@ row 0/4/6's committed exports instead of re-deriving them. That is the direct pa
 row 0 exporting `selectSolutionBlocks()` — the 813-vs-450 lie existed because three tools
 counted fences three ways, and this wave added three consumers and zero new parsers.
 
+### 2026-10-02 — row 15 root-caused: a 72-block bug found and fixed, plus a codec defect
+
+Row 15 is **still uncommitted**, and that is the correct outcome. Verifying its 4 failures by
+hand found a real engine bug (now fixed) and a real codec defect (not yet fixed).
+
+**Fixed — `f9f0efe`.** Guides write `// TreeNode shared from Level 1` above an L2 block that calls
+`new TreeNode(...)`. `npm test` copes because it concatenates all three levels into one harness;
+the tracer runs ONE block, so the shared type was undefined and the target threw before emitting
+a step. **72 blocks** were affected — every linked-list and tree guide's L2/L3 — but only 4
+surfaced as empty traces, because the rest receive a ready-made node as a test fixture. Fixing
+the 4 would have hidden 68. Declarations are spliced around the OUTSIDE, after instrumentation,
+so the blockHash stays the block's identity (K5) and probe offsets stay valid.
+
+Verified on the blocks that were empty: all three went from an error to the **correct tree**.
+
+**Not fixed — a codec misclassification.** With that resolved, `buildTreeMap(preorder, inorder)`
+throws `cannot read property 'map' of undefined`: `inorder` never arrives. Harvested args are
+correct, so the loss is in `api/_lib/problems.mjs:121`, whose `tree` branch does
+`__FN__(__arrayToTree__(t.args[0]))` — it assumes a tree target consumes **one level-order array**
+and calls it with that alone. But `buildTreeMap(preorder, inorder)`, `buildTree(inorder,
+postorder)` and `sortedArrayToBST(nums)` take raw arrays and build the tree themselves.
+`build/blocks.json` assigns `codec: tree` to all three, and **that classification is wrong.**
+The fix belongs in the codec assignment, not the driver.
+
+**Two implementations of one fix.** `gen-traces.mjs` already carries its own
+`missingDeclarations()` for the shared-declaration problem. Mine in rows 9/10 is a second
+implementation of the same thing. They must be reconciled — that duplication is itself a finding.
+
+**Method note, recorded because it cost real time.** Three of my four diagnoses were wrong before
+the fifth was right: I blamed name-alignment in the instrumenter (it places all probes correctly),
+then `runRaw`'s signature (I passed an array where a function was expected), then assumed row 15
+had no shared-declaration fix (it has one), and finally called `runBlockTrace` directly when row
+15 bridges a documented `__T`/`__T__` probe ABI drift through its own adapter. **Verify the layer
+before blaming it** — measuring the next layer would have found this immediately.
+
 ### 2026-10-02 — row 24 done; **row 15 found two real engine bugs**
 
 - **Row 24** (`7f75941`) — Tier 2 complete: 4 presets + 2 overlays, canonical level only.
