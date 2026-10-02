@@ -9,6 +9,7 @@
  *   node scripts/audit-curriculum.mjs            report (exits 0, even on drift)
  *   node scripts/audit-curriculum.mjs --check    structural self-check (exits 1 on failure)
  *   node scripts/audit-curriculum.mjs --json     machine-readable, incl. thinTables
+ *   node scripts/audit-curriculum.mjs --scores   per-guide guide-quality score (row 0b, gates nothing)
  *   node scripts/audit-curriculum.mjs --strict   exit 1 if any asserted number drifted
  */
 import fs from 'fs';
@@ -507,6 +508,162 @@ function skippedFenceLines(abs, picked) {
 }
 
 // ---------------------------------------------------------------------------
+// Guide-quality score — row 0b. The rubric is `docs/rubrics/README.md`; read it
+// before touching a weight, it states the same contract in prose.
+//
+// Every component is a number this file already measures or can count in one
+// line. Nothing here re-derives a fact the DRIFT table above already prints.
+//
+// ponytail: the score is mechanical-only — 7 predicates over text this file
+// already reads — so "is the intuition any good" and "is the dry run TRUE"
+// cannot move it. Ceiling, on purpose: a criterion nobody can compute is a lie
+// in a rubric, and prose judgement before gen-blocks.mjs exists would be a
+// number with no reproducer. Upgrade path: T1 wires a threshold over this same
+// score once an LLM drafter exists to fail, and rows 21/29 feed real trace-diff
+// evidence in as `dep` (a table the trace contradicts is worse than a thin one).
+const RUBRIC_PATH = 'docs/rubrics/README.md';
+
+// Mirrors the 6 numbered entries of `REQUIRED_SECTIONS` in validate-guide.mjs by
+// symbol, not by line, for the reason the SKIP_DIRS block gives above: it is not
+// exported and row 2 owns that file. Its index 0 (`'# '`) is a title sentinel,
+// not a section — a file with no H1 is a different defect, so it is left out.
+const RUBRIC_SECTIONS = [
+  '## 1. Problem Overview & Edge Case Matrix',
+  '## 2. Level 1: Brute Force Approach',
+  '## 3. Level 2: Optimized Approach',
+  '## 4. Level 3: Most Optimal / Canonical Approach',
+  '## 5. JavaScript-Specific Gotchas & V8 Optimizations',
+  '## 6. Real-World MAANG Interview Follow-Ups & Extensions',
+];
+
+/** Points per criterion. 100 total; the order is the print order. */
+const WEIGHTS = [
+  ['sch', 20], // 6-section headings (12) + 4-field problem header (8)
+  ['sol', 20], // 3 K7 solution blocks, one per level
+  ['tbl', 15], // 3 `### Step-by-Step Dry Run` headings
+  ['dep', 15], // no dry-run table thinner than 3 data rows
+  ['fol', 10], // >= 2 `### Follow-Up N:` headings
+  ['run', 10], // the guide has a RUNTIME_TESTS entry, so its code really runs
+  ['syn', 10], // no async/generator/eval in solution code
+];
+
+/**
+ * Descriptive bands. NOT thresholds: nothing below exits non-zero, blocks a
+ * commit, or feeds `verify` — row 0b ships the rubric and the number, and the
+ * gate is T1's to wire once a drafter exists to fail. A gate here would also
+ * fail the 41 syntax-only guides that row 3 exists to fix.
+ */
+const BANDS = [
+  { min: 100, name: 'reference' },
+  { min: 90, name: 'sound' },
+  { min: 80, name: 'incomplete evidence' },
+  { min: 0, name: 'draft' },
+];
+
+const bandOf = (score) => (BANDS.find((b) => score >= b.min) || BANDS[BANDS.length - 1]).name;
+const median = (xs) => {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
+};
+
+/**
+ * Per-guide score out of 100. Reuses `listGuides`, `selectSolutionBlocks`,
+ * `HEADER_FIELDS`, `FEATURES`, `ASYNC_GEN`, `stripComment`, `dryRunTables` and
+ * the `thinTableOwners` `measure()` already built — the only per-guide facts it
+ * adds are a follow-up heading count and the 4-field header membership.
+ *
+ * `run` reads RUNTIME_TESTS KEYS, not their contents, so row 2 dropping the
+ * `fns` arrays (names come from blocks.json instead) leaves the criterion intact.
+ *
+ * @returns {{rows: object[], summary: object}}
+ */
+export function scoreGuides(measured, registry) {
+  const m = measured || measure();
+  const reg = registry || readRuntimeTestRegistry();
+  const runtimeTested = new Set(reg.error ? [] : reg.entries);
+  const thinByPath = new Map(m.thinTableOwners.map((o) => [o.file, o.tables]));
+  const forbidden = (code) =>
+    code.split('\n').filter((l) => ASYNC_GEN.test(stripComment(l)) || FEATURES.evalOrFunction.test(l)).length;
+
+  const rows = listGuides().map((file) => {
+    const content = fs.readFileSync(path.join(ROOT_DIR, file), 'utf-8');
+    const sections = RUBRIC_SECTIONS.filter((s) => content.includes(s)).length;
+    const blocks = selectSolutionBlocks(content);
+    const levels = new Set(blocks.map((b) => b.level)).size;
+    const tables = dryRunTables(content.split('\n'), file);
+    const thin = thinByPath.get(file) || 0;
+    const followUps = (content.match(/### Follow-Up \d+:/g) || []).length;
+    const header = HEADER_FIELDS.every((f) => content.includes(f));
+    const hits = blocks.reduce((n, b) => n + forbidden(b.code), 0);
+    const parts = Object.fromEntries(
+      Object.entries({
+        sch: (sections / RUBRIC_SECTIONS.length) * 12 + (header ? 8 : 0),
+        sol: (levels / 3) * 20,
+        tbl: Math.min(1, tables.length / 3) * 15,
+        dep: (tables.length ? Math.max(0, 1 - thin / tables.length) : 0) * 15,
+        fol: Math.min(1, followUps / 2) * 10,
+        run: runtimeTested.has(file) ? 10 : 0,
+        syn: hits === 0 ? 10 : 0,
+      }).map(([k, v]) => [k, Math.round(v * 10) / 10]) // 1/3 of 15 is not a float anyone wants to read
+    );
+    const score = Math.round(Object.values(parts).reduce((a, b) => a + b, 0) * 10) / 10;
+    // `tables`/`thin` are the only fields `parts` does not already explain: dep is
+    // their ratio, and "1 of 3 thin" reads differently from "2 of 3 thin".
+    return { file, score, band: bandOf(score), parts, tables: tables.length, thin };
+  });
+  rows.sort((a, b) => b.score - a.score || a.file.localeCompare(b.file));
+
+  const scores = rows.map((r) => r.score);
+  const thinOwners = new Set(m.thinTableOwners.map((o) => o.file));
+  const thinRows = rows.filter((r) => thinOwners.has(r.file));
+  const restRows = rows.filter((r) => !thinOwners.has(r.file));
+  const restMedian = median(restRows.map((r) => r.score));
+  return {
+    rows,
+    summary: {
+      guides: rows.length,
+      mean: Math.round((scores.reduce((a, b) => a + b, 0) / rows.length) * 10) / 10,
+      min: Math.min(...scores),
+      max: Math.max(...scores),
+      atMax: scores.filter((s) => s === Math.max(...scores)).length,
+      minFile: rows[rows.length - 1].file,
+      bands: BANDS.map((b) => ({ band: b.name, atLeast: b.min, guides: rows.filter((r) => r.band === b.name).length })),
+      // Computed, not asserted: the penalty has to show up in the scores.
+      thinOwners: thinRows.length,
+      thinMeanDepth: thinRows.length ? Math.round((thinRows.reduce((a, r) => a + r.parts.dep, 0) / thinRows.length) * 10) / 10 : 0,
+      cleanMeanDepth: restRows.length ? Math.round((restRows.reduce((a, r) => a + r.parts.dep, 0) / restRows.length) * 10) / 10 : 0,
+      thinBelowRestMedian: thinRows.filter((r) => r.score < restMedian).length,
+      restMedian,
+    },
+  };
+}
+
+/** One line per guide, highest score first, then the summary a reader needs to trust it. */
+export function printScores(scored) {
+  const { rows, summary: s } = scored;
+  const w = Math.max(...rows.map((r) => r.file.length));
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+  const heads = WEIGHTS.map(([id, max]) => `${id}/${max}`.padStart(max < 10 ? 5 : 7));
+  const compWidth = heads.reduce((n, h) => n + h.length, 0) + heads.length - 1;
+  console.log('GUIDE QUALITY SCORE — rubric: ' + RUBRIC_PATH + ' — read-only, node ' + process.versions.node);
+  console.log('  bands are descriptive labels. Nothing gates: no threshold, no non-zero exit, no `verify` wiring.');
+  console.log('\n' + `${'guide'.padEnd(w)} ${'score'.padStart(6)}  ${'band'.padEnd(19)} ${heads.join(' ')}`);
+  console.log('-'.repeat(w + 6 + 2 + 19 + 1 + compWidth));
+  for (const r of rows) {
+    console.log(
+      `${r.file.padEnd(w)} ${fmt(r.score).padStart(6)}  ${r.band.padEnd(19)} ` +
+        WEIGHTS.map(([id, max]) => `${fmt(r.parts[id])}/${max}`.padStart(max < 10 ? 5 : 7)).join(' ')
+    );
+  }
+  console.log(`\nsummary: ${s.guides} guides · mean ${s.mean} · min ${s.min} (${s.minFile}) · max ${s.max} (${s.atMax} guides)`);
+  console.log('bands: ' + s.bands.map((b) => `${b.band} ${b.guides}`).join(' · '));
+  console.log(`thin-table cross-check: ${s.thinOwners} guides own a thin dry-run table (row 0) · their mean depth component is ${s.thinMeanDepth}/15 vs ${s.cleanMeanDepth}/15 for the other ${s.guides - s.thinOwners} · ${s.thinBelowRestMedian}/${s.thinOwners} score below the rest's median ${s.restMedian}`);
+  console.log('  a component is a number, not a judgement: "the intuition is any good" and "the dry run is TRUE" are not in the score.');
+  return s;
+}
+
+// ---------------------------------------------------------------------------
 // Report.
 
 const ROWS = [
@@ -618,9 +775,13 @@ if (process.argv[1] === __filename) {
   }
   const m = measure();
   const registry = readRuntimeTestRegistry();
+  // `--scores` is additive: without it every output below is byte-for-byte what
+  // row 0 shipped. With it, `--json` gains guideScores/guideScoreSummary keys.
+  const scored = argv.includes('--scores') ? scoreGuides(m, registry) : null;
   if (argv.includes('--json')) {
     console.log(JSON.stringify({
       ...m,
+      ...(scored ? { guideScores: scored.rows.map(({ file, score, band, parts }) => ({ file, score, band, ...parts })), guideScoreSummary: scored.summary } : {}),
       selfRecursiveGuidesNarrow: m.selfRecursiveGuides[0],
       selfRecursiveGuidesBroad: m.selfRecursiveGuides[1],
       runtimeTestsEntries: registry.entries.length,
@@ -629,6 +790,10 @@ if (process.argv[1] === __filename) {
       runtimeTestsPaths: registry.entries,
       drift: diffTable(m, registry).rows.filter((r) => r.ok === false).map((r) => ({ key: r.key, asserted: r.claimed, measured: r.measured })),
     }, null, 2));
+    process.exit(0);
+  }
+  if (scored) {
+    printScores(scored);
     process.exit(0);
   }
   const drift = printReport(m, registry);
