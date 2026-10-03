@@ -1085,6 +1085,49 @@
     const badge = (d) => `<span class="nav-badge text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="${DIFF_STYLE[d] || DIFF_STYLE.Primer}">${d}</span>`;
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+    /* ---------- row 32: the "Unverified" label ----------
+     *
+     * A label that is a stored flag rots into a lie the moment the gate behind it moves; that was
+     * the rot plan A2 feared. So the rule lives in exactly ONE place — `scripts/lib/v9.mjs`, a pure
+     * predicate checked by `node scripts/lib/v9.mjs` — and `scripts/gen-doc-traces.mjs` runs it at
+     * build time over the corpus, publishing one verdict per guide in `traces/index.json`.
+     *
+     * This block only READS that verdict. It does not decide anything, so the badge cannot disagree
+     * with the gate: a guide V9 certifies gets no badge at all, and `uncomparable` is rendered as
+     * its own state rather than folded into "Unverified", because `test-trace.mjs:1170-1173` is
+     * explicit that reporting "no comparison possible" as drift is the same sin as calling it
+     * agreement.
+     *
+     * What this is NOT, contrary to row 32 as originally written: a browser-side pure function of
+     * V9. The predicate needs every step's text/operands/snap and only a head's first/last survive
+     * into what ships, so the verdict is computed by the build. The row was renamed for that.
+     */
+    let TABLE_TRACE = null;
+    let tableTraceLoad = null;
+    const loadTableTrace = () => (tableTraceLoad ||= fetch('traces/index.json', { cache: 'no-cache' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(i => { TABLE_TRACE = (i && i.guides) || {}; })
+      .catch(() => { TABLE_TRACE = {}; }));
+
+    const VERDICT_STYLE = {
+      disagrees: 'background:rgba(251,113,133,.12);color:#FB7185;border:1px solid rgba(251,113,133,.35)',
+      uncomparable: 'background:rgba(251,191,36,.12);color:#FBBF24;border:1px solid rgba(251,191,36,.35)',
+    };
+    const VERDICT_TEXT = {
+      disagrees: 'Unverified · table disagrees with trace',
+      uncomparable: 'Unverified · not comparable',
+    };
+    /** Empty string when V9 certified the guide — absence of the badge IS the verified state. */
+    function verifyLabel(entry) {
+      const verdict = TABLE_TRACE && entry.item.relPath ? TABLE_TRACE[entry.item.relPath] : null;
+      if (!verdict || !VERDICT_TEXT[verdict.tableTrace]) return '';
+      return '<span id="verifyBadge" data-verdict="' + esc(verdict.tableTrace) + '" title="'
+        + esc('Row 32: V9 — the authored Level 3 dry-run table of this guide, cross-checked against the trace the code actually ran. '
+          + 'Verdict computed at build time by scripts/lib/v9.mjs and published in traces/index.json.')
+        + '" class="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="' + VERDICT_STYLE[verdict.tableTrace] + '">'
+        + VERDICT_TEXT[verdict.tableTrace] + '</span>';
+    }
+
     /* ---------- sidebar ---------- */
     function paintFilterPills() {
       document.querySelectorAll('.filter-btn').forEach(b => {
@@ -1168,6 +1211,7 @@
       crumbRow.innerHTML = '<span>' + esc(category) + '</span><span>/</span><span class="text-slate-300">' + esc((item.pattern || '').split('/')[0].trim() || item.difficulty) + '</span>';
       articleHead.innerHTML =
         '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
+        verifyLabel(entry) +
         '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
         '<div class="flex flex-wrap items-center gap-3">' +
         (item.leetcodeLink
@@ -1442,6 +1486,12 @@
       currentItemId = id;
       renderNav();
       renderHead(entry);
+      // Row 32's verdict arrives after the first paint, so the label lands without gating a guide
+      // on a fetch. Re-render only if the reader is still on this page — otherwise the badge for
+      // the guide they left would overwrite the one they are reading.
+      loadTableTrace().then(() => {
+        if (currentItemId === id) renderHead(byId.get(id));
+      });
       if (window.marked && marked.parse) {
         contentArea.innerHTML = marked.parse(entry.item.content);
       } else {
@@ -1898,6 +1948,8 @@
     /* ---------- init ---------- */
     paintFilterPills();
     renderNav();
+    // Row 32: warm the per-guide verdict index so the first guide a reader opens already has it.
+    loadTableTrace();
     refreshAuth();
     const startId = location.hash ? location.hash.slice(1) : null;
     if (startId && byId.has(startId)) openArticle(startId);
