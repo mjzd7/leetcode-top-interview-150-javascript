@@ -1521,6 +1521,50 @@ async function main() {
             : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
       }
     }
+
+    // ---- S21 · row 15 — a node argument the script never wrote down ----
+    // The tree codec can only marshal a LEVEL-ORDER literal, and the harvest only ever recorded
+    // one when a helper's own first argument was that literal. So a target whose node arguments
+    // are produced by a HELPER had nothing to record: lowest-common-ancestor asserts
+    // `fn(t1, findNode(t1, 5), findNode(t1, 1)).val`, `findNode` returns a LIVE node, `__LE__` is
+    // false for it, and the positional repair found no recording for positions 1 and 2 — so the
+    // driver called a three-argument target with one argument and dereferenced `undefined`.
+    //
+    // No script rewrite can fix this: the assertion is about node IDENTITY within one tree, so
+    // three separate literals would be three different trees and the answer would be a different
+    // question. The harvest has to carry the helper's RETURN, and it now does — into the same
+    // __FL__ list, in call order, so the positional repair downstream is untouched.
+    //
+    // Asserted as the CAPABILITY and not as a passing verdict, because lca is a TWO-mechanism
+    // case: `fn(t1, findNode(t1,5), findNode(t1,1)).val` also PROJECTS the return to a scalar, so
+    // even with all three arguments recorded the driver compares a node against 3. The args were
+    // the half this row owns; the projection is the derivation-replay row, and it is what keeps
+    // these three blocks in the S17 census. What is asserted here is that the arity failure is
+    // gone, because that failure was the harvest's and this change is the harvest's.
+    const DERIVED_NODE_GUIDES = [
+      ['09-binary-tree-general__10-lowest-common-ancestor', 'L1', 'findNode(t, v) arguments are now recorded, so the target is no longer driven short'],
+    ];
+    for (const [stem, level, why] of DERIVED_NODE_GUIDES) {
+      const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && !/of undefined/.test(String(golden.error ?? '')),
+        `S21 derived: ${stem} ${level} is not driven short of arguments — ${why}`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · error ${String(golden.error ?? 'none').split('\n')[0]}`
+          : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+    }
+    // The regression this capability invites: a helper that RETURNS a tree is recorded twice if
+    // its literal argument was already recorded, which shifts every later position. That is not
+    // hypothetical — it is exactly what `isSameTree(arrayToTree(A), arrayToTree(B))` did, and it
+    // broke the row-15 arity fix. Named here because S16 names the passing case and this is the
+    // failing one.
+    for (const level of ['L1', 'L2', 'L3']) {
+      const gname = names.find((n) => n.startsWith(`09-binary-tree-general__02-same-tree.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && golden.verdict.failed === 0,
+        `S21 derived: same-tree ${level} still passes — a helper that returns a tree must not be recorded twice`,
+        golden ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed}` : 'no golden — run `npm run gen:traces`');
+    }
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
