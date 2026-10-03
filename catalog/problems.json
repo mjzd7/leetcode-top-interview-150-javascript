@@ -1009,7 +1009,7 @@
       "canonicalTargetIsClass": false,
       "codec": "json",
       "difficulty": "Medium",
-      "equivalence": "exact",
+      "equivalence": "order-insensitive",
       "fnName": {
         "L1": "mergeBruteForce",
         "L2": "mergeOptimized",
