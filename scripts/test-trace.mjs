@@ -1473,6 +1473,26 @@ async function main() {
       'S18 split: a PURE SORT derivation is order-insensitive, so a catalog override reaches it');
     check(equivalent('order-insensitive', ['1,2', '1,3'], [[1, 2], [1, 3]]) === false,
       'S18 split: a PROJECTION derivation is NOT order-insensitive — strings vs nested arrays — so it needs the derivation replayed, not an override');
+
+    // ---- S19 · row 15 — instrumented output must be self-contained ----
+    // `instrumentBlock` emits `__c0 … __c31` references but never declared them: the temps were
+    // declared by the instrumenter's OWN harness (`blockScript`), so any second consumer of the
+    // same instrumented source got a ReferenceError instead of a verdict. The judge bundle is
+    // that second consumer — it embeds `instrumentedSource` in `userCode` and declares nothing.
+    // Corpus-wide rather than naming three guides, because the invariant is about the SHAPE of
+    // the emitted code: a golden carrying `__cN is not defined` is a broken artefact whatever it
+    // was tracing. All three observed blocks are class guides (codec `ops`), so this fix moves
+    // construction forward and the comparison then fails on its own terms — the census count
+    // does NOT move. It is a prerequisite for the class op list, not a win by itself.
+    const undefinedTemp = names
+      .map((n) => [n, readGolden(n)])
+      .filter(([, g]) => /__c\d+'?\s+is not defined/.test(String(g.error ?? '')))
+      .map(([n]) => n);
+    check(undefinedTemp.length === 0,
+      'S19 self-contained: no shipped golden fails on an undeclared instrumenter temp',
+      undefinedTemp.length
+        ? `${undefinedTemp.length} golden(s): ${undefinedTemp.slice(0, 4).join(', ')}${undefinedTemp.length > 4 ? ' …' : ''}`
+        : '450 goldens scanned, none references an undeclared __cN');
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
