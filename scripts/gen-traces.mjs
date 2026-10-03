@@ -66,7 +66,7 @@ import { fileURLToPath } from 'node:url';
 
 import { runBlockTrace, loadBlocks, getBlock, BLOCKS_PATH } from '../api/_lib/trace-runner.mjs';
 import { executeUserCode } from '../api/_lib/sandbox.mjs';
-import { getCodec, IMPLEMENTED_CODECS } from '../api/_lib/codecs.mjs';
+import { getCodec, driverCodecSource, IMPLEMENTED_CODECS } from '../api/_lib/codecs.mjs';
 import * as acorn from 'acorn';
 import * as walk from 'acorn-walk';
 
@@ -396,11 +396,16 @@ const SPY_RUNTIME = `
 function __SPY__(name, target, isCtor) {
   return function () {
     var __isTarget = __TARGETS__.indexOf(name) !== -1;
+    // Set when THIS invocation already recorded a literal, so the return-value collector below
+    // does not record the same tree twice. isSameTree(arrayToTree(A), arrayToTree(B)) is
+    // the case that makes this necessary: without the guard, A's own node lands at __FL__[1]
+    // and B's literal at __FL__[2], so position 1 gets A back and same-tree breaks (S21).
+    var __pushed__ = false;
     // Positional level-order evidence, collected for EVERY call in call order and BEFORE any
     // of the first-wins bookkeeping below. It has to sit here: a second arrayToTree([...])
     // arrives when __F__ is already occupied, so the guarded block below never runs for it —
     // which is exactly how isSameTree(A, B) lost its B.
-    if (__TREE__ && __LE__(arguments[0])) __FL__.push([arguments[0]]);
+    if (__TREE__ && __LE__(arguments[0])) { __FL__.push([arguments[0]]); __pushed__ = true; }
     if (!__isTarget || __A__ === null) {
       if (__isTarget || __F__ === null) {
         var __args = null;
@@ -439,8 +444,27 @@ function __SPY__(name, target, isCtor) {
       __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__ });
       __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = [];
     }
-    if (isCtor) return Reflect.construct(target, Array.prototype.slice.call(arguments));
-    return target.apply(this, arguments);
+    // A node argument the script never WROTE as a literal. lowestCommonAncestor is called as
+    // fn(t1, findNode(t1, 5), findNode(t1, 1)): the two derived nodes are live graphs, so the
+    // literal test above declined them and the positional repair had nothing for positions 1 and
+    // 2 — a three-argument target driven with one. Recording the helper's RETURN in the SAME
+    // __FL__ list, in call order and in the same one-element shape, means the repair loop
+    // downstream is untouched: it already reads __FL__[i][0].
+    //
+    // Collects on RETURN rather than on the way in, because the derived arguments are evaluated
+    // before the call they belong to. Skipped for a constructor (there is nothing to marshal) and
+    // for a non-node return, and guarded because a cyclic or exotic return must not abort the
+    // harvest — a tree whose level-order form is ambiguous stays unrecorded, exactly as it did
+    // before.
+    var __ret__ = isCtor ? Reflect.construct(target, Array.prototype.slice.call(arguments))
+                         : target.apply(this, arguments);
+    if (__TREE__ && !isCtor && !__pushed__ && __GRAPH__(__ret__)) {
+      try {
+        var __le__ = treeToArray(__ret__);
+        if (__LE__(__le__)) __FL__.push([__le__]);
+      } catch (e) { /* not a shape the tree codec can carry — leave it unrecorded */ }
+    }
+    return __ret__;
   };
 }
 `;
@@ -580,6 +604,11 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     `  }`,
     `  return true;`,
     `}`,
+    // `treeToArray`, for the case the spy's own literal test cannot catch: a node argument
+    // produced by a HELPER (row 15 / S21). Tree guides only, so the other 413 bundles are
+    // byte-identical to before, and LIFTED from codecs.mjs rather than forked — that file
+    // records having already forked this once.
+    codec === 'tree' ? driverCodecSource() : '',
     SPY_RUNTIME,
     // A no-op. The spy rewrites every asserter's call site to go through `__SPY__`, which is
     // where an assertion is recorded, so this only has to keep the identifier resolvable.
