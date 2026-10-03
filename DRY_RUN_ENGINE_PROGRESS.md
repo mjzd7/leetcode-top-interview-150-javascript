@@ -1020,3 +1020,117 @@ derivation for 6, and input derivation for 2. One of the 22 (`insert-delete-getr
 argument list — a trust expansion on the component the plan fences hardest. Owner decision C3
 chose replay-over-record in principle; the measurement shows it is 3–4 mechanisms, not 1, so the
 slicing is still open. **Row 15 stays PARTIAL.**
+
+### 2026-10-03 — row 32 **RENAMED**, not satisfied: the "never stored" purity was unachievable
+
+HEAD at this entry: `2c3e8df`. The row as written asked for the "Unverified" label to be a
+*pure function of per-guide evidence, rendered and never stored*. **It cannot be**, and the
+reasons are structural, not stylistic. Stated once:
+
+> V9 asks "does this guide's authored Level 3 dry-run table share at least one numeric token with
+> the trace the code actually ran?" To answer that in a browser you need **every** step's `text`,
+> `operands` and `snap`. **Steps 2…N−1 are published nowhere** — `scripts/gen-traces.mjs:936`
+> `headStep` keeps only `{n, line, out}` and the head carries `first`/`last` only. The two steps
+> that do ship are degraded: `out` is a 240-char, 4-binding human summary
+> (`api/_lib/trace-runner.mjs:721-729`), so `operands` is absent entirely. The remaining 11 649
+> L3 steps across 150 guides are 7.08 MiB of goldens that plan §6 E32 keeps out of git, and the
+> whole corpus is the 34.3 MiB that `scripts/gen-doc-traces.mjs:22-28` deliberately rejected.
+
+So the label's input is not in the browser, and "never stored" is not a design choice — it is
+impossible without shipping the corpus this engine spent 30 rows refusing to ship. The row was
+therefore **renamed** and the purity claim withdrawn, in the row and in the two statements that
+justified it (**A2** and **G5**), so the plan no longer asserts something false.
+
+**What shipped instead — the rot A2 actually feared is still foreclosed.** A label rots when its
+RULE drifts from the GATE that enforces it. That is solved by having exactly one definition of the
+rule, not by having zero stored bytes:
+
+| Piece | Where | Provenance |
+|---|---|---|
+| `numbersIn`, `level3TableNumbers`, `sharedNumbers`, `v9Verdict`, `declaredIn`, `namesIn`, `overrideOk`, `AGREES`/`DISAGREES`/`UNCOMPARABLE`, `MIN_STEPS` | `scripts/lib/v9.mjs` (NEW) | ported line-for-line from the inline S14 block, `scripts/test-trace.mjs:1156-1179` and `:1190-1199`. One dependency: `stringify` from `scripts/lib/serialize.mjs`. No `node:`, no fs, no network. `parseGuide` is INJECTED, not imported, so the module adds no new path to the table parser |
+| `readTableTraceVerdicts()` + `guides` / `counts.tableTrace*` in `buildIndex()` | `scripts/gen-doc-traces.mjs` | runs `v9Verdict` at build time over each L3 golden + its guide markdown, and publishes one verdict per guide |
+| `verifyLabel()` + `loadTableTrace()` + the badge in `renderHead()` | `docs/index.html` | READS the verdict; decides nothing, so the badge cannot disagree with the gate |
+
+**Measured at `2c3e8df`: 142 `agrees`, 0 `disagrees`, 8 `uncomparable`** — identical to the live
+`test:trace` S14 line (`142/150 agreed, 8 uncomparable`), which is the point: the artefact and the
+gate are the same number. (An earlier note said "10 uncomparable"; re-measured, it is **8**.)
+The 8: `01-array-string/18-integer-to-roman`, `07-stack/02-simplify-path`, `07-stack/03-min-stack`,
+`08-linked-list/01-linked-list-cycle`, `09-binary-tree-general/12-bst-iterator`,
+`16-one-dp/01-climbing-stairs`, `20-trie/01-implement-trie`, `20-trie/02-add-and-search-words`.
+
+`uncomparable` is rendered as its OWN label, never folded into "Unverified · disagrees":
+`test-trace.mjs:1170-1173` is explicit that reporting "no comparison possible" as drift is "the
+same sin as calling them agreement". 25 of the portal's 175 items (4 primers, 5 MAANG guides, 16
+`docs/` pages) have no L3 golden, so V9 makes no claim about them and they carry no label.
+
+**`V10` drops out of the rule.** `DRY_RUN_ENGINE_PROGRESS.md:760-763` already established V10 =
+row 25, real-surface Playwright QA — a corpus-level suite with no per-guide verdict. A per-guide
+label cannot be a function of it, so the label is a function of **V9 alone**, and this entry says
+so rather than pretending the conjunction exists.
+
+**Evidence (RED first, both artefacts):**
+
+- publisher: probe asserted `buildIndex` emits no `guides` map → **RED**
+  (`AssertionError: RED-1a: buildIndex emits no \`guides\` map`, exit 1) → **GREEN** after
+  `readTableTraceVerdicts`. It also pins `142 / 0 / 8` against the shipped
+  `docs/traces/index.json`.
+- predicate: `node scripts/lib/v9.mjs` = 12 self-checks, 0 failures, and the gate is proven able
+  to fire — mutating the ported `steps.length < MIN_STEPS` to `< 0` produced
+  `actual: 'disagrees', expected: 'uncomparable'`, exit 1.
+- port fidelity: a differential ran the inline body of `test-trace.mjs:1156-1180` against
+  `v9Verdict` over all 150 real guides — **0 mismatches**, and the same probe walks a real guide
+  through `agrees` → `agrees` → `uncomparable` → `disagrees` by editing its L3 table in memory.
+- real surface, `npx serve docs` + Playwright MCP at the **default 1200×1419 viewport** (measured
+  `window.innerWidth/innerHeight`, DPR 1 — NOT the repo's 1440×900 `desktop` project, which is
+  exercised by `npm run test:e2e`): `01-array-string_01-merge-sorted-array` (`agrees`) →
+  **no badge**; `16-one-dp_01-climbing-stairs` and `20-trie_01-implement-trie` (`uncomparable`) →
+  `Unverified · not comparable`, `data-verdict="uncomparable"`; and, with one entry of the
+  gitignored `docs/traces/index.json` doctored to `disagrees` and then restored,
+  `merge-sorted-array` → `Unverified · table disagrees with trace`, `data-verdict="disagrees"`.
+  All three loads confirmed `traces/index.json` → **200**. Screenshots (moved out of the repo —
+  `.playwright-mcp/` is **not** gitignored, and untracked evidence must not reach the commit):
+  `/var/folders/3c/mws77nsn7v9_641754phh7v00000gn/T/opencode/qa/screenshots/case1-agrees-no-badge.png`,
+  `case2-uncomparable-badge.png`, `case3-disagrees-badge.png`.
+
+**INTEGRATION STEP REQUIRED (not done here — file ownership).** `scripts/test-trace.mjs:1156`
+still carries its own `numbersIn` and `:1161-1180` still carry the inline loop, so the predicate
+exists in TWO places until the orchestrator applies the swap. Row 32's rename is what stops that
+from being permanent; this entry is what makes it a known debt.
+
+**Suites (measured with this row's changes in place, at the corpus state `2c3e8df` presents —
+150 guides / 450 heads):** `npm test` **1898, 0 failures** · `test:envelope` **129** ·
+`test:doc-traces` **17, 0 failures** · `test:dryrun-player` **40** ·
+`test:dryrun-render` **141** · `test:trace` **138, 0 failures** — and `test-trace.mjs` was never
+touched, so 138 is unchanged by construction. `git ls-files docs/traces/` is **0 files**,
+unchanged: the verdict lands in a **gitignored build artefact**, regenerated by `npm run build`
+(`scripts/build-site.mjs:171`), never committed.
+
+### 2026-10-03 — correction: `npm run verify` could NOT be measured green in this tree, and it is not this row
+
+~~exit 0. `git ls-files docs/traces/` is **0 files**~~ — struck because it was written before
+`verify` was actually run, and it is false. What happened, measured:
+
+A **parallel agent is editing a different slice of the same working tree** — `git status` shows
+`M scripts/gen-traces.mjs`, `M scripts/test-trace.mjs`, `M api/_lib/problems.mjs` and a moving
+`judge/traces/`. While this row's QA ran, the corpus went **450 → 438 → 446 heads** and
+`test:trace`'s failure count moved **5 → 12 across two runs with no edit from me**. `verify` exits
+**1 at its first step**, `gen:traces`, with 4 QuickJS `JS_FreeRuntime` aborts —
+`08-linked-list/06-reverse-nodes-in-k-group` L2, `14-backtracking/02-combinations` L2,
+`14-backtracking/04-combination-sum` L2 and L3 — i.e. exactly the guides whose wrapper derivations
+that agent's S22 replay gate is chasing.
+
+**Nothing here implicates this row**, and the proof is static rather than rhetorical:
+`scripts/test-trace.mjs:60` imports exactly one symbol from `scripts/gen-doc-traces.mjs` —
+`HEAD_BYTE_CAP` — and it is byte-identical in both versions (`2048`, HEAD:61 vs this row:63).
+This row's diff to that file is **one removed line** (the `buildIndex` signature) and 84 added;
+it adds no assertion and removes none. The failing gates are **S16 / S17 / S21 / S22**, which do
+not exist at `2c3e8df` in that form (`test:trace` was 138 assertions at HEAD and is 145 now — the
++7 can only be that agent's). **S14 V9 itself PASSES throughout**, tracking the corpus live.
+
+The anti-rot claim is nonetheless verified on the churning corpus, which is a stronger test than a
+stable one: at 446 heads the published artefact and the live gate reported the SAME number —
+`guides: 149`, `141 agrees / 0 disagrees / 8 uncomparable`, against the live
+`S14 V9: ... (141/149 agreed, 8 uncomparable)`. The index is not a stored opinion that happens to
+be right; it is the gate's own arithmetic, recomputed.
+
+**RE-RUN REQUIRED after both slices land.** This row does not claim `verify` green.

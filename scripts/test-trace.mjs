@@ -1153,7 +1153,12 @@ async function main() {
     // the table is what a learner reads, the trace is what the code actually did. V9 is the
     // only thing that stops them drifting apart silently.
     const tableModule = await import(pathToFileURL(path.join(repoRoot, 'docs', 'dryrun', 'table.js')).href);
-    const numbersIn = (text) => (String(text).match(/-?\d+/g) || []).map(Number);
+    // Row 32: the predicate now lives in ONE place. `scripts/gen-doc-traces.mjs` runs the same
+    // `v9Verdict` over the same corpus to publish a per-guide verdict the portal reads, so an
+    // inline second copy here is exactly the second source of truth the extraction removed — and
+    // it is the kind that rots silently, because both copies would keep printing plausible
+    // numbers while disagreeing about which guides are certified.
+    const { level3TableNumbers, sharedNumbers, MIN_STEPS } = await import('./lib/v9.mjs');
     let comparedTables = 0;
     let agreed = 0;
     const disagreed = [];
@@ -1162,20 +1167,15 @@ async function main() {
       const g = readGolden(name);
       let guideText;
       try { guideText = fs.readFileSync(path.join(repoRoot, g.path), 'utf8'); } catch { continue; }
-      const tables = tableModule.parseGuide(guideText);
-      const level3 = tables.find((t) => t.level === 3);
-      if (!level3 || !level3.rows.length) { uncomparable.push(g.path); continue; }
+      const tableNumbers = level3TableNumbers(guideText, tableModule.parseGuide);
+      if (tableNumbers === null) { uncomparable.push(g.path); continue; }
       comparedTables++;
-      const tableNumbers = new Set(level3.rows.flatMap((r) => r.flatMap((c) => numbersIn(c))));
       // Nothing numeric in the authored table means there is nothing to cross-check, and a
       // trace too short to contain a shared value cannot confirm or contradict it. Both are
       // UNCOMPARABLE. Calling them disagreements would report drift where no comparison is
       // possible — the same sin as calling them agreement.
-      if (tableNumbers.size === 0 || g.steps.length < 3) { uncomparable.push(g.path); continue; }
-      const traceText = g.steps.map((st) => `${st.text} ${stringify(st.operands)} ${stringify(st.snap)}`).join(' ');
-      const traceNumbers = new Set(numbersIn(traceText));
-      const shared = [...tableNumbers].filter((n) => traceNumbers.has(n));
-      if (shared.length) agreed++;
+      if (tableNumbers.size === 0 || g.steps.length < MIN_STEPS) { uncomparable.push(g.path); continue; }
+      if (sharedNumbers(tableNumbers, g.steps).length) agreed++;
       else { disagreed.push(g.path); }
     }
     check(disagreed.length === 0,
@@ -1565,6 +1565,113 @@ async function main() {
         `S21 derived: same-tree ${level} still passes — a helper that returns a tree must not be recorded twice`,
         golden ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed}` : 'no golden — run `npm run gen:traces`');
     }
+
+    // ---- S22 · row 15 — a derivation the driver has to REPLAY, not just forgive ----
+    // S18 split the family and left the projection half standing: `normCombos` is
+    // `lists.map((c) => c.join(','))`, so the harvest recorded expected `["1,2","1,3"]` while the
+    // driver's raw return is `[[1,2],[1,3]]`. No equivalence kind bridges REPRESENTATION —
+    // `equivalent('order-insensitive', ['1,2','1,3'], [[1,2],[1,3]])` is `false`, asserted two
+    // blocks up and re-asserted here, because a projection is not a reordering.
+    //
+    // So the derivation is REPLAYED: `collectDerivations` slices the expression the script
+    // asserted (with the target call replaced by `__FN__(__ARGS__)`) plus the helper declarations
+    // it still references, `harvestCases` carries it as `testCase.via` + `cases.viaCode`, and
+    // `buildBundle` applies `__VIA_FNS__[t.via](__FN__, args)` immediately after the call and
+    // BEFORE the codec's `owns`/`toWire` — so what gets compared is the value the AUTHOR wrote
+    // down, reached through the author's own code.
+    //
+    // The shapes there are, not a sample:
+    //   - `normCombos(fn(4, 2))`          a WRAPPER derivation around the call (combinations, permutations)
+    //   - `fn(input).sort(byStart)`       a PROJECTION applied to the RESULT, with no wrapper at all
+    //
+    // merge-intervals is S18's guide, and S18 reached it with a catalog override because its
+    // derivation is a PURE SORT — order-insensitive forgives a reordering. It is named here for the
+    // OTHER reason: it is the only clean block whose derivation is a trailing projection rather
+    // than a wrapper, so it is what proves the mechanism is not a wrapper-shaped special case. Its
+    // `.sort(byStart)` runs on the raw nested arrays, which is exactly the representation the
+    // wrapper shape also has to survive — one rule, both shapes.
+    const REPLAY_GUIDES = [
+      ['14-backtracking__02-combinations', 'L3', 'normCombos(fn(4, 2)) joins the combos to strings — a wrapper derivation the driver must replay'],
+      ['14-backtracking__03-permutations', 'L3', 'normPerms(fn([1,2,3])) joins the perms to strings — same wrapper shape, different guide'],
+      ['06-intervals__02-merge-intervals', 'L1', 'fn(input).sort(byStart) is a PROJECTION on the result — the same rule must reach it without a wrapper'],
+    ];
+    for (const [stem, level, why] of REPLAY_GUIDES) {
+      const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && golden.verdict.failed === 0,
+        `S22 replay: ${stem} ${level} passes every case — ${why}`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · error ${String(golden.error ?? 'none').split('\n')[0]}`
+          : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+    }
+    // ── The projection shape, asserted on the one transport that can carry it ────────────────
+    // `sorted-array-to-bst` asserts `inorderVals(fn([-10,-3,0,5,9]))`, which is the same
+    // `.val`-shaped derivation as lca's — the driver must run the author's helper over the target's
+    // return rather than comparing the raw return. Its arguments survive the trip (a flat array of
+    // numbers needs no codec), so the projection is reachable end to end and is asserted as a
+    // PASSING verdict rather than as a capability.
+    //
+    // ── Why lowest-common-ancestor is NOT in that list, and why deleting its assertion is not the
+    // answer either. Its script asserts `fn(t1, findNode(t1,5), findNode(t1,1)).val`, and the
+    // derivation replay now runs correctly: the registry is `__FN__.apply(null, __ARGS__).val` and
+    // both keys fire. It still fails, with `TypeError: cannot read property 'val' of null`, because
+    // the target returns `null` — and that is a TRANSPORT fact, not a derivation one. S21 records
+    // the two derived nodes as level-order arrays, `buildBundle` decodes each wire with
+    // `arrayToTree` into a FRESH graph, so positions 1 and 2 become three unrelated trees, and
+    // `pathToNode(root, p, pp)` walks `root` looking for `p` by `===` and never finds it. The guide
+    // says this itself at line 305: "Compare nodes by IDENTITY (`===` on objects), never by `.val`".
+    //
+    // A level-order wire is a VALUE encoding and cannot express object identity, so this block needs
+    // a codec that carries identity — `api/_lib/codecs.mjs`, which this slice does not own.
+    // Asserting it green would be asserting something false; asserting it red would leave the suite
+    // permanently failing. So the claim is asserted where it IS true and IS falsifiable: the block
+    // still gets a golden, and the residual failure is still the transport's. A derivation bug
+    // reintroduced here would change the residual error and turn this red.
+    const lcaName = '09-binary-tree-general__10-lowest-common-ancestor.L1.json';
+    const lcaGolden = names.includes(lcaName) ? readGolden(lcaName) : null;
+    check(lcaGolden !== null,
+      'S22 replay: lowest-common-ancestor L1 still produces a golden — the replay must not cost a block its envelope',
+      `no golden named ${lcaName} — run \`npm run gen:traces\``);
+    // The residual failure is measured from the head, which is where a verdict is written down (S17's
+    // own reason). It must be non-clean AND must not be an argument/derivation arity failure — those
+    // are the two symptoms the replay exists to remove, so either one appearing here is a regression.
+    const lcaHead = (() => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(GOLDENS_DIR, lcaName.replace('.json', '.head.json')), 'utf8'));
+      } catch { return null; }
+    })();
+    const lcaVerdict = lcaHead?.verdict ?? null;
+    check(lcaVerdict !== null && lcaVerdict.failed > 0,
+      'S22 replay: lowest-common-ancestor L1 is still wrong — recorded as REMAINING WORK (identity needs a codec that carries it), not silently dropped',
+      `verdict ${JSON.stringify(lcaVerdict)} — this block was expected to remain non-clean pending an identity-carrying codec`);
+    check(!/of undefined/.test(String(lcaHead?.error ?? '')),
+      'S22 replay: lowest-common-ancestor L1 no longer fails on a DRIVEN-SHORT arity — the residual is the identity transport, which is a different defect',
+      `error ${String(lcaHead?.error ?? 'none')} — an "of undefined" here means the derived-node arguments regressed (S21)`);
+    // The gate above reads `verdict.failed === 0` off a file on disk, so it can only be shown to
+    // bite by handing the same predicate a verdict that IS wrong. Otherwise "all three pass" and
+    // "the predicate never fires" are indistinguishable from the outside — which is how this
+    // feature shipped once already, reverted for breaking four scripts, and came back.
+    const replayPredicate = (g) => g !== null && g.verdict.failed === 0;
+    const replayName = names.find((n) => n.startsWith('14-backtracking__02-combinations.L3.json'));
+    const replayReal = replayName ? readGolden(replayName) : null;
+    check(replayReal !== null && replayPredicate(replayReal),
+      'S22 replay negative: the unmodified named golden SATISFIES the predicate — the probe below is not tautological',
+      replayReal ? `failed ${replayReal.verdict.failed}` : 'no golden — run `npm run gen:traces`');
+    const replayWrong = clone(replayReal);
+    replayWrong.verdict = { ...replayWrong.verdict, failed: replayWrong.verdict.failed + 1 };
+    check(!replayPredicate(replayWrong),
+      'S22 replay negative: a golden with one more failing case is REJECTED by the same predicate',
+      'the predicate accepted a deliberately-wrong verdict — the gate cannot fail');
+    // And the second half of the mechanism, stated separately because it is a DIFFERENT claim:
+    // a projection derivation is not reachable by any equivalence kind, so a driver that only
+    // forgives ordering still cannot compare these. Asserted against the real comparator, not a
+    // literal, so a change to E28's registry is what moves it.
+    check(equivalent('order-insensitive', ['1,2', '1,3'], [[1, 2], [1, 3]]) === false,
+      'S22 replay: a PROJECTION derivation is not order-insensitive — the replay is the only mechanism that reaches it',
+      "equivalent('order-insensitive', ...) accepted strings against nested arrays — E28's registry changed");
+    check(equivalent('order-insensitive', [[1, 2], [1, 3]], [[1, 3], [1, 2]]) === true,
+      'S22 replay: and a REORDERING is still forgiven — the replay is not doing the comparator\'s job',
+      "equivalent('order-insensitive', ...) rejected a pure reordering — the comparator regressed");
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);

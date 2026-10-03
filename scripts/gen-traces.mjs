@@ -338,12 +338,20 @@ const ASSERTER_RE = /^(assert|approx|check|expect|verify|eq|same|isEqual|isDeep|
  * Upgrade path: if a guide's cases ever turn out to be captured only through an alias, bind
  * the alias too — the spy needs no region table, so it extends for free.
  */
-function spyRewrite(script, targetNames = []) {
+function spyRewrite(script, targetNames = [], reserved = new Set()) {
   let ast;
   try {
     ast = acorn.parse(script, { ecmaVersion: 2024, sourceType: 'script', locations: false });
   } catch (err) {
-    return { code: script, rewritten: 0, targets: targetNames, error: `the authored script does not parse (${err.message})` };
+    return {
+      code: script,
+      rewritten: 0,
+      targets: targetNames,
+      error: `the authored script does not parse (${err.message})`,
+      viaCode: '',
+      viaCount: 0,
+      viaByStart: new Map(),
+    };
   }
 
   // A loop alias IS a target. `for (const fn of [f1, f2, f3]) assertEq(normWords(fn(board, WORDS)), …)`
@@ -364,24 +372,64 @@ function spyRewrite(script, targetNames = []) {
     },
   });
 
+  // The derivations, collected from the SAME AST and the SAME `script` text the edits below
+  // slice — collected BEFORE any edit is applied, because an edit shifts every offset after it
+  // and `byStart` is keyed on offsets into the ORIGINAL string.
+  const derivations = collectDerivations(script, ast, targets, reserved);
+
   const edits = [];
-  const rewrite = (callee, ctor) => {
+  const rewrite = (callee, ctor, callStart) => {
     if (callee?.type !== 'Identifier') return;
     if (SPY_EXEMPT.has(callee.name)) return;
-    const args = ctor ? `, 1` : '';
-    edits.push({ start: callee.start, end: callee.end, text: `__SPY__(${JSON.stringify(callee.name)}, ${callee.name}${args})` });
+    // The derivation key rides along as `__SPY__`'s 4th argument, looked up by the CALL's start
+    // offset — the one position both this walk and `collectDerivations` agree on, because both
+    // read the same unrewritten `script`.
+    const via = derivations.byStart.get(callStart);
+    // ── `isCtor` is emitted as an EXPLICIT 0/1 whenever a `via` key follows it ──────────────
+    // Omitting it and writing `__SPY__("fn", fn, "v1")` looks equivalent and is not: the key
+    // lands in the `isCtor` SLOT, so the spy takes its constructor branch and calls
+    // `Reflect.construct(target, args)` instead of `target.apply(this, args)`.
+    //
+    // For a plain `function` declaration that is silent and catastrophic. `Reflect.construct`
+    // DISCARDS the return value and yields the fresh `this` object, so
+    // `removeNthFromEndBruteForce([1,2,3,4,5], 2)` came back as `{}` instead of a list head, the
+    // guide's own `listToArray({})` then dereferenced `head.next` on a plain object and threw
+    // `cannot read property 'val' of undefined` — four authored scripts dead, with `gen:traces`
+    // still exiting 0 because a guide with no cases is reported, never fatal. A `function` that
+    // returns an OBJECT survives it (the object is the result), which is why exactly the guides
+    // whose derivation wraps the call in a list/tree encoder died and the rest did not.
+    //
+    // Emitting the slot explicitly costs three characters and makes the two paths differ only in
+    // a boolean, which is the only way this can be got right by accident later.
+    const args = ctor ? ', 1' : via === undefined ? '' : ', 0';
+    const viaArg = via === undefined ? '' : `, ${JSON.stringify(via)}`;
+    edits.push({ start: callee.start, end: callee.end, text: `__SPY__(${JSON.stringify(callee.name)}, ${callee.name}${args}${viaArg})` });
   };
-  walk.simple(ast, { CallExpression: (node) => rewrite(node.callee, false) });
-  walk.simple(ast, { NewExpression: (node) => rewrite(node.callee, true) });
+  walk.simple(ast, { CallExpression: (node) => rewrite(node.callee, false, node.start) });
+  walk.simple(ast, { NewExpression: (node) => rewrite(node.callee, true, node.start) });
   let code = script;
   for (const edit of edits.sort((a, b) => b.start - a.start)) {
     code = code.slice(0, edit.start) + edit.text + code.slice(edit.end);
   }
-  return { code, rewritten: edits.length, targets: [...targets], error: null };
+  return {
+    code,
+    rewritten: edits.length,
+    targets: [...targets],
+    error: null,
+    viaCode: derivations.viaCode,
+    viaCount: derivations.count,
+    viaByStart: derivations.byStart,
+  };
 }
 
 /** The spy `spyRewrite` emits calls to. Two slots: the first call to a TARGET, and the first
  *  call of any kind, used only when no target was called since the last assertion.
+ *
+ *  `via` is the DERIVATION key `spyRewrite` attached to this call site (row 15 / S22). It rides in
+ *  as the 4th argument and is recorded beside the case, so `buildBundle` can replay the author's
+ *  own post-processing in the driver instead of comparing the target's raw return. It is set in
+ *  exactly the three places `__AN__`/`__FN__` are set, and reset with the other per-assertion
+ *  resets, because a derivation belongs to the call it was written on and to no other.
  *
  *  `ponytail:` two slots rather than one because "first call wins" is right for a single-argument
  *  guide and wrong for a multi-argument one. `findWords(board, ["eat","oath"])` — whose script
@@ -393,7 +441,7 @@ function spyRewrite(script, targetNames = []) {
  *  the target only through an alias AND whose informative call is not a direct one.
  *  Upgrade path: a real parameter mapping, which needs the target's arity from the AST. */
 const SPY_RUNTIME = `
-function __SPY__(name, target, isCtor) {
+function __SPY__(name, target, isCtor, via) {
   return function () {
     var __isTarget = __TARGETS__.indexOf(name) !== -1;
     // Set when THIS invocation already recorded a literal, so the return-value collector below
@@ -428,22 +476,29 @@ function __SPY__(name, target, isCtor) {
             }
           }
           if (__fixed !== null) {
-            __A__ = __fixed; __AN__ = name;
+            __A__ = __fixed; __AN__ = name; __AV__ = via || null;
           } else if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
             // keep the level-order recording
           } else {
-            __A__ = __args; __AN__ = name;
+            __A__ = __args; __AN__ = name; __AV__ = via || null;
             if (__args === null) __TX__ = 1;
           }
         } else if (__F__ === null) {
+          // NOT a target, so NOT this case's derivation. Setting __AV__ here is what left 5 of
+          // combinations' 6 cases keyless: the second argument of
+          // assertEq(normCombos(fn(1, 1)), normCombos([[1]]), ...) is itself a normCombos call,
+          // evaluated after the target call and before the asserter, and it overwrote the key the
+          // target had just set. A derivation belongs to the target call it was written on --
+          // collectDerivations only ever keys a target call site -- so nothing else may write it.
           __F__ = __args; __FN__ = name;
         }
       }
     }
     if (__ASSERTERS__.indexOf(name) !== -1) {
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__ });
-      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = [];
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, via: __AV__ });
+      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = []; __AV__ = null;
     }
+
     // A node argument the script never WROTE as a literal. lowestCommonAncestor is called as
     // fn(t1, findNode(t1, 5), findNode(t1, 1)): the two derived nodes are live graphs, so the
     // literal test above declined them and the positional repair had nothing for positions 1 and
@@ -468,6 +523,192 @@ function __SPY__(name, target, isCtor) {
   };
 }
 `;
+
+/**
+ * Names the DRIVER already declares inside its own IIFE, so a derivation helper sliced out of an
+ * authored script can be checked against them BEFORE it is emitted.
+ *
+ * ── Why this set exists (the measured cause of a reverted feature) ─────────────────────────
+ * The derivation helpers are sliced out of the AUTHORED SCRIPT by name and emitted into the
+ * driver bundle. Most of the names a derivation expression references are not declared by the
+ * script at all — they come from the guide's own block (`listToArray`, `treeToArray`,
+ * `arrayToTree`, `graphToAdj`, `quadToGrid`, `inorderVals`, `treeHeight`), which
+ * `buildInstrumented` puts in `blockSource` OUTSIDE the driver IIFE. A handful of those names
+ * are ALSO the codec registry's own: `driverCodecSource()` emits `listToArray`, `arrayToList`,
+ * `treeToArray` and `arrayToTree` INSIDE the IIFE, where they shadow the block's copies.
+ *
+ * That shadowing is not a name clash, it is a semantic one. `codecs.mjs`'s `listToArray` walks a
+ * chain with `isNil(node)` and records `node.val`; a guide's own `listToArray` walks the same
+ * chain. Slicing the guide's version into the IIFE — AFTER `driverCodecSource()` has already
+ * declared its own — replaces the codec's encoder for every case in the run, and the result was
+ * four authored scripts dying on
+ * `TypeError: cannot read property 'val' of undefined at listToArray (submission.mjs:119)`, with
+ * `gen:traces` still exiting 0 because a guide that produces no cases is REPORTED, never fatal.
+ *
+ * So the emitted helper set is filtered against this set, and against the block's own
+ * declarations, before anything is sliced. A name in here is resolved by the driver that is
+ * already there.
+ *
+ * ponytail: a fixed list derived by reading `driverCodecSource()`'s own top-level declarations
+ * ONCE at module load, rather than re-parsing the emitted source per guide. Ceiling: a name the
+ * driver declares INSIDE a function body is not seen, so a helper could still shadow a local —
+ * the driver's own functions declare no such name today. Upgrade path: derive the set from the
+ * emitted bundle text in `problems.mjs`, which is the only place the full driver shape exists.
+ */
+const DRIVER_DECLARED = (() => {
+  const names = new Set([
+    // `buildBundle`'s own driver-body locals, declared before the codec source is emitted.
+    '__JUDGE_LOG__', '__TESTS__', '__FN_NAME__', '__KIND__', '__CODEC__', '__CMP__',
+    '__errText__', '__snap__', '__RESULT__', '__FN__', '__IS_CLASS__', '__VIA_FNS__',
+  ]);
+  try {
+    const ast = acorn.parse(driverCodecSource(), { ecmaVersion: 2024, sourceType: 'script' });
+    for (const node of ast.body) {
+      if (node.type === 'FunctionDeclaration' && node.id?.name) names.add(node.id.name);
+      else if (node.type === 'ClassDeclaration' && node.id?.name) names.add(node.id.name);
+      else if (node.type === 'VariableDeclaration') {
+        for (const decl of node.declarations) if (decl.id?.type === 'Identifier') names.add(decl.id.name);
+      }
+    }
+  } catch {
+    // An unparseable codec source is not this function's problem to report: `buildBundle` will
+    // fail loudly on the same text. The literal half of the set above still stands.
+  }
+  return names;
+})();
+
+/**
+ * The derivation an assertion applied to its target's return, and the code needed to replay it.
+ *
+ * A harvested case records what the authored script asserted AFTER its own post-processing, but
+ * `buildBundle`'s driver compares the target's RAW return. `normCombos(fn(4, 2))` asserts a
+ * mapped-and-sorted array of comma-joined STRINGS; the driver calls `fn(4, 2)` and gets nested
+ * arrays, then compares them to those strings. No equivalence kind bridges the two — measured,
+ * not assumed: `equivalent('order-insensitive', ['1,2','1,3'], [[1,2],[1,3]])` is `false`,
+ * because order-insensitive forgives ORDERING, not REPRESENTATION.
+ *
+ * So the derivation is replayed. One rule covers both shapes the corpus actually uses: take the
+ * asserter's `arguments[0]`, find the OUTERMOST `CallExpression` inside it whose callee is a
+ * target, and replace that call's source range with the literal text `__R__` — the target's
+ * RETURN, which the driver has already computed by the time it applies the derivation. The result
+ * is `normCombos(__R__)` for the wrapper shape and `__R__.val` for the projection shape — same
+ * rule, no per-guide table, and the target stays at exactly one invocation per case.
+ *
+ * The expression still references helper names (`normCombos`, `normPerms`), so each one's
+ * top-level declaration is sliced out of the SAME script. A name the driver already declares, or
+ * the guide's own block already declares, is NOT sliced — see `DRIVER_DECLARED` for why that
+ * filter is load-bearing rather than cosmetic.
+ *
+ * @param {string} script   the authored case script, unrewritten
+ * @param {object} ast      its parsed form (the caller already has one)
+ * @param {Set<string>|string[]} targets  names a recorded call may resolve to
+ * @param {Set<string>} [reserved]  names already declared by the block source; never sliced
+ * @returns {{viaCode: string, count: number, byStart: Map<number, string>}}
+ *   `byStart` maps a target call's source offset to its registry key, so the spy rewrite can hand
+ *   the key to that exact call site.
+ */
+export function collectDerivations(script, ast, targets, reserved = new Set()) {
+  const targetSet = targets instanceof Set ? targets : new Set(targets);
+  const entries = [];
+  const byStart = new Map();
+
+  // The OUTERMOST target call inside `arguments[0]`. Outermost matters: `normCombos(fn(4, 2))`
+  // has `fn(4, 2)` nested inside `normCombos(...)`, and the derivation is the whole wrapper, not
+  // the inner call. `lca`'s `fn(t1, …).val` has the target call as the `.object` of a member
+  // expression, which the same descent finds because it walks every child, not just callee.
+  const outermostTargetCall = (node) => {
+    let found = null;
+    const visit = (n) => {
+      if (!n || typeof n.type !== 'string' || found !== null) return;
+      if (n.type === 'CallExpression' && n.callee?.type === 'Identifier' && targetSet.has(n.callee.name)) {
+        found = n;
+        return;
+      }
+      for (const key of Object.keys(n)) {
+        if (key === 'type' || key === 'start' || key === 'end') continue;
+        const value = n[key];
+        if (Array.isArray(value)) for (const child of value) visit(child);
+        else if (value && typeof value.type === 'string') visit(value);
+      }
+    };
+    visit(node);
+    return found;
+  };
+
+  walk.simple(ast, {
+    CallExpression: (node) => {
+      const callee = node.callee;
+      if (callee?.type !== 'Identifier') return;
+      if (targetSet.has(callee.name)) return;
+      if (callee.name !== 'assertEq' && !ASSERTER_RE.test(callee.name)) return;
+      const actual = node.arguments[0];
+      if (!actual) return;
+      const call = outermostTargetCall(actual);
+      if (!call) return;
+      // The substituted call becomes the RETURN VALUE, `__R__`. The driver has already invoked the
+      // target by the time it applies this derivation, so re-invoking it here would be a SECOND
+      // call — and for a target that mutates its argument in place (`mergeTwoLists` relinks `a`'s
+      // own nodes into the result) that second call walks a chain that is no longer a list and
+      // never terminates. `__R__` keeps the target at exactly one invocation per case.
+      //
+      // Both real shapes reduce to it unchanged: `normCombos(fn(4, 2))` becomes `normCombos(__R__)`
+      // and `fn(t1, …).val` becomes `__R__.val`.
+      const expr = script.slice(actual.start, call.start) + '__R__' + script.slice(call.end, actual.end);
+
+      let exprAst;
+      try {
+        exprAst = acorn.parse(expr, { ecmaVersion: 2024, sourceType: 'script' });
+      } catch {
+        return; // an expression this generator cannot re-parse is one it will not replay
+      }
+      // Over-approximate the referenced names, exactly like `missingDeclarations` does: a helper
+      // pulled in that the expression did not need is inert (it is the script's own text, it just
+      // declares a name), while under-approximating would emit a derivation that throws on a
+      // free identifier — which is the failure this whole mechanism exists to remove.
+      const referenced = new Set();
+      walk.simple(exprAst, {
+        Identifier: (n) => {
+          if (targetSet.has(n.name) || n.name === '__R__' || n.name === '__FN__' || n.name === '__ARGS__') return;
+          referenced.add(n.name);
+        },
+      });
+      const key = `v${entries.length + 1}`;
+      entries.push({ key, expr, helpers: [...referenced] });
+      byStart.set(call.start, key);
+    },
+  });
+
+  if (entries.length === 0) return { viaCode: '', count: 0, byStart };
+
+  // Slice each helper out of the SAME script, skipping anything already declared where the code
+  // is going to land. `topLevelDeclarations` is the existing resolver; a name the script declares
+  // as `function`/`class`/`const`/`let`/`var` at top level is sliced whole.
+  const declared = topLevelDeclarations(script);
+  const needed = new Set();
+  const slices = [];
+  for (const entry of entries) {
+    for (const name of entry.helpers) {
+      if (needed.has(name)) continue;
+      if (DRIVER_DECLARED.has(name) || reserved.has(name)) continue;
+      const text = declared.get(name);
+      if (text === undefined) continue; // a global the script never declared: the driver's own
+      needed.add(name);
+      slices.push(text);
+    }
+  }
+
+  // The registry body is UNARY: it receives the target's RETURN, which the driver has already
+  // computed, and transforms it. Handing it the target and the arguments instead would re-invoke
+  // the target a second time, which is not merely redundant — for a target that mutates its input
+  // in place it corrupts the input and the second call never terminates. See the note where the
+  // `__R__` placeholder is substituted.
+  const viaCode = [
+    ...slices,
+    `var __VIA_FNS__ = __VIA_FNS__ || {};`,
+    ...entries.map((e) => `__VIA_FNS__[${JSON.stringify(e.key)}] = function (__R__) { return ${e.expr}; };`),
+  ].join('\n');
+  return { viaCode, count: entries.length, byStart };
+}
 
 /**
  * Concatenate three levels' block sources with LATER declarations winning on a shared name.
@@ -550,7 +791,11 @@ async function harvestCases(script, blocksByLevel, codec = null) {
   if (typeof script !== 'string' || script.trim() === '') {
     return { cases: [], reason: 'the authored script is empty' };
   }
-  const spied = spyRewrite(script, blocksByLevel.map((b) => b.targetFn).filter(Boolean));
+  // Names the guide's OWN block source declares, across all three levels. Passed to the spy so a
+  // derivation helper that is already available where the bundle puts it is never sliced out and
+  // re-declared — see `DRIVER_DECLARED` for the same filter on the driver's half.
+  const reserved = new Set(blocksByLevel.flatMap((b) => [...topLevelDeclarations(b.source ?? '').keys()]));
+  const spied = spyRewrite(script, blocksByLevel.map((b) => b.targetFn).filter(Boolean), reserved);
   if (spied.error) return { cases: [], reason: spied.error };
   const targets = spied.targets;
   // `assertEq` is ALWAYS one: after the rewrite its call sites no longer declare it, and most
@@ -575,6 +820,9 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     `var __CAP__ = [];`,
     `var __A__ = null;`,
     `var __AN__ = null;`,
+    // The derivation key for the call currently being recorded, row 15 / S22. Reset with the rest
+    // of the per-assertion state, because a derivation belongs to one call site and no other.
+    `var __AV__ = null;`,
     `var __F__ = null;`,
     `var __FN__ = null;`,
     `var __TX__ = 0;`,
@@ -656,6 +904,10 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     // that the target RETURNS the mutated array, which it does not.
     if (record.expected !== undefined) testCase.expected = record.expected;
     if (record.callee !== undefined) testCase.callee = record.callee;
+    // The derivation the SCRIPT applied to this call's return before asserting (row 15 / S22), as
+    // a registry key. It is inert in the driver unless a `__VIA_FNS__` entry of that name is
+    // present, which `buildBundle` emits from the array property below.
+    if (record.via !== undefined && record.via !== null) testCase.via = record.via;
     cases.push(testCase);
   }
   if (cases.length === 0) {
@@ -668,7 +920,14 @@ async function harvestCases(script, blocksByLevel, codec = null) {
         : 'no assertion in the authored script calls a function this block declares, so there is no input to trace',
     };
   }
-  return { cases, unserialisable, untransportable };
+  // The derivation CODE rides as a PROPERTY ON THE ARRAY, not as an element. That is deliberate:
+  // `JSON.stringify` ignores non-index own properties of an array, so `buildBundle`'s existing
+  // `JSON.stringify(tests)` carries the cases and NOT this code — the driver receives the code as
+  // a separate emitted prelude instead, and no signature, schema or envelope field changes
+  // anywhere to accommodate it. A reader that spreads or filters the array drops the property,
+  // which is why the level partition in `main()` re-attaches it explicitly.
+  if (spied.viaCode) cases.viaCode = spied.viaCode;
+  return { cases, unserialisable, untransportable, viaCount: spied.viaCount ?? 0 };
 }
 
 /**
@@ -1180,6 +1439,35 @@ async function main(argv) {
 
   fs.mkdirSync(TRACES_DIR, { recursive: true });
 
+  // ── STALE ARTEFACT SWEEP ────────────────────────────────────────────────────────────────
+  // A guide that produces no golden writes NOTHING, and nothing here ever deleted what a previous
+  // run left behind. So `judge/traces/` accumulated a MIX of fresh and stale files, and every
+  // census computed over it — `test:trace`'s S17 ratchet included — was reading a corpus that no
+  // single run produced. That is not a rounding error: it is how the same on-disk state was
+  // observed as `zero-pass 49` from a standalone script and `zero-pass 94` from inside
+  // `npm run test:trace`, and how an uncomputed census can read as improvement.
+  //
+  // So the directory is emptied BEFORE generation, and `--no-write` is exempt (it is the
+  // read-only probe; deleting the corpus under it would destroy the thing being inspected).
+  // `--only` is NOT exempt in the same way — it narrows what is rewritten, so it must also not
+  // delete what it is not rewriting. It is therefore refused here rather than half-supported.
+  if (!noWrite && only) {
+    throw new Error(
+      `gen:traces --only ${only} cannot clear judge/traces/ without destroying the other 149 guides' `
+      + 'goldens. Sweep and partial-regeneration are mutually exclusive: run the full generator, or '
+      + 'point --only at a copy of the corpus.',
+    );
+  }
+  if (!noWrite) {
+    let swept = 0;
+    for (const file of fs.readdirSync(TRACES_DIR)) {
+      if (!/\.L[123]\.(head\.)?json$/.test(file) && file !== 'manifest.json') continue;
+      fs.rmSync(path.join(TRACES_DIR, file));
+      swept += 1;
+    }
+    if (swept > 0) console.log(`[gen-traces] swept ${swept} stale golden file(s) from judge/traces/ — a census may never be computed over a mix of fresh and stale artefacts`);
+  }
+
   const started = Date.now();
   const coverage = new Map();
   const written = [];
@@ -1240,10 +1528,16 @@ async function main(argv) {
     const codecOfTarget = new Map(blocksByGuide.map((b) => [b.targetFn, b.codec ?? null]));
     const casesForLevel = (level) => {
       const mine = blocksByGuide.find((b) => b.level === level);
-      return source.cases.filter((c) => {
+      const kept = source.cases.filter((c) => {
         if (c.callee === mine?.targetFn || !blocksByGuide.some((b) => b.targetFn === c.callee)) return true;
         return !(codecOfTarget.get(c.callee) === 'ops' && mine?.codec !== 'ops');
       });
+      // `.filter()` returns a NEW array and does not copy non-index own properties, so the
+      // derivation code `harvestCases` parked on `source.cases.viaCode` is GONE by default. It has
+      // to be re-attached by hand or every level of a derivation guide silently loses its replay
+      // and the block stays in the wrong-verdict census looking like a driver bug.
+      if (source.cases.viaCode) kept.viaCode = source.cases.viaCode;
+      return kept;
     };
 
     for (const level of LEVELS) {

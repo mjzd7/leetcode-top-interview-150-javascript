@@ -39,6 +39,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { parseGuide } from '../docs/dryrun/table.js';
+import { v9Verdict } from './lib/v9.mjs';
 import { stringify } from './lib/serialize.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -139,14 +141,81 @@ export function measureRawCorpus(dir = SOURCE_DIR) {
   return { count, total, max, over1Mb };
 }
 
+/** The per-guide field the portal reads. Named, because `verdict` on a trace entry already means
+ *  something else entirely — the TRACE's pass/fail, not the authored table's. */
+export const TABLE_TRACE = 'tableTrace';
+
+/**
+ * Row 32's per-guide V9 verdict, computed ONCE HERE, at build time.
+ *
+ * ── WHY THIS IS NOT A CLIENT-SIDE FUNCTION ───────────────────────────────────────────
+ * Row 32 asked for the "Unverified" label to be a pure function of per-guide evidence, rendered
+ * and never stored. That is unachievable, and the blocker is structural, not a matter of taste:
+ * the predicate (`scripts/lib/v9.mjs`, ported from `scripts/test-trace.mjs:1163-1179`) needs
+ * EVERY step's `text`, `operands` and `snap`, and steps 2…N−1 are not published anywhere —
+ * `scripts/gen-traces.mjs:936` `headStep` keeps only `{n, line, out}` and writes a head carrying
+ * `first`/`last` only. The two steps that DO ship are degraded: `out` is a 240-char, 4-binding
+ * human summary (`api/_lib/trace-runner.mjs:721-729`), so `operands` is absent entirely.
+ * Shipping the missing steps is the 34.3 MiB corpus that `scripts/gen-doc-traces.mjs:22-28`
+ * deliberately rejected, so the build computes the verdict and the portal renders it.
+ *
+ * So the verdict is STORED, at build time, in the index. That is the opposite of what row 32 as
+ * written claimed, which is why the row was renamed rather than quietly satisfied.
+ *
+ * What is still pure is the predicate: one named function, one definition, `node scripts/lib/v9.mjs`
+ * checks it. A label whose rule lives in exactly one place cannot rot into a lie by drifting from
+ * the gate that enforces it — that was the rot A2 actually feared, and this shape forecloses it.
+ *
+ * `uncomparable` is a real third verdict, not a synonym for disagreement: `test-trace.mjs:1170-1173`
+ * is explicit that reporting "no comparison possible" as drift is "the same sin as calling them
+ * agreement". Measured on this corpus at HEAD 2c3e8df: **142 agrees, 8 uncomparable, 0 disagrees**
+ * (the live S14 line agrees: `142/150 agreed, 8 uncomparable`).
+ *
+ * @param {Array<{name: string, head: object}>} heads as {@link readHeads} returns them
+ * @param {{root?: string}} opts `root` is the repo root; only for tests
+ * @returns {Record<string, {tableTrace: 'agrees'|'disagrees'|'uncomparable'}>} keyed by guide path
+ *   (plan §8 invariant 1 / E30: path, never slug), covering the L3 golden of every traced guide
+ */
+export function readTableTraceVerdicts(heads, { root = ROOT } = {}) {
+  const verdicts = {};
+  for (const { name, head } of heads) {
+    // test-trace.mjs:1161 filters to `.L3.json`, so V9 makes no claim about L1/L2 — publishing a
+    // per-level verdict here would put a value on 300 rows that nothing ever checked.
+    if (head.level !== 3) continue;
+    let guideText;
+    try { guideText = fs.readFileSync(path.join(root, head.path), 'utf8'); } catch { continue; }
+    // test-trace.mjs:1164 `continue`s on an unreadable guide rather than counting it, so this
+    // does too: an absent guide is out of scope, which is not the same as uncomparable.
+    let steps;
+    try {
+      steps = JSON.parse(fs.readFileSync(path.join(SOURCE_DIR, name.replace(/\.head\.json$/, '.json')), 'utf8')).steps;
+    } catch { continue; }
+    if (!Array.isArray(steps)) continue;
+    verdicts[head.path] = { [TABLE_TRACE]: v9Verdict(guideText, steps, parseGuide) };
+  }
+  return verdicts;
+}
+
+/** How many guides landed in each V9 bucket — the ledger's number, reproducible from the artefact. */
+function countVerdicts(verdicts) {
+  const counts = { agrees: 0, disagrees: 0, uncomparable: 0 };
+  for (const { tableTrace } of Object.values(verdicts)) counts[tableTrace]++;
+  return counts;
+}
+
 /**
  * The index: the ONE file the portal has to know exists.
  *
  * Everything here is derived, and nothing here re-declares a fact: the path, level, fn name,
  * codec, verdict and blockHash all come from the head row 15 wrote, so there is no second
  * source of slug truth (plan §8 invariant 2) and no second chance to disagree with it.
+ *
+ * `guides` is the one derived thing that cannot come from a head, because V9 needs steps a head
+ * does not carry: see {@link readTableTraceVerdicts} for why it is computed here and not in the
+ * browser. It is computed by default rather than passed in, so an index built by anyone, for any
+ * reason, cannot silently ship without it — the field this row exists to make un-rotten.
  */
-export function buildIndex(heads, { rawCorpus = null } = {}) {
+export function buildIndex(heads, { rawCorpus = null, verdicts = null } = {}) {
   const traces = heads
     .map(({ file, bytes, head }) => ({
       path: head.path,
@@ -164,6 +233,8 @@ export function buildIndex(heads, { rawCorpus = null } = {}) {
 
   const headSummary = summariseSizes(heads);
   const raw = rawCorpus ?? measureRawCorpus();
+  const guides = verdicts ?? readTableTraceVerdicts(heads);
+  const tableTrace = countVerdicts(guides);
 
   return {
     v: 1,
@@ -184,8 +255,20 @@ export function buildIndex(heads, { rawCorpus = null } = {}) {
       rawCorpusLargestBytes: raw.max,
       rawCorpusOver1Mb: raw.over1Mb,
       shippedVsRawPercent: raw.total ? Number(((headSummary.total / raw.total) * 100).toFixed(2)) : 0,
+      /** Row 32: per-guide V9 verdicts. `disagrees` is the state that means "Unverified". */
+      guides: Object.keys(guides).length,
+      tableTraceAgrees: tableTrace.agrees,
+      tableTraceDisagrees: tableTrace.disagrees,
+      tableTraceUncomparable: tableTrace.uncomparable,
+      /** Row 32's rename, carried in the artefact so the reason travels with the bytes. */
+      tableTraceNote:
+        'V9 (table <-> trace) is computed HERE, at build time, and stored per guide. It cannot be a '
+        + 'browser-side pure function: the predicate needs every step\'s text/operands/snap, and only '
+        + 'first/last survive into a head (scripts/gen-traces.mjs headStep). The predicate itself has '
+        + 'one definition, scripts/lib/v9.mjs, checked by `node scripts/lib/v9.mjs`.',
     },
     decision: DECISION,
+    guides,
     traces,
   };
 }
