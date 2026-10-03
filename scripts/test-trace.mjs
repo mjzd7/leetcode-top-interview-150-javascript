@@ -1402,7 +1402,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 51, partialPass: 33 };
+    const VERDICT_BASELINE = { zeroPass: 49, partialPass: 33 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1493,6 +1493,34 @@ async function main() {
       undefinedTemp.length
         ? `${undefinedTemp.length} golden(s): ${undefinedTemp.slice(0, 4).join(', ')}${undefinedTemp.length > 4 ? ' …' : ''}`
         : '450 goldens scanned, none references an undeclared __cN');
+
+    // ---- S20 · row 15 — one harvested case list, three levels ----
+    // The same `cases` array is handed to every level unfiltered (`gen-traces.mjs`), and that is
+    // load-bearing: an ALIAS loop (`for (const fn of [f1, f2, f3]) assertEq(...)`) records
+    // `callee: 'fn'`, and each level running that one case against its OWN function is exactly
+    // how 150 guides get covered by one authored script.
+    //
+    // is-subsequence is what breaks it. Its script can only drive the L3 CLASS, so it never
+    // calls the L1/L2 functions — and the harvested args are the CONSTRUCTOR's, so L1 ran
+    // `isSubsequenceBruteForce('ahbgdc')` with one argument and died on `.length` of undefined.
+    // The fix is two halves that must both land: the script drives all three, and the case list
+    // is partitioned per level. The partition drops a case ONLY when its callee is a DIFFERENT
+    // level's target, so an alias (`fn`) and every non-harvested case (no `callee` at all) still
+    // reach all three levels.
+    const PARTITIONED_GUIDES = [
+      ['02-two-pointers__02-is-subsequence', ['L1', 'L2'], 'the script drives all three levels; each level gets only its own cases'],
+    ];
+    for (const [stem, levels, why] of PARTITIONED_GUIDES) {
+      for (const level of levels) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && golden.verdict.failed === 0,
+          `S20 partition: ${stem} ${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · error ${String(golden.error ?? 'none').split('\n')[0]}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
+    }
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
