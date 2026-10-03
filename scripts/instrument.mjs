@@ -110,6 +110,22 @@ const REGION_NODES = new Set([
  */
 const COND_TEMPS = 32;
 
+/**
+ * The declaration of those temps, as the instrumented source itself carries it.
+ *
+ * It used to be declared by `blockScript` — the instrumenter's OWN harness — which made the
+ * instrumented source self-incomplete: it REFERENCES `__c0 …` but never declared them. The
+ * judge's `buildBundle` embeds the same `instrumentedSource` in `userCode` and declares nothing,
+ * so every class guide traced through the bundle died with `ReferenceError: '__c0' is not defined`
+ * and shipped a 2-or-3-step golden instead of a trace. Measured on the corpus: 7 goldens, of
+ * which 4 still passed their VERDICT (the raw run carries no probes) and every one of them had a
+ * near-empty trace.
+ *
+ * So the temps are declared where they are used, and `blockScript` reuses this exact string —
+ * one declaration, two consumers, and the drift between them is not expressible.
+ */
+const COND_TEMPS_DECL = `var ${Array.from({ length: COND_TEMPS }, (_, i) => `__c${i}`).join(', ')};`;
+
 /** Step types, named exactly as `docs/trace-schema.json` names them. */
 const STEP_TYPES = {
   decl: 'decl', assign: 'assign', if: 'if-test', loop: 'loop-head', loopBack: 'loop-back',
@@ -696,7 +712,8 @@ export function instrumentBlock(source, entry) {
   }
 
   return {
-    code: splice(source, edits),
+    // Self-contained: the temps this source references are declared by the source itself.
+    code: `${COND_TEMPS_DECL}\n${splice(source, edits)}`,
     source, // the UNINSTRUMENTED block, so I2 can compare against it
     probes,
     hash: actualHash,
@@ -850,9 +867,9 @@ export function instrumentGuideBlock(guidePath, level, manifest = loadManifest()
 function blockScript(source, entry, drive, traced) {
   const globals = [
     `var __H__ = ${JSON.stringify(entry.blockHash)};`,
-    // The hoisted condition temps live here, not in the block: the instrumented code stays the
-    // guide's own JavaScript plus __T(...) calls, so a diff of it is still readable.
-    `var ${Array.from({ length: COND_TEMPS }, (_, i) => `__c${i}`).join(', ')};`,
+    // Same string the instrumented source carries, so the harness and the artefact cannot drift.
+    // (Redeclaring a `var` is legal anyway, so this is belt-and-braces, not a requirement.)
+    COND_TEMPS_DECL,
     traced ? TRACE_RUNTIME : 'var __TRACE__ = { n: 0, steps: [], error: null };',
   ];
   return new vm.Script(`(function () {
