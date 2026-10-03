@@ -46,6 +46,7 @@ const EQUIVALENCE_OVERRIDES = {
   '03-sliding-window/03-substring-with-concatenation-of-all-words.md': ['order-insensitive', '§1: starting indices may be returned "in any order"'],
   '05-hashmap/05-group-anagrams.md': ['multiset', 'groups are a multiset: group order and within-group word order carry no meaning'],
   '05-hashmap/06-two-sum.md': ['order-insensitive', '§1: "You can return the answer in any order."'],
+  '06-intervals/02-merge-intervals.md': ['order-insensitive', 'the authored script sorts the result itself (`.sort(byStart)`) precisely because the brute force preserves discovery order, so the order is not the contract'],
   '14-backtracking/01-letter-combinations.md': ['order-insensitive', '§1: "in any order"'],
   '14-backtracking/02-combinations.md': ['order-insensitive', '§1: "in any order"'],
   '14-backtracking/03-permutations.md': ['order-insensitive', '§1: "in any order"'],

@@ -58,6 +58,8 @@ import { validateEnvelope } from './validate-envelope.mjs';
 // The ~2 KB per-problem cap is E32's number and row 16 already owns it, so it is imported
 // rather than re-declared: two literals would drift, and the drift would be invisible.
 import { HEAD_BYTE_CAP } from './gen-doc-traces.mjs';
+// S18 sorts the "is this whole family one mechanism?" question, and the answer is in here.
+import { equivalent } from '../api/_lib/codecs.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures', 'trace');
@@ -1400,7 +1402,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 52, partialPass: 33 };
+    const VERDICT_BASELINE = { zeroPass: 51, partialPass: 33 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1415,20 +1417,62 @@ async function main() {
       breaches(verdictCensus, VERDICT_BASELINE).join('; ')
         || `zeroPass ${verdictCensus.zeroPass} / partialPass ${verdictCensus.partialPass}`);
     // The gate above compares two numbers, so on its own it cannot be shown to bite — which is
-    // the S15 lesson exactly. Both directions get a probe: a rise must breach, a fall must not.
-    check(breaches({ zeroPass: 53, partialPass: 33 }, VERDICT_BASELINE).length === 1,
-      'S17 negative: a census that rose by one block is caught',
-      `breaches said [${breaches({ zeroPass: 53, partialPass: 33 }, VERDICT_BASELINE)}]`);
-    check(breaches({ zeroPass: 51, partialPass: 32 }, VERDICT_BASELINE).length === 0,
-      'S17 negative: a census that FELL is not a breach — a fixed slice must not turn this red',
-      `breaches said [${breaches({ zeroPass: 51, partialPass: 32 }, VERDICT_BASELINE)}]`);
-    check(breaches({ zeroPass: 52, partialPass: 34 }, VERDICT_BASELINE).length === 1,
+    // the S15 lesson exactly. All three directions get a probe, and every probe is written
+    // RELATIVE to the baseline: a probe holding a literal count silently rots the moment a
+    // slice lands and the baseline drops, which is how this suite went red on a fix.
+    const at = (dZero, dPartial) => ({
+      zeroPass: VERDICT_BASELINE.zeroPass + dZero,
+      partialPass: VERDICT_BASELINE.partialPass + dPartial,
+    });
+    check(breaches(at(1, 0), VERDICT_BASELINE).length === 1,
+      'S17 negative: a zero-pass rise is caught',
+      `breaches said [${breaches(at(1, 0), VERDICT_BASELINE)}]`);
+    check(breaches(at(0, 1), VERDICT_BASELINE).length === 1,
       'S17 negative: a PARTIAL-pass rise is caught too — that is the metric zero-pass cannot see',
-      `breaches said [${breaches({ zeroPass: 52, partialPass: 34 }, VERDICT_BASELINE)}]`);
+      `breaches said [${breaches(at(0, 1), VERDICT_BASELINE)}]`);
+    check(breaches(at(-1, -1), VERDICT_BASELINE).length === 0,
+      'S17 negative: a census that FELL is not a breach — a fixed slice must not turn this red',
+      `breaches said [${breaches(at(-1, -1), VERDICT_BASELINE)}]`);
     check(verdictCensus.zeroPass + verdictCensus.partialPass + verdictCensus.clean === verdictCensus.censused,
       'S17 ratchet: the three census buckets partition the corpus — no head is silently uncounted',
       `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != ${verdictCensus.censused}`);
     console.log(`S17 ratchet: ${headNames.length} heads · zero-pass ${verdictCensus.zeroPass} (baseline ${VERDICT_BASELINE.zeroPass}) · partial-pass ${verdictCensus.partialPass} (baseline ${VERDICT_BASELINE.partialPass}) · clean ${verdictCensus.clean}`);
+
+    // ---- S18 · row 15 — a derivation the script applied and the driver dropped ----
+    // The harvest records WHAT was asserted after the script's own post-processing, and the
+    // driver compares the target's RAW return. merge-intervals' script asserts
+    // `fn(input).sort(byStart)`; the driver called `fn(input)` and got discovery order
+    // `[[8,10],[15,18],[1,6]]`. One block, named, because it is the smallest honest instance
+    // and because a gate naming all of them could not go green until the family was finished.
+    //
+    // IT IS AN OVERRIDE, NOT DRIVER PLUMBING — and the reason is worth recording, because the
+    // obvious move here is to build a `via` replay and it would be wasted on half the family.
+    // The 24 do NOT share one mechanism, they share one SYMPTOM. Measured against the real
+    // comparator:
+    //   - a PURE SORT is order-insensitive and needs one line of catalog. merge-intervals L1
+    //     is exactly this, and L2/L3 already returned sorted output and passed by luck.
+    //   - a PROJECTION is not. `normCombos` is `lists.map(c => c.join(','))`, so its expected
+    //     side is `["1,2","1,3"]` while the raw return is `[[1,2],[1,3]]` — order-insensitive
+    //     forgives ordering, not REPRESENTATION, so no equivalence kind reaches it and those
+    //     blocks genuinely need the derivation replayed. They stay in the S17 census.
+    const VIA_GUIDES = [
+      ['06-intervals__02-merge-intervals', 'L1', 'mergeBruteForce returns discovery order; the script asserts it .sort(byStart)'],
+    ];
+    for (const [stem, level, why] of VIA_GUIDES) {
+      const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && golden.verdict.failed === 0,
+        `S18 via: ${stem} ${level} passes every case — ${why}`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · result ${JSON.stringify(golden.result).slice(0, 80)}`
+          : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+    }
+    // The split itself, asserted so it cannot be quietly undone by copying merge-intervals'
+    // override onto a projection guide and declaring the family fixed.
+    check(equivalent('order-insensitive', [[1, 6], [8, 10]], [[8, 10], [1, 6]]) === true,
+      'S18 split: a PURE SORT derivation is order-insensitive, so a catalog override reaches it');
+    check(equivalent('order-insensitive', ['1,2', '1,3'], [[1, 2], [1, 3]]) === false,
+      'S18 split: a PROJECTION derivation is NOT order-insensitive — strings vs nested arrays — so it needs the derivation replayed, not an override');
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
