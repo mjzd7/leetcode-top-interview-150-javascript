@@ -120,6 +120,17 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
   // everywhere else. There is no default branch in the sandbox either — see `__CODEC__`.
   getCodec(codec, fnName);
   equivalent(equivalence, null, null);
+  // Row 15 / S22 — the derivation replay. A harvested case records what the authored script
+  // asserted AFTER its own post-processing (`normCombos(fn(4, 2))` is comma-joined STRINGS), while
+  // this driver compares the target's RAW return. No equivalence kind bridges that:
+  // `equivalent('order-insensitive', ['1,2','1,3'], [[1,2],[1,3]])` is `false`, because
+  // order-insensitive forgives ORDERING, not REPRESENTATION. So the author's own derivation is
+  // replayed here, in the driver's own words.
+  //
+  // Read off the RAW array, BEFORE it is serialised: `harvestCases` parks the code as a non-index
+  // own property, which `JSON.stringify` drops by design — so this is the only place it exists, and
+  // reading it here is what keeps the change out of every signature and schema in the system.
+  const viaCode = tests?.viaCode ?? '';
   return [
     `var __JUDGE_LOG__ = console.log.bind(console);`,
     userCode,
@@ -128,6 +139,16 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `  var __FN_NAME__ = ${JSON.stringify(fnName)};`,
     `  var __KIND__ = ${JSON.stringify(equivalence)};`,
     driverCodecSource(),
+    // INSIDE the IIFE, and AFTER `driverCodecSource()`, for one measured reason. A derivation
+    // expression references helpers that come from the guide's own block (`listToArray`,
+    // `treeToArray`, `graphToAdj`), which `userCode` above declares in the ENCLOSING scope — so
+    // inside the IIFE they resolve through the closure with no redeclaration at all. The filter
+    // that guarantees none of them is re-declared lives in `gen-traces.mjs`
+    // (`collectDerivations`/`DRIVER_DECLARED`): emitting a helper here that shares a name with
+    // `driverCodecSource()`'s own would shadow the codec's encoder for the whole run, which is
+    // what killed four authored scripts the first time this shipped.
+    `  var __VIA_FNS__ = {};`,
+    ...(viaCode ? viaCode.split('\n').map((line) => `  ${line}`) : []),
     `  var __CODEC__ = __CODECS__[${JSON.stringify(codec)}];`,
     `  var __CMP__ = __COMPARATORS__[__KIND__];`,
     `  if (!__CODEC__ || !__CMP__) {`,
@@ -163,6 +184,28 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `        var args = (t.args || []).map(function (a) { return __CODEC__.acceptsWire(a) ? __CODEC__.fromWire(a) : a; });`,
     `        var before = args.map(__snap__);`,
     `        var r = __IS_CLASS__ ? Reflect.construct(__FN__, args) : __FN__.apply(null, args);`,
+    // Row 15 / S22: replay the derivation the AUTHOR applied, immediately AFTER the call and
+    // BEFORE the codec's `owns`/`toWire` below. That position is the whole point — after the call,
+    // because the derivation is a function OF the return; before `toWire`, because the codec must
+    // encode the value the author actually asserted (`normCombos` gives strings, which `json`
+    // passes straight through) rather than the raw graph it was derived from. A case with no
+    // `via`, or a key with no registry entry, keeps the raw return, so a guide with no derivation
+    // is byte-identical to before.
+    //
+    // ── It takes the RETURN, not the target and the arguments ────────────────────────────────
+    // The registry is called as `fn(r)`, so the target is invoked EXACTLY ONCE per case. Handing
+    // it `(fn, args)` instead — which looks equivalent, because the derivation text is written
+    // `__FN__.apply(null, __ARGS__)` — calls the target a SECOND time, and for a target that
+    // mutates its argument in place that is not a redundant call, it is a corrupted one:
+    // `mergeTwoLists(a, c)` relinks `a`'s own nodes into the result, so the second call walks a
+    // chain that is no longer a list and never terminates. Measured: 4 linked-list blocks and
+    // 2 divide-conquer blocks went from `passed 6 failed 0` to `passed 0 failed 0` with the
+    // driver reporting `Time Limit Exceeded` and the target entered exactly twice.
+    //
+    // So the derivation is applied to the value the call already produced. The corpus's shapes both
+    // reduce to that: `normCombos(fn(4,2))` becomes `normCombos(r)` and `fn(t1,…).val` becomes
+    // `r.val`, because the substituted call is the outermost expression the derivation is built on.
+    `        if (t.via && __VIA_FNS__[t.via]) r = __VIA_FNS__[t.via](r);`,
     `        if (r === undefined && t.expected !== undefined) {`,
     // A void target's answer is an ARGUMENT. Prefer the one the call actually changed, and
     // fall back to the first: `merge([1], 1, [], 0)` has nothing to merge, so it changes
