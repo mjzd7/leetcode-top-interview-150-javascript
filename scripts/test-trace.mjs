@@ -1266,11 +1266,25 @@ async function main() {
     const bulky = [];
     let headBytes = 0;
     let headMax = { bytes: 0, file: null };
+    // S17's census accumulator lives HERE, beside the other per-corpus tallies, because the
+    // loop below fills it and `const` at the assertion site would be a TDZ error.
+    const verdictCensus = { zeroPass: 0, partialPass: 0, clean: 0, censused: 0 };
 
     for (const hf of headNames) {
       const raw = fs.readFileSync(path.join(GOLDENS_DIR, hf));
       const head = JSON.parse(raw.toString('utf8'));
       headBytes += raw.length;
+      // S17's census. Counted here, before the `noGolden` continue below, because the ratchet
+      // must see every head — a head whose golden is missing still carries a verdict.
+      {
+        const v = head.verdict;
+        if (v && typeof v.passed === 'number' && typeof v.failed === 'number') {
+          verdictCensus.censused += 1;
+          if (v.passed === 0) verdictCensus.zeroPass += 1;
+          else if (v.failed > 0) verdictCensus.partialPass += 1;
+          else verdictCensus.clean += 1;
+        }
+      }
       if (raw.length > headMax.bytes) headMax = { bytes: raw.length, file: hf };
       if (raw.length > HEAD_BYTE_CAP) oversized.push(`${hf} ${raw.length}B`);
       for (const [h] of HEAD_MATCH) {
@@ -1369,6 +1383,52 @@ async function main() {
           ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed}${golden.verdict.failed ? ` — first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '').split('\n')[0]}` : ''}`
           : `no golden named ${stem}.L3.json — run \`npm run gen:traces\``);
     }
+
+    // ---- S17 · row 15 — the wrong-verdict ratchet ----
+    // Row 15's own success metric is `zero-pass == 0`, and it is a trap. A block that gets
+    // SOME cases right reports `passed > 0`, so it leaves the zero-pass census while still
+    // shipping wrong verdicts: `14-backtracking/04-combination-sum` scores 3 passed / 3 failed
+    // at every level using the IDENTICAL `normCombos` post-decoder shape as the 24-block group
+    // that IS counted, and is invisible here only because its empty-result case matches by
+    // luck. So `zero-pass == 0` can go green with wrong verdicts still shipping.
+    //
+    // Nothing could see it either. `judge/traces/manifest.json` carries no `verdict` field at
+    // all — its `goldens[]` entries are `{bytes, degraded, level, path, steps}` — and reports
+    // `failures: []`. A slicing driven off the manifest sees a clean run. The 450
+    // `*.head.json` are the only place a verdict is written down, so they are the census.
+    //
+    // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
+    // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
+    // the only thing that makes it tight — a gate that can only be satisfied by going down.
+    const VERDICT_BASELINE = { zeroPass: 52, partialPass: 33 };
+    const breaches = (c, base) => Object.keys(base)
+      .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
+    // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
+    // census is all zeros, which is below every baseline, so "I never measured" reads as
+    // "everything improved" and the gate passes having measured nothing. So the census has to
+    // account for every head before its numbers mean anything.
+    check(verdictCensus.censused === headNames.length,
+      'S17 ratchet: every head is census-bearing — an unmeasured corpus cannot read as improvement',
+      `censused ${verdictCensus.censused} of ${headNames.length} heads`);
+    check(breaches(verdictCensus, VERDICT_BASELINE).length === 0,
+      'S17 ratchet: no wrong-verdict census has risen above its committed baseline',
+      breaches(verdictCensus, VERDICT_BASELINE).join('; ')
+        || `zeroPass ${verdictCensus.zeroPass} / partialPass ${verdictCensus.partialPass}`);
+    // The gate above compares two numbers, so on its own it cannot be shown to bite — which is
+    // the S15 lesson exactly. Both directions get a probe: a rise must breach, a fall must not.
+    check(breaches({ zeroPass: 53, partialPass: 33 }, VERDICT_BASELINE).length === 1,
+      'S17 negative: a census that rose by one block is caught',
+      `breaches said [${breaches({ zeroPass: 53, partialPass: 33 }, VERDICT_BASELINE)}]`);
+    check(breaches({ zeroPass: 51, partialPass: 32 }, VERDICT_BASELINE).length === 0,
+      'S17 negative: a census that FELL is not a breach — a fixed slice must not turn this red',
+      `breaches said [${breaches({ zeroPass: 51, partialPass: 32 }, VERDICT_BASELINE)}]`);
+    check(breaches({ zeroPass: 52, partialPass: 34 }, VERDICT_BASELINE).length === 1,
+      'S17 negative: a PARTIAL-pass rise is caught too — that is the metric zero-pass cannot see',
+      `breaches said [${breaches({ zeroPass: 52, partialPass: 34 }, VERDICT_BASELINE)}]`);
+    check(verdictCensus.zeroPass + verdictCensus.partialPass + verdictCensus.clean === verdictCensus.censused,
+      'S17 ratchet: the three census buckets partition the corpus — no head is silently uncounted',
+      `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != ${verdictCensus.censused}`);
+    console.log(`S17 ratchet: ${headNames.length} heads · zero-pass ${verdictCensus.zeroPass} (baseline ${VERDICT_BASELINE.zeroPass}) · partial-pass ${verdictCensus.partialPass} (baseline ${VERDICT_BASELINE.partialPass}) · clean ${verdictCensus.clean}`);
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
