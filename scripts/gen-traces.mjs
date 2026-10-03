@@ -616,12 +616,17 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     if (record.untransportable) { untransportable++; continue; }
     if (!Array.isArray(record.args)) { unserialisable++; continue; }
     const testCase = { name: record.label ?? `case${cases.length}`, args: record.args };
+    // The target that produced this case, carried so a level can tell its OWN cases from another
+    // level's (row 15 / S20). Without it every level runs every case, and a class guide's
+    // constructor arguments reach a plain function one argument short. Inert in the driver,
+    // which reads only name/args/expected.
     // A void target returns nothing, and `buildBundle` compares `expected` through a
     // serialiser that renders an absent key as the string `'__undefined__'` — so ABSENT is the
     // honest encoding of "this function returns nothing", which is what the catalog's
     // `returnType: "void"` says. Copying the wrapper's post-state here instead would assert
     // that the target RETURNS the mutated array, which it does not.
     if (record.expected !== undefined) testCase.expected = record.expected;
+    if (record.callee !== undefined) testCase.callee = record.callee;
     cases.push(testCase);
   }
   if (cases.length === 0) {
@@ -1142,7 +1147,7 @@ async function main(argv) {
   const index = loadProblemIndex();
 
   // Fail loudly, before writing anything, on a manifest that is absent or unparseable.
-  loadBlocks();
+  const blocks = loadBlocks();
 
   fs.mkdirSync(TRACES_DIR, { recursive: true });
 
@@ -1178,11 +1183,45 @@ async function main(argv) {
     }
     coverage.set(entry.path, { cases: source.cases.length, origin: source.origin });
 
+    // Row 15 / S20 — one harvested case list feeds all three levels, and that is load-bearing:
+    // an ALIAS loop (`for (const fn of [f1, f2, f3]) assertEq(...)`) records `callee: 'fn'`, and
+    // each level running that one case against its OWN function is how 150 guides are covered by
+    // one authored script. So the list is NOT filtered per level in general.
+    //
+    // What must not happen is a case recorded against ANOTHER level's target being replayed here,
+    // which is how is-subsequence's L1 ran `isSubsequenceBruteForce('ahbgdc')` — the L3 CLASS's
+    // constructor argument, one argument short, dying on `.length` of undefined. So a case is
+    // dropped on that exact condition and no other: a `callee` that is not any level's target
+    // (an alias, or a case from `judge/tests` / `test-runner` / `catalog` with no `callee` at
+    // all) still reaches every level, which is what keeps coverage intact.
+    // The MANIFEST's per-level target, not the catalog's: `fnName.L3` is null for a guide whose
+    // canonical is a class (`02-two-pointers/02-is-subsequence.md` declares `SubsequenceMatcher`,
+    // which `declarations()` cannot see), and reading level targets from the catalog made its
+    // 7 class cases look like an alias's — so they leaked into L1 and L2, which is the very
+    // failure this exists to stop.
+    //
+    // ONLY a class case is dropped, and the discriminator is the block's own `codec`. A case
+    // recorded against a different level's FUNCTION is still a legitimate case here: an alias
+    // loop asserts one property of all three, and an assertion that names one level's function
+    // outside such a loop (`assertEq(copyRandomListBruteForce(null), null)`) states a property
+    // the other two must satisfy too. Dropping those cost 4 blocks their only passing case and
+    // was a net loss. An `ops` case is an op sequence against a CONSTRUCTED INSTANCE and is
+    // structurally meaningless against a plain function — that asymmetry is the whole defect.
+    const blocksByGuide = blocks.filter((b) => b.path === entry.path);
+    const codecOfTarget = new Map(blocksByGuide.map((b) => [b.targetFn, b.codec ?? null]));
+    const casesForLevel = (level) => {
+      const mine = blocksByGuide.find((b) => b.level === level);
+      return source.cases.filter((c) => {
+        if (c.callee === mine?.targetFn || !blocksByGuide.some((b) => b.targetFn === c.callee)) return true;
+        return !(codecOfTarget.get(c.callee) === 'ops' && mine?.codec !== 'ops');
+      });
+    };
+
     for (const level of LEVELS) {
       const label = `${entry.path} L${level}`;
       try {
         const envelope = await traceOne(entry.path, level, {
-          cases: source.cases,
+          cases: casesForLevel(level),
           caseIndex: 0,
         });
 
