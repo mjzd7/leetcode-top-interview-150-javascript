@@ -16,6 +16,12 @@
  * unchanged. Nothing is reimplemented and nothing is "improved" — a cross-check whose
  * semantics drifted from the gate that enforces it would stop being a cross-check:
  *
+ * Every `test-trace.mjs:NNNN` citation in this file names a line **as of `f61e4fd`**, the
+ * commit this was extracted at, and not as the file stands now: `982264c` deleted all seven
+ * of these definitions from `test-trace.mjs` and made this file their only definition, which
+ * is the point of the extraction. Reading one of those citations against today's
+ * `test-trace.mjs` finds the import, not the body.
+ *
  *   numbersIn          <- test-trace.mjs:1156     the `-?\d+` token extractor
  *   level3TableNumbers <- test-trace.mjs:1165-1169 parseGuide -> level 3 rows -> numeric cells
  *   sharedNumbers      <- test-trace.mjs:1175-1177 trace text -> numeric tokens -> intersection
