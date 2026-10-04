@@ -137,7 +137,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 29 | V8 scan → repair thin tables | §7 | **done — 25 of 27** | `971b344` | `npm run audit` → thin tables **27 → 2**. Rows derived from golden-trace steps with cited indices; where a table's input disagreed with the trace's canonical case, the trace won. **2 left deliberately** (`length-of-last-word` L2, `kth-largest-element` L1): each traces to exactly **2 steps**, so 3 rows cannot be derived and a padded row looks like evidence while being none. validate 150/0 · player 40/0 · **110 Playwright green**. Also surfaced L1 code defects (`rotate-array` L1 never returns) — reported, not patched. |
 | 30 | Wire `verify` + CI cache + time budget | §7 | **done** | `159607d` `0e05af2` | **`npm run verify` green end to end for the first time: exit 0, 224 s measured, 450 goldens, 256 Playwright tests.** CI half earlier (`159607d`): `pull_request` trigger, `cache: 'npm'`, `timeout-minutes: 15`, Pages steps gated on `push`. `0e05af2`: 11 npm scripts registered, `verify` runs audit:check → gen:traces → validate → test → judge → chat → trace/envelope/serialize/validate/codecs/instrument/cases/doc-traces/renderers → e2e → build. `gen:traces` precedes `test:trace` because goldens are gitignored (E32). **Wiring the gates caught 2 real defects**: `gen:traces` flaked under load (flatten-binary-tree L1 TLE; generator now widens only its OWN budget to 9 s, judge stays 3 s) and `test-codecs` was pinning a stale codec interface (row 17's `name/encode/decode` vs row 15's added `owns`/`acceptsWire`/`toWire`/`fromWire` — assertion moved with the contract, still pins a CLOSED uniform surface). |
 | 31 | Design pass: timing/contrast/keyboard | §7 | **done** | `5630110` | **110 Playwright tests pass** across both viewports (was 100; +5 design-pass × 2 projects). axe-core (devDep, test-only) clean **inside the player**. **Found and fixed a real bug**: `scrollable-region-focusable` at 390px — `.viz-array.dr-array` overflows horizontally with no `tabindex`, so a keyboard user could not scroll it. Fixed at all 3 construction sites with `tabindex`/`role`/`aria-label`. Invisible at 1440px — exactly why F11 wants both viewports. |
-| 32 | "Unverified" = derived function | §7 | pending | | |
+| 32 | "Unverified" = derived function | §7 | **done** | `HEAD` | The integration step the 2026-10-03 entry flagged is CLOSED: `scripts/test-trace.mjs` no longer carries a second copy of the predicate. The inline three-way branch is deleted — the S14 loop routes `v9Verdict` (`:1178`) and nothing else — and `declaredIn` / `namesIn` / `overrideOk` are imported from `scripts/lib/v9.mjs` (`:1162-1163`). **+3 gates** (`:1226-1254`) assert no local definition can return. `npm run test:trace` → **151 assertions, 0 failures** (was 148), published line **byte-identical**: `142/150 agreed, 8 uncomparable`. Gate proven RED first, naming `declaredIn at test-trace.mjs:1190`. Fidelity differential, old body vs `v9Verdict` over all 150 guides → **0 mismatches**. Portal badge re-proved live. See the 2026-10-03 section at the end. |
 | 33 | V12 logging-only prediction events | §7 | **done** | `ebe75e3` | `npm run test:judge` → **76 assertions, 0 failures** (was 64; **+12** for the event store). Player 40/0, validate 150/0. **Logging only** — no score, nothing rendered. Browser half writes localStorage; aggregate half is `readPredictionEvents`/`recordPredictionEvents` in the **existing** `kv.mjs` (K3 reuse), capped at 500 with the oldest dropped. Records **reached-the-end only** — correctness is deliberately not recorded, since nothing can know it. **No endpoint added**: the plan names none, and a route nobody calls is the surface P1 cuts. |
 
 **Gated — do not build unprompted.**
@@ -1134,3 +1134,116 @@ stable one: at 446 heads the published artefact and the live gate reported the S
 be right; it is the gate's own arithmetic, recomputed.
 
 **RE-RUN REQUIRED after both slices land.** This row does not claim `verify` green.
+
+### 2026-10-03 — row 32's integration step: the predicate exists ONCE, and a gate says so
+
+HEAD at this entry: `f61e4fd`. This closes the debt named at `:1095-1098` — `scripts/test-trace.mjs`
+still had its own copy of V9 — so `scripts/lib/v9.mjs` is now the **only** definition, and the CI
+gate and the published portal badge provably share it.
+
+**What was removed** (from `scripts/test-trace.mjs`, at the pre-change line numbers):
+
+| Was | Now |
+|---|---|
+| `:1162-1180` — the inline three-way branch, re-implementing `v9Verdict`'s exact order | `:1178` `const tableVerdict = v9Verdict(guideText, g.steps, tableModule.parseGuide)`, routed onto the same three arrays at `:1179-1181` |
+| `:1190-1193` `const declaredIn = (source) => …` | imported, `:1162` |
+| `:1197` `const namesIn = (sentence) => …` | imported, `:1162` |
+| `:1198-1199` `const overrideOk = (sentence, codeNames, watch) => …` | imported, `:1162` |
+
+`sharedNumbers` and `MIN_STEPS` are no longer imported either — `v9Verdict` owns the threshold, so
+S14 states no threshold of its own. `parseGuide` is still the module loaded at `:1155`; no second
+path to the table parser was added. `level3TableNumbers` survives at `:1177` for ONE reason:
+`comparedTables` is a census of **authored L3 tables**, not a verdict, and a guide with no table
+never entered the denominator — dropping it would have moved the published line to `142/142`.
+
+**RED first (`npm run test:trace`, gate written while the duplicates were still in place), exit 1:**
+
+```
+❌ [FAIL] S14 V9 one definition: this file defines none of V9's own — 5 names imported from scripts/lib/v9.mjs
+   defined again here: declaredIn at test-trace.mjs:1190, namesIn at test-trace.mjs:1197, overrideOk at test-trace.mjs:1198
+Assertions: 151 | Failures: 1
+```
+
+It names every offending definition **with its line number**. The gate's second assertion is the
+detector biting on purpose, so the first one cannot be a no-op, and the third asserts they are
+defined in `lib/v9.mjs` — "not here" must not mean "nowhere".
+
+**GREEN after the deletion (`npm run test:trace`), exit 0:**
+
+```
+✅ [PASS] S14 V9: every comparable authored table shares at least one value with its trace (142/150 agreed, 8 uncomparable)
+S14 V9: 8 guides have no comparable L3 table (trace too coarse or table absent) — reported, not counted as agreement
+✅ [PASS] S14 V9 override guard: a sentence naming watched code identifiers is allowed
+✅ [PASS] S14 V9 override guard: a sentence naming a DECLARED-BUT-UNWATCHED identifier is REJECTED — the guard bites
+✅ [PASS] S14 V9 override guard: prose and literals are not identifier references
+✅ [PASS] S14 V9 override guard: no shipped override names an identifier the trace never watched (0 overrides in the corpus)
+✅ [PASS] S14 V9 one definition: this file defines none of V9's own — 5 names imported from scripts/lib/v9.mjs
+✅ [PASS] S14 V9 one definition: the duplicate-definition detector BITES and names the line — a copy here would not be silent
+✅ [PASS] S14 V9 one definition: all 5 are DEFINED in scripts/lib/v9.mjs, not merely absent here
+Assertions: 151 | Failures: 0
+```
+
+**Assertion count 148 → 151** — +3, the three gates added and nothing else. **Before**
+(`npm run test:trace`, measured at `f61e4fd`): `Assertions: 148 | Failures: 0`. **After**: `151 | 0`.
+The two `S14 V9:` strings are **byte-identical** across the deletion: the RED run above still ran the
+INLINE loop, and `diff` of its two S14 lines against the GREEN run's is empty — the published line did
+not move a character.
+
+The published number is the artefact's, not this gate's: `docs/traces/index.json`
+(`curl -s http://localhost:8099/traces/index.json`, parsed) still carries
+`counts.tableTraceAgrees 142 · tableTraceDisagrees 0 · tableTraceUncomparable 8`, and the same
+**8 paths** as the 2026-10-03 entry — `01-array-string/18-integer-to-roman`, `07-stack/02-simplify-path`,
+`07-stack/03-min-stack`, `08-linked-list/01-linked-list-cycle`, `09-binary-tree-general/12-bst-iterator`,
+`16-one-dp/01-climbing-stairs`, `20-trie/01-implement-trie`, `20-trie/02-add-and-search-words`.
+
+**Fidelity differential (S5) — the swap changed no arithmetic.** A throwaway script in `/tmp`
+(not in the repo, not committed) ran the OLD inline body, copied verbatim from `f61e4fd`
+`scripts/test-trace.mjs:1162-1180`, and the NEW routing over every one of the 150 real L3 guides:
+
+```
+guides compared        : 150 (of 150 L3 goldens, 0 unreadable)
+old inline  tally      : 142 agrees / 0 disagrees / 8 uncomparable (comparedTables=150)
+v9Verdict    tally     : 142 agrees / 0 disagrees / 8 uncomparable (comparedTables=150)
+MISMATCHES             : 0
+uncomparable SET differences: 0
+RESULT: 0 mismatches — the swap changed no arithmetic, and the same 8 guides are uncomparable
+```
+
+The SET comparison is the load-bearing part: an equal count could still be a different 8 guides.
+
+**Real surface (S1) — the badge still renders from the build-time verdict.**
+`npx serve docs -l 8099` (already in the npx cache; nothing installed) + Playwright MCP at the
+measured default viewport **1200×1419, DPR 1**:
+
+| Guide | `TABLE_TRACE[…]` | Badge | `data-verdict` |
+|---|---|---|---|
+| `01-array-string_01-merge-sorted-array` | `{tableTrace:"agrees"}` | **none** — `#verifyBadge` absent | — |
+| `20-trie_01-implement-trie` | `{tableTrace:"uncomparable"}` | `Unverified · not comparable` | `uncomparable` |
+
+Absence of the badge on the `agrees` guide is checked against the guide's own verdict entry, so it
+is the *certified* state and not a missing index. `curl -s -o /dev/null -w '%{http_code}'
+http://localhost:8099/traces/index.json` → **200** (164 644 B, parses). Screenshots moved out of
+the repo — `.playwright-mcp/` is **not** gitignored: `/tmp/row32-qa/case1-agrees-no-badge.png`,
+`/tmp/row32-qa/playwright-mcp/row32-case2b-uncomparable-badge.png`. Server killed after the run:
+`pgrep -fl "serve docs"` → nothing, `curl` → `000` connection refused, nothing listening on 8099.
+
+`disagrees` has **no** published instance (0 of 150), so its badge cannot be photographed from the
+real corpus; that branch's predicate case is `node scripts/lib/v9.mjs`'s ("a table with NO shared
+value DISAGREES — the guard bites"), and `docs/index.html` is untouched by this row.
+
+**Suites, re-measured with this change in place.** `npm test` **1898 assertions · 0 failures**
+(Files 150 · runtime 150 · syntax-only 0 · 450 blocks) · `test:envelope` **129·0** ·
+`test:serialize` **9 cases, 0 failures** · `test:validate` **23·0** · `test:instrument` **246·0** ·
+`test:codecs` **275·0** · `test:trace-runner` **269·0** · `test:doc-traces` **17·0** ·
+`test:judge` **96·0** · `validate` **Scanned: 150 problem files, Errors: 0, Warnings: 0** ·
+`test:trace` **151·0**. The corpus was NOT regenerated (`npm run gen:traces` not run): 450 full
+goldens and 450 heads are already on disk and `judge/traces/` is gitignored. S17's own ratchet line
+from the same `npm run test:trace` run: `450 heads · zero-pass 32 (baseline 49) · partial-pass 20
+(baseline 33) · clean 398`.
+
+**Left alone deliberately.** `scripts/lib/v9.mjs` is unmodified (`git status` shows one file), so its
+header's port provenance (`test-trace.mjs:1156`, `:1163-1179`, `:1190-1199`) now cites lines that
+have moved — a comment-only staleness, in a file this row does not own. Row 15's residual work and
+the `verify` re-run the 2026-10-03 correction demands are untouched; `gen-traces.mjs`,
+`api/_lib/problems.mjs`, `api/_lib/codecs.mjs` and `judge/` are not mine.
+
