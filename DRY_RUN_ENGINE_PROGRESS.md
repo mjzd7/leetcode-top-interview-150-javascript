@@ -1836,3 +1836,58 @@ X1, X2, X3 and X4 are all one sentence: **the wire cannot express what the autho
 of them means either an authored-script execution inside the driver or a change to the codec
 registry's wire domain — the two things §5d and §6 rule out, and the two decision C3's reopen
 condition names. They are reported, not taken.
+
+### 2026-10-05 — row 15's six slices: `npm run verify` green, and the portal ships a clean verdict
+
+**`npm run verify` → exit 0**, measured end to end at `b75dd5a`, with `gen:traces` re-running first
+because the goldens are gitignored (E32). What it printed, in order:
+
+```
+audit:check · gen:traces → problems 150  covered 150  uncovered 0 · validate → Scanned: 150, Errors: 0 | Warnings: 0
+npm test        → Files: 150 (runtime-tested: 150, syntax-only: 0) · Syntax blocks checked: 450 | Runtime assertions: 1898 · Failures: 0
+test:judge      → Assertions: 96  | Failures: 0      test:chat      → Assertions: 471 | Failures: 0
+test:trace      → Assertions: 197 | Failures: 0      S17 ratchet: 450 heads · zero-pass 6 (baseline 6) · partial-pass 5 (baseline 5) · clean 439
+test:envelope   → Assertions: 129 | Failures: 0      test:serialize → 9 cases, failures: 0
+test:validate   → Assertions: 23  | Failures: 0      test:codecs    → Assertions: 275 | Failures: 0
+test:instrument → Assertions: 246 | Failures: 0      test:cases     → Files covered: 41 | Failures: 0
+test:doc-traces → 17 assertions, 0 failures          test:dryrun-player → Checks: 40 | Failures: 0
+test:e2e        → 272 passed, 18 skipped             build → Bundled 175 modules, Published docs/traces/
+```
+
+`test:trace-runner` is **not** in `verify`'s chain and was measured on its own: **269 · 0**.
+
+**The residual in one line: `clean 439 · zero-pass 6 · partial-pass 5`.** Row 15's cell now reads
+**`PARTIAL — 11/450 verdicts still wrong`**, and §7's closing table names each of the 11 with the
+reason and the mechanism its fix would need.
+
+**Real surface (5g.4).** `npx serve docs -l 8137` (background), Playwright MCP at the default
+viewport, guide `155. Min Stack` — one of the 19 blocks this row's first slice closed, and the guide
+whose authored script is the canonical op-sequence shape.
+
+| What | Observed |
+|---|---|
+| Page | `http://localhost:8137/#07-stack_03-min-stack`, `<h1>` = **155. Min Stack**, Level 2 pane with its pseudocode, dry-run table and JS section rendered, 15 187 chars of guide content |
+| The dry-run table the portal draws | `push(-2)` · `push(0)` · `push(-3)` · **`getMin() → -3`** · `pop()` · **`top() → 0`** · **`getMin() → -2`** — the authored op sequence, op for op |
+| The trace the portal serves | `GET /traces/heads/07-stack__03-min-stack.L3.head.json` → **`verdict {"failed":0,"passed":9}`**, `stepCount 14`, `codec ops`, first step `this.stack = []`, last step `return this.stack[this.stack.length - 1][1]` |
+| `GET /traces/index.json` | **HTTP 200, 164 652 B, parses**; `07-stack/03-min-stack.md → {"tableTrace":"agrees"}`, and `#verifyBadge` is **ABSENT** — which is the certified state for `agrees`, checked against the guide's own index entry rather than assumed |
+| V9 on the live corpus | `144 agrees / 0 disagrees / 6 uncomparable` |
+
+**V9's published line MOVED, `142/8 → 144/6`, and that is the gate working rather than a regression.**
+It is recomputed from the traces at build time (row 32's own note: "the index is not a stored opinion
+that happens to be right; it is the gate's own arithmetic"), and two guides became comparable because
+their traces are no longer the collapsed `args: []` recording. `scripts/lib/v9.mjs`,
+`docs/index.html` and `docs/dryrun/` are untouched by this row — `git show --stat` on all six commits
+names only `scripts/gen-traces.mjs`, `api/_lib/problems.mjs`, `scripts/test-trace.mjs`,
+`DRY_RUN_ENGINE_PROGRESS.md` and the `judge/traces/*.head.json` files row 28 committed.
+
+**Server killed, port proven free.** `pkill -f "serve docs -l 8137"` → `pgrep -fl "serve docs"` prints
+nothing, `curl -m 3 http://localhost:8137/` → **000 (connection refused)**, `lsof -nP -iTCP:8137` →
+empty. `.playwright-mcp/` is **not** gitignored, so the screenshot and the two snapshot files were
+moved out to `/tmp/row15-qa/` and the directory removed: `git status --porcelain | wc -l` → **0**.
+
+**Committed heads, and why they are in these commits.** The 450 `*.head.json` are TRACKED (row 28
+committed them; `git check-ignore` matches only `judge/traces/*.json`, i.e. the full goldens and
+`manifest.json`). Leaving them stale would break S15's head-versus-golden drift gate on a fresh clone,
+since `verify` regenerates the goldens and compares them against the committed heads. So each slice
+commits exactly the heads whose `verdict` or `stepCount` it moved — 28, 12, 4, 6, 3 and 3 across the six
+slices — and never a full golden, never `build/`, never `docs/traces/`.
