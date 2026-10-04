@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 33/450 verdicts still wrong** (was 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 26/450 verdicts still wrong** (was 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -1394,3 +1394,84 @@ here. The methods replayed are the target's own; nothing in the driver computes 
 **Left alone deliberately.** `api/_lib/codecs.mjs` is unmodified, so X3/X4 stay open rather than being
 "fixed" by a registry edit that §6 forbids and that the `[]` probe showed is a net loss. The other 33
 blocks (M2–M6, X2, X3, X4) are not started.
+
+### 2026-10-05 — row 15, part 3: an assertion with no recorded target call is NOT a case. **33 → 26.**
+
+The spy's recorded target call could not be transported (a `list` with random pointers, a cyclic
+graph), so `__A__` stayed null and the capture fell through to the first-any-call fallback — which
+for `assertEq(copy !== orig && copy.next !== orig.next, true, 'deep copy, no shared nodes')` is the
+ASSERTER ITSELF. So `args` became `[true, true, 'deep copy, no shared nodes']` and the driver invoked
+`copyRandomListBruteForce` with it. Measured on the committed heads with `node /tmp/cases.mjs
+08-linked-list/04-copy-list-with-random-pointer.md`: 6 of its 7 cases carried `callee: 'assertEq'`.
+
+That is not a case about the target, and it is exactly how the block reported `passed 1 failed 6` —
+the one pass is the `null` input, which is a real case.
+
+**Shipped: the capture is dropped, and counted, on the same ground as the untransportable case above
+it.** `unbacked` is set when `__A__` is null AND no op list backs the case AND the recorded callee is
+an asserter. The op-list clause is not decoration: `is-subsequence`'s class case has no recorded
+ARGUMENTS either (the receiver's construction is left unspied, per part 2) and is entirely carried by
+its op list, so testing `__A__` alone dropped 7 good cases and took the corpus to 449 heads.
+
+**RED first, `npm run test:trace`, exit 1, 9 failures** — every one naming its guide and its current
+counts:
+
+```
+❌ [FAIL] S24 unbacked: 08-linked-list__04-copy-list-with-random-pointer L1 passes every case it has — the list has random pointers, so the input is CYCLIC and cannot be transported
+   passed 1, failed 6 · stepCount 7
+❌ [FAIL] S24 unbacked: 18-graph-general__03-clone-graph L1 passes every case it has — the graph is cyclic too — the target is never driven with an unbacked assertion again
+   passed 2, failed 6 · stepCount 8
+❌ [FAIL] S24 unbacked: 20-trie__03-word-search-ii L1 passes every case it has — `board restored` asserts about the board, never about the target — it was graded as a call
+   passed 3, failed 3 · stepCount 188
+Assertions: 185 | Failures: 9
+```
+
+`20-trie/03-word-search-ii`'s `board restored` case is the purest instance: `assertEq(board.every(…),
+true)` asserts about the BOARD, never about the target, and it was being graded as a call on it.
+
+**GREEN after the drop, `npm run test:trace`, exit 0:**
+
+```
+S17 ratchet: 450 heads · zero-pass 13 (baseline 13) · partial-pass 13 (baseline 13) · clean 424
+Assertions: 183 | Failures: 0
+```
+
+**The gate names clone-graph L1 only, and the reason is worth recording.** Its L2/L3 lose the
+unbacked cases too — that is this mechanism — but their two surviving cases then fail on
+`ReferenceError: graphToAdj is not defined`, which is a derivation helper declared in a SIBLING block
+and therefore M5's defect, not this one's. Naming L2/L3 here would make the gate un-greenable for a
+reason that has nothing to do with the drop, which is the S16 lesson again: a gate that cannot go green
+proves nothing.
+
+**Census before → after** (`node /tmp/census.mjs`):
+
+```
+before   clean 417  zeroPass 13  partialPass 20
+after    clean 424  zeroPass 13  partialPass 13
+```
+
+`clean` moved by **exactly 7** — copy-list ×3, clone-graph L1, word-search-ii ×3 — and `zero-pass` did
+not move at all, which is the receipt that nothing regressed. The 13 remaining partial are
+`next-right-pointers-ii` ×2 (X3), `powx-n` ×3 (M6), `longest-palindromic-substring` ×3 (M3),
+`sorted-array-to-bst` L1 (M3), `merge-k-sorted-lists` ×2 (X4) and `clone-graph` L2/L3 (M5).
+
+**Determinism, two consecutive `npm run gen:traces`:** `clean 424 zeroPass 13 partialPass 13`, twice.
+
+**Suites, re-measured** — every §6 number unmoved except the one §6 allows to move:
+
+| Suite | Value |
+|---|---|
+| `npm test` | **1898 assertions · 0 failures** · `Files: 150` · `syntax-only: 0` · 450 blocks · 36 divergences |
+| `test:envelope` **test:serialize** **test:validate** **test:instrument** | **129 · 0** · **9 cases · 0** · **23 · 0** · **246 · 0** |
+| `test:codecs` **test:trace-runner** **test:doc-traces** **test:judge** | **275 · 0** · **269 · 0** · **17 · 0** · **96 · 0** |
+| `validate` | **150 files · 0 errors · 0 warnings** |
+| `test:trace` | **183 · 0** (was 176; +7 named gates for this slice) |
+
+**Real surface (5g.3) — the control.** `npm test 08-linked-list/04-copy-list-with-random-pointer.md`
+→ `✅ [PASS] (10 assertions)` · `npm test 18-graph-general/03-clone-graph.md` → `✅ [PASS] (11
+assertions)` · `npm test 20-trie/03-word-search-ii.md` → `✅ [PASS] (6 assertions)`. `test-runner.mjs`
+was already immune, so these are controls; the receipt is the census.
+
+**Not a comparator change.** Nothing about how a value is compared moved. What moved is which
+inputs reach the comparator: an argument list the script never wrote down as the target's is no
+longer graded as one. `api/_lib/codecs.mjs` and the E28 registry are untouched.

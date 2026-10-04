@@ -607,7 +607,19 @@ function __SPY__(name, target, isCtor, via) {
         __ops__ = __OPS__.map(function (o, i) { return [o[0], o[1], i >= __base__ ? o[2] : 0]; });
         __FROM__ = __OPS__.length;
       }
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null });
+      // Row 15 / S24 — the unbacked flag is set when the "args" recorded for this case ARE the asserter's
+      // own arguments: no target call was recorded since the last assertion (the one that was could
+      // not be transported), so the first-any-call fallback below recorded the ASSERTER. That is not
+      // a case about the target — it is the target being asked to be called with
+      // [true, true, "deep copy, no shared nodes"] — and grading it is how
+      // copy-list-with-random-pointer reported 1 passed / 6 failed. Dropped and counted, on the same
+      // ground as the untransportable case above it: a golden for an input the script never wrote
+      // down is not a golden.
+      // An op list backs the case on its own, so the test is the OPS LENGTH and not __A__:
+      // is-subsequence's class case has no recorded ARGUMENTS (the receiver's construction is left
+      // unspied) and is entirely carried by the op list.
+      var __unbacked__ = (__A__ === null && __OPS__.length === 0 && __ASSERTERS__.indexOf(__FN__) !== -1) ? 1 : 0;
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null });
       __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = []; __AV__ = null;
     }
 
@@ -1013,6 +1025,7 @@ async function harvestCases(script, blocksByLevel, codec = null) {
   const cases = [];
   let unserialisable = 0;
   let untransportable = 0;
+  let unbacked = 0;
   for (const record of captured) {
     if (record.args === null || record.args === undefined) continue; // no block call before this assertion
     // The TARGET was called and its arguments could not be transported. `buildBundle` inlines
@@ -1020,6 +1033,8 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     // recording the helper's arguments instead would trace a call the guide never documents.
     // Dropped, and counted, because a golden for a substituted input is not a golden.
     if (record.untransportable) { untransportable++; continue; }
+    // Row 15 / S24: nothing was recorded behind this assertion, so its `args` are the ASSERTER's.
+    if (record.unbacked) { unbacked++; continue; }
     if (!Array.isArray(record.args)) { unserialisable++; continue; }
     const testCase = { name: record.label ?? `case${cases.length}`, args: record.args };
     // The target that produced this case, carried so a level can tell its OWN cases from another
@@ -1053,7 +1068,10 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     return {
       cases: [],
       untransportable,
-      reason: untransportable > 0
+      unbacked,
+      reason: unbacked > untransportable
+        ? `every assertion had no recorded target call behind it (${unbacked} of them), so there was no input to trace — the spy fell back to the asserter's own arguments`
+        : untransportable > 0
         ? `every assertion calls the target with an input that cannot be transported to the driver (${untransportable} cyclic/non-JSON argument lists). `
           + '`api/_lib/problems.mjs`\'s `buildBundle` marshals ONLY the `tree` codec — its own comment names row 17 as the fix — so a `list`/`graph` input (a node graph, or a cycle) has no form `JSON.stringify(tests)` can carry.'
         : 'no assertion in the authored script calls a function this block declares, so there is no input to trace',

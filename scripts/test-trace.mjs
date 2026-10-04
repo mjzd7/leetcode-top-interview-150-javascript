@@ -1466,7 +1466,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 13, partialPass: 20 };
+    const VERDICT_BASELINE = { zeroPass: 13, partialPass: 13 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1574,6 +1574,36 @@ async function main() {
       check(golden !== null && !classOpPredicate(golden),
         `S23 ops: insert-delete-getrandom-o1 ${level} is still wrong on purpose — its answer needs a Math.random stub, which §5d forbids`,
         `passed ${golden?.verdict.passed}, failed ${golden?.verdict.failed} — a clean verdict here means the op list was replayed against an unpinned draw sequence, which is non-deterministic`);
+    }
+
+    // ---- S24 · row 15 — an assertion with no recorded target call is NOT a case ----
+    // When the spy's recorded target call could not be transported, `__A__` stayed null and the
+    // capture fell through to the first-any-call fallback — which for `assertEq(copy !== orig && …)`
+    // is the ASSERTER ITSELF. So `args` became the asserter's own arguments and the driver invoked
+    // the target with them. Measured on `08-linked-list/04-copy-list-with-random-pointer`: the
+    // golden drove `copyRandomListBruteForce(true, true, 'deep copy, no shared nodes')`.
+    //
+    // That is not a case about the target at all, and grading it is how a block reports
+    // `passed 1 failed 6`: the one pass is the `null` input, which is a real case.
+    const UNBACKED_GUIDES = [
+      ['08-linked-list__04-copy-list-with-random-pointer', 'L1,L2,L3', 'the list has random pointers, so the input is CYCLIC and cannot be transported'],
+      // Only L1 here. clone-graph's L2/L3 also lose the unbacked cases, but their remaining two
+      // cases then fail on `graphToAdj` not being declared in the driver — a derivation helper that
+      // lives in a SIBLING block, which is its own mechanism and its own gate (S25). Naming them
+      // here would make this gate un-greenable for a reason that has nothing to do with the drop.
+      ['18-graph-general__03-clone-graph', 'L1', 'the graph is cyclic too — the target is never driven with an unbacked assertion again'],
+      ['20-trie__03-word-search-ii', 'L1,L2,L3', '`board restored` asserts about the board, never about the target — it was graded as a call'],
+    ];
+    for (const [stem, levels, why] of UNBACKED_GUIDES) {
+      for (const level of levels.split(',')) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && classOpPredicate(golden),
+          `S24 unbacked: ${stem} ${level} passes every case it has — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · stepCount ${golden.stepCount}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
     }
 
     // ---- S18 · row 15 — a derivation the script applied and the driver dropped ----
