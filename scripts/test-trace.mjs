@@ -1157,8 +1157,10 @@ async function main() {
     // `v9Verdict` over the same corpus to publish a per-guide verdict the portal reads, so an
     // inline second copy here is exactly the second source of truth the extraction removed — and
     // it is the kind that rots silently, because both copies would keep printing plausible
-    // numbers while disagreeing about which guides are certified.
-    const { level3TableNumbers, sharedNumbers, MIN_STEPS } = await import('./lib/v9.mjs');
+    // numbers while disagreeing about which guides are certified. This loop ROUTES that verdict
+    // and decides nothing; `S14 V9 one definition` below is what keeps the copy from coming back.
+    const { v9Verdict, level3TableNumbers, AGREES, DISAGREES, declaredIn, namesIn, overrideOk } =
+      await import('./lib/v9.mjs');
     let comparedTables = 0;
     let agreed = 0;
     const disagreed = [];
@@ -1167,16 +1169,16 @@ async function main() {
       const g = readGolden(name);
       let guideText;
       try { guideText = fs.readFileSync(path.join(repoRoot, g.path), 'utf8'); } catch { continue; }
-      const tableNumbers = level3TableNumbers(guideText, tableModule.parseGuide);
-      if (tableNumbers === null) { uncomparable.push(g.path); continue; }
-      comparedTables++;
-      // Nothing numeric in the authored table means there is nothing to cross-check, and a
-      // trace too short to contain a shared value cannot confirm or contradict it. Both are
-      // UNCOMPARABLE. Calling them disagreements would report drift where no comparison is
-      // possible — the same sin as calling them agreement.
-      if (tableNumbers.size === 0 || g.steps.length < MIN_STEPS) { uncomparable.push(g.path); continue; }
-      if (sharedNumbers(tableNumbers, g.steps).length) agreed++;
-      else { disagreed.push(g.path); }
+      // `comparedTables` counts AUTHORED L3 TABLES — a census, not a verdict, so a guide with no
+      // table never enters the denominator. Everything else is `v9Verdict`'s to decide, and in the
+      // order `scripts/lib/v9.mjs:88-107` documents: no table, then nothing numeric to check or a
+      // trace too coarse to hold a shared value, are UNCOMPARABLE — calling either a disagreement
+      // would report drift where no comparison is possible, the same sin as calling it agreement.
+      if (level3TableNumbers(guideText, tableModule.parseGuide) !== null) comparedTables++;
+      const tableVerdict = v9Verdict(guideText, g.steps, tableModule.parseGuide);
+      if (tableVerdict === AGREES) agreed++;
+      else if (tableVerdict === DISAGREES) disagreed.push(g.path);
+      else uncomparable.push(g.path);
     }
     check(disagreed.length === 0,
       `S14 V9: every comparable authored table shares at least one value with its trace (${agreed}/${comparedTables} agreed, ${uncomparable.length} uncomparable)`,
@@ -1186,17 +1188,11 @@ async function main() {
     // The override guard (plan D12): an override SENTENCE may not name an identifier the CODE
     // declares but the trace never watched — otherwise the portal narrates a variable it never
     // sampled. Judged against the code's own declared names, NOT against every word in the
-    // sentence: an override is prose, and "left meets right" is not a reference to `meets`.
-    const declaredIn = (source) => new Set([
-      ...[...String(source).matchAll(/\b(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/g)].map((m) => m[1]),
-      ...[...String(source).matchAll(/\(([^)]*)\)\s*(?:=>|\{)/g)].flatMap((m) => m[1].split(',').map((t) => t.trim().split(/[\s=:]/)[0]).filter(Boolean)),
-    ]);
-    // The sentence REFERENCES identifiers; it does not declare them. So the guard intersects the
-    // words the sentence mentions with the names the CODE declares, and rejects any the trace
-    // never watched.
-    const namesIn = (sentence) => new Set([...(String(sentence).match(/[A-Za-z_$][\w$]*/g) || [])]);
-    const overrideOk = (sentence, codeNames, watch) => [...namesIn(sentence)]
-      .filter((w) => codeNames.has(w) && !watch.includes(w));
+    // sentence: an override is prose, and "left meets right" is not a reference to `meets`. The
+    // sentence REFERENCES identifiers rather than declaring them, so the guard intersects the words
+    // it mentions with the names the CODE declares and rejects any the trace never watched. Those
+    // three helpers are imported from `scripts/lib/v9.mjs` above, not re-typed here: row 32 left
+    // this file unable to define them, which is what the one-definition gate below asserts.
 
     const codeNames = new Set(['left', 'right', 'ghost']);
     const watchNow = ['left', 'right'];
@@ -1226,6 +1222,35 @@ async function main() {
     check(badOverrides.length === 0,
       `S14 V9 override guard: no shipped override names an identifier the trace never watched (${liveOverrides.length} overrides in the corpus)`,
       `bad: ${badOverrides.slice(0, 6).join(', ')}`);
+
+    // Row 32's anti-rot gate. `scripts/lib/v9.mjs` is the ONE definition of V9 — this gate and the
+    // published portal badge run the same predicate over the same corpus — so a second copy here is
+    // the rot A2 named: the rule drifting from the gate that enforces it. It stays invisible until
+    // the copies disagree about which guides are certified, which is why the only defence is to
+    // assert that this file defines NONE of them. Read from this file's own source, because a
+    // definition nobody exports is not a value any assertion here could reach.
+    const V9_OWNED = ['v9Verdict', 'level3TableNumbers', 'declaredIn', 'namesIn', 'overrideOk'];
+    /** Line numbers in `source` where `name` is DEFINED — a declaration keyword, then the name. */
+    const defLines = (source, name) => source.split('\n').flatMap((line, i) => (
+      new RegExp(`\\b(?:function|const|let|var|class)\\s+${name}\\b`).test(line) ? [i + 1] : []));
+    const selfSource = fs.readFileSync(path.join(__dirname, 'test-trace.mjs'), 'utf8');
+    const localDefs = V9_OWNED.flatMap((name) => defLines(selfSource, name)
+      .map((line) => `${name} at test-trace.mjs:${line}`));
+    check(localDefs.length === 0,
+      `S14 V9 one definition: this file defines none of V9's own — ${V9_OWNED.length} names imported from scripts/lib/v9.mjs`,
+      `defined again here: ${localDefs.join(', ')}`);
+    // The detector itself, proven able to bite: the same line shape, one line down, IS named. A gate
+    // that cannot go red proves nothing, and this is what makes the assertion above trustworthy.
+    const defProbe = `// row 32 probe\nconst ${V9_OWNED[0]} = () => {};`;
+    check(String(defLines(defProbe, V9_OWNED[0])) === '2',
+      'S14 V9 one definition: the duplicate-definition detector BITES and names the line — a copy here would not be silent',
+      `detector returned ${JSON.stringify(defLines(defProbe, V9_OWNED[0]))} for ${JSON.stringify(defProbe)}`);
+    // And the other half of the claim: they live THERE, so "not here" is not "nowhere".
+    const v9Source = fs.readFileSync(path.join(__dirname, 'lib', 'v9.mjs'), 'utf8');
+    const notInV9 = V9_OWNED.filter((name) => !new RegExp(`export function ${name}\\b`).test(v9Source));
+    check(notInV9.length === 0,
+      `S14 V9 one definition: all ${V9_OWNED.length} are DEFINED in scripts/lib/v9.mjs, not merely absent here`,
+      `no \`export function\` for: ${notInV9.join(', ')}`);
 
     // ---- S15: row 28 — every committed head is a true, capped SUMMARY of its golden ----
     // E32 is the claim ("commit only trace-head.json per problem"); this is the receipt. A head
