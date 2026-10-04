@@ -1466,7 +1466,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 13, partialPass: 10 };
+    const VERDICT_BASELINE = { zeroPass: 9, partialPass: 8 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1625,6 +1625,31 @@ async function main() {
         const golden = gname ? readGolden(gname) : null;
         check(golden !== null && classOpPredicate(golden),
           `S25 retvar: ${stem} ${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
+    }
+
+    // ---- S27 · row 15 — a derivation helper the driver never received ----
+    // A derivation is replayed in the driver's IIFE, and the helpers it references are sliced out of
+    // the AUTHORED SCRIPT. Some are declared in neither: they live in the guide's own block, at a
+    // level the driver is not given, so the replay throws `ReferenceError` before it can compare
+    // anything. `quadToGrid` is declared once in construct-quad-tree's markdown and is in none of
+    // the three selected blocks; `graphToAdj` and `treeHeight` are the same shape.
+    const SIBLING_HELPER_GUIDES = [
+      ['21-divide-conquer__03-construct-quad-tree', 'L2,L3', 'quadToGrid is in the guide, not in the block the driver is handed'],
+      ['18-graph-general__03-clone-graph', 'L2,L3', 'graphToAdj likewise — the remaining two cases died on it once the unbacked ones were dropped'],
+      // Found by running it, not by reading it: this guide's `treeHeight` is the same shape, so it
+      // is named here rather than left for a later slice to rediscover as a driver bug.
+      ['21-divide-conquer__01-sorted-array-to-bst', 'L2,L3', 'treeHeight is the same shape — its cases died on ReferenceError before comparing anything'],
+    ];
+    for (const [stem, levels, why] of SIBLING_HELPER_GUIDES) {
+      for (const level of levels.split(',')) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && classOpPredicate(golden),
+          `S27 sibling helper: ${stem} ${level} passes every case — ${why}`,
           golden
             ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
             : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
