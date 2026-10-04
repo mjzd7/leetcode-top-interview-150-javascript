@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 26/450 verdicts still wrong** (was 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 23/450 verdicts still wrong** (was 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -1475,3 +1475,95 @@ was already immune, so these are controls; the receipt is the census.
 **Not a comparator change.** Nothing about how a value is compared moved. What moved is which
 inputs reach the comparator: an argument list the script never wrote down as the target's is no
 longer graded as one. `api/_lib/codecs.mjs` and the E28 registry are untouched.
+
+### 2026-10-05 — row 15, part 4: the return can reach an assertion through a VARIABLE. **26 → 23.**
+
+`collectDerivations` finds the derivation by taking the asserter's `arguments[0]` and replacing its
+outermost TARGET CALL with the return placeholder. But an author does not have to put the call inside
+the assertion:
+
+```js
+const r1 = fn('babad');
+assertEq(r1.length === 3 && isPalStr(r1), true, 'babad longest pal');
+```
+
+No target call in `arguments[0]`, so no derivation was recorded, and the driver compared the target's
+raw return `"bab"` against an expected `true`. Measured before, all three levels: `passed 6 failed 3`.
+
+**Shipped: a variable initialised by a target call is the same value by another route.** Its
+references inside an assertion become the return placeholder — the same substitution, so the target
+still runs exactly once. `substituteRefs` replaces REFERENCES only, never anything spelled the same
+way and meaning something else: a computed-free member's *property*, an object-literal or pattern
+*key*, a label, and a `break`/`continue` label are all excluded by parent inspection, because
+`r1.length` is a reference to `r1` and `obj.r1` is not.
+
+The key has to be attached at a place the spy can tag. An inline call is keyed by its own offset; a
+variable-bound return has no inline call in the assertion at all, so the key is attached to the call
+INSIDE the declarator that bound it — the same two hops the value travelled, in reverse.
+
+**One filter was load-bearing, and 21 blocks found it.** `merge-sorted-array` declares
+`const merge = (nums1, m, nums2, n) => {…}` at top level and then CALLS it. Without excluding names
+the script itself declares (and names that are targets), `merge` became a "return variable", and the
+derivation came out as
+
+```
+__VIA_FNS__["v1"] = function (__R__) { return __R__([1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3); };
+```
+
+— the target call with its own callee replaced. Census went **424 → 406, zero-pass 13 → 34**, 21
+blocks across 7 guides (`merge-sorted-array`, `rotate-array`, `substring-with-concatenation`,
+`rotate-image`, `set-matrix-zeroes`, `game-of-life`, `group-anagrams`), all void mutators whose script
+declares a helper of the same name. With the filter: `clean 427 zeroPass 13 partialPass 10`.
+
+**RED first, `npm run test:trace`, exit 1:**
+
+```
+❌ [FAIL] S25 retvar: 17-multi-dp__04-longest-palindromic-substring L1 passes every case — the assertion projects the RETURN: r1.length === 3 && isPalStr(r1)
+   passed 6, failed 3 · first error: (a case compared unequal)
+❌ [FAIL] S25 retvar: 21-divide-conquer__01-sorted-array-to-bst L1 passes every case — inorderVals(t) — the author asserts the INORDER traversal of the returned tree
+   passed 2, failed 5 · first error: (a case compared unequal)
+Assertions: 187 | Failures: 4
+```
+
+**GREEN after the substitution:**
+
+```
+S17 ratchet: 450 heads · zero-pass 13 (baseline 13) · partial-pass 10 (baseline 10) · clean 427
+Assertions: 186 | Failures: 0
+```
+
+**Why the gate does not name sorted-array-to-bst, even though its `inorderVals(t)` case is exactly
+this shape.** It needs a second mechanism as well: `treeHeight` is declared in a block the driver
+never receives, so its other cases die on `ReferenceError: treeHeight is not defined` — that is the
+sibling-block helper defect (M5) and it gets its own gate. Its L1 case is a THIRD defect: the
+author's second loop iterates `[sortedArrayToBSTSliced, sortedArrayToBST]` only, so
+`treeHeight(...) <= 3` is false for L1's brute force — and the harvested case carries `callee: 'fn'`,
+an alias BIND in both loops, so the level partition cannot tell them apart. That is an eighth
+mechanism (an alias loop's membership is not recorded), one block, left open and named here so it is
+not rediscovered as a driver bug.
+
+**Census before → after** (`node /tmp/census.mjs`):
+
+```
+before   clean 424  zeroPass 13  partialPass 13
+after    clean 427  zeroPass 13  partialPass 10
+```
+
+`clean` moved by **exactly 3** — longest-palindromic-substring L1/L2/L3 — and `zero-pass` did not move,
+so nothing regressed. sorted-array-to-bst L1 improved `2/5 → 5/2` without becoming clean: the two
+failures are now the author's second loop being asserted against L1, which is a fact rather than a
+transport failure.
+
+**Determinism, two consecutive `npm run gen:traces`:** `clean 427 zeroPass 13 partialPass 10`, twice.
+
+**Suites, re-measured:** `npm test` **1898 · 0** (`Files: 150`, `syntax-only: 0`, 450 blocks, 36
+divergences) · `test:envelope` **129 · 0** · `test:serialize` **9 cases · 0** · `test:validate`
+**23 · 0** · `test:instrument` **246 · 0** · `test:codecs` **275 · 0** · `test:trace-runner`
+**269 · 0** · `test:doc-traces` **17 · 0** · `test:judge` **96 · 0** · `validate` **150 files · 0
+errors · 0 warnings** · `test:trace` **186 · 0** (was 183; +3 named gates).
+
+**Real surface (5g.3) — the control.** `npm test 17-multi-dp/04-longest-palindromic-substring.md` →
+`✅ [PASS] (9 assertions)`.
+
+**The comparator is untouched.** A derivation was already part of the design (S22); this slice adds
+one more way for the harvest to RECORD one. `api/_lib/codecs.mjs` and E28 are unmodified.
