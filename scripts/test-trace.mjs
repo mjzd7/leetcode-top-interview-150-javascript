@@ -1466,7 +1466,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 13, partialPass: 13 };
+    const VERDICT_BASELINE = { zeroPass: 13, partialPass: 10 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1602,6 +1602,31 @@ async function main() {
           `S24 unbacked: ${stem} ${level} passes every case it has — ${why}`,
           golden
             ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · stepCount ${golden.stepCount}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
+    }
+
+    // ---- S25 · row 15 — a derivation over a VARIABLE the author bound the return to ----
+    // `const r1 = fn('babad'); assertEq(r1.length === 3 && isPalStr(r1), true)` never puts the
+    // target call inside the asserter, so `collectDerivations` — which looks for the outermost
+    // TARGET CALL in `arguments[0]` — found none, recorded no derivation, and the driver compared
+    // the target's raw return `"bab"` against an expected `true`.
+    // sorted-array-to-bst is NOT named here even though its `inorderVals(t)` case is exactly this
+    // shape, because it needs a SECOND mechanism as well: `treeHeight` is declared in a block the
+    // driver never receives, so its other cases die on `treeHeight is not defined`. That is the
+    // sibling-block helper defect, and it gets its own gate — naming it here would make this gate
+    // un-greenable for a reason that is not this mechanism.
+    const RET_VAR_GUIDES = [
+      ['17-multi-dp__04-longest-palindromic-substring', 'L1,L2,L3', 'the assertion projects the RETURN: r1.length === 3 && isPalStr(r1)'],
+    ];
+    for (const [stem, levels, why] of RET_VAR_GUIDES) {
+      for (const level of levels.split(',')) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && classOpPredicate(golden),
+          `S25 retvar: ${stem} ${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
             : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
       }
     }
