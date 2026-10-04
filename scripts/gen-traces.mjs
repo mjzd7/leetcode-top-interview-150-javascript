@@ -341,7 +341,7 @@ const ASSERTER_RE = /^(assert|approx|check|expect|verify|eq|same|isEqual|isDeep|
  * Upgrade path: if a guide's cases ever turn out to be captured only through an alias, bind
  * the alias too — the spy needs no region table, so it extends for free.
  */
-function spyRewrite(script, targetNames = [], reserved = new Set(), siblingSources = [], { ops = true } = {}) {
+function spyRewrite(script, targetNames = [], reserved = new Set(), siblingSources = [], { ops = true, mutArgs = false } = {}) {
   let ast;
   try {
     ast = acorn.parse(script, { ecmaVersion: 2024, sourceType: 'script', locations: false });
@@ -446,7 +446,7 @@ function spyRewrite(script, targetNames = [], reserved = new Set(), siblingSourc
   // The derivations, collected from the SAME AST and the SAME `script` text the edits below
   // slice — collected BEFORE any edit is applied, because an edit shifts every offset after it
   // and `byStart` is keyed on offsets into the ORIGINAL string.
-  const derivations = collectDerivations(script, ast, targets, reserved, siblingSources);
+  const derivations = collectDerivations(script, ast, targets, reserved, siblingSources, { mutArgs });
 
   const edits = [];
   const rewrite = (callee, ctor, callStart) => {
@@ -736,7 +736,7 @@ const DRIVER_DECLARED = (() => {
  *   `byStart` maps a target call's source offset to its registry key, so the spy rewrite can hand
  *   the key to that exact call site.
  */
-export function collectDerivations(script, ast, targets, reserved = new Set(), siblings = []) {
+export function collectDerivations(script, ast, targets, reserved = new Set(), siblings = [], { mutArgs = false } = {}) {
   const targetSet = targets instanceof Set ? targets : new Set(targets);
   const entries = [];
   const byStart = new Map();
@@ -778,6 +778,25 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
   // became a "return variable" and the derivation came out as
   // `__R__([1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3)` — the target call with its own callee replaced.
   // Measured cost of getting that wrong: 21 blocks across 7 guides went clean to zero-pass.
+  // Row 15 / S26 - the THIRD place the target's value reaches an assertion: a MUTATED ARGUMENT.
+  // `fn(t1); assertEq(collectRightChain(t1), [1,2,3,4,5,6])` - a void target rewrites its argument
+  // in place, so the asserted value is a derivation over that argument, not over the return.
+  // Offered only when the target is `void` (see `harvestCases`): for a target that RETURNS a value
+  // the driver has no changed argument to hand the registry, and left ungated this fired on every
+  // assertion mentioning an argument name - measured cost: word-search-ii's three levels went clean
+  // to zero-pass and the corpus read `clean 424 zeroPass 15`.
+  const argVars = new Set();
+  const argVarSite = new Map();
+  if (mutArgs) walk.simple(ast, {
+    CallExpression(node) {
+      if (node.callee?.type !== 'Identifier' || !targetSet.has(node.callee.name)) return;
+      for (const a of node.arguments ?? []) {
+        if (a?.type !== 'Identifier') continue;
+        argVars.add(a.name);
+        if (!argVarSite.has(a.name)) argVarSite.set(a.name, node.start);
+      }
+    },
+  });
   const declaredHere = topLevelDeclarations(script);
   walk.simple(ast, {
     VariableDeclarator(node) {
@@ -792,7 +811,7 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
   // Replace every REFERENCE to `names`, and nothing that merely looks like one: a computed-free
   // member's property (`r1.length` is a reference to r1, `obj.r1` is not), an object-literal or
   // pattern key, and a label are all spelled the same way and mean something else.
-  const substituteRefs = (text, names) => {
+  const substituteRefs = (text, names, placeholder = '__R__') => {
     let tree;
     try {
       tree = acorn.parse(text, { ecmaVersion: 2024, sourceType: 'script' });
@@ -821,7 +840,7 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
     visit(tree, null);
     let out = text;
     for (const cut of cuts.sort((a, b) => b.start - a.start)) {
-      out = out.slice(0, cut.start) + '__R__' + out.slice(cut.end);
+      out = out.slice(0, cut.start) + placeholder + out.slice(cut.end);
     }
     return out;
   };
@@ -838,10 +857,17 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
       // No inline target call: the author may have bound the return to a variable first (S25), and
       // then the derivation is whatever the assertion did to THAT name.
       const raw = script.slice(actual.start, actual.end);
-      const expr = call
+      // The RETURN is the more specific answer, so it is tried first; a mutated argument is the
+      // fallback, and only a void target ever reaches it.
+      let expr = call
         ? script.slice(actual.start, call.start) + '__R__' + script.slice(call.end, actual.end)
         : substituteRefs(raw, retVars);
-      if (expr === null || !expr.includes('__R__')) return;
+      let base = '__R__';
+      if (expr === null || !expr.includes('__R__')) {
+        expr = substituteRefs(raw, argVars, '__MUT__');
+        base = '__MUT__';
+      }
+      if (expr === null || !expr.includes(base)) return;
       // Where the key has to be ATTACHED. An inline target call is keyed by its own offset, because
       // that is the call site the spy rewrite can tag. A variable-bound return has no inline call in
       // the assertion at all, so the key is attached to the call INSIDE the declarator that bound it
@@ -850,6 +876,14 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
       if (site === null) {
         for (const name of retVars) {
           if (retVarSite.has(name) && new RegExp(`\\b${name}\\b`).test(raw)) { site = retVarSite.get(name); break; }
+        }
+      }
+      if (site === null && base === '__MUT__') {
+        // A mutated-argument derivation attaches to the TARGET CALL that took the argument, which is
+        // a call site the spy rewrite can tag exactly like any other. `fn(t1)` is where the value the
+        // author later asserted was produced.
+        for (const name of argVars) {
+          if (argVarSite.has(name) && new RegExp(`\\b${name}\\b`).test(raw)) { site = argVarSite.get(name); break; }
         }
       }
       // The substituted call becomes the RETURN VALUE, `__R__`. The driver has already invoked the
@@ -878,7 +912,7 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
         },
       });
       const key = `v${entries.length + 1}`;
-      entries.push({ key, expr, helpers: [...referenced] });
+      entries.push({ key, expr, base, helpers: [...referenced] });
       if (site !== null) byStart.set(site, key);
     },
   });
@@ -936,7 +970,10 @@ export function collectDerivations(script, ast, targets, reserved = new Set(), s
   const viaCode = [
     ...slices,
     `var __VIA_FNS__ = __VIA_FNS__ || {};`,
-    ...entries.map((e) => `__VIA_FNS__[${JSON.stringify(e.key)}] = function (__R__) { return ${e.expr}; };`),
+    // TWO parameters, because a derivation has two legitimate bases and the driver has both values in
+    // hand: the target's RETURN and the ARGUMENT the call changed. Which one an entry reads is
+    // decided by which placeholder its expression substituted, so there is no flag to keep in sync.
+    ...entries.map((e) => `__VIA_FNS__[${JSON.stringify(e.key)}] = function (__R__, __MUT__) { return ${e.expr}; };`),
   ].join('\n');
   return { viaCode, count: entries.length, byStart, deps: [...deps] };
 }
@@ -1018,7 +1055,7 @@ function topLevelStatementTexts(source) {
  * Upgrade path: cache the harvest to `build/cases.json` beside the block manifest, which
  * `scripts/gen-blocks.mjs` already owns.
  */
-async function harvestCases(script, blocksByLevel, codec = null) {
+async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = false } = {}) {
   if (typeof script !== 'string' || script.trim() === '') {
     return { cases: [], reason: 'the authored script is empty' };
   }
@@ -1045,7 +1082,7 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     blocksByLevel.map((b) => b.targetFn).filter(Boolean),
     reserved,
     blocksByLevel.map((b) => b.source ?? ''),
-    { ops: !nonDeterministic },
+    { ops: !nonDeterministic, mutArgs: voidTarget },
   );
   if (spied.error) return { cases: [], reason: spied.error };
   const targets = spied.targets;
@@ -1255,6 +1292,9 @@ export async function caseSourceFor(entry) {
       script,
       blocksByLevel.map(({ block, meta, source, targetFn, regionTable }) => ({ block, meta, source, targetFn, regionTable })),
       blocksByLevel[0]?.block?.codec ?? null,
+      // Row 15 / S26: a derivation over a MUTATED ARGUMENT only means anything for a target that
+      // returns nothing, so it is offered only when the catalog says the target is `void`.
+      { voidTarget: entry.returnType === 'void' },
     );
     return {
       cases: harvested.cases,

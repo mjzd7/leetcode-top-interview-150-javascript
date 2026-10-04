@@ -234,27 +234,32 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     // So the derivation is applied to the value the call already produced. The corpus's shapes both
     // reduce to that: `normCombos(fn(4,2))` becomes `normCombos(r)` and `fn(t1,…).val` becomes
     // `r.val`, because the substituted call is the outermost expression the derivation is built on.
-    `        if (t.via && __VIA_FNS__[t.via]) r = __VIA_FNS__[t.via](r);`,
-    // `__opsRan__` guards the mutated-argument branch below: an op sequence already produced the
-    // value the author asserted, so falling through to "the answer is a changed argument" would
-    // compare an argument against an array of method returns.
-    `        if (!__opsRan__ && r === undefined && t.expected !== undefined) {`,
     // A void target's answer is an ARGUMENT. Prefer the one the call actually changed, and
     // fall back to the first: `merge([1], 1, [], 0)` has nothing to merge, so it changes
     // nothing, and the authored edge case still expects the argument back (`[1]`). The
     // fallback is only reachable when NO argument moved, so it can never overrule evidence.
+    // `__opsRan__` guards it: an op sequence already produced the value the author asserted, so
+    // falling through to "the answer is a changed argument" would compare an argument against an
+    // array of method returns.
+    `        var __mutSel__ = false;`,
+    `        var __mut__;`,
+    `        if (!__opsRan__ && r === undefined && t.expected !== undefined) {`,
     `          var __ai__ = 0;`,
     `          while (__ai__ < args.length && __snap__(args[__ai__]) === before[__ai__]) __ai__++;`,
     `          if (args.length > 0) {`,
-    `            var __a__ = args[__ai__ < args.length ? __ai__ : 0];`,
-    `            got = __CODEC__.owns(__a__) ? __CODEC__.toWire(__a__) : __a__;`,
-    `          } else {`,
-    `            got = undefined;`,
+    `            __mut__ = args[__ai__ < args.length ? __ai__ : 0];`,
+    `            __mutSel__ = true;`,
     `          }`,
-    `        } else {`,
-    `          got = __CODEC__.owns(r) ? __CODEC__.toWire(r) : r;`,
     `        }`,
-    `        ok = __CMP__(t.expected, got);`,
+    `        var __val__ = __mutSel__ ? __mut__ : r;`,
+    // Row 15 / S26: the derivation is applied to the SELECTED value and the registry is handed BOTH
+    // candidates, because a void target's derivation is written over the ARGUMENT the call changed
+    // (`collectRightChain(t1)`) while every other one is written over the RETURN. Which one an entry
+    // reads is decided by which placeholder its expression substituted, so there is no flag here to
+    // keep in sync with the harvest. With no derivation this line is the old one: `__val__` is `r`.
+    `        if (t.via && __VIA_FNS__[t.via]) __val__ = __VIA_FNS__[t.via](r, __mut__);`,
+    `        got = __CODEC__.owns(__val__) ? __CODEC__.toWire(__val__) : __val__;`,
+    `        ok = __CMP__(__CODEC__.owns(t.expected) ? __CODEC__.toWire(t.expected) : t.expected, got);`,
     `      } catch (e) { errText = __errText__(e); }`,
     `      if (ok) { __RESULT__.passed++; } else { __RESULT__.failed++; }`,
     `      __RESULT__.tests.push({ name: t.name, ok: ok, expected: t.expected, got: errText !== null ? undefined : got, error: errText });`,
