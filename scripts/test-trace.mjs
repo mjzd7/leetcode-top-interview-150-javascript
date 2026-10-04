@@ -1466,7 +1466,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 6, partialPass: 8 };
+    const VERDICT_BASELINE = { zeroPass: 6, partialPass: 5 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1671,6 +1671,27 @@ async function main() {
     check(getCodec('tree', 'S26').toWire(null) !== null && getCodec('json', 'S26').toWire({ a: 1 }).a === 1,
       'S26 encoding: the two sides really do differ — tree re-encodes nil, json does not — so the symmetry is a real rule and not a no-op',
       'one of the two codecs stopped re-encoding the value it owns');
+
+    // ---- S28 · row 15 — the recorded call must be the one NEAREST the assertion ----
+    // `const got = fn(2.1, 3); if (Math.abs(got - 9.261) > 1e-9) { … process.exit(1) }` asserts
+    // through no asserter at all, so the spy's recorded call was still sitting there when the NEXT
+    // assertion arrived — and because the recording is first-wins, the next assertion kept the STALE
+    // arguments with the new expected value. The committed head said `args [2.1, 3]` against
+    // `expected 1024`: a case that asserts `myPow(2, 10) == 1024` while calling `myPow(2.1, 3)`.
+    const NEAREST_CALL_GUIDES = [
+      ['15-math__05-powx-n', 'L1,L2,L3', 'the float check asserts through `if (…) process.exit(1)`, so its call leaked into the next case'],
+    ];
+    for (const [stem, levels, why] of NEAREST_CALL_GUIDES) {
+      for (const level of levels.split(',')) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && classOpPredicate(golden),
+          `S28 nearest: ${stem} ${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
+    }
 
     // ---- S18 · row 15 — a derivation the script applied and the driver dropped ----
     // The harvest records WHAT was asserted after the script's own post-processing, and the
