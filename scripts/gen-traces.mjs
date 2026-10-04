@@ -762,6 +762,68 @@ export function collectDerivations(script, ast, targets, reserved = new Set()) {
     return found;
   };
 
+  // Row 15 / S25 - the OTHER place the target's value can reach an assertion: bound to a VARIABLE
+  // first. `const r1 = fn('babad'); assertEq(r1.length === 3 && isPalStr(r1), true)` puts no target
+  // call inside the asserter at all, so the rule below found nothing, recorded no derivation, and
+  // the driver compared the raw return "bab" against an expected true. A variable initialised by a
+  // target call is the same value by another route, so its references in an assertion become the
+  // return placeholder - same substitution, same one-invocation guarantee.
+  const retVars = new Set();
+  const retVarSite = new Map();
+  // A name the SCRIPT declares at top level is a helper, not a value the target returned — even when
+  // the script also calls a target inside its initialiser. `merge-sorted-array` declares
+  // `const merge = (nums1, m, nums2, n) => {…}` and then calls it, so without this filter `merge`
+  // became a "return variable" and the derivation came out as
+  // `__R__([1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3)` — the target call with its own callee replaced.
+  // Measured cost of getting that wrong: 21 blocks across 7 guides went clean to zero-pass.
+  const declaredHere = topLevelDeclarations(script);
+  walk.simple(ast, {
+    VariableDeclarator(node) {
+      if (node.id?.type !== 'Identifier' || !node.init) return;
+      if (targetSet.has(node.id.name) || declaredHere.has(node.id.name)) return;
+      const inner = outermostTargetCall(node.init);
+      if (!inner) return;
+      retVars.add(node.id.name);
+      retVarSite.set(node.id.name, inner.start);
+    },
+  });
+  // Replace every REFERENCE to `names`, and nothing that merely looks like one: a computed-free
+  // member's property (`r1.length` is a reference to r1, `obj.r1` is not), an object-literal or
+  // pattern key, and a label are all spelled the same way and mean something else.
+  const substituteRefs = (text, names) => {
+    let tree;
+    try {
+      tree = acorn.parse(text, { ecmaVersion: 2024, sourceType: 'script' });
+    } catch {
+      return null;
+    }
+    const cuts = [];
+    const note = (n, parent) => {
+      if (n.type !== 'Identifier' || !names.has(n.name)) return;
+      if (parent?.type === 'MemberExpression' && parent.property === n && !parent.computed) return;
+      if (parent?.type === 'Property' && parent.key === n && !parent.computed) return;
+      if (parent?.type === 'LabeledStatement' && parent.label === n) return;
+      if (parent?.type === 'BreakStatement' || parent?.type === 'ContinueStatement') return;
+      cuts.push({ start: n.start, end: n.end });
+    };
+    const visit = (node, parent) => {
+      if (!node || typeof node.type !== 'string') return;
+      note(node, parent);
+      for (const key of Object.keys(node)) {
+        if (key === 'type' || key === 'start' || key === 'end') continue;
+        const value = node[key];
+        if (Array.isArray(value)) for (const child of value) visit(child, node);
+        else if (value && typeof value.type === 'string') visit(value, node);
+      }
+    };
+    visit(tree, null);
+    let out = text;
+    for (const cut of cuts.sort((a, b) => b.start - a.start)) {
+      out = out.slice(0, cut.start) + '__R__' + out.slice(cut.end);
+    }
+    return out;
+  };
+
   walk.simple(ast, {
     CallExpression: (node) => {
       const callee = node.callee;
@@ -771,7 +833,23 @@ export function collectDerivations(script, ast, targets, reserved = new Set()) {
       const actual = node.arguments[0];
       if (!actual) return;
       const call = outermostTargetCall(actual);
-      if (!call) return;
+      // No inline target call: the author may have bound the return to a variable first (S25), and
+      // then the derivation is whatever the assertion did to THAT name.
+      const raw = script.slice(actual.start, actual.end);
+      const expr = call
+        ? script.slice(actual.start, call.start) + '__R__' + script.slice(call.end, actual.end)
+        : substituteRefs(raw, retVars);
+      if (expr === null || !expr.includes('__R__')) return;
+      // Where the key has to be ATTACHED. An inline target call is keyed by its own offset, because
+      // that is the call site the spy rewrite can tag. A variable-bound return has no inline call in
+      // the assertion at all, so the key is attached to the call INSIDE the declarator that bound it
+      // - the same two hops the value itself travelled, in reverse.
+      let site = call?.start ?? null;
+      if (site === null) {
+        for (const name of retVars) {
+          if (retVarSite.has(name) && new RegExp(`\\b${name}\\b`).test(raw)) { site = retVarSite.get(name); break; }
+        }
+      }
       // The substituted call becomes the RETURN VALUE, `__R__`. The driver has already invoked the
       // target by the time it applies this derivation, so re-invoking it here would be a SECOND
       // call — and for a target that mutates its argument in place (`mergeTwoLists` relinks `a`'s
@@ -780,8 +858,6 @@ export function collectDerivations(script, ast, targets, reserved = new Set()) {
       //
       // Both real shapes reduce to it unchanged: `normCombos(fn(4, 2))` becomes `normCombos(__R__)`
       // and `fn(t1, …).val` becomes `__R__.val`.
-      const expr = script.slice(actual.start, call.start) + '__R__' + script.slice(call.end, actual.end);
-
       let exprAst;
       try {
         exprAst = acorn.parse(expr, { ecmaVersion: 2024, sourceType: 'script' });
@@ -801,7 +877,7 @@ export function collectDerivations(script, ast, targets, reserved = new Set()) {
       });
       const key = `v${entries.length + 1}`;
       entries.push({ key, expr, helpers: [...referenced] });
-      byStart.set(call.start, key);
+      if (site !== null) byStart.set(site, key);
     },
   });
 
