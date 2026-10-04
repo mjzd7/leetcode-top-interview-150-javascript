@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 17/450 verdicts still wrong** (was 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 14/450 verdicts still wrong** (was 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -1643,3 +1643,107 @@ errors · 0 warnings** · `test:trace` **192 · 0** (was 186; +6 named gates).
 block's cross-level references verbatim; this adds the derivation's dependencies to the same lookup.
 No authored script text enters the driver, no codec or comparator moves, and the sliced text is
 uninstrumented so it contributes no probes and no steps (K4).
+
+### 2026-10-05 — row 15, part 6: a void target's answer is a MUTATED ARGUMENT. **17 → 14.**
+
+`fn(t1); assertEq(collectRightChain(t1), [1, 2, 3, 4, 5, 6])`. `flatten` returns nothing and
+rewrites its argument in place, so the value the author asserted is a derivation over **the argument
+the call changed**, not over the return. The driver already picked the changed argument — that branch
+is `buildBundle`'s IN-PLACE MUTATOR mechanism — and then compared it RAW, so a flattened tree was
+graded as its own level-order wire:
+
+```
+expected [1, 2, 3, 4, 5, 6]   got [1, null, 2, null, 3, null, 4, null, 5, null, 6]
+```
+
+All three levels, `passed 0 failed 6`.
+
+**Shipped, half one: the derivation is written over the mutated argument.** A derivation now has two
+legitimate bases and the registry has **two parameters** — the target's return and the argument the
+call changed — and which one an entry reads is decided by which placeholder its expression
+substituted. So there is no flag in the driver to keep in sync with the harvest, and a derivation with
+no `__MUT__` reference behaves exactly as before (`__val__` is `r`).
+
+Offered **only for a target the catalog calls `void`**, and that gate is load-bearing rather than
+tidy. Left ungated it fires on every assertion that mentions an argument name, and for a target that
+RETURNS a value the driver has no changed argument to hand the registry. Measured: word-search-ii's
+three levels went clean → zero-pass and the corpus read `clean 424 zeroPass 15 partialPass 11`.
+
+**Shipped, half two: a value the codec OWNS is encoded on BOTH sides.** `tree` puts nil in its own
+domain — `treeToArray(null)` is `[]` — so the driver encoded the answer as `[]` and compared it against
+an author who wrote `null`. That is the same fact in two vocabularies, and it is precisely the failure
+the codec's own note records for `invertTree`: "the driver reading a correct answer as a wrong one".
+
+**The blast radius is measured, not asserted.** Over all **776** harvested cases carrying an expected
+value, the symmetric encoding *fires* on **460** — and `json`/`ops`/`graph` `toWire` are the identity,
+so **457 of those 460 change nothing at all**. The only behavioural change in the whole corpus is
+`tree` + nil: **3 cases**, all `flatten-binary-tree`'s `empty tree no-op`. Reproduce with
+
+```
+node --input-type=module -e "import fs from 'node:fs';
+  const {getCodec}=await import(process.cwd()+'/api/_lib/codecs.mjs');
+  const gt=await import(process.cwd()+'/scripts/gen-traces.mjs');
+  let fired=0,total=0;const byCodec={};
+  for(const e of await gt.loadCatalog()){
+    let src; try{src=await gt.caseSourceFor(e);}catch{continue;}
+    for(const c of src.cases){ if(c.expected===undefined) continue; total++;
+      const cd=getCodec(e.codec,e.path);
+      if(cd.owns(c.expected)){fired++;byCodec[e.codec]=(byCodec[e.codec]??0)+1;} } }
+  console.log('cases with expected:',total,'fires on:',fired,JSON.stringify(byCodec));"
+```
+
+→ `cases with expected: 776 fires on: 460 {"json":457,"tree":3}`.
+
+**It cannot manufacture a pass.** The SAME encoder is applied to both sides, and the comparator is
+untouched: E28 still rejects nil against the empty wire on its own, which is asserted as its own gate
+(`equivalent('exact', [], null) === false`) beside a second one proving the two sides really do
+differ (`tree.toWire(null) !== null` while `json.toWire({a:1}).a === 1`), so the symmetry cannot rot
+into a no-op.
+
+**RED first, `npm run test:trace`, exit 1:**
+
+```
+❌ [FAIL] S26 mutarg: 09-binary-tree-general__07-flatten-binary-tree L1 passes every case — returnType void: the answer is the mutated argument, reached through collectRightChain
+   passed 0, failed 6 · first error: (a case compared unequal)
+❌ [FAIL] S26 mutarg: 09-binary-tree-general__07-flatten-binary-tree L3 passes every case — returnType void: the answer is the mutated argument, reached through collectRightChain
+   passed 0, failed 6 · first error: (a case compared unequal)
+Assertions: 189 | Failures: 3
+```
+
+**GREEN after both halves:**
+
+```
+S17 ratchet: 450 heads · zero-pass 6 (baseline 6) · partial-pass 8 (baseline 8) · clean 436
+✅ [PASS] S26 encoding: the comparator still REJECTS nil against the empty wire on its own — the symmetry is in what the driver hands it, not in the comparator
+Assertions: 194 | Failures: 0
+```
+
+**Census before → after** (`node /tmp/census.mjs`):
+
+```
+before   clean 433  zeroPass 9  partialPass 8
+after    clean 436  zeroPass 6  partialPass 8
+```
+
+`clean` moved by **exactly 3** — flatten-binary-tree L1/L2/L3. The 6 remaining zero-pass are
+`insert-delete-getrandom-o1` ×3 (X1) and `lowest-common-ancestor` ×3 (X2); the 8 partial are
+`next-right-pointers-ii` ×2 (X3), `powx-n` ×3 (M6), `merge-k-sorted-lists` ×2 (X4) and
+`sorted-array-to-bst` L1 (alias-loop membership).
+
+**Determinism, two consecutive `npm run gen:traces`:** `clean 436 zeroPass 6 partialPass 8`, twice.
+
+**Suites, re-measured:** `npm test` **1898 · 0** (`Files: 150`, `syntax-only: 0`, 450 blocks, 36
+divergences) · `test:envelope` **129 · 0** · `test:serialize` **9 cases · 0** · `test:validate`
+**23 · 0** · `test:instrument` **246 · 0** · `test:codecs` **275 · 0** · `test:trace-runner`
+**269 · 0** · `test:doc-traces` **17 · 0** · `test:judge` **96 · 0** · `validate` **150 files · 0
+errors · 0 warnings** · `test:trace` **194 · 0** (was 192; +3 named gates +2 encoding gates).
+
+**Real surface (5g.3) — the control.** `npm test 09-binary-tree-general/07-flatten-binary-tree.md` →
+`✅ [PASS] (6 assertions)`.
+
+**A note on slicing, because it is the honest shape of this row.** Half one cannot go green without
+half two and half two cannot go green without half one — flatten is the only guide that needs either.
+They are committed as ONE slice for that reason and the second half is named as a separate rule above
+rather than folded into the first, because it is one: it is not about void targets, it is about both
+sides of a comparison being in one vocabulary. The alternative was two commits, the first with a gate
+that could never pass, which §5b forbids in the only terms that mean anything.

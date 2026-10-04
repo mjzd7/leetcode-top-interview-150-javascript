@@ -59,7 +59,7 @@ import { validateEnvelope } from './validate-envelope.mjs';
 // rather than re-declared: two literals would drift, and the drift would be invisible.
 import { HEAD_BYTE_CAP } from './gen-doc-traces.mjs';
 // S18 sorts the "is this whole family one mechanism?" question, and the answer is in here.
-import { equivalent } from '../api/_lib/codecs.mjs';
+import { equivalent, getCodec } from '../api/_lib/codecs.mjs';
 // S23 replays a class target's op list, so the claim is proved against the REAL driver rather than
 // against a re-implementation of it — a probe that copies the driver proves the copy.
 import { buildBundle } from '../api/_lib/problems.mjs';
@@ -1466,7 +1466,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 9, partialPass: 8 };
+    const VERDICT_BASELINE = { zeroPass: 6, partialPass: 8 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1655,6 +1655,22 @@ async function main() {
             : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
       }
     }
+
+    // The second half of this slice's mechanism, stated as its own claim because it is a DIFFERENT
+    // rule: a value the codec OWNS is now encoded on BOTH sides of the comparison. `tree` puts nil in
+    // its own domain (`treeToArray(null)` is `[]`), so the driver encoded the answer as `[]` and then
+    // compared it against an author who wrote `null` — the same fact in two vocabularies, and the
+    // driver reading a correct answer as a wrong one, which is the note the codec already carries for
+    // `invertTree`. Measured blast radius, over all 776 harvested cases with an expected value:
+    // `json`/`ops`/`graph` `toWire` is the identity, so 457 of the 460 firings change nothing; the
+    // ONLY behavioural change in the corpus is `tree` + nil, 3 cases, all `flatten-binary-tree`'s
+    // `empty tree no-op`. Same encoder on both sides, so it cannot manufacture a pass.
+    check(equivalent('exact', [], null) === false,
+      'S26 encoding: the comparator still REJECTS nil against the empty wire on its own — the symmetry is in what the driver hands it, not in the comparator',
+      "equivalent('exact', [], null) accepted them — E28's registry changed under this slice");
+    check(getCodec('tree', 'S26').toWire(null) !== null && getCodec('json', 'S26').toWire({ a: 1 }).a === 1,
+      'S26 encoding: the two sides really do differ — tree re-encodes nil, json does not — so the symmetry is a real rule and not a no-op',
+      'one of the two codecs stopped re-encoding the value it owns');
 
     // ---- S18 · row 15 — a derivation the script applied and the driver dropped ----
     // The harvest records WHAT was asserted after the script's own post-processing, and the
