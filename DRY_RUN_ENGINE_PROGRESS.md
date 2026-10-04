@@ -1891,3 +1891,62 @@ committed them; `git check-ignore` matches only `judge/traces/*.json`, i.e. the 
 since `verify` regenerates the goldens and compares them against the committed heads. So each slice
 commits exactly the heads whose `verdict` or `stepCount` it moved — 28, 12, 4, 6, 3 and 3 across the six
 slices — and never a full golden, never `build/`, never `docs/traces/`.
+
+### 2026-10-05 — two corrections to the record, one of them against my own hand
+
+**`?guide=<id>` is not a broken deep link. It was never a deep link.** Reported by the row-32
+slice as a possible portal defect ("init rendered the home page with the hash set"). It is not one:
+`docs/index.html:1954-1955` reads `location.hash`, and the only query parameter read anywhere in the
+file is `login_error` (`docs/index.html:1732`). Reproduce both with:
+
+```bash
+grep -n "location\.hash\|q\.get(" docs/index.html      # -> 1954-1955, 1732; no get('guide')
+```
+
+The supported form is `#<id>`, which is how the 2026-10-03 row-32 QA entry opened its guides too. So
+the row-32 slice's QA used a URL shape that does not exist and read the home page as a failure.
+**No defect, nothing to fix** — recorded so the next session does not spend a cycle on it.
+
+**The `lca` classification in the row-15 close-out is too strong, and that was my framing.** The
+slice stopped 3 `lowest-common-ancestor` blocks as "the wire cannot express node identity". Read the
+authored script (`scripts/test-runner.mjs:363-373`) and the claim splits in two:
+
+```js
+const t1 = arrayToTree([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
+assertEq(fn(t1, findNode(t1, 5), findNode(t1, 1)).val, 3, 'diverging paths');
+```
+
+- **`.val` on the return** is precisely the shape the S22 `via` mechanism already replays — the
+  ledger's own §7 records "`fn(t1,…).val` becomes `r.val`". No new mechanism.
+- **`findNode(t1, 5)` as an argument** is the part the driver cannot see. But `findNode` is declared
+  in the guide's OWN Level 1 block, so it is already inside `userCode` — inside the bundle, inside
+  the existing trust boundary. Evaluating `findNode(decodedT1, 5)` uses only code the bundle already
+  trusts; it is *not* authored-script text arriving from outside it.
+
+So identity is the target's own job and the wire never has to carry it; what is missing is
+**driver-side argument derivation**, which the earlier row-15 entry already listed as a distinct
+mechanism ("argument derivation for 6"). I am recording the correction because the owner decision
+below should be made on the accurate version. **I did not build it**, and the reason is not that the
+mechanism is unsafe: it is that this adds a new path to the security-sensitive driver loop, which is
+exactly what decision C3's reopen condition fences, and reversing a measured stop on reasoning alone
+is not an agent's call at the end of a session.
+
+**Owner decision, now correctly scoped — 11 blocks, 2 mechanisms, not 5:**
+
+| Route | Blocks | What it costs |
+|---|---|---|
+| Driver-side argument derivation against helpers already in `userCode` | `lowest-common-ancestor` ×3, `sorted-array-to-bst` L1 ×1 | a new mechanism in the driver's per-case loop; no codec change, no authored text crosses the boundary |
+| Codec wire domain change (`api/_lib/codecs.mjs`) | `next-right-pointers-ii` ×2, `merge-k-sorted-lists` ×2 | the wire grows a `next` pointer / an emptiness distinction that currently overloads `[]`. The `merge-k` probe is already measured and **reverted**: declining `[]` as a wire fixes those 2 and breaks `invert-binary-tree` ×3 (census 398 → 397) |
+| **Refused, correctly** | `insert-delete-getrandom-o1` ×3 | the answer *is* `Math.random`. Three `gen:traces` runs on one tree gave `6/1`, `4/3`, `6/1`. A verdict that moves per run cannot be gated, so the op list is refused by `NON_DETERMINISTIC_RE` and three S23 assertions now pin those blocks wrong **on purpose** |
+
+Recommendation unchanged and now better founded: **take the first route, leave the second, keep the
+third refused.** 439/450 with a ratchet that cannot rise is honest; 450/450 bought by executing
+authored script inside the driver reopens C3 for 8 blocks that do not need it.
+
+**One more correction, this one in the repo.** `scripts/lib/v9.mjs`'s header cites its port
+provenance as bare `test-trace.mjs:NNNN` line numbers (7 in the header, 11 more in the JSDoc). After
+`982264c` deleted those definitions from `test-trace.mjs`, every one of those citations points at
+lines where the body no longer is. Pinned to the commit instead: `982264c` made that file the only
+definition, which is the point of the extraction. Comment-only, so no gate —
+`node scripts/lib/v9.mjs` → **12 self-checks, 0 failures** and `npm run test:trace` → **197·0**,
+both unmoved.
