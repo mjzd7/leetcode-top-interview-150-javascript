@@ -553,7 +553,18 @@ function __SPY__(name, target, isCtor, via) {
     // arrives when __F__ is already occupied, so the guarded block below never runs for it —
     // which is exactly how isSameTree(A, B) lost its B.
     if (__TREE__ && __LE__(arguments[0])) { __FL__.push([arguments[0]]); __pushed__ = true; }
-    if (!__isTarget || __A__ === null) {
+    // Row 15 / S28 - a TARGET call always re-records, so the case an assertion gets is the call
+    // NEAREST it. First-wins was right about HELPER vs TARGET (see the findWords(board, WORDS)
+    // note below, which is unchanged) and wrong about two TARGETS before one assertion: a script
+    // that checks a float result with "if (Math.abs(got - 9.261) > 1e-9) process.exit(1)" asserts
+    // through no asserter at all, so its call was still recorded when the NEXT assertion arrived and
+    // that case kept the STALE arguments with the NEW expected value - the committed head said
+    // args [2.1, 3] against expected 1024, i.e. a case asserting myPow(2, 10) == 1024 while
+    // calling myPow(2.1, 3).
+    //
+    // The untransportable marker moves with it: it describes the args of the call that set it, so a
+    // later TRANSPORTABLE call has to clear it or the next assertion is dropped for a stale reason.
+    if (true) {
       if (__isTarget || __F__ === null) {
         var __args = null;
         try { __args = JSON.parse(JSON.stringify(Array.prototype.slice.call(arguments))); } catch (e) { __args = null; }
@@ -575,12 +586,12 @@ function __SPY__(name, target, isCtor, via) {
             }
           }
           if (__fixed !== null) {
-            __A__ = __fixed; __AN__ = name; __AV__ = via || null;
+            __A__ = __fixed; __AN__ = name; __AV__ = via || null; __TX__ = 0;
           } else if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
             // keep the level-order recording
           } else {
             __A__ = __args; __AN__ = name; __AV__ = via || null;
-            if (__args === null) __TX__ = 1;
+            __TX__ = (__args === null) ? 1 : 0;
           }
         } else if (__F__ === null) {
           // NOT a target, so NOT this case's derivation. Setting __AV__ here is what left 5 of

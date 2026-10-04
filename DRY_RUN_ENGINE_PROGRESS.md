@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 14/450 verdicts still wrong** (was 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 11/450 verdicts still wrong** (was 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -1747,3 +1747,92 @@ They are committed as ONE slice for that reason and the second half is named as 
 rather than folded into the first, because it is one: it is not about void targets, it is about both
 sides of a comparison being in one vocabulary. The alternative was two commits, the first with a gate
 that could never pass, which §5b forbids in the only terms that mean anything.
+
+### 2026-10-05 — row 15, part 7: the recorded call must be the one NEAREST the assertion. **14 → 11.**
+
+`15-math/05-powx-n`'s script checks its float result without any asserter:
+
+```js
+const got = fn(2.1, 3);
+if (Math.abs(got - 9.261) > 1e-9) { console.error('FAIL float power: …'); process.exit(1); }
+```
+
+So that call is recorded and **never consumed** — there is no asserter to consume it. The recording is
+first-wins, so the NEXT assertion kept it: the committed head carried
+`{"name":"integer power","args":[2.1,3],"expected":1024}`, a case asserting `myPow(2, 10) == 1024`
+while calling `myPow(2.1, 3)`. Three levels, `passed 7 failed 2`.
+
+**Shipped: a TARGET call always re-records.** The distinction first-wins was actually drawing —
+HELPER versus TARGET — is untouched and its own note (`findWords(board, WORDS)`, whose script builds
+`board` through a spied helper first and must record the helper's level-order array, not the target's)
+still governs. What changed is two TARGET calls before one assertion: the nearest one wins, because
+the nearest one is the one the assertion is about.
+
+**The untransportable marker moves with it, and that half is not cosmetic.** `__TX__` describes the
+arguments of the call that set it, so a later TRANSPORTABLE call has to clear it — otherwise the next
+assertion is dropped for a stale reason. Left as `if (__args === null) __TX__ = 1`, the marker would
+have survived a good call and taken the next assertion down with it.
+
+**What this costs, stated plainly.** The author's float check is not an asserter, so it produces **no
+case at all** — the harvest cannot see a comparison it is not told about. That is a coverage loss, and
+it is the honest trade: the alternative was grading `myPow(2, 10)` against the value the author wrote
+for `myPow(2.1, 3)`. Nine cases per level remain, all of them authored `assertEq` assertions.
+
+**RED first, `npm run test:trace`, exit 1:**
+
+```
+❌ [FAIL] S28 nearest: 15-math__05-powx-n L1 passes every case — the float check asserts through `if (…) process.exit(1)`, so its call leaked into the next case
+   passed 7, failed 2 · first error: (a case compared unequal)
+❌ [FAIL] S28 nearest: 15-math__05-powx-n L2 passes every case — the float check asserts through `if (…) process.exit(1)`, so its call leaked into the next case
+   passed 7, failed 2 · first error: (a case compared unequal)
+Assertions: 197 | Failures: 3
+```
+
+**GREEN after the re-record:**
+
+```
+S17 ratchet: 450 heads · zero-pass 6 (baseline 6) · partial-pass 5 (baseline 5) · clean 439
+Assertions: 197 | Failures: 0
+```
+
+**Census before → after** (`node /tmp/census.mjs`):
+
+```
+before   clean 436  zeroPass 6  partialPass 8
+after    clean 439  zeroPass 6  partialPass 5
+```
+
+`clean` moved by **exactly 3** — powx-n L1/L2/L3 — and `zero-pass` did not move. The 5 remaining
+partial are `next-right-pointers-ii` L2/L3 (X3), `merge-k-sorted-lists` L1/L2 (X4) and
+`sorted-array-to-bst` L1 (M8, alias-loop membership — the author's second loop iterates only L2/L3, so
+`treeHeight(...) <= 3` is false for L1's brute force, and the harvested case carries `callee: 'fn'`, an
+alias bound in BOTH loops, so the level partition cannot tell them apart).
+
+**Determinism, two consecutive `npm run gen:traces`:** `clean 439 zeroPass 6 partialPass 5`, twice.
+
+**Suites, re-measured:** `npm test` **1898 · 0** (`Files: 150`, `syntax-only: 0`, 450 blocks, 36
+divergences) · `test:envelope` **129 · 0** · `test:serialize` **9 cases · 0** · `test:validate`
+**23 · 0** · `test:instrument` **246 · 0** · `test:codecs` **275 · 0** · `test:trace-runner`
+**269 · 0** · `test:doc-traces` **17 · 0** · `test:judge` **96 · 0** · `validate` **150 files · 0
+errors · 0 warnings** · `test:trace` **197 · 0** (was 194; +3 named gates).
+
+**Real surface (5g.3) — the control.** `npm test 15-math/05-powx-n.md` → `✅ [PASS] (12 assertions)`,
+which includes the float check the harvest cannot see.
+
+### 2026-10-05 — row 15's residual: **11 blocks left, and 4 of them are the trust boundary**
+
+Census at `34c06b8`+this slice, `node /tmp/census.mjs`: **clean 439 · zero-pass 6 · partial-pass 5**.
+The 52 the handoff named are now **41 closed and 11 open**, and the 11 split cleanly:
+
+| # | Blocks | Guide | Why it is not closed here |
+|---|---|---|---|
+| X1 | 3 | `01-array-string/12-insert-delete-getrandom-o1` L1/L2/L3 | its answer IS the draw sequence; closing it needs a global `Math.random` stub, which §5d forbids. **This is the stop the handoff flagged.** The op list is REFUSED for it on purpose (part 2), and three S23 assertions keep it wrong so no later slice can close it by making it non-deterministic |
+| X2 | 3 | `09-binary-tree-general/10-lowest-common-ancestor` L1/L2/L3 | `assertEq(fn(t1, findNode(t1,5), findNode(t1,1)).val, 3)`. S21 already carries the derived nodes as level-order arrays; `buildBundle` decodes each wire into a FRESH graph, so positions 1 and 2 become three unrelated trees and `pathToNode` walks `root` looking for `p` by `===` and never finds it. **A level-order wire is a VALUE encoding and cannot express object identity** — the codec's own header on `listToArray` records that E7 back-references solve this inside one graph and not across two |
+| X3 | 2 | `09-binary-tree-general/14-next-right-pointers-ii` L2/L3 | the guide's nodes are `{val, left, right, next}` and `arrayToTree` builds no `next`. The only recorded input is the level-order array, so `connect` walks `cur.next` on `undefined`. Closing it means running the author's `arrayToNextTree` inside the driver — §5d |
+| X4 | 2 | `21-divide-conquer/04-merge-k-sorted-lists` L1/L2 | `assertEq(fn([]), null)`: `[]` is both "no lists" (what the author wrote) and "the empty list" (the `list` codec's wire), and `acceptsNodeWire` cannot separate them. **Measured, not argued:** declining `[]` as a wire fixes these two and breaks `invert-binary-tree` L1/L2/L3 — census 398 → 397. Probe reverted, `api/_lib/codecs.mjs` unmodified |
+| M8 | 1 | `21-divide-conquer/01-sorted-array-to-bst` L1 | the author's SECOND loop iterates `[sortedArrayToBSTSliced, sortedArrayToBST]` only, so `treeHeight(...) <= 3` is genuinely false for L1's brute force. The harvested case carries `callee: 'fn'` — an alias bound in BOTH loops — so the level partition cannot tell which loop it came from. The mechanism the fix needs is "record an alias loop's membership", which is a new harvest fact rather than a driver change |
+
+X1, X2, X3 and X4 are all one sentence: **the wire cannot express what the author wrote.** Closing any
+of them means either an authored-script execution inside the driver or a change to the codec
+registry's wire domain — the two things §5d and §6 rule out, and the two decision C3's reopen
+condition names. They are reported, not taken.
