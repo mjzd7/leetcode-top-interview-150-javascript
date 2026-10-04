@@ -60,6 +60,10 @@ import { validateEnvelope } from './validate-envelope.mjs';
 import { HEAD_BYTE_CAP } from './gen-doc-traces.mjs';
 // S18 sorts the "is this whole family one mechanism?" question, and the answer is in here.
 import { equivalent } from '../api/_lib/codecs.mjs';
+// S23 replays a class target's op list, so the claim is proved against the REAL driver rather than
+// against a re-implementation of it — a probe that copies the driver proves the copy.
+import { buildBundle } from '../api/_lib/problems.mjs';
+import { executeUserCode } from '../api/_lib/sandbox.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures', 'trace');
@@ -97,6 +101,41 @@ const goldenNames = () => fs.readdirSync(GOLDENS_DIR)
   .filter((f) => /\.L[123]\.json$/.test(f))
   .sort();
 const readGolden = (name) => JSON.parse(fs.readFileSync(path.join(GOLDENS_DIR, name), 'utf8'));
+
+/**
+ * S23's mechanism probe: drive `buildBundle` with a class target and a recorded op list, and report
+ * what the driver's own comparison said.
+ *
+ * Written against the REAL driver for one reason: a probe that re-implements the replay proves the
+ * re-implementation, which is the failure mode every "the harness agrees with itself" check in this
+ * row's history has been. The class is three lines and the op list is the shape `harvestCases`
+ * emits, so what is under test is `buildBundle`'s ops branch and nothing else.
+ *
+ * `expected` is chosen so a PASS is impossible unless the ops were really replayed against the
+ * constructed instance: `Stack` keeps its own `min`, and no single invocation of the constructor
+ * produces `[-2, -3]`.
+ */
+async function opsEmits(fnName, ops, ctor) {
+  const userCode = [
+    'class Stack {',
+    '  constructor() { this.min = []; }',
+    '  push(v) { this.min.push(v); if (this.min.length === 1 || v < this.min[0]) this.min[0] = v; return true; }',
+    '  top() { return this.min[this.min.length - 1]; }',
+    '  getMin() { return this.min[0]; }',
+    '}',
+  ].join('\n');
+  const bundle = buildBundle({
+    userCode,
+    fnName,
+    codec: 'ops',
+    equivalence: 'ops-terminal-state-and-outputs',
+    tests: [{ name: 'op sequence', args: [], ctor, ops, expected: [-2, -3] }],
+  });
+  const exec = await executeUserCode(bundle, { timeoutMs: 5000 });
+  if (!exec.ok || typeof exec.envelopeRaw !== 'string') return false;
+  const verdict = JSON.parse(exec.envelopeRaw.slice('__VERDICT__'.length));
+  return verdict.passed === 1 && verdict.failed === 0;
+}
 
 /** The first step index satisfying a predicate — so a mutant targets a step the golden HAS. */
 const findStep = (g, pred) => g.steps.findIndex((s) => plainObject(s) && pred(s));
@@ -1427,7 +1466,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 49, partialPass: 33 };
+    const VERDICT_BASELINE = { zeroPass: 13, partialPass: 20 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1462,6 +1501,80 @@ async function main() {
       'S17 ratchet: the three census buckets partition the corpus — no head is silently uncounted',
       `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != ${verdictCensus.censused}`);
     console.log(`S17 ratchet: ${headNames.length} heads · zero-pass ${verdictCensus.zeroPass} (baseline ${VERDICT_BASELINE.zeroPass}) · partial-pass ${verdictCensus.partialPass} (baseline ${VERDICT_BASELINE.partialPass}) · clean ${verdictCensus.clean}`);
+
+    // ---- S23 · row 15 — a CLASS target's op sequence is the case, and it was never recorded ----
+    // `harvestCases` emits every case with a `callee` field and `buildBundle` never reads it. For a
+    // class target the authored script performs a SEQUENCE of method calls on ONE constructed
+    // instance, and the spy collapses that sequence into a single record with `args: []` — so the
+    // driver did `Reflect.construct(MinStackBruteForce, [])` and compared a scalar against a class
+    // instance's state. Measured: `07-stack/03-min-stack` yields 9 cases, every one of them
+    // `{"args":[], "expected":<scalar>, "callee":"C"}`.
+    //
+    // Named per GUIDE rather than as a corpus-wide count, for the S16 reason: a gate naming all 19
+    // class blocks could not go green until every other mechanism landed, so it would prove nothing.
+    // Seven guides × the levels each one fails is the whole M1 family.
+    //
+    // The negative matters more than the positive: a gate reading `failed === 0` off a file on disk
+    // is indistinguishable from a predicate that never fires, so the same predicate is handed a
+    // golden with one extra failure and has to reject it.
+    const CLASS_OP_GUIDES = [
+      ['07-stack__03-min-stack', 'L1,L2,L3', 'push/pop/top/getMin on one constructed MinStack'],
+      ['08-linked-list__11-lru-cache', 'L1,L2,L3', 'put/get sequence on one constructed LRUCache'],
+      ['09-binary-tree-general__12-bst-iterator', 'L1,L2,L3', 'next/hasNext over one constructed iterator'],
+      ['13-heap__04-median-finder', 'L1,L2,L3', 'addNum/findMedian on one constructed MedianFinder'],
+      ['20-trie__01-implement-trie', 'L1,L2,L3', 'insert/search/startsWith on one constructed Trie'],
+      ['20-trie__02-add-and-search-words', 'L1,L2,L3', 'addWord/search with a wildcard on one constructed WordDictionary'],
+      ['02-two-pointers__02-is-subsequence', 'L3', 'the L3 target is a CLASS: new SubsequenceMatcher(t).isSubsequence(s)'],
+    ];
+    const classOpPredicate = (g) => g !== null && g.verdict.failed === 0;
+    for (const [stem, levels, why] of CLASS_OP_GUIDES) {
+      for (const level of levels.split(',')) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(classOpPredicate(golden),
+          `S23 ops: ${stem} ${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
+    }
+    // The same predicate, a golden it must reject — so "all 19 pass" cannot be a predicate that
+    // never fires. Built from a real golden this family already fixed, so it cannot rot into a
+    // shape nothing ships.
+    const opsControlName = names.find((n) => n.startsWith('07-stack__03-min-stack.L3.json'));
+    const opsControl = opsControlName ? readGolden(opsControlName) : null;
+    check(classOpPredicate(opsControl),
+      'S23 ops negative: the unmodified named golden SATISFIES the predicate — the probe below is not tautological',
+      opsControl ? `failed ${opsControl.verdict.failed}` : 'no golden — run `npm run gen:traces`');
+    const opsWrong = clone(opsControl);
+    opsWrong.verdict = { ...opsWrong.verdict, failed: opsWrong.verdict.failed + 1 };
+    check(!classOpPredicate(opsWrong),
+      'S23 ops negative: a golden with one more failing case is REJECTED by the same predicate',
+      'the predicate accepted a deliberately-wrong verdict — the gate cannot fail');
+    // The mechanism itself, asserted where it is TRUE and falsifiable without the corpus: a case
+    // carrying an op list is replayed against the CONSTRUCTED instance's own methods, so a target
+    // whose method returns its own state answers from that state. The op list is DATA — it rides
+    // inside the existing `JSON.stringify(tests)`, exactly as `t.via` does — so no envelope, golden
+    // or schema field was added for it (S10's frozen set is untouched). `args` is EMPTY, so a
+    // driver that ignored `ops` would construct and stop, and could not produce `[-2, -3]`.
+    check(await opsEmits('Stack', [['push', [-2], false], ['getMin', [], true], ['push', [-3], false], ['getMin', [], true]], []),
+      "S23 ops: an op list drives the target's OWN methods — the emitted values come from the instance, not from a synthesised one",
+      'the replay did not reproduce the method sequence the op list named');
+
+    // The one guide in this family that is NOT closed, asserted as remaining work rather than left
+    // to a future reader's inference. Replaying an op sequence makes the verdict depend on what the
+    // target's methods return at run time, and for insert-delete-getrandom-o1 that is `Math.random`.
+    // Its authored script pins the draw sequence with a GLOBAL stub, which is out of bounds (§5d), so
+    // the op mechanism refuses any block whose source names a non-deterministic global. Measured
+    // consequence of NOT refusing: three consecutive regenerations of one tree gave 6/1, 4/3 and
+    // 6/1 — a golden whose verdict moves on every run, which nothing can gate on (K6/E8).
+    for (const level of ['L1', 'L2', 'L3']) {
+      const gname = names.find((n) => n.startsWith(`01-array-string__12-insert-delete-getrandom-o1.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && !classOpPredicate(golden),
+        `S23 ops: insert-delete-getrandom-o1 ${level} is still wrong on purpose — its answer needs a Math.random stub, which §5d forbids`,
+        `passed ${golden?.verdict.passed}, failed ${golden?.verdict.failed} — a clean verdict here means the op list was replayed against an unpinned draw sequence, which is non-deterministic`);
+    }
 
     // ---- S18 · row 15 — a derivation the script applied and the driver dropped ----
     // The harvest records WHAT was asserted after the script's own post-processing, and the

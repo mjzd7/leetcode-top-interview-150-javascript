@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 52/450 verdicts still wrong** (was 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 33/450 verdicts still wrong** (was 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -1247,3 +1247,150 @@ have moved — a comment-only staleness, in a file this row does not own. Row 15
 the `verify` re-run the 2026-10-03 correction demands are untouched; `gen-traces.mjs`,
 `api/_lib/problems.mjs`, `api/_lib/codecs.mjs` and `judge/` are not mine.
 
+
+### 2026-10-05 — row 15, part 2: a class target's op SEQUENCE is the case. **52 → 33.**
+
+The handoff's census (`zero-pass 32, partial-pass 20, clean 398`) reproduces exactly at `982264c`,
+and **the 52 splits into SIX mechanisms plus FOUR stops** — not the two classes the handoff named.
+Counted from `node /tmp/census.mjs` against the `*.head.json`; every row's count is that script's
+output, and the six plus the four sum to 52.
+
+| Mech | Blocks | Guides (levels) | The mechanism |
+|---|---|---|---|
+| **M1** class op list | 19 | min-stack L1/L2/L3 · lru-cache L1/L2/L3 · bst-iterator L1/L2/L3 · median-finder L1/L2/L3 · implement-trie L1/L2/L3 · add-and-search-words L1/L2/L3 · is-subsequence L3 | record `ops` (`[method, args, emitted]`) + `ctor`; the driver REPLAYS them against the constructed instance's own methods |
+| **M2** an assertion with no recorded target call | 9 | copy-list-with-random-pointer ×3 · clone-graph ×3 · word-search-ii ×3 | the capture fell back to the ASSERTER's own arguments as `args`; drop it and count it |
+| **M3** derivation over a variable the return was bound to | 6 | longest-palindromic-substring ×3 · sorted-array-to-bst ×3 | `const r1 = fn(x); assertEq(r1.length === 3 && isPalStr(r1), true)` |
+| **M4** derivation over the MUTATED ARGUMENT of a void target | 3 | flatten-binary-tree ×3 | the answer is an argument, and the author's derivation applies to it |
+| **M5** derivation helper declared in a SIBLING block | 2 | construct-quad-tree L2/L3 | `quadToGrid` is in the guide's markdown but in no selected block, so the replay threw `ReferenceError` |
+| **M6** the recorded call must be the one NEAREST the assertion | 3 | powx-n ×3 | a target call the author asserted through `if (…) process.exit(1)` leaked into the next case: `args [2.1,3]`, `expected 1024` |
+| **X1** STOP — needs a global `Math.random` stub (§5d) | 3 | insert-delete-getrandom-o1 ×3 | the answer IS the draw sequence |
+| **X2** STOP — node identity across arguments | 3 | lowest-common-ancestor ×3 | a level-order wire is a value encoding; `p`/`pp` are nodes INSIDE `root` |
+| **X3** STOP — a third pointer the `tree` wire does not carry | 2 | next-right-pointers-ii L2/L3 | nodes are `{val,left,right,next}`; `arrayToTree` builds no `next` |
+| **X4** STOP — `[]` is two different values | 2 | merge-k-sorted-lists L1/L2 | `[]` is both "no lists" (the author) and "the empty list" (the `list` wire) |
+| | **52** | | **19 + 6 + 3 + 2 + 3 = 33 closeable; 10 stops** |
+
+**X4 is measured, not argued.** Declining `[]` as a wire in `acceptsNodeWire` fixes merge-k L1/L2 and
+breaks `invert-binary-tree` L1/L2/L3 — census **398 → 397**. `npm run gen:traces` twice, probe
+reverted, tree clean.
+
+**Shipped here: M1, all 19 blocks.** `harvestCases` emitted every case with a `callee` field and
+`buildBundle` never read it, so a class guide's authored script — which CONSTRUCTS a target and then
+drives it — collapsed into one record with `args: []`, and the driver constructed the class and
+compared a scalar against an empty instance. Measured before: `node /tmp/cases.mjs
+07-stack/03-min-stack.md` → 9 cases, every one `{"args":[], "expected":<scalar>, "callee":"C"}`.
+
+Three things had to be true at once, and only running it found all three:
+
+- **`emitted` is "was the return value used".** A method call that is a STATEMENT contributed nothing
+  to the assertion (`m.pop()`) and one whose value is used contributed exactly that value
+  (`out.push(c.get(1))`, `assertEq(m.getMin(), -3)`). One rule, no per-guide table, and it is what
+  lets ONE emitted value answer a scalar assertion and SEVERAL answer the author's collected array.
+- **the op list is CUMULATIVE from the construction, and `emitted` is relative to the previous
+  assertion.** min-stack's three assertions share one instance; replaying all three `getMin`s for the
+  second compares `[-3, 0]` against an expected `0`. So `__OPS__` resets on a CONSTRUCTION (the one
+  event that starts a sequence) and `__FROM__` marks what the last assertion consumed.
+- **an op list belongs to the CONSTRUCTED target only.** `is-subsequence` drives the L3 class and the
+  L1/L2 functions in one loop body, so without dropping the op list on a plain-function target call the
+  class's list was attached to the function's cases: L2 went `21/0 → 18/3` and the L3 block drove a
+  constructor with a function's arguments. The partition now reads `c.ops` rather than `c.callee`,
+  because recording the sequence takes the receiver's construction out of the target-call path — which
+  is also why `new SubsequenceMatcher(t).isSubsequence(s)` has to hand its constructor arguments to
+  `__SPYOP__` itself: that `new` is left unspied, so nothing else would.
+
+**RED first, `npm run test:trace`, exit 1, 21 failures** (S23's 19 named guides + the tautology
+control + the mechanism probe):
+
+```
+❌ [FAIL] S23 ops: 07-stack__03-min-stack L1 passes every case — push/pop/top/getMin on one constructed MinStack
+   passed 0, failed 9 · first error: (a case compared unequal)
+❌ [FAIL] S23 ops negative: the unmodified named golden SATISFIES the predicate — the probe below is not tautological
+   failed 9
+❌ [FAIL] S23 ops: an op list drives the target's OWN methods — the emitted values come from the instance, not from a synthesised one
+   the replay did not reproduce the method sequence the op list named
+Assertions: 173 | Failures: 21
+```
+
+Every one of the 19 names its guide and its current `passed`/`failed`. The gate names GUIDES, not the
+whole 52, for the reason the S16 entry records: a gate naming all of them could not go green until
+every other mechanism landed, so it would prove nothing.
+
+**GREEN after the replay, `npm run test:trace`, exit 0:**
+
+```
+S17 ratchet: 450 heads · zero-pass 13 (baseline 13) · partial-pass 20 (baseline 20) · clean 417
+✅ [PASS] S23 ops: 07-stack__03-min-stack L3 passes every case — push/pop/top/getMin on one constructed MinStack
+✅ [PASS] S23 ops: 02-two-pointers__02-is-subsequence L3 passes every case — the L3 target is a CLASS: new SubsequenceMatcher(t).isSubsequence(s)
+Assertions: 176 | Failures: 0
+```
+
+The third S23 assertion is proved against the REAL driver (`buildBundle` + `executeUserCode` on a
+three-line class), not a re-implementation of it, and its case carries `args: []` — a driver that
+ignored `ops` would construct and stop and could not produce `[-2, -3]`. Two negatives keep it
+honest: the unmodified named golden satisfies the same predicate, and a golden with one more failure
+is rejected by it.
+
+**`VERDICT_BASELINE` 49/33 → 13/20**, in the same commit. All three S17 probes still bite at the new
+baseline, and each still asserts what it claims because every probe is written RELATIVE to it:
+`at(1,0)` = `{14,20}` → 1 breach; `at(0,1)` = `{13,21}` → 1 breach; `at(-1,-1)` = `{12,19}` → 0 breaches.
+`npm run test:trace` prints all three as PASS.
+
+**Census before → after** (`node /tmp/census.mjs`, the §5h probe verbatim):
+
+```
+before   clean 398  zeroPass 32  partialPass 20
+after    clean 417  zeroPass 13  partialPass 20
+```
+
+`clean` moved by **exactly 19** — M1's family size, no more and no less. `partial-pass` did not move
+at all, which is the receipt that nothing already-partial regressed. The 13 remaining zero-pass are
+`flatten-binary-tree` ×3, `lowest-common-ancestor` ×3, `sorted-array-to-bst` L2/L3, `construct-quad-tree`
+L2/L3 (M3–M5) and `insert-delete-getrandom-o1` ×3 (X1).
+
+**X1 is a refusal, and the measurement that forced it.** Replaying an op sequence makes the verdict
+depend on what the target's methods return AT RUN TIME, and for `insert-delete-getrandom-o1` that is
+`Math.random`. Its authored script pins the draw sequence with a global stub — precisely because the
+answer depends on it — and §5d forbids shipping one. Three consecutive `npm run gen:traces` on the
+SAME tree gave `passed 6 failed 1`, `passed 4 failed 3`, `passed 6 failed 1`. A golden whose verdict
+moves on every run is worse than a wrong one, because nothing can gate on it, so `harvestCases`
+refuses the op list for ANY block whose source names `Math.random`, `Date.now` or `new Date`
+(`NON_DETERMINISTIC_RE`) — by source, not by guide name, and the repo already has the vocabulary
+(E26, row 4's validator). Three new assertions name the three blocks that must stay wrong ON PURPOSE,
+so a future slice cannot close them by making them non-deterministic.
+
+**Determinism re-proven after the change** — the ledger's own standard, two runs:
+`npm run gen:traces && node /tmp/census.mjs` → `clean 417 zeroPass 13 partialPass 20`, twice, byte
+for byte. Before the refusal rule the same two runs disagreed.
+
+**Suites, re-measured with this change in place** (`npm run <script>` each):
+
+| Suite | Before | After |
+|---|---|---|
+| `npm test` | 1898 assertions · 0 failures | **1898 · 0** (`Files: 150`, `syntax-only: 0`, 450 blocks, 36 divergences) |
+| `test:envelope` | 129 · 0 | **129 · 0** |
+| `test:serialize` | 9 cases · 0 | **9 cases · 0** |
+| `test:validate` | 23 · 0 | **23 · 0** |
+| `test:instrument` | 246 · 0 | **246 · 0** |
+| `test:codecs` | 275 · 0 | **275 · 0** |
+| `test:trace-runner` | 269 · 0 | **269 · 0** |
+| `test:doc-traces` | 17 · 0 | **17 · 0** |
+| `test:judge` | 96 · 0 | **96 · 0** |
+| `validate` | 150 files · 0 errors | **150 files · 0 errors · 0 warnings** |
+| `test:trace` | 151 · 0 | **176 · 0** (+25: 19 guide/level gates, 3 determinism refusals, 3 mechanism/negative probes) |
+
+`test:trace`'s count RISES, which §6 allows for gates this row adds and nothing else.
+
+**Real surface (5g.3) — the control, not the proof.** `npm test 07-stack/03-min-stack.md` →
+`✅ [PASS] 07-stack/03-min-stack.md (9 assertions)`; `npm test 08-linked-list/11-lru-cache.md` →
+`✅ [PASS] (3 assertions)`. `test-runner.mjs`'s bare harness was already immune to this bug class, so
+it is a control; the proof is the census above and the 19 named gates.
+
+**Trust boundary — where this slice stopped.** No authored script text enters the driver. `ops` and
+`ctor` are DATA on a case object and ride the existing `JSON.stringify(tests)`, exactly as `t.via`
+does, so **no envelope field, golden field or schema entry was added** and S10's frozen v1.1 set is
+untouched (`test:envelope` 129·0, and S10 is inside it). The one authored-JS expansion C3 warned about
+— `viaCode`, which emits SCRIPT text into the bundle — was already in the tree and is not extended
+here. The methods replayed are the target's own; nothing in the driver computes an answer.
+
+**Left alone deliberately.** `api/_lib/codecs.mjs` is unmodified, so X3/X4 stay open rather than being
+"fixed" by a registry edit that §6 forbids and that the `[]` probe showed is a net loss. The other 33
+blocks (M2–M6, X2, X3, X4) are not started.

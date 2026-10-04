@@ -173,6 +173,7 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `    if (typeof __FN__ !== 'function') throw new Error('Function ' + __FN_NAME__ + ' is not defined');`,
     `    var __IS_CLASS__ = false;`,
     `    try { __IS_CLASS__ = /^\\s*class[\\s{]/.test(String(__FN__)); } catch (e) { __IS_CLASS__ = false; }`,
+    `    function __dec__(a) { return __CODEC__.acceptsWire(a) ? __CODEC__.fromWire(a) : a; }`,
     `    for (var ti = 0; ti < __TESTS__.length; ti++) {`,
     `      var t = __TESTS__[ti];`,
     `      var got;`,
@@ -181,9 +182,37 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `      try {`,
     // Only a value that IS this codec's canonical wire is decoded. A tree guide whose target
     // takes a plain array (`buildTree(preorder, inorder)`, `sortedArrayToBST(nums)`) keeps it.
-    `        var args = (t.args || []).map(function (a) { return __CODEC__.acceptsWire(a) ? __CODEC__.fromWire(a) : a; });`,
+    `        var args = (t.args || []).map(__dec__);`,
     `        var before = args.map(__snap__);`,
-    `        var r = __IS_CLASS__ ? Reflect.construct(__FN__, args) : __FN__.apply(null, args);`,
+    // Row 15 / S23 — a CLASS target's op sequence. The harvest records the method calls the authored
+    // script made on ONE constructed instance, and this is where they are replayed AGAINST THE
+    // TARGET'S OWN METHODS. Nothing is synthesised: every value compared below came out of a method
+    // the guide declares. That is the whole reason this is a replay and not a recorded `expected` —
+    // a recorded value would be a claim about the target made by something other than the target.
+    //
+    // `emitted` is the recorded half of "did the author use this value": `m.pop()` and `c.put(1,1)`
+    // are statements and contributed nothing, `assertEq(m.getMin(), -3)` and `out.push(c.get(1))`
+    // contributed exactly their return value. ONE emitted value answers the author's scalar
+    // assertion and SEVERAL answer the author's collected-array one, so the shape falls out of the
+    // count rather than out of a flag.
+    `        var r;`,
+    `        var __opsRan__ = false;`,
+    `        if (Array.isArray(t.ops)) {`,
+    `          var __inst__ = Reflect.construct(__FN__, (t.ctor || []).map(__dec__));`,
+    `          var __outs__ = [];`,
+    `          for (var oi = 0; oi < t.ops.length; oi++) {`,
+    `            var op = t.ops[oi];`,
+    `            if (typeof op[0] !== 'string' || typeof __inst__[op[0]] !== 'function') {`,
+    `              throw new Error('driver: the target has no method ' + op[0] + ', so the recorded op sequence cannot be replayed');`,
+    `            }`,
+    `            var ov = __inst__[op[0]].apply(__inst__, (op[1] || []).map(__dec__));`,
+    `            if (op[2]) __outs__.push(ov);`,
+    `          }`,
+    `          r = __outs__.length === 1 ? __outs__[0] : __outs__;`,
+    `          __opsRan__ = true;`,
+    `        } else {`,
+    `          r = __IS_CLASS__ ? Reflect.construct(__FN__, args) : __FN__.apply(null, args);`,
+    `        }`,
     // Row 15 / S22: replay the derivation the AUTHOR applied, immediately AFTER the call and
     // BEFORE the codec's `owns`/`toWire` below. That position is the whole point — after the call,
     // because the derivation is a function OF the return; before `toWire`, because the codec must
@@ -206,7 +235,10 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     // reduce to that: `normCombos(fn(4,2))` becomes `normCombos(r)` and `fn(t1,…).val` becomes
     // `r.val`, because the substituted call is the outermost expression the derivation is built on.
     `        if (t.via && __VIA_FNS__[t.via]) r = __VIA_FNS__[t.via](r);`,
-    `        if (r === undefined && t.expected !== undefined) {`,
+    // `__opsRan__` guards the mutated-argument branch below: an op sequence already produced the
+    // value the author asserted, so falling through to "the answer is a changed argument" would
+    // compare an argument against an array of method returns.
+    `        if (!__opsRan__ && r === undefined && t.expected !== undefined) {`,
     // A void target's answer is an ARGUMENT. Prefer the one the call actually changed, and
     // fall back to the first: `merge([1], 1, [], 0)` has nothing to merge, so it changes
     // nothing, and the authored edge case still expects the argument back (`[1]`). The

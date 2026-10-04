@@ -297,6 +297,9 @@ function readAuthoredCases() {
  *  spy — the spy is what records an assertion, so an asserter must not bypass it. */
 const SPY_EXEMPT = new Set(['console', 'Math', 'JSON', 'Number', 'String', 'Boolean', 'Array', 'Object', 'Reflect', 'Map', 'Set']);
 
+/** A block reading one of these answers differently on two runs of the same tree (E26). */
+const NON_DETERMINISTIC_RE = /Math\.random|Date\.now|new Date\b/;
+
 /**
  * A script's assertion helpers, by shape rather than by name: `(actual, expected, label)`.
  *
@@ -338,7 +341,7 @@ const ASSERTER_RE = /^(assert|approx|check|expect|verify|eq|same|isEqual|isDeep|
  * Upgrade path: if a guide's cases ever turn out to be captured only through an alias, bind
  * the alias too — the spy needs no region table, so it extends for free.
  */
-function spyRewrite(script, targetNames = [], reserved = new Set()) {
+function spyRewrite(script, targetNames = [], reserved = new Set(), { ops = true } = {}) {
   let ast;
   try {
     ast = acorn.parse(script, { ecmaVersion: 2024, sourceType: 'script', locations: false });
@@ -370,6 +373,73 @@ function spyRewrite(script, targetNames = [], reserved = new Set()) {
       const holdsTarget = iterable.elements.some((el) => el?.type === 'Identifier' && targets.has(el.name));
       if (holdsTarget) targets.add(binding.name);
     },
+  });
+
+  // ── The op sequence of a class target ────────────────────────────────────────────────────
+  // A class guide's script does not CALL the target, it CONSTRUCTS it and then drives it:
+  // `const m = new C(); m.push(-2); m.push(0); assertEq(m.getMin(), -3)`. Every one of those
+  // method calls has a MemberExpression callee, which the spy below does not rewrite, so the whole
+  // sequence collapsed into one record with `args: []` — and the driver then constructed the class
+  // and compared a scalar against an empty instance's state. Measured: min-stack yields 9 cases,
+  // every one of them `{"args":[], "expected":<scalar>, "callee":"C"}`.
+  //
+  // So the calls are rewritten too, to a form that both RUNS the method and records it. Two shapes
+  // cover the corpus: the receiver is a variable holding a constructed target (`m.push(-2)`), or the
+  // call is on the construction itself (`new SubsequenceMatcher(t).isSubsequence(s)`). Both are
+  // recorded as `[method, args, emitted]`, and `emitted` is the whole of the "did the author use
+  // this value" question: a method call used as a STATEMENT contributed nothing to the assertion
+  // (`m.pop()`) and a method call whose value is used contributed exactly that value
+  // (`out.push(c.get(1))`, `assertEq(m.getMin(), -3)`). One rule, no per-guide table.
+  const instanceVars = new Set();
+  walk.simple(ast, {
+    VariableDeclarator(node) {
+      const init = node.init;
+      if (node.id?.type !== 'Identifier' || init?.type !== 'NewExpression') return;
+      const ctor = init.callee;
+      if (ctor?.type === 'Identifier' && targets.has(ctor.name)) instanceVars.add(node.id.name);
+      else if (ctor?.type === 'MemberExpression' && targets.has(ctor.property?.name)) {
+        instanceVars.add(node.id.name);
+      }
+    },
+  });
+  const opCalls = [];
+  const stmtStarts = new Set();
+  const ctorStarts = new Set();
+  if (ops) walk.simple(ast, {
+    ExpressionStatement: (node) => stmtStarts.add(node.expression.start),
+    CallExpression(node) {
+      const callee = node.callee;
+      if (callee?.type !== 'MemberExpression' || callee.computed) return;
+      const method = callee.property?.name;
+      if (typeof method !== 'string') return;
+      const obj = callee.object;
+      const onNew = obj?.type === 'NewExpression';
+      if (!onNew && !(obj?.type === 'Identifier' && instanceVars.has(obj.name))) return;
+      if (onNew) ctorStarts.add(obj.start);
+      opCalls.push(node);
+    },
+  });
+  // `acorn-walk` gives no parent pointer, so "was the return value used" is answered by a SET of
+  // the calls that ARE statements — order-independent, and it reads off the same AST the edits
+  // slice, so the two can never disagree about which call is which.
+  const opEdits = opCalls.map((node) => {
+    const obj = node.callee.object;
+    const objText = script.slice(obj.start, obj.end);
+    const argText = node.arguments.map((a) => script.slice(a.start, a.end)).join(', ');
+    const used = stmtStarts.has(node.start) ? 0 : 1;
+    const onNew = obj.type === 'NewExpression';
+    // A receiver that IS the construction carries the constructor arguments, because that `new` is
+    // left unspied — two edits cannot span one range — so `__SPY__`'s constructor branch never runs
+    // and `__CTOR__` would stay empty. Without this, `new SubsequenceMatcher(t).isSubsequence(s)`
+    // reconstructs with no arguments and dies on `.length` of undefined.
+    const ctorText = onNew
+      ? `[${(obj.arguments ?? []).map((a) => script.slice(a.start, a.end)).join(', ')}]`
+      : 'null';
+    return {
+      start: node.start,
+      end: node.end,
+      text: `__SPYOP__(${JSON.stringify(node.callee.property.name)}, ${objText}, [${argText}], ${used}, ${ctorText})`,
+    };
   });
 
   // The derivations, collected from the SAME AST and the SAME `script` text the edits below
@@ -406,14 +476,21 @@ function spyRewrite(script, targetNames = [], reserved = new Set()) {
     edits.push({ start: callee.start, end: callee.end, text: `__SPY__(${JSON.stringify(callee.name)}, ${callee.name}${args}${viaArg})` });
   };
   walk.simple(ast, { CallExpression: (node) => rewrite(node.callee, false, node.start) });
-  walk.simple(ast, { NewExpression: (node) => rewrite(node.callee, true, node.start) });
+  walk.simple(ast, {
+    // A construction that is the RECEIVER of a recorded op is left alone: the op edit already spans
+    // the whole call, and two edits over one range cannot both apply. Nothing is lost — the driver
+    // constructs from the recorded ctor args rather than re-running the construction.
+    NewExpression: (node) => { if (!ctorStarts.has(node.start)) rewrite(node.callee, true, node.start); },
+  });
+  const allEdits = edits.concat(opEdits).sort((a, b) => b.start - a.start);
   let code = script;
-  for (const edit of edits.sort((a, b) => b.start - a.start)) {
+  for (const edit of allEdits) {
     code = code.slice(0, edit.start) + edit.text + code.slice(edit.end);
   }
   return {
     code,
-    rewritten: edits.length,
+    rewritten: allEdits.length,
+    opCount: opEdits.length,
     targets: [...targets],
     error: null,
     viaCode: derivations.viaCode,
@@ -441,6 +518,26 @@ function spyRewrite(script, targetNames = [], reserved = new Set()) {
  *  the target only through an alias AND whose informative call is not a direct one.
  *  Upgrade path: a real parameter mapping, which needs the target's arity from the AST. */
 const SPY_RUNTIME = `
+// Row 15 / S23 — the op sequence of a CLASS target. \`__OPS__\` is the accumulated
+// \`[method, args, emitted]\` list for the instance constructed most recently, and it is NOT reset per
+// assertion: the driver's replay reconstructs the instance from \`ctor\` and then applies the WHOLE
+// list, so every case in a sequence has to carry the list as it stood when that assertion was
+// written. It is reset by a CONSTRUCTION instead, which is the one event that starts a new sequence.
+var __OPS__ = [];
+var __CTOR__ = null;
+// How many ops the PREVIOUS assertion already consumed. An op's "emitted" flag is a property of
+// the call SITE, but an assertion only collects the values produced since the last one: min-stack's
+// three assertions share one instance, and replaying all three getMins for the second would
+// compare [-3, 0] against an expected 0.
+var __FROM__ = 0;
+function __TXA__(a) { try { return JSON.parse(JSON.stringify(Array.prototype.slice.call(a))); } catch (e) { return null; } }
+function __SPYOP__(method, recv, args, emit, ctorArgs) {
+  if (ctorArgs !== null) { var __ca__ = __TXA__(ctorArgs); __CTOR__ = __ca__ === null ? [] : __ca__; __OPS__ = []; __FROM__ = 0; }
+  var r = recv[method].apply(recv, args);
+  var tx = __TXA__(args);
+  __OPS__.push([method, tx === null ? [] : tx, emit]);
+  return r;
+}
 function __SPY__(name, target, isCtor, via) {
   return function () {
     var __isTarget = __TARGETS__.indexOf(name) !== -1;
@@ -494,8 +591,23 @@ function __SPY__(name, target, isCtor, via) {
         }
       }
     }
+    // Row 15 / S23: a plain-FUNCTION target call starts a different subject, so the instance op
+    // list is dropped here rather than carried. is-subsequence is the measured reason: one
+    // authored script drives the L3 CLASS and the L1/L2 functions in the same loop body, so without
+    // this the class's op list was attached to the function's cases too and the L3 block drove a
+    // constructor with a function's arguments.
+    if (__isTarget && !isCtor) { __OPS__ = []; __CTOR__ = null; __FROM__ = 0; }
     if (__ASSERTERS__.indexOf(name) !== -1) {
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, via: __AV__ });
+      // Row 15 / S23: \`.slice()\` is load-bearing, not defensive. \`__CAP__\` is serialised ONCE at the
+      // end of the script, so a shared array reference would give every case in the sequence the
+      // FINAL list and silently grade all of them against the last assertion.
+      var __ops__ = null;
+      if (__OPS__.length > 0) {
+        var __base__ = __FROM__;
+        __ops__ = __OPS__.map(function (o, i) { return [o[0], o[1], i >= __base__ ? o[2] : 0]; });
+        __FROM__ = __OPS__.length;
+      }
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null });
       __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = []; __AV__ = null;
     }
 
@@ -511,6 +623,9 @@ function __SPY__(name, target, isCtor, via) {
     // for a non-node return, and guarded because a cyclic or exotic return must not abort the
     // harvest — a tree whose level-order form is ambiguous stays unrecorded, exactly as it did
     // before.
+    // Row 15 / S23: a new instance starts a new op sequence. Only a TARGET construction does —
+    // \`new Node(v)\` inside a script is a helper and must not truncate the sequence.
+    if (__isTarget && isCtor) { var __ca__ = __TXA__(arguments); __CTOR__ = __ca__ === null ? [] : __ca__; __OPS__ = []; __FROM__ = 0; }
     var __ret__ = isCtor ? Reflect.construct(target, Array.prototype.slice.call(arguments))
                          : target.apply(this, arguments);
     if (__TREE__ && !isCtor && !__pushed__ && __GRAPH__(__ret__)) {
@@ -795,7 +910,21 @@ async function harvestCases(script, blocksByLevel, codec = null) {
   // derivation helper that is already available where the bundle puts it is never sliced out and
   // re-declared — see `DRIVER_DECLARED` for the same filter on the driver's half.
   const reserved = new Set(blocksByLevel.flatMap((b) => [...topLevelDeclarations(b.source ?? '').keys()]));
-  const spied = spyRewrite(script, blocksByLevel.map((b) => b.targetFn).filter(Boolean), reserved);
+  // Row 15 / S23 — a class target whose source reads a NON-DETERMINISTIC global gets NO op list.
+  //
+  // Replaying an op sequence makes the verdict depend on what the target's own methods return at
+  // run time, and for `01-array-string/12-insert-delete-getrandom-o1` that is `Math.random`. Its
+  // authored script pins the draw sequence with a global stub precisely because the answer depends
+  // on it, and the stub is out of bounds here (§5d). Without a draw sequence the same guide measured
+  // `passed 6 failed 1`, `passed 4 failed 3` and `passed 6 failed 1` on three consecutive
+  // regenerations of the SAME tree — a golden whose verdict moves on every run is worse than a wrong
+  // one, because nothing can gate on it (K6/E8 assume a byte-reproducible artefact).
+  //
+  // So the refusal is by SOURCE, not by guide name: any block naming `Math.random`, `Date.now` or
+  // `new Date` keeps the pre-S23 recording, and its blocks stay in the S17 census as honest
+  // remaining work. The repo already has this vocabulary — E26, and row 4's validator gate.
+  const nonDeterministic = blocksByLevel.some((b) => NON_DETERMINISTIC_RE.test(b.source ?? ''));
+  const spied = spyRewrite(script, blocksByLevel.map((b) => b.targetFn).filter(Boolean), reserved, { ops: !nonDeterministic });
   if (spied.error) return { cases: [], reason: spied.error };
   const targets = spied.targets;
   // `assertEq` is ALWAYS one: after the rewrite its call sites no longer declare it, and most
@@ -908,6 +1037,16 @@ async function harvestCases(script, blocksByLevel, codec = null) {
     // a registry key. It is inert in the driver unless a `__VIA_FNS__` entry of that name is
     // present, which `buildBundle` emits from the array property below.
     if (record.via !== undefined && record.via !== null) testCase.via = record.via;
+    // Row 15 / S23 — the op list of a class target, and the CONSTRUCTOR arguments it starts from.
+    // DATA, not code: it rides inside the existing `JSON.stringify(tests)`, exactly as `t.via` does,
+    // so no envelope field, golden field or schema entry was added to carry it (S10's frozen v1.1
+    // set is untouched). `args` deliberately stays whatever the spy recorded — the driver ignores
+    // it on the ops branch, and keeping it means a case that BOTH has ops and is read by a host
+    // that predates them still says what the script called.
+    if (Array.isArray(record.ops) && record.ops.length > 0) {
+      testCase.ops = record.ops;
+      testCase.ctor = Array.isArray(record.ctor) ? record.ctor : [];
+    }
     cases.push(testCase);
   }
   if (cases.length === 0) {
@@ -1529,6 +1668,25 @@ async function main(argv) {
     const casesForLevel = (level) => {
       const mine = blocksByGuide.find((b) => b.level === level);
       const kept = source.cases.filter((c) => {
+        // Row 15 / S23: a case carrying an op list is an op sequence against a CONSTRUCTED
+        // INSTANCE, so it is structurally meaningless against a plain function — the same
+        // asymmetry the rule below states for a case whose `callee` is an `ops` target, and it
+        // reaches only the levels whose own block is an `ops` one. The discriminator is `c.ops`,
+        // NOT `c.callee`: recording the op sequence takes the receiver's construction out of the
+        // target-call path, so such a case's `callee` is the ASSERTER and the rule below saw
+        // nothing to drop. Measured: is-subsequence L2 went 21/0 to 18/3 without this, because
+        // three of the L3 class cases reached a plain function.
+        if (Array.isArray(c.ops)) return mine?.codec === 'ops';
+        // …and the same asymmetry read from the other side: at an `ops` LEVEL the target is a class,
+        // so a case recorded against a sibling level's plain FUNCTION is structurally meaningless
+        // there too. `is-subsequence` is the measured instance — one authored script drives the L3
+        // CLASS and the L1/L2 functions, so without this the L3 block ran 14 function cases against
+        // a constructor and answered 0 of 21. `callee: 'C'` (an alias) and `callee: 'assertEq'`
+        // name no block at all, so both still reach the level, which is what keeps coverage intact.
+        if (mine?.codec === 'ops') {
+          const owner = blocksByGuide.find((b) => b.targetFn === c.callee);
+          if (owner && owner.codec !== 'ops') return false;
+        }
         if (c.callee === mine?.targetFn || !blocksByGuide.some((b) => b.targetFn === c.callee)) return true;
         return !(codecOfTarget.get(c.callee) === 'ops' && mine?.codec !== 'ops');
       });
