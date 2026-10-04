@@ -341,7 +341,7 @@ const ASSERTER_RE = /^(assert|approx|check|expect|verify|eq|same|isEqual|isDeep|
  * Upgrade path: if a guide's cases ever turn out to be captured only through an alias, bind
  * the alias too — the spy needs no region table, so it extends for free.
  */
-function spyRewrite(script, targetNames = [], reserved = new Set(), { ops = true } = {}) {
+function spyRewrite(script, targetNames = [], reserved = new Set(), siblingSources = [], { ops = true } = {}) {
   let ast;
   try {
     ast = acorn.parse(script, { ecmaVersion: 2024, sourceType: 'script', locations: false });
@@ -354,6 +354,7 @@ function spyRewrite(script, targetNames = [], reserved = new Set(), { ops = true
       viaCode: '',
       viaCount: 0,
       viaByStart: new Map(),
+      derivationDeps: [],
     };
   }
 
@@ -445,7 +446,7 @@ function spyRewrite(script, targetNames = [], reserved = new Set(), { ops = true
   // The derivations, collected from the SAME AST and the SAME `script` text the edits below
   // slice — collected BEFORE any edit is applied, because an edit shifts every offset after it
   // and `byStart` is keyed on offsets into the ORIGINAL string.
-  const derivations = collectDerivations(script, ast, targets, reserved);
+  const derivations = collectDerivations(script, ast, targets, reserved, siblingSources);
 
   const edits = [];
   const rewrite = (callee, ctor, callStart) => {
@@ -496,6 +497,7 @@ function spyRewrite(script, targetNames = [], reserved = new Set(), { ops = true
     viaCode: derivations.viaCode,
     viaCount: derivations.count,
     viaByStart: derivations.byStart,
+    derivationDeps: derivations.deps,
   };
 }
 
@@ -734,7 +736,7 @@ const DRIVER_DECLARED = (() => {
  *   `byStart` maps a target call's source offset to its registry key, so the spy rewrite can hand
  *   the key to that exact call site.
  */
-export function collectDerivations(script, ast, targets, reserved = new Set()) {
+export function collectDerivations(script, ast, targets, reserved = new Set(), siblings = []) {
   const targetSet = targets instanceof Set ? targets : new Set(targets);
   const entries = [];
   const byStart = new Map();
@@ -881,20 +883,46 @@ export function collectDerivations(script, ast, targets, reserved = new Set()) {
     },
   });
 
-  if (entries.length === 0) return { viaCode: '', count: 0, byStart };
+  if (entries.length === 0) return { viaCode: '', count: 0, byStart, deps: [] };
 
   // Slice each helper out of the SAME script, skipping anything already declared where the code
   // is going to land. `topLevelDeclarations` is the existing resolver; a name the script declares
   // as `function`/`class`/`const`/`let`/`var` at top level is sliced whole.
   const declared = topLevelDeclarations(script);
+  // Row 15 / S27 — a derivation helper the SCRIPT does not declare is not necessarily the driver's
+  // own: it is very often declared by the GUIDE, in one of its three blocks, at a level this run is
+  // not given. `quadToGrid` is declared once in construct-quad-tree's markdown and in none of the
+  // selected blocks, so the derivation sliced a registry entry that threw
+  // `ReferenceError: 'quadToGrid' is not defined` before comparing anything. So the lookup falls
+  // through to the SIBLING blocks — the guide's own code, verbatim, uninstrumented, exactly as
+  // `missingDeclarations` already lifts them into the block half of the bundle. The two filters stay:
+  // a name the driver already declares is resolved by the driver, and a name the block declares is
+  // already in scope through the closure.
   const needed = new Set();
   const slices = [];
+  // …and they are NOT sliced into the driver. Two reasons, both measured:
+  //   - a derivation helper that reaches the IIFE can SHADOW a name the codec registry declares
+  //     there, which is the reverted-feature note on `DRIVER_DECLARED`;
+  //   - `reserved` is the union of ALL THREE levels' declarations, so a helper that only one level's
+  //     block declares looks "already in scope" for the other two and is skipped, leaving those
+  //     levels with a registry entry that throws `ReferenceError` before comparing anything.
+  // So a name neither the script nor the block-half declares is reported as a DEPENDENCY and lifted
+  // into the block half instead — the guide's own code, verbatim and uninstrumented, which is what
+  // `missingDeclarations` already does for a block's cross-level references.
+  const deps = new Set();
   for (const entry of entries) {
     for (const name of entry.helpers) {
-      if (needed.has(name)) continue;
-      if (DRIVER_DECLARED.has(name) || reserved.has(name)) continue;
+      if (needed.has(name) || deps.has(name)) continue;
+      if (DRIVER_DECLARED.has(name)) continue;
       const text = declared.get(name);
-      if (text === undefined) continue; // a global the script never declared: the driver's own
+      // Not declared by the SCRIPT: it is a dependency for the block half to supply, and
+      // `missingDeclarations` decides per level whether the block already has it. Consulting
+      // `reserved` here is what broke it — that set is the union of all three levels, so a helper
+      // only one level declares looks available to the other two and is dropped.
+      if (text === undefined) { deps.add(name); continue; }
+      // Declared by the script AND already in scope where the code lands: not sliced, or it would
+      // shadow the block's own copy.
+      if (reserved.has(name)) continue;
       needed.add(name);
       slices.push(text);
     }
@@ -910,7 +938,7 @@ export function collectDerivations(script, ast, targets, reserved = new Set()) {
     `var __VIA_FNS__ = __VIA_FNS__ || {};`,
     ...entries.map((e) => `__VIA_FNS__[${JSON.stringify(e.key)}] = function (__R__) { return ${e.expr}; };`),
   ].join('\n');
-  return { viaCode, count: entries.length, byStart };
+  return { viaCode, count: entries.length, byStart, deps: [...deps] };
 }
 
 /**
@@ -1012,7 +1040,13 @@ async function harvestCases(script, blocksByLevel, codec = null) {
   // `new Date` keeps the pre-S23 recording, and its blocks stay in the S17 census as honest
   // remaining work. The repo already has this vocabulary — E26, and row 4's validator gate.
   const nonDeterministic = blocksByLevel.some((b) => NON_DETERMINISTIC_RE.test(b.source ?? ''));
-  const spied = spyRewrite(script, blocksByLevel.map((b) => b.targetFn).filter(Boolean), reserved, { ops: !nonDeterministic });
+  const spied = spyRewrite(
+    script,
+    blocksByLevel.map((b) => b.targetFn).filter(Boolean),
+    reserved,
+    blocksByLevel.map((b) => b.source ?? ''),
+    { ops: !nonDeterministic },
+  );
   if (spied.error) return { cases: [], reason: spied.error };
   const targets = spied.targets;
   // `assertEq` is ALWAYS one: after the rewrite its call sites no longer declare it, and most
@@ -1160,6 +1194,10 @@ async function harvestCases(script, blocksByLevel, codec = null) {
   // anywhere to accommodate it. A reader that spreads or filters the array drops the property,
   // which is why the level partition in `main()` re-attaches it explicitly.
   if (spied.viaCode) cases.viaCode = spied.viaCode;
+  // Same non-index-on-the-array trick as `viaCode`, for the same reason: these names have to reach
+  // `buildInstrumented` and they are not cases. `JSON.stringify` drops them by design, so nothing
+  // downstream that only sees the serialised cases is affected.
+  if (spied.derivationDeps?.length) cases.derivationDeps = spied.derivationDeps;
   return { cases, unserialisable, untransportable, viaCount: spied.viaCount ?? 0 };
 }
 
@@ -1369,7 +1407,7 @@ function missingDeclarations(blockSource, siblingSources) {
  * reader. The envelope's `block.startLine`/`lines` still come from the manifest, which is the
  * identity K5 pins.
  */
-export async function buildInstrumented(guidePath, level = 3) {
+export async function buildInstrumented(guidePath, level = 3, { depNames = [] } = {}) {
   const meta = getBlock(guidePath, level); // throws, naming gen-blocks.mjs, on an unknown block
   const { entry, source, instrumented } = instrumentGuideBlock(guidePath, level);
   const probes = Array.isArray(instrumented?.probes) ? instrumented.probes : [];
@@ -1384,7 +1422,14 @@ export async function buildInstrumented(guidePath, level = 3) {
         return '';
       }
     });
-  const shared = missingDeclarations(source, siblings);
+  // Row 15 / S27 — a derivation helper the level's own block does not declare. Appending the NAMES to
+  // the source `missingDeclarations` already scans is enough: it lifts a referenced-but-undeclared
+  // name out of a sibling block, and it skips anything the block DOES declare, so this is per-level
+  // correct without the harvest having to know which level it is building for.
+  const shared = missingDeclarations(
+    depNames.length > 0 ? `${source}\n${depNames.join('\n')}` : source,
+    siblings,
+  );
 
   // The alias goes in BOTH halves. Row 10 builds the traced run from `instrumented` and the
   // raw verdict run from `source`, and `buildWrapper` installs into whichever it is given —
@@ -1521,7 +1566,7 @@ export function degradeToDiff(envelope) {
  * @param {{cases?: object[], caseIndex?: number, codecOverride?: string}} [opts]
  */
 export async function traceOne(guidePath, level = 3, opts = {}) {
-  const built = await buildInstrumented(guidePath, level);
+  const built = await buildInstrumented(guidePath, level, { depNames: opts.cases?.derivationDeps ?? [] });
 
   if (opts.codecOverride !== undefined) {
     // G1's loud failure, proven: `getCodec` throws on an unimplemented name. Called here so the
@@ -1789,6 +1834,7 @@ async function main(argv) {
       // to be re-attached by hand or every level of a derivation guide silently loses its replay
       // and the block stays in the wrong-verdict census looking like a driver bug.
       if (source.cases.viaCode) kept.viaCode = source.cases.viaCode;
+      if (source.cases.derivationDeps) kept.derivationDeps = source.cases.derivationDeps;
       return kept;
     };
 

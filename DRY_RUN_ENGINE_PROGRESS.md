@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 23/450 verdicts still wrong** (was 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 17/450 verdicts still wrong** (was 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -1567,3 +1567,79 @@ errors · 0 warnings** · `test:trace` **186 · 0** (was 183; +3 named gates).
 
 **The comparator is untouched.** A derivation was already part of the design (S22); this slice adds
 one more way for the harvest to RECORD one. `api/_lib/codecs.mjs` and E28 are unmodified.
+
+### 2026-10-05 — row 15, part 5: a derivation helper the driver never RECEIVED. **23 → 17.**
+
+A derivation is replayed inside the driver's IIFE, and the helpers its expression references are
+sliced out of the AUTHORED SCRIPT. Some are declared in neither the script nor the block the driver is
+handed: they live in the guide's own markdown, at a level this run is not given. `quadToGrid` is
+declared once in `21-divide-conquer/03-construct-quad-tree.md:101` and is in none of the three
+selected blocks, so the registry entry was `function (__R__) { return quadToGrid(__R__, 2); }` with
+no `quadToGrid` anywhere, and the run died on
+`ReferenceError: 'quadToGrid' is not defined` before comparing anything. All six cases, all levels.
+
+**Shipped: such a name is reported as a DEPENDENCY and lifted into the BLOCK half**, not sliced into
+the driver. That placement is the whole fix, for two reasons that are both measured rather than
+stylistic:
+
+- A derivation helper that reaches the IIFE can **shadow** a name the codec registry declares there.
+  That is the reverted-feature note `DRIVER_DECLARED` already carries, and it cost four authored
+  scripts the first time it happened.
+- `reserved` is the union of **all three** levels' declarations, so a helper only ONE level's block
+  declares looks "already in scope" for the other two and is skipped — which is exactly the bug.
+  `missingDeclarations` decides per level, and lifting into the block half reuses it unchanged: it
+  lifts a referenced-but-undeclared name out of a sibling block and skips anything the block under
+  test already declares.
+
+The dependency NAMES ride as a non-index own property on the `cases` array, the same trick
+`viaCode` uses and for the same reason: `JSON.stringify` drops them by design, so they reach
+`buildInstrumented` and change nothing about the transported cases, the envelope or the schema.
+
+**RED first, `npm run test:trace`, exit 1:**
+
+```
+❌ [FAIL] S27 sibling helper: 21-divide-conquer__03-construct-quad-tree L2 passes every case — quadToGrid is in the guide, not in the block the driver is handed
+   passed 0, failed 6 · first error: (a case compared unequal)
+❌ [FAIL] S27 sibling helper: 18-graph-general__03-clone-graph L2 passes every case — graphToAdj likewise — the remaining two cases died on it once the unbacked ones were dropped
+   passed 1, failed 1 · first error: (a case compared unequal)
+Assertions: 190 | Failures: 4
+```
+
+**GREEN after the lift:**
+
+```
+S17 ratchet: 450 heads · zero-pass 9 (baseline 9) · partial-pass 8 (baseline 8) · clean 433
+Assertions: 192 | Failures: 0
+```
+
+**Six blocks, not the four the gate was written against.** `sorted-array-to-bst` L2/L3 turned out to
+have the same shape — `treeHeight` is declared the same way — and are now NAMED in the gate rather
+than left for a later slice to rediscover as a driver bug. Found by running it, not by reading it.
+
+**Census before → after** (`node /tmp/census.mjs`):
+
+```
+before   clean 427  zeroPass 13  partialPass 10
+after    clean 433  zeroPass 9   partialPass 8
+```
+
+`clean` moved by **exactly 6** — construct-quad-tree L2/L3, clone-graph L2/L3, sorted-array-to-bst
+L2/L3. The 9 remaining zero-pass are `insert-delete-getrandom-o1` ×3 (X1), `lowest-common-ancestor` ×3
+(X2) and `flatten-binary-tree` ×3 (M4, one slice away). The 8 partial are `next-right-pointers-ii` ×2
+(X3), `powx-n` ×3 (M6), `merge-k-sorted-lists` ×2 (X4) and `sorted-array-to-bst` L1.
+
+**Determinism, two consecutive `npm run gen:traces`:** `clean 433 zeroPass 9 partialPass 8`, twice.
+
+**Suites, re-measured:** `npm test` **1898 · 0** (`Files: 150`, `syntax-only: 0`, 450 blocks, 36
+divergences) · `test:envelope` **129 · 0** · `test:serialize` **9 cases · 0** · `test:validate`
+**23 · 0** · `test:instrument` **246 · 0** · `test:codecs` **275 · 0** · `test:trace-runner`
+**269 · 0** · `test:doc-traces` **17 · 0** · `test:judge` **96 · 0** · `validate` **150 files · 0
+errors · 0 warnings** · `test:trace` **192 · 0** (was 186; +6 named gates).
+
+**Real surface (5g.3) — the control.** `npm test 21-divide-conquer/03-construct-quad-tree.md` →
+`✅ [PASS] (6 assertions)` · `npm test 18-graph-general/03-clone-graph.md` → `✅ [PASS] (11 assertions)`.
+
+**The helper is the GUIDE'S OWN CODE, copied, not new code.** `missingDeclarations` already lifts a
+block's cross-level references verbatim; this adds the derivation's dependencies to the same lookup.
+No authored script text enters the driver, no codec or comparator moves, and the sliced text is
+uninstrumented so it contributes no probes and no steps (K4).
