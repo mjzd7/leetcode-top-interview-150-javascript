@@ -451,3 +451,38 @@ test('the collapse control points the way it will move', async ({ page }) => {
   expect(seen[1].d, 'both widening steps point the same way').toBe(seen[2].d);
   expect(seen[3].d, 'and collapsing looks the same again on the way round').toBe(seen[0].d);
 });
+
+/* The sidebar was roomier on a phone than on a desktop: 44px between groups
+   below md, 20px from md up. The cause was a default that lived inside the
+   min-width query — .nav-cat-btn fell back to inline-block below md, and a 0x0
+   empty button still builds a line box from the font strut. 24px of nothing
+   above each of the 27 group headers. */
+test('the sidebar keeps the same rhythm at every width', async ({ page }) => {
+  const gapsAt = async (width) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/#' + PROBLEM_01);
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(300);
+    return page.evaluate(() => {
+      const groups = [...document.querySelectorAll('#curriculumNav .nav-group')];
+      const gaps = [];
+      for (let i = 0; i < groups.length - 1; i += 1) {
+        const last = groups[i].querySelector('.nav-item:last-of-type');
+        const head = groups[i + 1].querySelector('.nav-group-text');
+        if (last && head) gaps.push(Math.round(head.getBoundingClientRect().top - last.getBoundingClientRect().bottom));
+      }
+      return {
+        gaps,
+        laidOutGlyphs: [...document.querySelectorAll('#curriculumNav .nav-cat-btn')]
+          .filter((e) => getComputedStyle(e).display !== 'none').length,
+      };
+    });
+  };
+
+  const phone = await gapsAt(412);
+  const desktop = await gapsAt(1440);
+
+  expect(phone.laidOutGlyphs, 'no category glyph is laid out below md').toBe(0);
+  expect(Math.max(...phone.gaps), 'a phone is not roomier than a desktop').toBeLessThanOrEqual(20);
+  expect(phone.gaps[0], 'the gap between groups is the same at both widths').toBe(desktop.gaps[0]);
+});

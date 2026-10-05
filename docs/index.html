@@ -253,6 +253,14 @@
     .lt-rail { display: contents; }
     .lt-rail-toc { display: none; }
     #ltRailResizer { display: none; }
+    .nav-group-rule { display: none; }
+    /* Hidden at every width, not just from md up. These two defaults used to live
+       inside the min-width: 768px query, so below it .nav-cat-btn fell back to
+       inline-block: a 0x0 empty button, but an inline-level box still builds a
+       line box from the font strut, and that put 24px of dead space above each of
+       the 27 group headers. Sidebar groups were 44px apart on a phone and 20px on
+       a desktop — denser the other way round. */
+    .nav-cat-btn, .nav-group-rule { display: none; }
     @media (min-width: 768px) {
       #sidebar[data-stage="1"] { width: 200px; }
       #sidebar[data-stage="2"] { width: 56px; }
