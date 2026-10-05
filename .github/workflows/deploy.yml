@@ -41,6 +41,20 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # test-trace picks its diff renderer by looking for `delta` on PATH. A runner has none, so
+      # the renderer fell back to plain text and four assertions failed with `renderer was "text"`
+      # — on S5b and S9, the plan §0.2 claim itself. Same shape as the ast-grep dependency: a tool
+      # the suite requires that nothing declared. The no-delta fallback assertions hide `delta`
+      # from PATH themselves, so installing it here cannot make them pass vacuously.
+      - name: Install delta (the trace differ)
+        run: |
+          cargo install --locked delta || {
+            echo "cargo unavailable; falling back to the release binary"
+            curl -fsSL https://github.com/dandavison/delta/releases/download/0.18.2/delta-0.18.2-x86_64-unknown-linux-gnu.tar.gz \
+              | tar -xz -C /usr/local/bin --strip-components=1
+          }
+          delta --version
+
       - name: Validate Markdown Schema & Code Blocks
         run: npm run validate
 
