@@ -2472,3 +2472,36 @@ first kind this session.
 **Operational note, now a property of the config rather than folklore:** an occupied 4173 stops the run.
 That is the intended behaviour, so clear the port before `test:e2e` — `lsof -iTCP:4173 -sTCP:LISTEN -t
 2>/dev/null | xargs kill` — and check it afterwards.
+
+### 2026-10-05 — S33: the degrade assertions are pure, so they never needed the slow fixture
+
+The debt entry above concluded that `test:trace-runner` must stay out of `verify` because E22 builds a
+real >1 MB trace against the sandbox's 3 s budget. That is true **of E22**, and the conclusion I drew —
+that `verify` therefore has no coverage of the degrade path — does not follow. E22's six assertions are
+not about *producing* a big trace; they are about what degradation **does** to one, and `degradeToDiff`
+(`trace-runner.mjs:752`) is a **pure exported function** over `steps[].snap`, `steps[].delta`,
+`budget.mode` and `truncated.trace`.
+
+So the same six properties are now asserted in `scripts/test-trace.mjs` (**S33**, +7 assertions →
+**219·0**), on a **real L3 golden** with its snapshots inflated. No QuickJS, no byte budget crossed, no
+clock — milliseconds instead of ~2 minutes, and not one assertion depends on machine speed. That restores
+the coverage that motivated wiring the runner suite in, without the flake that made wiring it wrong.
+
+**A wrong fixture, found by a failing assertion.** The pad key was `` `${i}:${blob}` `` — changing every
+step — and the saving assertion failed while all six others passed. The reason is worth keeping:
+`degradeToDiff` records `{path, from, to}` and **`to` is the full new value**, so a key that changes every
+step **migrates into every step's `delta` instead of disappearing**. The envelope came out the same size,
+and "shedding snapshots saved nothing" was true for a reason that had nothing to do with shedding. A
+**constant** pad key diffs empty after the first step, which is the condition E20's claim actually
+describes. The comment at the fixture says so, so the next reader does not re-introduce it.
+
+**Proven able to bite.** Deleting the one line `for (const step of envelope.steps) step.snap = null` turns
+**three** assertions red — *the snapshot payload is GONE*, *the degrade is a real SAVING*, and *the
+degraded envelope is still a VALID envelope* — and restoring returns **219·0**. A negative probe also
+holds: a trace with nothing to diff gets exactly one `{(degraded)}` synthetic change, so diff mode is
+never blank (§5 I4).
+
+**What this still does not claim** — stated so the boundary is not lost: that a **real** over-budget run
+*reaches* the degrade path. That is E22's transport proof, it genuinely needs the slow fixture, and it
+stays where it is, outside `verify`. S33 is the half that was silently ungated, not a replacement for the
+half that is expensive.
