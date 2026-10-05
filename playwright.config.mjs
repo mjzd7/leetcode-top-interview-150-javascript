@@ -38,9 +38,31 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `npm run build && npx --yes serve@14 -l ${PORT} docs`,
+    // Serve only. The build is NOT here: `npm run build` regenerates 3 MB of curriculum data plus the
+    // trace index, and under load it exceeds `webServer.timeout` (120 s) — Playwright then gives up
+    // before the server ever listens, and every test fails with `ERR_CONNECTION_REFUSED`. Measured: 157
+    // connection-refused failures and a 3.0-minute run, versus a 6-minute run with 0 when the machine
+    // was idle. A build step inside the server's own startup budget is a race with the timeout.
+    //
+    // Freshness is the caller's job, and `verify` now does it explicitly: `npm run build` runs
+    // IMMEDIATELY BEFORE `npm run test:e2e`, so the suite still tests a build made seconds earlier —
+    // it is just not racing a 120 s watchdog to produce it. Combined with `reuseExistingServer: false`
+    // (below), a stale server can never be adopted either.
+    command: `npx --yes serve@14 -l ${PORT} docs`,
     url: `http://127.0.0.1:${PORT}/index.html`,
-    reuseExistingServer: !process.env.CI,
+    // NEVER adopt a server that is already listening, locally or in CI.
+    //
+    // `!process.env.CI` meant that any interrupted run left its `serve` child alive, and the NEXT run
+    // silently adopted it — measuring the whole suite against whatever `docs/` that stale process was
+    // serving. Measured this session: `curriculum-data.js` 3 091 546 B served against 3 103 743 B on
+    // disk, and `tests/dry-run.spec.mjs` reported 126 failed at the PRISTINE baseline commit for that
+    // reason alone. Two whole runs (129 connection-refused, then 195 failed) were spent chasing it.
+    //
+    // `false` makes an occupied port a LOUD failure — Playwright reports the port is in use and stops —
+    // which is the correct trade: a stale-but-plausible portal is far more expensive than a red run that
+    // names its own cause. Kill port 4173 before running e2e; `npm run verify` no longer hides a stale
+    // one from you.
+    reuseExistingServer: false,
     timeout: 120_000,
     stdout: 'ignore',
     stderr: 'pipe',

@@ -171,10 +171,17 @@ FUNCTION findSubstringOffset(s, words):
 ```
 
 ### Step-by-Step Dry Run
-`s = "barfoothefoobarman"`, $L = 3$
+`s = "barfoothefoobarman"`, `words = ["foo", "bar"]`, $K = 2$, `wordLen` $= L = 3$, `totalLen` $= 6$
 - `offset = 0`: inspect indices `0, 3, 6, 9, 12 ...`
 - `offset = 1`: inspect indices `1, 4, 7, 10 ...`
 - `offset = 2`: inspect indices `2, 5, 8, 11 ...`
+
+| `offset` | `i` Values Inspected | Window Chunks | `result` After the Pass |
+| :--- | :--- | :--- | :--- |
+| 0 | $0, 3, 6, 9, 12$ | $i = 0$: `"bar"` + `"foo"` ✓ &nbsp;·&nbsp; $i = 9$: `"foo"` + `"bar"` ✓ | `[0, 9]` |
+| 1 | $1, 4, 7, 10, 13$ | every window fails `wordMap.has(chunk)` | `[0, 9]` |
+| 2 | $2, 5, 8, 11, 14$ | every window fails `wordMap.has(chunk)` | `[0, 9]` |
+| 3 | — | `offset === wordLen` ends the outer loop; `return result` | `[0, 9]` |
 
 ### Modern JavaScript Implementation
 ```javascript
