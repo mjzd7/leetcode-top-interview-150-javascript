@@ -1,7 +1,10 @@
-import { parseCookies, signSession, sessionCookieHeader, appBaseUrl } from '../_lib/session.mjs';
+import { parseCookies, signSession, sessionCookieHeader, clearOauthStateCookieHeader, appBaseUrl } from '../_lib/session.mjs';
 
 function fail(res, status, message) {
   // Login failures redirect home with an error flag (no stack traces to users).
+  // The state cookie is single-use, so it dies here too — clearing it only on
+  // the success path left a stale 10-minute cookie after every failed attempt.
+  res.setHeader('Set-Cookie', clearOauthStateCookieHeader());
   res.writeHead(302, { Location: `/?login_error=${encodeURIComponent(message)}` });
   res.end();
   return status;
@@ -79,7 +82,7 @@ export default async function handler(req, res) {
   const session = signSession({ githubId: me.id, login: me.login || '' }, sessionSecret);
   res.setHeader('Set-Cookie', [
     sessionCookieHeader(session),
-    'oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax',
+    clearOauthStateCookieHeader(),
   ]);
   res.writeHead(302, { Location: '/' });
   res.end();
