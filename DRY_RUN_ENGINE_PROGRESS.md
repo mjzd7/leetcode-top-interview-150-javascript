@@ -2382,3 +2382,40 @@ not an assertion failure, and the run either side of it is green.
 **Not claimed:** that the spec is now non-flaky. It is *less* flaky in the way that was measured — the
 assertion race is gone — while `test:e2e`'s webServer remains a known source of whole-run failures that
 no change here addresses. One run in four is not a pass rate worth banking.
+
+### 2026-10-05 — correction: `test:trace-runner` is OUT of `verify` again, and my "wire it in" advice was wrong
+
+The slice above wired `test:trace-runner` into `verify` and argued that was right: *"the ordering is
+deliberate and worth keeping: wiring the suite in is what made this visible at all. A green `verify`
+that excludes a suite is worth less than a red one that includes it."* **That reasoning was wrong, and
+this entry strikes it.**
+
+Measured, `npm run verify` with the suite wired in: **`test:trace-runner` reports 269 assertions /
+5 failures inside the chain**, and the same command **in isolation on the same tree reports 269 / 0**.
+`verify` runs ~20 heavy steps before it, so by the time E22 executes the box is loaded, and E22 is
+constructively slow: n=5000, every step re-encoding all 5 000 numbers, against the sandbox's 3 s budget.
+Widening its timeout 120 s → 300 s did not fix it, and the arithmetic says it never will — E22's bytes
+are `steps × n` and its work is proportional to the same product, so producing a >1 MB trace inherently
+costs ~1 MB of snapshot encoding. It cannot be made materially cheaper without weakening exactly what it
+proves, which is that a real over-budget run really degrades.
+
+So the choice is not "green `verify` that excludes a suite" versus "red `verify` that includes it". It is
+**a gate that fails for environmental reasons**, and my position on those all session was that they are
+worse than useless: I twice attributed E22 to my own change before measuring it with the change reverted,
+and once spent two commits on it. Promoting a load-sensitive suite into the chain converts a flake that
+only bites under load into a **permanent red on every run**, including every clean one. A permanently red
+gate trains people to ignore it, which is strictly worse than a documented gap — and the gap is now
+documented in three separate entries above, with the reason it exists.
+
+**Reverted. `package.json` is byte-identical to `fbbf6cb`'s parent for this line**, so `verify` is once
+again green on everything it covers, and `test:trace-runner` stays a suite you run **on a quiet box**:
+
+```bash
+npm run test:trace-runner     # 269 assertions, 0 failures, ~2 min on an idle machine
+```
+
+**What would actually close it, for whoever picks it up:** not a wider timeout. Either make `degradeToDiff`
+testable without executing a real 1 MB trace — it is a pure exported function (`trace-runner.mjs:752`),
+so a hand-built large envelope exercises the shedding logic deterministically and in milliseconds — or
+keep the end-to-end version as a *nightly* rather than a per-commit gate. Both trade away "a real run
+degrades" for determinism, which is why this is a decision and not a tweak.
