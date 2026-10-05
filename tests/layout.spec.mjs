@@ -196,3 +196,49 @@ test.describe('the assistant button against the sticky prev/next pair', () => {
     });
   }
 });
+
+/* Read from the browser's own accessibility tree rather than a hand-rolled name
+   computation. An earlier pass at this reported the assistant's suggestion chips
+   as unnamed because it read innerText while the panel was still
+   visibility:hidden — Chrome already knows which nodes it exposes. */
+const INTERACTIVE_AX = new Set([
+  'button', 'link', 'textbox', 'searchbox', 'combobox', 'checkbox', 'switch', 'radio', 'menuitem',
+]);
+
+async function unnamedControls(page) {
+  const client = await page.context().newCDPSession(page);
+  await client.send('Accessibility.enable');
+  await client.send('DOM.enable');
+  const { nodes } = await client.send('Accessibility.getFullAXTree');
+  const bad = nodes.filter((n) => !n.ignored && INTERACTIVE_AX.has(n.role?.value)
+    && !String(n.name?.value || '').trim());
+  const described = [];
+  for (const n of bad) {
+    let how;
+    try {
+      const { outerHTML } = await client.send('DOM.getOuterHTML', { backendNodeId: n.backendDOMNodeId });
+      how = outerHTML.replace(/\s+/g, ' ').slice(0, 96);
+    } catch {
+      how = '(unresolvable)';
+    }
+    described.push(`${n.role.value}: ${how}`);
+  }
+  await client.detach();
+  return described;
+}
+
+test.describe('accessible names', () => {
+  // 360 is in the list because #paletteBtn's two text spans are hidden below md,
+  // which left the button with an icon and no name at all.
+  for (const width of [360, 1440]) {
+    test(`every control has a name at ${width}px`, async ({ page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'the tree comes from CDP');
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/#' + GUIDE);
+      await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+      await page.waitForTimeout(600);
+      expect(await unnamedControls(page),
+        'a keyboard or screen-reader user meets a control it cannot name').toEqual([]);
+    });
+  }
+});
