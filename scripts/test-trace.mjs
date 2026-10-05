@@ -64,6 +64,7 @@ import { equivalent, getCodec } from '../api/_lib/codecs.mjs';
 // against a re-implementation of it — a probe that copies the driver proves the copy.
 import { buildBundle } from '../api/_lib/problems.mjs';
 import { executeUserCode } from '../api/_lib/sandbox.mjs';
+import { degradeToDiff as degradeEnvelopeToDiff } from '../api/_lib/trace-runner.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures', 'trace');
@@ -2128,6 +2129,70 @@ async function main() {
     check(l1 === readBlockSource(GUIDE, getBlock(GUIDE, 1)),
       'S32 compose: level 1 is returned byte-identical — composition is for level > 1 only',
       'composing level 1 changed its source');
+  }
+  // ---- S33 · row 15 — the DEGRADE is a pure function, so its assertions need no sandbox ----------
+  // `test:trace-runner` is deliberately outside `verify`, because E22 there builds a real >1 MB trace
+  // (n=5000 re-encoding 5000 numbers per step) against the sandbox's 3 s budget: it passes in isolation
+  // and fails 5 assertions in-chain, so wiring it in would make every clean run red. That left
+  // `verify` with NO coverage of the degrade path at all, which is the part that actually lost a bug.
+  //
+  // But E22's six assertions are not about producing a big trace — they are about what degradation DOES
+  // to one, and `degradeToDiff` (trace-runner.mjs:752) is a pure exported function over
+  // `steps[].snap`, `steps[].delta`, `budget.mode` and `truncated.trace`. So the same six properties are
+  // asserted here on a REAL golden with its snapshots inflated — no QuickJS, no byte budget crossed, no
+  // clock. Milliseconds instead of minutes, and not one of these assertions depends on machine speed.
+  //
+  // What this does NOT claim: that a real over-budget run reaches the degrade path. That is E22's
+  // transport proof and it stays where it is. This is the half that was silently ungated.
+  {
+    const donor = names.find((n) => n.endsWith('.L3.json'));
+    const golden = donor ? readGolden(donor) : null;
+    check(golden !== null && Array.isArray(golden.steps) && golden.steps.length >= 8,
+      'S33 degrade: a real L3 golden with enough steps is available as the donor — the degrade claims need a multi-step trace',
+      donor ? `${donor} has ${golden?.steps?.length} step(s)` : 'no L3 golden on disk — run `npm run gen:traces`');
+    if (golden && golden.steps.length >= 8) {
+      // Inflate: each step's snapshot grows a payload big enough that the snapshots DOMINATE the
+      // encoded size, which is the condition E20 says the shedding exists for.
+      const fat = JSON.parse(JSON.stringify(golden));
+      // The pad must be CONSTANT across steps. A pad that changed every step would migrate into every
+      // step's `delta` instead of disappearing — `degradeToDiff` records `{path, from, to}` and `to` is
+      // the full new value — so the envelope would come out the SAME size and "shedding saved nothing"
+      // for a reason that has nothing to do with shedding. Measured: that was this fixture's first
+      // shape, and it failed the saving assertion while every other S33 assertion passed. A constant
+      // key diffs empty after the first step, which is the condition E20's claim actually describes.
+      const blob = 'x'.repeat(2048);
+      fat.steps.forEach((st) => {
+        st.snap = { ...(st.snap ?? {}), __pad: blob };
+        st.delta = [];
+      });
+      const before = Buffer.byteLength(stringify(fat), 'utf8');
+      const after = Buffer.byteLength(stringify(degradeEnvelopeToDiff(fat)), 'utf8');
+      check(fat.budget.mode === 'diff' && fat.truncated.trace === true,
+        'S33 degrade: mode becomes "diff" and truncated.trace is set — the same two properties E22 asserts',
+        `mode ${JSON.stringify(fat.budget.mode)}, truncated.trace ${JSON.stringify(fat.truncated.trace)}`);
+      check(fat.steps.every((st) => st.snap === null),
+        'S33 degrade: the snapshot payload is GONE from every step',
+        `${fat.steps.filter((st) => st.snap !== null).length} step(s) still carry a snapshot`);
+      check(fat.steps.some((st) => st.delta.length > 0),
+        'S33 degrade: deltas were emitted for the degraded span (I4) — a diff trace with none renders blank',
+        'no step carries a delta');
+      check(after < before * 0.5,
+        'S33 degrade: the degrade is a real SAVING where snapshots dominate - the E20 claim, on real steps',
+        `${before} -> ${after} bytes — shedding snapshots saved ${(100 - Math.round((after / before) * 100))}%`);
+      const v = validateEnvelope(fat);
+      check(v.isValid,
+        'S33 degrade: the degraded envelope is still a VALID envelope — shedding must not break the schema',
+        v.errors.slice(0, 3).join(' | '));
+      // Negative: a trace whose snapshots never change still gets a labelled delta, or diff mode
+      // renders blank. That is §5 I4, and it is a property of the degrade rather than of the budget.
+      const flat = JSON.parse(JSON.stringify(golden));
+      const one = { ...flat.steps[0], snap: { k: 1 }, delta: [] };
+      flat.steps = [one];
+      degradeEnvelopeToDiff(flat);
+      check(one.delta.length > 0 && one.delta[0].path === '(degraded)',
+        'S33 degrade negative: a trace with nothing to diff gets ONE labelled synthetic change — diff mode is never blank',
+        `delta ${JSON.stringify(one.delta)}`);
+    }
   }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
