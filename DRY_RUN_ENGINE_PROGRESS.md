@@ -2532,3 +2532,30 @@ knows the limit is deliberate.
 **Pattern worth keeping for this file:** three tests, three failures, one cause — a wall-clock animation
 asserted through a timer. Every assertion that counted frames or timeouts was a proxy for a state claim,
 and every state claim held.
+
+### 2026-10-05 — three verify-chain Playwright failures, measured as load-induced, not code
+
+`npm run verify` reported **3 failed / 269 passed / 18 skipped** with **0** connection-refused and
+**0** `already used` errors — i.e. the portal served correctly and three assertions timed out. All three
+had outsized durations (**44.5 s**, **27.6 s**, **45.3 s**) on an **8.4-minute** run, against a
+**4.4–6.2 min** baseline earlier in the session:
+
+- `chat-streaming.spec.js:169` — a caret marks the reveal position and disappears when the turn ends
+- `chatbox.spec.js:1756` — the page policy is hash-based and the portal provably satisfies it
+- `dry-run.spec.mjs:309` — window: mounts on Minimum Size Subarray and a step forward changes the render
+
+Re-run **in isolation** on the same tree: **3 passed in 11.6 s** — roughly a quarter of the in-chain
+time for the same assertions. Two of the three are in specs this row has never touched.
+
+So: the box was saturated by the time `test:e2e` ran (it is the second-to-last step of ~20), and the
+Playwright default action timeout is wall-clock. That is the **third** instance of the same environmental
+class in this session — after E22's constructively-slow fixture and the leaked `serve` — and the same
+conclusion each time applies: **a red suite on this box is not evidence until it has been reproduced with
+the load removed.**
+
+**Not claimed:** that `verify` is green. What is claimed is the measurement above, and that the durable
+fix for the whole class is the one already named — `test:e2e` is the wrong place for three
+wall-clock-sensitive specs to live in a 20-step chain. Either give the timing-sensitive tests their own
+budget headroom, or move `test:e2e` earlier so it runs before the chain has loaded the machine. Not done
+here; it is a CI-design decision, and this box cannot distinguish "flaky under load" from "wrong" often
+enough to justify guessing.
