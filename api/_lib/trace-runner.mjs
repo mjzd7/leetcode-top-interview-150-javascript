@@ -867,7 +867,7 @@ export async function runBlockTrace({
   // plausible-looking wrong data (plan §3 G1).
   const codec = getCodec(meta.codec, slug ?? guidePath);
 
-  const blockSource = source ?? composeShared(readBlockSource(guidePath, meta), guidePath, meta);
+  const blockSource = source ?? await composeShared(readBlockSource(guidePath, meta), guidePath, meta);
   const instrumentedSource = instrumented ?? (await importRow9(guidePath, meta));
   const resolvedCases = cases ?? judgeCases(slug, guidePath);
   const tracedCase = resolvedCases[caseIndex];
@@ -1064,7 +1064,7 @@ fnName: meta.targetFn,
 const escapeForRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** The block source, sliced exactly the way `gen-blocks.mjs` selected it. */
-function readBlockSource(guidePath, meta) {
+export function readBlockSource(guidePath, meta) {
   let text;
   try {
     text = fs.readFileSync(path.resolve(here, '../..', guidePath), 'utf-8');
@@ -1100,10 +1100,25 @@ function readBlockSource(guidePath, meta) {
  * If row 9's module cannot be loaded this is a no-op and the run reports the underlying "not a
  * function", which is the honest failure. It must never paper over it.
  */
-function composeShared(blockSource, guidePath, meta) {
+/**
+ * Compose the sibling levels' SHARED declarations into this level's block source.
+ *
+ * Row 10 / row 9's `composeBlockSource`: `09-binary-tree-general/14-next-right-pointers-ii`'s L2
+ * block says "Node shared from Level 1" and then uses `findNextChild` on `node.next`, so without
+ * this the Level 1 block's `class Node` is simply absent and the guide cannot run at all.
+ *
+ * ASYNC, and that is the bug fix rather than a style choice. This used to load
+ * `scripts/instrument.mjs` through `createRequire`, and that module is ESM with TOP-LEVEL AWAIT, so
+ * `require()` raises `ERR_REQUIRE_ASYNC_MODULE`; the `catch` set the cache to `null` and this
+ * function returned `blockSource` unchanged for EVERY guide at EVERY level above 1. The entire
+ * shared-declaration mechanism was a silent no-op for the life of the row, and nothing reported it:
+ * no gate covered it, and the symptom (a missing `class Node`) is indistinguishable from a guide
+ * that never had one. `runBlockTrace` is already async, so awaiting the real module costs nothing.
+ */
+export async function composeShared(blockSource, guidePath, meta) {
   const level = meta.level ?? 3;
   if (level <= 1) return blockSource;
-  const mod = instrumentModuleSync();
+  const mod = await loadInstrumentModule();
   if (!mod || typeof mod.composeBlockSource !== 'function') return blockSource;
   try {
     return mod.composeBlockSource(guidePath, level) || blockSource;
@@ -1112,16 +1127,16 @@ function composeShared(blockSource, guidePath, meta) {
   }
 }
 
-/** Row 9's module, synchronously, because the raw path above is not async. */
-let instrumentModuleCache;
-function instrumentModuleSync() {
-  if (instrumentModuleCache !== undefined) return instrumentModuleCache;
-  try {
-    instrumentModuleCache = createRequire(import.meta.url)(path.resolve(here, '../../scripts/instrument.mjs'));
-  } catch {
-    instrumentModuleCache = null;
+/** Row 9's module. One promise, so N guides cost one import. */
+let instrumentModulePromise;
+function loadInstrumentModule() {
+  if (instrumentModulePromise === undefined) {
+    // ponytail: a failed import resolves to null and stays null, which is the old behaviour —
+    // composeShared then leaves the block alone. Ceiling: a transient failure is cached for the
+    // process. Upgrade path: reset the promise on failure, if that ever matters.
+    instrumentModulePromise = import(path.resolve(here, '../../scripts/instrument.mjs')).catch(() => null);
   }
-  return instrumentModuleCache;
+  return instrumentModulePromise;
 }
 
 /**
