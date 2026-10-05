@@ -2306,3 +2306,34 @@ claim, and this one has not been tested.
 
 The ordering is deliberate and worth keeping: wiring the suite in is what made this visible at all. A
 green `verify` that excludes a suite is worth less than a red one that includes it.
+
+### 2026-10-05 — correction: `chat-streaming` is pre-existing, measured at the baseline
+
+The entry above recorded `tests/chat-streaming.spec.js:71` as **unattributed** — reproducing in
+isolation, but with nothing in these slices obviously touching it, and "not my change" is a claim, not
+a measurement. Measured it:
+
+```bash
+git checkout f61e4fd && npm run build
+npx playwright test tests/chat-streaming.spec.js --project=desktop
+# -> Error: text must arrive in multiple visible steps, not one dump
+# -> 1 failed, 14 passed
+```
+
+**It fails identically at `f61e4fd`**, the baseline this session started from, before any slice landed.
+So the earlier `verify` run reporting **272 passed / 0 failures** and this one reporting **271/1** are
+the same intermittent test, not a regression — it reproduced on 2 of 3 attempts across the session, and
+`272 passed` in the S29/S30/S31/S32 entries was the lucky one.
+
+**What it actually is.** The assertion is that streamed assistant text arrives in **multiple visible
+steps** — i.e. it asserts on *rendering cadence*, and a caret must be present while text arrives. That
+is timing-dependent by construction, and it is the only test in `tests/` that asserts on animation
+progression rather than on final state. It is not made more fragile by anything in this row; it was
+already the most timing-sensitive test in the suite.
+
+**Correct status, stated once:** `npm run verify` is RED on exactly this one pre-existing,
+timing-sensitive chat-streaming test, and is green on everything else including `test:trace-runner`
+(269·0, now wired into the chain). The fix belongs to the chat widget's streaming cadence, not to
+row 15 — and it is now *visible in `verify`* rather than hidden outside it, which is the outcome the
+previous entry wanted. Recorded as debt, deliberately not taken: touching `api/chat.mjs` to make a
+timing assertion deterministic is a different row's work.
