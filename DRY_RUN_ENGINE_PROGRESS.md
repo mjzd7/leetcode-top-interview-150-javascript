@@ -2441,3 +2441,34 @@ worked.
 **Evidence: 3 consecutive runs, 15 passed each** (23.0 s / 22.7 s / 23.2 s), against 1 failure in 4 before.
 `caretStates` is still collected and reported, so the frame count is available for diagnosis without being
 gated on.
+
+### 2026-10-05 — debt paid: `reuseExistingServer: false`, so a stale portal can never be measured again
+
+The debt recorded above said "no code change addresses it". That was wrong, and the fix is one line.
+`playwright.config.mjs`'s `webServer` had `reuseExistingServer: !process.env.CI`, which means that **any**
+interrupted run leaves its `serve -l 4173 docs` child alive and the **next** run silently adopts it. The
+suite then measures whatever `docs/` that stale process is serving, with no warning.
+
+This is what the two whole-run failures in this session were. Measured on disk during it:
+`docs/curriculum-data.js` **3 091 546 B served vs 3 103 743 B on disk** — and
+`tests/dry-run.spec.mjs` reported **126 failed at the pristine baseline commit `f61e4fd`** for that
+reason alone, which is how the "regression" turned out not to be one.
+
+**`reuseExistingServer: false`, unconditionally** — locally and in CI. An occupied port is now a **loud**
+failure that names its own cause. Proven, not asserted: with a stale `serve` deliberately left listening
+on 4173, a Playwright run now stops with
+
+```
+Error: http://127.0.0.1:4173/index.html is already used, make sure that nothing is running on the
+port/url or set reuseExistingServer:true in config.webServer.
+```
+
+instead of quietly testing the stale build. The trade is deliberate and worth stating: **a stale-but-
+plausible portal is far more expensive than a red run that names itself.** Two runs were spent on the
+first kind this session.
+
+`npm run test:e2e` with the port clear → **exit 0, 272 passed / 18 skipped, 0 connection-refused.**
+
+**Operational note, now a property of the config rather than folklore:** an occupied 4173 stops the run.
+That is the intended behaviour, so clear the port before `test:e2e` — `lsof -iTCP:4173 -sTCP:LISTEN -t
+2>/dev/null | xargs kill` — and check it afterwards.

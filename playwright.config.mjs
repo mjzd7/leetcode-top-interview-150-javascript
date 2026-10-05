@@ -40,7 +40,19 @@ export default defineConfig({
   webServer: {
     command: `npm run build && npx --yes serve@14 -l ${PORT} docs`,
     url: `http://127.0.0.1:${PORT}/index.html`,
-    reuseExistingServer: !process.env.CI,
+    // NEVER adopt a server that is already listening, locally or in CI.
+    //
+    // `!process.env.CI` meant that any interrupted run left its `serve` child alive, and the NEXT run
+    // silently adopted it — measuring the whole suite against whatever `docs/` that stale process was
+    // serving. Measured this session: `curriculum-data.js` 3 091 546 B served against 3 103 743 B on
+    // disk, and `tests/dry-run.spec.mjs` reported 126 failed at the PRISTINE baseline commit for that
+    // reason alone. Two whole runs (129 connection-refused, then 195 failed) were spent chasing it.
+    //
+    // `false` makes an occupied port a LOUD failure — Playwright reports the port is in use and stops —
+    // which is the correct trade: a stale-but-plausible portal is far more expensive than a red run that
+    // names its own cause. Kill port 4173 before running e2e; `npm run verify` no longer hides a stale
+    // one from you.
+    reuseExistingServer: false,
     timeout: 120_000,
     stdout: 'ignore',
     stderr: 'pipe',
