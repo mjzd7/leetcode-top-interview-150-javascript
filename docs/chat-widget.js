@@ -77,6 +77,15 @@
   /** Composer grows with the question up to this height, then scrolls. */
   var COMPOSER_MAX_H = 168;
 
+  /** Height the panel may be dragged down to: header plus composer, and no more. */
+  var PANEL_MIN_H = 200;
+
+  /** Page left visible above a full-height panel, so the sheet never takes over. */
+  var PANEL_TOP_PEEK = 56;
+
+  /** Where the reader's panel height is remembered, beside the rail's width. */
+  var PANEL_H_KEY = 'lt150-chat-h';
+
   var state = {
     articleId: null,
     articleTitle: '',
@@ -1781,6 +1790,98 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Panel height
+   * ------------------------------------------------------------------ */
+
+  /**
+   * Tallest the panel may be. On desktop it shares the rail with the table of
+   * contents, so the rail is the ceiling; on the sheet the window is, less a
+   * strip of page.
+   */
+  function panelCeiling() {
+    var rail = el.panel.closest && el.panel.closest('.lt-rail');
+    if (rail && !isSheet()) return Math.max(PANEL_MIN_H, rail.clientHeight);
+    return Math.max(PANEL_MIN_H, window.innerHeight - PANEL_TOP_PEEK);
+  }
+
+  /** Pin the panel to `h` px tall, clamped, and remember it if asked. */
+  function applyPanelH(h, persist) {
+    h = Math.min(panelCeiling(), Math.max(PANEL_MIN_H, Math.round(h)));
+    el.panel.setAttribute('data-resized', '');
+    el.panel.style.setProperty('--ltc-panel-h', h + 'px');
+    if (el.panelResizer) {
+      el.panelResizer.setAttribute('aria-valuemin', String(PANEL_MIN_H));
+      el.panelResizer.setAttribute('aria-valuemax', String(panelCeiling()));
+      el.panelResizer.setAttribute('aria-valuenow', String(h));
+    }
+    if (persist) { try { localStorage.setItem(PANEL_H_KEY, String(h)); } catch (e) {} }
+    return h;
+  }
+
+  /** Hand the panel back to its CSS default: 72dvh on the sheet, the rail's
+   *  leftover space on desktop. */
+  function resetPanelH() {
+    el.panel.removeAttribute('data-resized');
+    el.panel.style.removeProperty('--ltc-panel-h');
+    try { localStorage.removeItem(PANEL_H_KEY); } catch (e) {}
+    if (el.panelResizer) {
+      el.panelResizer.setAttribute(
+        'aria-valuenow', String(Math.round(el.panel.getBoundingClientRect().height)),
+      );
+    }
+  }
+
+  /** Current height, from the inline value if pinned, else from the layout. */
+  function panelHeight() {
+    var pinned = parseInt(el.panel.style.getPropertyValue('--ltc-panel-h'), 10);
+    return pinned || Math.round(el.panel.getBoundingClientRect().height);
+  }
+
+  function initPanelResize() {
+    if (!el.panelResizer) return;
+    var saved = 0;
+    try { saved = parseInt(localStorage.getItem(PANEL_H_KEY), 10) || 0; } catch (e) {}
+    if (saved) applyPanelH(saved, false);
+    else resetPanelH();
+
+    var handle = el.panelResizer;
+    var dragging = false, moved = false, startY = 0, lastY = 0, bottom = 0;
+    var onMove = function (e) {
+      if (!dragging) return;
+      lastY = e.clientY;
+      if (Math.abs(lastY - startY) < 3) return;
+      moved = true;
+      applyPanelH(bottom - lastY, true);
+    };
+    var onUp = function () {
+      dragging = false;
+      handle.classList.remove('is-dragging');
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      if (moved) applyPanelH(bottom - lastY, true);
+    };
+    // Document-level listeners, not setPointerCapture, which suppresses the
+    // dblclick this needs to reset — same reasoning as #ltRailResizer. The
+    // height only changes after real movement: a plain click must not nudge the
+    // panel, or the handle slides out from under the second click.
+    handle.addEventListener('pointerdown', function (e) {
+      dragging = true; moved = false; startY = e.clientY; lastY = e.clientY;
+      bottom = el.panel.getBoundingClientRect().bottom;
+      handle.classList.add('is-dragging');
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    });
+    handle.addEventListener('dblclick', resetPanelH);
+    handle.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowUp') { applyPanelH(panelHeight() + 32, true); e.preventDefault(); }
+      else if (e.key === 'ArrowDown') { applyPanelH(panelHeight() - 32, true); e.preventDefault(); }
+      else if (e.key === 'Home' || e.key === 'End') { resetPanelH(); e.preventDefault(); }
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
    * Wiring
    * ------------------------------------------------------------------ */
 
@@ -1797,6 +1898,7 @@
     el.statusTxt = $('ltcStatusTxt');
     el.scrollDown = $('ltcScrollDown');
     el.clearAll = $('ltcClearAll');
+    el.panelResizer = $('ltcPanelResizer');
     if (!el.panel || !el.fab || !el.log || !el.form || !el.input || !el.send) return;
 
     // On desktop the panel is always visible, so `open()` never runs there. The
@@ -1899,7 +2001,14 @@
     window.addEventListener('hashchange', function () { syncArticle(false); });
 
     // Shrinking from desktop panel to mobile sheet: drop the trap, not the state.
-    window.addEventListener('resize', function () { if (!isSheet()) el.input.blur(); });
+    window.addEventListener('resize', function () {
+      if (!isSheet()) el.input.blur();
+      // A pinned height is a px count, so a shorter window (or the rail losing
+      // the TOC) can leave it past the ceiling. Re-clamp rather than overflow.
+      if (el.panel.hasAttribute('data-resized')) applyPanelH(panelHeight(), true);
+    });
+
+    initPanelResize();
 
     el.send.disabled = true;
     autoGrow();
