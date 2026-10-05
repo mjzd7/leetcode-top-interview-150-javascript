@@ -198,6 +198,34 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `      var v = __CODEC__.fromWire(a);`,
     `      return __hasNode__ ? __initNext__(v) : v;`,
     `    }`,
+    // Row 15 / S35 — arguments that are NODES OF ONE TREE, decoded ONCE.
+    //
+    // `fn(t1, findNode(t1, 5), findNode(t1, 1))` is three arguments of which two are the author's
+    // own lookups INSIDE the first. The guide says how to read that call: "Compare nodes by IDENTITY
+    // (`===` on objects), never by `.val`" — so handing the target three separately-decoded graphs
+    // answers a different question. `pathToNode(root, p, pp)` walks `root` for `p` by `===`, does not
+    // find it, the target returns `null`, and the authored projection reads `null`.
+    //
+    // The codec could always express this — `treeToArray` mints `{__ref: N}` for any node it has
+    // already emitted and `arrayToTree` resolves those against its own `made[]` table — so this is the
+    // registry's own decoder doing the work, in ONE pass, and the projection being a PATH WALK over
+    // the result rather than a second definition of what a back-reference means. `paths[i]` is that
+    // walk for argument `i`; a `null` entry is an argument that is not a node, which keeps the decoded
+    // value `args` already produced. Absent for every case whose arguments share nothing, in which
+    // case this whole branch is dead and the line below is the pre-S35 one, byte for byte.
+    `    function __sharedArgs__(sh, fallback) {`,
+    `      var root = __CODEC__.fromWire(sh.wire);`,
+    `      if (__hasNode__) __initNext__(root);`,
+    `      var out = [];`,
+    `      for (var i = 0; i < sh.paths.length; i++) {`,
+    `        var path = sh.paths[i];`,
+    `        if (path === null) { out.push(fallback[i]); continue; }`,
+    `        var n = root;`,
+    `        for (var k = 0; k < path.length; k++) n = n === null || n === undefined ? null : n[path[k]];`,
+    `        out.push(n === undefined ? null : n);`,
+    `      }`,
+    `      return out;`,
+    `    }`,
     `    for (var ti = 0; ti < __TESTS__.length; ti++) {`,
     `      var t = __TESTS__[ti];`,
     `      var got;`,
@@ -216,7 +244,14 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     // fixes 2 blocks and breaks `invert-binary-tree` x3, measured. The PROVENANCE differs, and the
     // harvest is the only party that saw it. Absent `live` this line is the old one, argument for
     // argument, so no other block's bundle moves a byte.
+    // `t.shared` is read directly rather than through `__dec__`, and deliberately so: `acceptsWire`
+    // answers "is this ALREADY a canonical wire" by round-tripping, which a wire carrying `{__ref}`
+    // cannot do — `acceptsNodeWire` rejects any object cell before it gets that far. That question is
+    // moot here because the harvest minted this wire with the codec's own `toWire`, so it is a wire
+    // by construction. Nothing about `acceptsWire` is relaxed, widened or bypassed for any other
+    // value; this branch never asks it.
     `        var args = (t.args || []).map(function (a, i) { return t.live === 1 ? a : __dec__(a); });`,
+    `        if (t.shared && Array.isArray(t.shared.paths)) args = __sharedArgs__(t.shared, args);`,
     `        var before = args.map(__snap__);`,
     // Row 15 / S23 — a CLASS target's op sequence. The harvest records the method calls the authored
     // script made on ONE constructed instance, and this is where they are replayed AGAINST THE

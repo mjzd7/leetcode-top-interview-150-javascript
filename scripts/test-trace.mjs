@@ -238,6 +238,106 @@ async function listWireDecodeRespectsTheRecordedCallee() {
   return true;
 }
 
+/**
+ * S35's identity probe: does a case carrying `share` really hand the target THREE ARGUMENTS THAT ARE
+ * VIEWS OF ONE GRAPH?
+ *
+ * Driven through the REAL driver, for S29's and S34's reason — a probe that re-implements the
+ * projection proves the re-implementation. The container wire is minted here by the codec's OWN
+ * `toWire` (the same function the harvest calls), so what is under test is `buildBundle`'s branch
+ * and nothing else.
+ *
+ * The target does not compare VALUES. It walks `root` and counts how many of the nodes it reaches
+ * are `===` the arguments it was handed, so the only way to answer `2` is for `p` and `q` to BE
+ * nodes of `root` — which is the guide's own rule (`10-lowest-common-ancestor.md:305`: "Compare
+ * nodes by IDENTITY (`===` on objects), never by `.val`"). A driver that decoded the three
+ * arguments separately would hand over three unrelated graphs and the count would be `0`.
+ *
+ * Two directions, because a one-sided probe is decoration: the byte-identical `args` WITHOUT
+ * `share` must FAIL. That is what proves the pass above came from the sharing and not from the
+ * numbers agreeing, and it is the negative half of "a green verdict alone is not enough".
+ *
+ * Returns a reason string rather than a bare boolean, for the same reason S34's probe does: a probe
+ * that cannot say which direction broke is a probe that gets "fixed" by deleting the assertion.
+ */
+async function sharedArgsAreViewsOfOneGraph() {
+  const userCode = [
+    'function countIdentical(root, p, q) {',
+    '  let hits = 0;',
+    '  const stack = [root];',
+    '  while (stack.length > 0) {',
+    '    const n = stack.pop();',
+    '    if (n === p || n === q) hits += 1;',
+    '    if (n.left !== null) stack.push(n.left);',
+    '    if (n.right !== null) stack.push(n.right);',
+    '  }',
+    '  return hits;',
+    '}',
+  ].join('\n');
+  const T = getCodec('tree', 'S35');
+  // The corpus shape: one root, plus two nodes taken from inside it by IDENTITY.
+  const root = T.fromWire([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
+  const byValue = (v) => {
+    let found = null;
+    const stack = [root];
+    while (stack.length > 0 && found === null) {
+      const n = stack.pop();
+      if (n.val === v) found = n;
+      else {
+        if (n.left !== null) stack.push(n.left);
+        if (n.right !== null) stack.push(n.right);
+      }
+    }
+    return found;
+  };
+  const nodes = [root, byValue(5), byValue(1)];
+  // ONE wire for all three, with the projection paths the harvest records beside it. Every node
+  // reachable twice is a back-reference the encoder mints, so the decode hands back the same
+  // objects rather than equal copies.
+  const box = { val: 0, left: nodes[0], right: null };
+  const paths = [['left']];
+  let tail = box;
+  for (let i = 1; i < nodes.length; i++) {
+    const mid = { val: 0, left: nodes[i], right: null };
+    tail.right = mid;
+    const path = [];
+    for (let k = 0; k < i; k++) path.push('right');
+    path.push('left');
+    paths.push(path);
+    tail = mid;
+  }
+  const wire = T.toWire(box);
+  const run = async (test) => {
+    const bundle = buildBundle({
+      userCode, fnName: 'countIdentical', codec: 'tree', equivalence: 'exact', tests: [test],
+    });
+    const exec = await executeUserCode(bundle, { timeoutMs: 5000 });
+    if (!exec.ok || typeof exec.envelopeRaw !== 'string') return null;
+    const v = JSON.parse(exec.envelopeRaw.slice('__VERDICT__'.length));
+    return v.passed === 1 && v.failed === 0;
+  };
+  const shared = await run({
+    name: 'one graph', args: [], shared: { wire, paths }, expected: 2,
+  });
+  if (shared !== true) {
+    return 'the shared case did not pass — the projected `p`/`q` are not `===` the nodes inside `root`, so the tree codec is minting copies rather than back-references';
+  }
+  // The SAME case with the sharing removed and nothing else changed: the target still gets THREE
+  // tree arguments, at the same arity, with the same values — only the two derived nodes are their
+  // own separate graphs. That is today's transport, and it answers `0`, so the driver marks it
+  // failed. Every value is identical between the two cases; only identity differs, which is exactly
+  // what makes this the negative half of the probe rather than an arity check in disguise.
+  const separate = await run({
+    name: 'three graphs',
+    args: [T.toWire(nodes[0]), T.toWire(nodes[1]), T.toWire(nodes[2])],
+    expected: 2,
+  });
+  if (separate !== false) {
+    return 'the per-argument case passed anyway — either `p`/`q` are not identity-compared here, or the target was handed something that was never a tree, so the shared case proves nothing';
+  }
+  return true;
+}
+
 /** The first step index satisfying a predicate — so a mutant targets a step the golden HAS. */
 const findStep = (g, pred) => g.steps.findIndex((s) => plainObject(s) && pred(s));
 
@@ -1572,7 +1672,14 @@ async function main() {
     // L1 at 5 passed / 2 failed, which is a `tree` guide and therefore cannot be moved by a `list`
     // transport change — it stays at `0p/6f`'s sibling slice's expense, and `VERDICT_BASELINE` now says
     // so exactly rather than leaving 4 counts of slack that nothing has earned.
-    const VERDICT_BASELINE = { zeroPass: 3, partialPass: 1 };
+    // Row 15 / S35 tightened `zeroPass` from 3 to its measured floor, 0: S35 closed the last three
+    // zero-pass blocks (lowest-common-ancestor L1/L2/L3), so the corpus now carries exactly one
+    // wrong-verdict head — sorted-array-to-bst L1 at 5p/2f, the `tree`-guide slice this row does not
+    // own. The floor is the MEASURED value and not 1, because a baseline above the measurement is
+    // slack nothing has earned: the same argument that dropped this from 5 to 1 in S34 drops it to 0
+    // now, and the three negative probes below are written RELATIVE to the baseline so this
+    // tightening cannot rot them.
+    const VERDICT_BASELINE = { zeroPass: 0, partialPass: 1 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1896,9 +2003,14 @@ async function main() {
     check(verdictCensus.zeroPass + verdictCensus.partialPass + verdictCensus.clean === 450,
       'S34 list wire: the census still accounts for all 450 heads — a guide dropped from the manifest is not an improvement',
       `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != 450`);
-    check(verdictCensus.clean === 446,
-      'S34 list wire: `clean` is 446 — the two blocks this slice names went from partial to clean and nothing else moved',
-      `clean ${verdictCensus.clean} (444 before this slice), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
+    // The COUNT moves with the corpus, never the assertion: this still pins the exact census, and it
+    // still fails for a guide that was dropped rather than fixed. `446` was S34's measured value;
+    // row 15 slice 12 (S35) took lowest-common-ancestor L1/L2/L3 from zero-pass to clean, so the
+    // number it asserts is now `449`. The claim moved with it — the fix is named, the arithmetic is
+    // stated, and the sum is asserted independently on the line above.
+    check(verdictCensus.clean === 449,
+      'S34 list wire: `clean` is 449 — the two blocks S34 named went from partial to clean, and S35\'s three went from zero-pass, and nothing else moved',
+      `clean ${verdictCensus.clean} (446 after S34, 444 before it), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
     // The negative that distinguishes the two sides of the rule. A case whose recorded call WAS the
     // codec's decoder must still be decoded — that is `invert-binary-tree`'s `empty tree`, and if
     // the rule ever says "never decode", every tree guide's harvested level-order input stops being
@@ -1908,6 +2020,18 @@ async function main() {
     check(liveProbe === true,
       'S34 list wire negative: a case recorded from this codec\'s OWN decoder is still decoded — `live` suppresses the decode only for an argument no codec produced',
       liveProbe === true ? '' : String(liveProbe));
+
+    // The census, because three blocks going green by any means at all is not the claim — these three
+    // and nothing else. The count is what distinguishes a fix from a guide quietly dropped from the
+    // manifest, which is the failure that once shipped 428 goldens instead of 450 and passed every
+    // assertion in this file. Read HERE, inside the block that computes the census, rather than from
+    // the S35 section below: `verdictCensus` is a `const` local to it.
+    check(verdictCensus.zeroPass + verdictCensus.partialPass + verdictCensus.clean === 450,
+      'S35 shared graph: the census still accounts for all 450 heads — a guide dropped from the manifest is not an improvement',
+      `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != 450`);
+    check(verdictCensus.clean === 449,
+      'S35 shared graph: `clean` is 449 — lowest-common-ancestor L1/L2/L3 went from zero-pass to clean and nothing else moved',
+      `clean ${verdictCensus.clean} (446 before this slice), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
 
     // ---- S29 · row 15 — the recorded call must be the one NEAREST the assertion ----
     // `const got = fn(2.1, 3); if (Math.abs(got - 9.261) > 1e-9) { … process.exit(1) }` asserts
@@ -2103,42 +2227,45 @@ async function main() {
     // numbers needs no codec), so the projection is reachable end to end and is asserted as a
     // PASSING verdict rather than as a capability.
     //
-    // ── Why lowest-common-ancestor is NOT in that list, and why deleting its assertion is not the
-    // answer either. Its script asserts `fn(t1, findNode(t1,5), findNode(t1,1)).val`, and the
-    // derivation replay now runs correctly: the registry is `__FN__.apply(null, __ARGS__).val` and
-    // both keys fire. It still fails, with `TypeError: cannot read property 'val' of null`, because
-    // the target returns `null` — and that is a TRANSPORT fact, not a derivation one. S21 records
-    // the two derived nodes as level-order arrays, `buildBundle` decodes each wire with
-    // `arrayToTree` into a FRESH graph, so positions 1 and 2 become three unrelated trees, and
-    // `pathToNode(root, p, pp)` walks `root` looking for `p` by `===` and never finds it. The guide
-    // says this itself at line 305: "Compare nodes by IDENTITY (`===` on objects), never by `.val`".
+    // ── lowest-common-ancestor, and why it was not in that list before ────────────────────────
+    // Its script asserts `fn(t1, findNode(t1,5), findNode(t1,1)).val`, and the derivation replay runs
+    // correctly for it: the registry is `__FN__.apply(null, __ARGS__).val` and both keys fire. What
+    // it could not do was deliver the ARGUMENTS. S21 records each of the three separately — three
+    // level-order wires — and `buildBundle` decodes each with its own `fromWire`, so positions 1 and
+    // 2 came back as FRESH graphs. The target compares nodes with `===`, so `pathToNode(root, p, pp)`
+    // walked `root` looking for a node that was never in it, the target returned `null`, and the
+    // projection read `null` — measured as `TypeError: cannot read property 'val' of null`. The guide
+    // says the rule itself at line 305: "Compare nodes by IDENTITY (`===` on objects), never by `.val`".
     //
-    // A level-order wire is a VALUE encoding and cannot express object identity, so this block needs
-    // a codec that carries identity — `api/_lib/codecs.mjs`, which this slice does not own.
-    // Asserting it green would be asserting something false; asserting it red would leave the suite
-    // permanently failing. So the claim is asserted where it IS true and IS falsifiable: the block
-    // still gets a golden, and the residual failure is still the transport's. A derivation bug
-    // reintroduced here would change the residual error and turn this red.
+    // The earlier entry here claimed the wire "cannot express object identity" and parked the block
+    // as REMAINING WORK. **That claim was wrong, and it is withdrawn.** `api/_lib/codecs.mjs`'s `tree`
+    // codec has always minted `{__ref: N}` for any node it has already emitted, and `arrayToTree`
+    // resolves those back-references against its `made[]` table — so one wire CAN carry a shared
+    // node, and `fromWire` returns the same object twice. What was missing was a HARVEST that records
+    // the three arguments as one graph instead of three. S35 is that harvest, and the gate below is
+    // the claim the withdrawn note said could not be made.
     const lcaName = '09-binary-tree-general__10-lowest-common-ancestor.L1.json';
     const lcaGolden = names.includes(lcaName) ? readGolden(lcaName) : null;
     check(lcaGolden !== null,
       'S22 replay: lowest-common-ancestor L1 still produces a golden — the replay must not cost a block its envelope',
       `no golden named ${lcaName} — run \`npm run gen:traces\``);
-    // The residual failure is measured from the head, which is where a verdict is written down (S17's
-    // own reason). It must be non-clean AND must not be an argument/derivation arity failure — those
-    // are the two symptoms the replay exists to remove, so either one appearing here is a regression.
+    // The residual must not be an argument/derivation arity failure — those are the two symptoms the
+    // replay exists to remove, so either one appearing here is a regression. Read off the HEAD, which
+    // is where a verdict is written down (S17's own reason).
     const lcaHead = (() => {
       try {
         return JSON.parse(fs.readFileSync(path.join(GOLDENS_DIR, lcaName.replace('.json', '.head.json')), 'utf8'));
       } catch { return null; }
     })();
-    const lcaVerdict = lcaHead?.verdict ?? null;
-    check(lcaVerdict !== null && lcaVerdict.failed > 0,
-      'S22 replay: lowest-common-ancestor L1 is still wrong — recorded as REMAINING WORK (identity needs a codec that carries it), not silently dropped',
-      `verdict ${JSON.stringify(lcaVerdict)} — this block was expected to remain non-clean pending an identity-carrying codec`);
     check(!/of undefined/.test(String(lcaHead?.error ?? '')),
       'S22 replay: lowest-common-ancestor L1 no longer fails on a DRIVEN-SHORT arity — the residual is the identity transport, which is a different defect',
       `error ${String(lcaHead?.error ?? 'none')} — an "of undefined" here means the derived-node arguments regressed (S21)`);
+    // The measurement the old note was built on, kept as a name for the gate that replaced it: the
+    // head before S35, quoted so a reader can see what the six failures were.
+    const lcaVerdict = lcaHead?.verdict ?? null;
+    check(lcaVerdict !== null,
+      'S22 replay: lowest-common-ancestor L1 carries a verdict on its head — the block is graded, not merely traced',
+      `no verdict on ${lcaName.replace('.json', '.head.json')} — run \`npm run gen:traces\``);
     // The gate above reads `verdict.failed === 0` off a file on disk, so it can only be shown to
     // bite by handing the same predicate a verdict that IS wrong. Otherwise "all three pass" and
     // "the predicate never fires" are indistinguishable from the outside — which is how this
@@ -2165,6 +2292,52 @@ async function main() {
       'S22 replay: and a REORDERING is still forgiven — the replay is not doing the comparator\'s job',
       "equivalent('order-insensitive', ...) rejected a pure reordering — the comparator regressed");
   }
+  // ---- S35 · row 15 — three arguments that SHARE nodes are ONE graph, not three wires ----
+  // `lowestCommonAncestor` is called as `fn(t1, findNode(t1, 5), findNode(t1, 1))`. The two derived
+  // nodes are not independent inputs: they are nodes OF `t1`, and the target finds the answer by
+  // comparing them with `root`'s own nodes by `===` (`10-lowest-common-ancestor.md:305`). So
+  // recording each argument as its own level-order wire cannot express the question — three wires
+  // decode to three unrelated graphs, `pathToNode(root, p, pp)` never matches, the target returns
+  // `null`, and the authored projection `.val` reads `null` (`TypeError: cannot read property 'val'
+  // of null`).
+  //
+  // The `tree` codec CAN express it, and always could: `treeToArray` emits `{__ref: N}` for any node
+  // it has already emitted and `arrayToTree` resolves those against its own `made[]` table, so
+  // sharing survives a round trip. The earlier note in this file claimed the wire "cannot express
+  // object identity" — that was wrong, and this gate is the claim it said was unmakeable. What was
+  // missing was a harvest that records the arguments as ONE graph, so the `__ref` tokens have
+  // something to span: the three trees are hung as children of one synthetic root, encoded in a
+  // single `toWire` pass, and the projection back to three arguments is a PATH WALK over the single
+  // decode. `p` is then literally `root.left.left` — the same object, not an equal one.
+  //
+  // Named for all THREE levels, not L1 alone: the transport is shared and the partition per level
+  // means each level grades the same case list, so a regression at any level shows here.
+  const SHARED_GRAPH_GUIDES = [
+    ['09-binary-tree-general__10-lowest-common-ancestor', 'L1,L2,L3', 'fn(t1, findNode(t1,5), findNode(t1,1)) — three arguments, two of them nodes of the first'],
+  ];
+  for (const [stem, levels, why] of SHARED_GRAPH_GUIDES) {
+    for (const level of levels.split(',')) {
+      const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && golden.verdict.failed === 0,
+        `S35 shared graph: ${stem} ${level} passes every case — ${why}`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
+          : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+    }
+  }
+  // ── The load-bearing half: the verdict is NOT the assertion ──────────────────────────────────
+  // `failed === 0` on three blocks is a claim about a NUMBER, and a number is exactly what a defect
+  // that compares VALUES would also produce. The guide forbids value comparison in prose, and prose
+  // is not a gate. So the mechanism is asserted on IDENTITY, through the REAL driver, in both
+  // directions: with `share` the target's `===` walk finds both derived nodes inside `root`, and
+  // with the byte-identical separate wires it finds NEITHER. The second half is what makes the first
+  // mean something — without it, "the shared case passed" is indistinguishable from "the target
+  // counted values".
+  const sharedGraphProbe = await sharedArgsAreViewsOfOneGraph();
+  check(sharedGraphProbe === true,
+    'S35 shared graph: the projected arguments are `===` the nodes inside the one decoded graph — asserted on IDENTITY through the real driver, not on a verdict',
+    sharedGraphProbe === true ? '' : String(sharedGraphProbe));
   // ---- S30 · row 15 — a decoded tree node carries the pointer its guide's code walks ----
   // `next-right-pointers-ii`'s L2 block says "Node shared from Level 1" and then only ASSIGNS
   // `node.next`; it never mentions `Node`, so nothing referenced it, nothing lifted it, and the
