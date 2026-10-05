@@ -20,6 +20,11 @@ const box = (page, sel) =>
 const isRailColumn = (page) =>
   page.evaluate(() => getComputedStyle(document.getElementById('ltRail')).display !== 'contents');
 
+/* 1024 is where the layout first has to pay for everything at once: the sidebar
+   is docked, and so is the rail. It used to be tested at 1440 and on a phone and
+   nowhere between, which is exactly where the column collapsed. */
+const GUIDE = '08-linked-list_06-reverse-nodes-in-k-group';
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
   // attached, not visible: below 1024px the assistant is a hidden bottom sheet.
@@ -115,4 +120,45 @@ test('the collapsed navigation rail holds its own controls', async ({ page }) =>
   expect(r.w, 'the collapsed rail is 56px').toBe(56);
   expect(r.spills, 'no control hangs outside the rail').toBe(0);
   expect(r.ovf, 'the rail does not scroll sideways').toBe(false);
+});
+
+/* The three below are one defect seen three ways, and every one of them was
+   invisible to the suite. `nothing in the shell extends past the viewport`
+   cannot see it: html clips horizontal overflow, so the page never scrolls
+   sideways no matter how far the reader column spills, and a document-level
+   assertion passes while content sits off the right edge. */
+test.describe('the reading column when everything is docked', () => {
+  test.skip(({ viewport }) => viewport.width < 768, 'the sidebar and rail only coexist from md up');
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.goto('/#' + GUIDE);
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(400);
+  });
+
+  test('the column can still afford the rail', async ({ page }) => {
+    const w = await page.evaluate(() =>
+      Math.round(document.querySelector('#contentContainer article').getBoundingClientRect().width));
+    expect(w, 'under 500px the prose wraps to one or two words a line').toBeGreaterThanOrEqual(500);
+  });
+
+  test('the reader never needs a sideways scroll', async ({ page }) => {
+    const m = await page.evaluate(() => {
+      const cc = document.getElementById('contentContainer');
+      return { scrollW: cc.scrollWidth, clientW: cc.clientWidth };
+    });
+    expect(m.scrollW, 'a sideways scroll hides the overflow where nobody looks for it')
+      .toBeLessThanOrEqual(m.clientW);
+  });
+
+  test('both prev/next cells sit inside the column', async ({ page }) => {
+    const past = await page.evaluate(() => {
+      const art = document.querySelector('#contentContainer article').getBoundingClientRect();
+      return [...document.querySelectorAll('#prevNext [data-nav]')].map((c) =>
+        Math.round(c.getBoundingClientRect().right - art.right));
+    });
+    expect(past.length, 'this guide has a next guide to reach').toBe(2);
+    for (const p of past) expect(p, 'no cell hangs past the column').toBeLessThanOrEqual(1);
+  });
 });
