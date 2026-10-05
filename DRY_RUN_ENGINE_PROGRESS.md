@@ -2136,3 +2136,48 @@ present and with it reverted, which is the signature of load-sensitivity rather 
 regression; the ledger already records this class of flake (`flatten-binary-tree` L1 TLE under load,
 `0e05af2`). **It is also not in `verify`'s chain**, which is how a red suite goes unnoticed — noted, not
 wired. Recorded here so the next session does not re-bisect it.
+
+### 2026-10-05 — the "regression" that was not one: a leaked `serve` process, and two lessons in probe design
+
+`npm run verify` exited **1** at `6dae213` with **130 Playwright failures**, every one
+`expect(locator).toBeVisible() failed` on `[data-dryrun-player]` while the page's own `h1` assertion
+passed. I reported it as a regression from this row and refused to claim success. **It was not one, and
+the bisect is the interesting part.**
+
+Measured, full `tests/dry-run.spec.mjs`, same machine:
+
+| Commit | Result |
+|---|---|
+| `f61e4fd` (row 0 baseline) | **126 failed** |
+| `26db8e5` (S23 slice 6) | **126 failed** |
+| `6dae213` (HEAD) | 126 failed in isolation / 130 in the full `verify` |
+
+**The baseline failed too, by the same count.** And 126 is exactly row 25's recorded number — *"126
+passed for dry-run.spec (63 × 2 projects)"*. Same 126 tests, opposite result, at the pristine baseline:
+so the code was never the variable.
+
+**Cause: a leaked `serve -l 4173 docs` child, 1 h 23 m old, serving a stale build**
+(`curriculum-data.js` 3 091 546 B served vs 3 103 743 B on disk). `playwright.config.mjs:40` starts the
+portal as a `webServer` with `command: npm run build && npx --yes serve@14 -l ${PORT} docs`, and
+`reuseExistingServer` is true locally — so once an interrupted Playwright run left the child alive,
+every later run silently tested the OLD `docs/`. A second, distinct failure mode appeared once that was
+killed: `page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/`, i.e. the `webServer` never
+came up under load (its own `npm run build` is in the command, and this box was running a full verify).
+
+**After clearing the port: `npm run test:e2e` → 272 passed / 18 skipped, exit 0, and `npm run verify`
+→ exit 0.** Nothing in the tree changed. So the honest status of this row's suites is green, and the
+130 was an artefact of my own process hygiene.
+
+**Lesson 1 — a bisect is only as good as the method, and mine was invalid.** My first probe was a
+single `-g "reachable and labelled"` test. It failed at HEAD **and at `f61e4fd`**, which is how I
+learned it is order-dependent and never passes alone — so it could not distinguish a regression from a
+broken environment at all. Two commits and two builds were spent before switching to the full spec with
+a count. **A filtered subset is not a bisect; and a baseline that fails tells you the METHOD is wrong,
+not the code.** I should have run the full spec at the baseline first, which would have found this in
+one command.
+
+**Lesson 2 — "cleanup is part of QA" has to include the port, not just the server.** Both subagent
+slices killed the servers they started on 8099 and 8137 and proved the ports free, and I checked 8099
+and 8137 too. Nobody checked **4173**, because that port belongs to `playwright.config.mjs`'s
+`webServer` rather than to a QA step — so the one server that mattered was the one nobody owned. The
+next session should treat "is 4173 free before and after" as part of any run that starts Playwright.
