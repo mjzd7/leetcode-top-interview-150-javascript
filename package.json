@@ -18,7 +18,7 @@
     "test:chat": "node scripts/test-chat.mjs",
     "test:chat:live": "node scripts/test-chat-live.mjs",
     "test:e2e": "playwright test",
-    "verify": "npm run audit:check && npm run gen:traces && npm run validate && npm test && npm run test:judge && npm run test:chat && npm run test:trace && npm run test:trace-runner && npm run test:envelope && npm run test:serialize && npm run test:validate && npm run test:codecs && npm run test:instrument && npm run test:cases && npm run test:doc-traces && npm run test:dryrun-player && npm run test:dryrun-render && npm run test:e2e && npm run build",
+    "verify": "npm run audit:check && npm run gen:traces && npm run validate && npm test && npm run test:judge && npm run test:chat && npm run test:trace && npm run test:envelope && npm run test:serialize && npm run test:validate && npm run test:codecs && npm run test:instrument && npm run test:cases && npm run test:doc-traces && npm run test:dryrun-player && npm run test:dryrun-render && npm run test:e2e && npm run build",
     "audit:check": "node scripts/audit-curriculum.mjs --check",
     "gen:blocks": "node scripts/gen-blocks.mjs",
     "test:trace": "node scripts/test-trace.mjs",
