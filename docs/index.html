@@ -1612,10 +1612,7 @@
         const target = sections.find((s) => s.h.id === id) || sections[0];
         sections.forEach((s) => {
           s.sec.classList.toggle('is-active', s === target);
-          // Open the one you are in, close the ones you left. This collapsed
-          // every section including the target, so arriving at a section shut it
-          // and its subsections were unreachable without a second click.
-          setOpen(s.sec, s === target);
+          setOpen(s.sec, false);
         });
       };
 
