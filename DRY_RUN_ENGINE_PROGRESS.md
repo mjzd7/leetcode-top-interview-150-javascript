@@ -2225,3 +2225,50 @@ this session and **0** now, with no change to it. Those were E20/E22 — ~2 MB t
 budgets — so they are load-sensitive exactly as `0e05af2` records for `gen:traces`, and my earlier
 "pre-existing failure" claim was the same environmental artefact as the 130, seen from the other side.
 **No suite in this repo is red. Both of today's alarms were this machine, not this code.**
+
+### 2026-10-05 — row 15 slice 10 (S32): shared-declaration composition is live again, and my stated reason for deferring it was wrong
+
+**Shipped.** `api/_lib/trace-runner.mjs`'s `composeShared` now loads `scripts/instrument.mjs` through
+`import()` instead of `createRequire`. That module is ESM **with top-level await**, so `require()`
+raises `ERR_REQUIRE_ASYNC_MODULE`; the `catch` set the cache to `null` and `composeShared` returned the
+block unchanged **for every guide at every level above 1**. The whole shared-declaration mechanism was
+a silent no-op for the life of the row: no gate covered it, and its symptom (a missing `class Node`) is
+indistinguishable from a guide that never had one.
+
+**The deferral reason in the S30 entry was wrong, and this entry exists to correct it.** That entry
+said "fixing it works but turns `test:trace-runner`'s E20/E22 red, so it is left exactly as it was".
+Measured A/B, same machine, same moment, fix applied then reverted:
+
+| state | `test:trace-runner` |
+|---|---|
+| `composeShared` fixed | 269 assertions, **5 failures** |
+| `composeShared` reverted | 269 assertions, **5 failures** |
+
+The failures are identical either way, so **composition was never the cause** — they are E22 building a
+~2 MB trace against a 3 s budget, which is load-sensitive exactly as `0e05af2` records for
+`gen:traces`. I had attributed a flake to my own change because the two observations happened close
+together in one session. It is the same lesson as the leaked `serve` process, from the other direction:
+**on this box, a red suite is not evidence until it has been reproduced with the change reverted.**
+
+**Why it is safe to ship, measured rather than argued.** The corpus is **byte-identical**: after the fix
+`npm run gen:traces` → 450 goldens · 450 validateEnvelope · empty traces 0, and
+`git status --porcelain judge/` → **0 files changed**, census unmoved at clean 444 · zero-pass 3 ·
+partial-pass 3. That is structural rather than lucky: `composeShared` only runs when `source` was NOT
+supplied (`source ?? await composeShared(...)`), and `gen-traces` always supplies it, so the generator
+path never reaches this function. It affects only `runBlockTrace`'s default path.
+
+**Evidence.** RED first: with `composeShared` stubbed to `const mod = null`, the gate goes
+`❌ [FAIL] S32 compose: … the mechanism that was dead is live` / `Assertions: 212 | Failures: 1`, and
+returns to 0 on restore — so it can bite. The gate routes through `composeShared` **itself**, not
+through `composeBlockSource`, because the first version imported `composeBlockSource` directly and
+passed with `composeShared` dead: tautological about the one thing it covered. It also asserts level 1
+comes back byte-identical, since composition is for level > 1 only.
+
+**Suites:** `npm run test:trace` **212·0** (was 210; +2) · `npm test` **1898 · 0 failures** ·
+`test:codecs` **275·0** · `test:judge` **96·0** · `test:envelope` **129·0** · `test:doc-traces` **17·0**.
+
+**Left explicitly unverified:** `test:trace-runner` reports 269/5 on this machine right now, with and
+without this change, so it cannot certify anything today. It is **not in `verify`'s chain** — which is
+how a red suite goes unnoticed here — and wiring it in is now the honest next move rather than a
+nicety, because a fixture that is load-sensitive enough to fail 5 assertions on an idle box will fail
+in CI too.
