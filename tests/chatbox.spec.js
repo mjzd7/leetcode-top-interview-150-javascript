@@ -1880,37 +1880,38 @@ test('markdown and the code-block copy button still render against the pinned ma
  * Layout: the right rail (item B)
  * ------------------------------------------------------------------ *
  * The chat used to be a 4th flex column beside <main>, which squeezed the
- * article on a 1440 screen. Decision B puts the TOC and the chat in ONE
- * right rail: TOC on top, chat below, sharing a width that item C resizes.
+ * article on a 1440 screen. Decision B puts it in ONE right rail of its own,
+ * sharing a width that item C resizes. The rail also carried a table of
+ * contents until that was removed; the assistant now has the column to itself.
  */
 
 const rail = '#ltRail';
 
-test('the right rail holds both the table of contents and the assistant', async ({ page }) => {
+test('the right rail holds the assistant and nothing else', async ({ page }) => {
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
 
   await expect(page.locator(rail)).toHaveCount(1);
-  await expect(page.locator(`${rail} #tocNav`)).toHaveCount(1);
   await expect(page.locator(`${rail} ${panel}`)).toHaveCount(1);
+  expect(await page.locator(`${rail} #tocNav`).count(), 'no table of contents').toBe(0);
 
   // Asserted as a negative: a direct child of <body> would mean the chat is
   // still a 4th flex column rather than a member of the rail.
   expect(await page.locator(`body > ${panel}`).count()).toBe(0);
 });
 
-test('the assistant sits below the table of contents inside the rail', async ({ page }) => {
+test('the assistant takes the rail top to bottom', async ({ page }) => {
   test.skip(isMobile(page), 'the rail only exists on wide viewports');
 
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
 
-  const toc = await page.locator(`${rail} #tocNav`).boundingBox();
+  const railBox = await page.locator(rail).boundingBox();
   const chat = await page.locator(panel).boundingBox();
 
-  expect(toc, 'TOC has a box').not.toBeNull();
   expect(chat, 'chat has a box').not.toBeNull();
-  expect(chat.y, 'chat starts below the TOC').toBeGreaterThan(toc.y);
+  expect(chat.y, 'chat starts at the top of the rail').toBeCloseTo(railBox.y, 0);
+  expect(chat.height, 'and fills its height').toBeCloseTo(railBox.height, 0);
 });
 
 test('the article is no longer squeezed by a fourth column', async ({ page }) => {
@@ -1929,148 +1930,6 @@ test('the article is no longer squeezed by a fourth column', async ({ page }) =>
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow, 'no horizontal page overflow').toBeLessThanOrEqual(0);
-});
-
-/* ------------------------------------------------------------------ *
- * The one-liner page navigation (item A)
- * ------------------------------------------------------------------ *
- * Collapsed, "On this page" is a single row naming the section in view.
- * Clicking it opens that section's sub-headings, which hang off a guide
- * line. Moving to another section closes the one that was open, so the
- * navigation is never more than a single section deep and never lists
- * sections out of article order.
- */
-
-/** Sections actually painted, i.e. not hidden by the one-liner rule. */
-const visibleSecs = (page) => page.locator('#tocNav .toc-sec:visible').count();
-
-/** Load the guide and return the active section's one-liner row. */
-async function oneLiner(page) {
-  await page.goto(ARTICLE_URL);
-  await page.waitForSelector('#tocNav .toc-link');
-  return page.locator('#tocNav .toc-sec.is-active .toc-row');
-}
-
-/** Scroll a section into view by a phrase in its heading. */
-const scrollToSection = (page, re) =>
-  page.evaluate((src) => {
-    const re = new RegExp(src);
-    const h = [...document.querySelectorAll('#articleContent h2')].find((e) => re.test(e.textContent));
-    h.scrollIntoView({ block: 'start', behavior: 'instant' });
-  }, re.source);
-
-/** Scroll a subsection into view by a phrase in its heading. */
-const scrollToSubsection = (page, re) =>
-  page.evaluate((src) => {
-    const re = new RegExp(src);
-    const h = [...document.querySelectorAll('#articleContent h3')].find((e) => re.test(e.textContent));
-    h.scrollIntoView({ block: 'start', behavior: 'instant' });
-  }, re.source);
-
-test('the page navigation is one line naming only the section in view', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await expect(row).toBeVisible();
-  expect(await visibleSecs(page), 'exactly one section is shown').toBe(1);
-  await expect(row).toContainText(/Problem Overview/);
-  await expect(page.locator('#tocNav .toc-sec.is-active .toc-sub')).toBeHidden();
-});
-
-test('the one-liner opens that section and nothing else', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').click();
-
-  const open = page.locator('#tocNav .toc-sec[data-collapsed="false"]');
-  await expect(open).toHaveCount(1);
-  await expect(open.locator('.toc-sub')).toBeVisible();
-  expect(await open.locator('.toc-sub-link').count()).toBeGreaterThan(1);
-  await expect(open.locator('.toc-toggle')).toHaveAttribute('aria-expanded', 'true');
-});
-
-test('sub-headings hang off a guide line so they read as children', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').click();
-  const child = page.locator('#tocNav .toc-sec.is-active .toc-sub-link').first();
-  await expect(child).toBeVisible();
-
-  const guide = await page.locator('#tocNav .toc-sec.is-active .toc-sub').evaluate((el) => {
-    const s = getComputedStyle(el);
-    return { border: parseFloat(s.borderLeftWidth), pad: parseFloat(s.paddingLeft) };
-  });
-  expect(guide.border, 'a visible guide line').toBeGreaterThan(0);
-  expect(guide.pad, 'children are indented').toBeGreaterThan(0);
-
-  const indent = await child.evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft));
-  expect(indent, 'child sits right of the guide').toBeGreaterThan(0);
-});
-
-test('an opened section closes when the reader moves to another', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').click();
-  await expect(page.locator('#tocNav .toc-sec[data-collapsed="false"]')).toHaveCount(1);
-
-  await scrollToSection(page, /Level 3/);
-
-  // The new section leads and the one that was open has folded away, so the
-  // navigation is a single line again rather than two out-of-order sections.
-  expect(await visibleSecs(page), 'only the section in view is shown').toBe(1);
-  await expect(page.locator('#tocNav .toc-sec.is-active .toc-link').first())
-    .toContainText(/Level 3/);
-  await expect(page.locator('#tocNav .toc-sec[data-collapsed="false"]')).toHaveCount(0);
-});
-
-test('only the section in view is ever shown', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').click();
-  await scrollToSection(page, /Level 3/);
-
-  const shown = page.locator('#tocNav .toc-sec:visible');
-  await expect(shown).toHaveCount(1);
-  await expect(shown.first()).toHaveClass(/is-active/);
-});
-
-test('the one-liner keeps tracking the section in both directions', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').click();
-
-  for (const [target, name] of [[/Level 3/, /Level 3/], [/Gotchas/, /Gotchas/], [/Level 1/, /Level 1/]]) {
-    await scrollToSection(page, target);
-    expect(await visibleSecs(page), `one section shown at ${name}`).toBe(1);
-    await expect(page.locator('#tocNav .toc-sec.is-active .toc-link').first())
-      .toContainText(name);
-  }
-});
-
-test('the sub-heading being read is marked as the active child', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-  // Marking the active sub-heading is an IntersectionObserver reaction to a
-  // scroll, so it costs a frame or two after the scroll settles — and the
-  // portal's five CDN libraries can starve that frame for seconds on a bad
-  // network. Headroom here buys the observer time; the waits stay state-based.
-  test.slow();
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').click();
-  expect(await page.locator('#tocNav .toc-sub-link.is-current').count()).toBe(0);
-
-  // A child is only "in view" once the reader scrolls into it, not when the
-  // section head arrives, so scroll to a specific subsection.
-  await scrollToSubsection(page, /Pseudocode/);
-  await page.locator('#tocNav .toc-sec.is-active .toc-toggle').click();
-
-  const current = page.locator('#tocNav .toc-sub-link.is-current');
-  await expect(current).toHaveCount(1, { timeout: 30_000 });
-  await expect(current).toHaveText(/Pseudocode/);
 });
 
 /* ------------------------------------------------------------------ *
@@ -2233,16 +2092,3 @@ test('the nav stage survives a reload', async ({ page }) => {
   expect(await navWidth(page)).toBeCloseTo(NAV_WIDTHS[2], 0);
 });
 
-test('the one-liner is operable from the keyboard', async ({ page }) => {
-  test.skip(isMobile(page), 'the TOC only exists on wide viewports');
-
-  const row = await oneLiner(page);
-  await row.locator('.toc-toggle').focus();
-  await expect(page.locator('#tocNav .toc-sec.is-active .toc-toggle')).toBeFocused();
-
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#tocNav .toc-sec[data-collapsed="false"]')).toHaveCount(1);
-
-  await page.keyboard.press('Space');
-  await expect(page.locator('#tocNav .toc-sec.is-active .toc-sub')).toBeHidden();
-});

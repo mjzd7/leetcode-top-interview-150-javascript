@@ -292,3 +292,42 @@ test.describe("the assistant's touch controls", () => {
     expect(m.hintOver, 'and neither is the hint under it').toBeLessThanOrEqual(1);
   });
 });
+
+/* The right rail held two things: an "On this page" list taking up to 45% of the
+   column, and the assistant below it. With one thing left in the rail the list
+   has nothing to share the height with, so it is gone and the assistant takes
+   the whole column. */
+test.describe('the right rail', () => {
+  test.skip(({ viewport }) => viewport.width < 1280, 'the rail is a column from 1280');
+
+  test('has no table of contents and gives the full column to the assistant', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/#' + GUIDE);
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(600);
+
+    const r = await page.evaluate(() => {
+      const rail = document.getElementById('ltRail');
+      const panel = document.getElementById('ltcPanel');
+      const rb = rail.getBoundingClientRect();
+      const pb = panel.getBoundingClientRect();
+      return {
+        tocBlocks: document.querySelectorAll('.lt-rail-toc, #tocNav').length,
+        heading: [...document.querySelectorAll('#ltRail *')].some((e) => e.textContent.trim() === 'On this page'),
+        railH: Math.round(rb.height),
+        panelH: Math.round(pb.height),
+        panelTopGap: Math.round(pb.top - rb.top),
+        // The rail's first element child should be the resizer, then the panel.
+        order: [...rail.children].map((e) => e.id || String(e.className).split(' ')[0]),
+        formOver: Math.round(document.getElementById('ltcForm').getBoundingClientRect().bottom - innerHeight),
+      };
+    });
+
+    expect(r.tocBlocks, 'no table-of-contents markup survives').toBe(0);
+    expect(r.heading, 'and no "On this page" label').toBe(false);
+    expect(r.order, 'the rail is the resizer and the assistant, nothing else').toEqual(['ltRailResizer', 'ltcPanel']);
+    expect(r.panelTopGap, 'the assistant starts at the top of the rail').toBe(0);
+    expect(r.panelH, 'and fills its height').toBe(r.railH);
+    expect(r.formOver, 'with the composer still inside the viewport').toBeLessThanOrEqual(1);
+  });
+});
