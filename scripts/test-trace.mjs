@@ -2100,6 +2100,35 @@ async function main() {
       'S30 lift negative: an unknown dependency name is simply not found, and does not abort the build',
       'a depName no sibling declares threw instead of being skipped');
   }
+  // ---- S32 · row 15 — shared-declaration composition is LIVE, and its absence was silent ----------
+  // `composeShared` used to load `scripts/instrument.mjs` through `createRequire`, and that module is
+  // ESM with top-level await, so `require()` raises `ERR_REQUIRE_ASYNC_MODULE`; the `catch` cached
+  // `null` and every guide at every level above 1 shipped WITHOUT its siblings' shared declarations.
+  // Nothing reported it and no gate covered it, because "a missing `class Node`" is indistinguishable
+  // from a guide that never had one.
+  //
+  // It gates on `composeShared` itself, NOT on `composeBlockSource` directly. A first version imported
+  // `composeBlockSource` and passed with `composeShared` stubbed to `const mod = null` — tautological
+  // about the one thing it claimed to cover, which a mutant proved. This version routes through the real
+  // entry point, so the same mutant turns it red.
+  {
+    const { composeShared, readBlockSource, getBlock } = await import('../api/_lib/trace-runner.mjs');
+    const GUIDE = '09-binary-tree-general/14-next-right-pointers-ii.md';
+    const raw = readBlockSource(GUIDE, getBlock(GUIDE, 2));
+    const composed = typeof composeShared === 'function'
+      ? await composeShared(raw, GUIDE, { level: 2 })
+      : '';
+    check(/class Node/.test(composed),
+      "S32 compose: row 9's composeBlockSource really brings a sibling level's shared `class Node` into L2 — the mechanism that was dead is live",
+      'composed L2 source declares no `class Node` — composeShared regressed, or the shared-declaration lift stopped working');
+    // Level 1 must be returned untouched: there is nothing to compose into the first level.
+    const l1 = typeof composeShared === 'function'
+      ? await composeShared(readBlockSource(GUIDE, getBlock(GUIDE, 1)), GUIDE, { level: 1 })
+      : '';
+    check(l1 === readBlockSource(GUIDE, getBlock(GUIDE, 1)),
+      'S32 compose: level 1 is returned byte-identical — composition is for level > 1 only',
+      'composing level 1 changed its source');
+  }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
   console.log(`Assertions: ${assertions} | Failures: ${failures}`);
