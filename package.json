@@ -8,7 +8,11 @@
     "build": "node scripts/build-site.mjs",
     "test": "node scripts/test-runner.mjs",
     "test:judge": "node scripts/test-judge.mjs",
-    "verify": "npm run validate && npm test && npm run test:judge && npm run build"
+    "test:chat": "node scripts/test-chat.mjs",
+    "test:chat:live": "node scripts/test-chat-live.mjs",
+    "test:e2e": "playwright test",
+    "csp:hash": "node scripts/refresh-csp-hash.mjs",
+    "verify": "npm run validate && npm test && npm run test:judge && npm run test:chat && npm run test:e2e && npm run build"
   },
   "keywords": [
     "leetcode",
@@ -21,6 +25,17 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "quickjs-emscripten": "^0.32.0"
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
+    "dotenv": "^18.0.4",
+    "openai": "^7.23.0",
+    "quickjs-emscripten": "^0.32.0",
+    "tiktoken": "^1.0.22"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.17.0",
+    "@playwright/test": "^1.63.0",
+    "playwright": "^1.63.0",
+    "puppeteer": "^25.11.0"
   }
 }

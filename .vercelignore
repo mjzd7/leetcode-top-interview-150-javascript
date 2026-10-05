@@ -1,8 +1,17 @@
 # Never deploy raw media, agent scratch, or local installs.
-# (Git already ignores these via .gitignore; Vercel CLI needs its own list.)
+# (Git already ignores most of these via .gitignore; the Vercel CLI needs its
+# own list, and anything missing from it is uploaded.)
 node_modules
 .omo
 .git
-00-foundations/video-transcripts/*/download
-00-foundations/video-transcripts/*/frames
+.codegraph
+.puppeteer_cache
+.firecrawl
+scratch
+test-results
+playwright-report
 *.log
+
+# ~915MB of YouTube downloads and extracted frames. Research input for the
+# guides, not site content: no markdown lives here and nothing references it.
+00-foundations/video-transcripts
