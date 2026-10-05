@@ -242,3 +242,55 @@ test.describe('accessible names', () => {
     });
   }
 });
+
+/* Every control below already clears WCAG 2.5.8 AA, which asks 24x24. 44 is the
+   AAA figure and the one Apple's guidance uses, and it is the one that matters
+   for the assistant: Send was a 34px target on a phone held in one hand, sitting
+   beside the input rather than under a thumb. The header's own controls stay at
+   40px — they clear AA with room, they sit at the top where reach is easy, and
+   40 is a deliberate invariant from 029ff25 (one height, one baseline, 56px row)
+   that layout.spec.mjs asserts at exactly 40. */
+test.describe("the assistant's touch controls", () => {
+  test('meet the 44px floor on the smallest phone claimed', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+    await page.click('.ltc-fab');
+    await page.waitForTimeout(700);
+    // The scroll-down chevron rests at opacity 0 / pointer-events none, scaled to
+    // 0.9. Measuring it there would score a control nobody can touch.
+    await page.evaluate(() => document.getElementById('ltcScrollDown').classList.add('is-shown'));
+    await page.waitForTimeout(400);
+    const small = await page.evaluate(() => {
+      const out = [];
+      for (const sel of ['#ltcSend', '#ltcScrollDown', '#ltcClear', '#ltcClearAll', '#ltcClose', '.ltc-chip']) {
+        for (const el of document.querySelectorAll(sel)) {
+          const b = el.getBoundingClientRect();
+          if (b.width === 0) continue; // not rendered in this state
+          if (b.height < 44 || b.width < 44) out.push(`${sel} ${Math.round(b.width)}x${Math.round(b.height)}`);
+        }
+      }
+      return out;
+    });
+    expect(small, 'a thumb should not have to find a 34px target').toEqual([]);
+  });
+
+  test('the composer still fits after they grow', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+    await page.click('.ltc-fab');
+    await page.waitForTimeout(700);
+    const m = await page.evaluate(() => {
+      const form = document.getElementById('ltcForm').getBoundingClientRect();
+      const hint = document.querySelector('.ltc-hint');
+      return {
+        formBottomOver: Math.round(form.bottom - innerHeight),
+        hintOver: hint ? Math.round(hint.getBoundingClientRect().bottom - innerHeight) : null,
+        vh: innerHeight,
+      };
+    });
+    expect(m.formBottomOver, 'the composer is not clipped by the viewport').toBeLessThanOrEqual(1);
+    expect(m.hintOver, 'and neither is the hint under it').toBeLessThanOrEqual(1);
+  });
+});
