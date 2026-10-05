@@ -1794,9 +1794,10 @@
    * ------------------------------------------------------------------ */
 
   /**
-   * Tallest the panel may be. On desktop it shares the rail with the table of
-   * contents, so the rail is the ceiling; on the sheet the window is, less a
-   * strip of page.
+   * Tallest the panel may be. On desktop it is the whole rail, so that is the
+   * ceiling — which means a panel at rest already sits at it and the handle can
+   * only shrink until it is dragged or keyed back up. On the sheet the window is
+   * the ceiling, less a strip of page.
    */
   function panelCeiling() {
     var rail = el.panel.closest && el.panel.closest('.lt-rail');
