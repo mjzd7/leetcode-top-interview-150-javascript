@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 11/450 verdicts still wrong** (was 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 4/450 verdicts still wrong** (was 11, 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. Wrong-verdict census (row 15 / S17, from the 450 committed heads): **clean 446 · zero-pass 3 · partial-pass 1** — the 4 wrong verdicts are `lowest-common-ancestor` L1/L2/L3 at 0p/6f and `sorted-array-to-bst` L1 at 5p/2f, both owned by other slices. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -2632,3 +2632,133 @@ it was defeating a PID-based kill.
 **Evidence — `npm run verify` → EXIT=0**, server errors **0**, `S17 census clean 444 · zero-pass 3 ·
 partial-pass 3`, `test:trace` **219·0**, `npm test` **1898·0**, Playwright **272 passed / 18 skipped**
 (4.2 min). Same tree, same session, from **157 connection-refused** to **0**.
+
+### 2026-10-05 — row 15 slice 11 (S34): a `[]` the author wrote for the TARGET is not a wire a codec produced, and the recorded cause was wrong twice
+
+**Shipped.** `merge-k-sorted-lists` L1 and L2 grade `passed 9 / failed 0`. A `list` block's spy now
+records one extra thing per case — `live: 1` — and `buildBundle`'s driver reads it to leave an argument
+**un**decoded. `live` means exactly: *the value that became this case's argument was handed to the
+TARGET, and it is this codec's wire-shaped, so decoding it would be the harvest inventing an input.*
+It is set in one place, the spy's `__isTarget` branch, from `__LIST__ && __pushed__`, where `__pushed__`
+was already computed on the way IN from `__LIST_WIRE__` — which **is** `list.acceptsWire`, read off the
+registry rather than reimplemented, so there is still exactly one notion of "a list wire".
+
+**The two earlier entries both named the wrong cause, and this is the part worth keeping.** S31's
+recorded diagnosis — carried in `scripts/test-trace.mjs` and in the S31 §7 entry above — is that the
+harvest records this guide's list input as raw node OBJECTS, that `list.acceptsWire` rejects that shape,
+and that "the merge then walks the wrong shape", with the `fn([])` / `fn([null])` cases passing. Measured
+against the real driver, that is false in both halves: the three failing cases are labelled **`empty
+array`** and their error is `TypeError: cannot read property 'Symbol.iterator' of null`, and the
+chained-input case **passes** at all three levels. A plain object carrying a `next` property *is* a
+chain the target can walk, and `list.acceptsWire` refusing an array of objects is the correct answer,
+not the defect. `~~The two `fn([])` / `fn([null])` cases pass; only the chained-input case fails.~~` →
+**the two `fn([])` / `fn([null])` cases: `fn([null])` passes and `fn([])` is the failing one.**
+Reproduce: `node -e "…buildBundle({codec:'list', tests: …})…"` — the same bundle `buildBundle` builds,
+printed per case; the shape is in the RED output below.
+
+Two measured facts the entries above did not have, both of which change the fix:
+
+- **L3 is clean because its BLOCK codec is `ops`, not `list`.** `catalog/problems.json` says `list`; the
+  manifest the run actually reads says otherwise, and `ops` accepts every wire and decodes it with the
+  identity, so the transport never mangles anything. `node -e "…getBlock('21-divide-conquer/04-merge-k-sorted-lists.md',3).codec…"` → `ops`.
+- **The empty array is byte-identical in two records that need opposite handling.** `invert-binary-tree`'s
+  `empty tree` case is also `args:[[]]` and MUST decode — the script wrote `fn(arrayToTree([]))`, so the
+  array is that constructor's wire — while merge-k's `empty array` is the author writing `fn([])`, meaning
+  "no lists at all". `list.acceptsWire([])` is `true` (`arrayToList([])` is `null`, `listToArray(null)` is
+  `[]`, so the round trip holds), so the codec claims both. That is why the recorded probe on
+  `acceptsWire` was net-negative and it was not repeated: declining `[]` fixes these 2 blocks and breaks
+  `invert-binary-tree` ×3.
+
+| Mechanism | Where | What it does | Gate |
+|---|---|---|---|
+| `live` case data | `scripts/gen-traces.mjs`, `harvestCases` | 1 ⇒ the driver does not decode this case's arguments | S34 verdict gate + negative probe |
+| `__LIVE__` | `SPY_RUNTIME`, the `__isTarget` branch | `(__LIST__ && __pushed__) ? 1 : 0` — set only where the code knows the argument reached the TARGET | S34 census gate |
+| `__LIST__` | parallel to `__TREE__`, **not** a widening | 4 of the 6 in-`SPY_RUNTIME` `__TREE__` reads are tree-specific SEMANTICS (`__LE__` push, `__GRAPH__` repair, `treeToArray` over the return, keep-the-recording fallback); widening would hand every `list` block all four | the 448 unmoved heads |
+| `__LIST_WIRE__` | `= __LIST__ && __CODECS__.list.acceptsWire(a)` | the `list` analogue of `__LE__`, taken from the registry | S34 negative probe |
+| `driverCodecSource()` widened to `list` | `gen-traces.mjs` bundle | emits `__CODECS__` + `listToArray`/`arrayToList` so `__LIST_WIRE__` resolves; the block's own `arrayToList` still comes later and still wins | the 448 unmoved heads |
+
+**RED first.** The gate names only merge-k L1 and L2 and asserts `failed === 0`, beside a census gate that
+asserts the corpus is still 450 and `clean` rose by exactly the two blocks named. `npm run test:trace`:
+
+```
+❌ [FAIL] S34 list wire: 21-divide-conquer__04-merge-k-sorted-lists L1 passes every case — the recorded `[]` is the target's own "no lists", not the list codec's empty wire
+   passed 6, failed 3 · first error: (a case compared unequal)
+❌ [FAIL] S34 list wire: 21-divide-conquer__04-merge-k-sorted-lists L2 passes every case — the recorded `[]` is the target's own "no lists", not the list codec's empty wire
+   passed 6, failed 3 · first error: (a case compared unequal)
+✅ [PASS] S34 list wire: the census still accounts for all 450 heads — a guide dropped from the manifest is not an improvement
+❌ [FAIL] S34 list wire: `clean` is 446 — the two blocks this slice names went from partial to clean and nothing else moved
+   clean 444 (444 before this slice), zero-pass 3, partial-pass 3
+❌ [FAIL] S34 list wire negative: a case recorded from this codec's OWN decoder is still decoded — `live` suppresses the decode only for an argument no codec produced
+Assertions: 224 | Failures: 4
+```
+
+**GREEN.** Same command after the change, with `VERDICT_BASELINE` tightened to
+`{ zeroPass: 3, partialPass: 1 }`:
+
+```
+S17 ratchet: 450 heads · zero-pass 3 (baseline 3) · partial-pass 1 (baseline 1) · clean 446
+✅ [PASS] S34 list wire: 21-divide-conquer__04-merge-k-sorted-lists L1 passes every case
+✅ [PASS] S34 list wire: 21-divide-conquer__04-merge-k-sorted-lists L2 passes every case
+✅ [PASS] S34 list wire: the census still accounts for all 450 heads
+✅ [PASS] S34 list wire: `clean` is 446
+✅ [PASS] S34 list wire negative: a case recorded from this codec's OWN decoder is still decoded
+Assertions: 224 | Failures: 0
+```
+
+`test:trace` went **219 → 224** assertions, 0 failures. The three S17 negative probes still bite
+(`breaches(at(1,0))`, `breaches(at(0,1))`, `breaches(at(-1,-1))`), all written relative to the baseline so
+tightening it did not rot them.
+
+**Mutant proof — three, one per lever, each restored and the corpus re-proved after every restore.**
+
+1. `__LIST_WIRE__` returns `false` (the list-wire predicate disabled) → `npm run gen:traces` then
+   `npm run test:trace`: `passed 6, failed 3` at both levels, `clean 444 … partial-pass 3`,
+   `Assertions: 224 | Failures: 3`. Restored → census back to `clean 446 · zero-pass 3 · partial-pass 1`.
+2. Driver ignores `t.live` (`(t.args || []).map(__dec__)`) → the negative probe alone goes red:
+   `❌ [FAIL] S34 list wire negative: …` , `Assertions: 224 | Failures: 1`. This is the direction that
+   silently undoes the slice: the verdict gates read committed goldens and would stay green.
+3. Driver never decodes (`function (a, i) { return a; }`) → the same probe goes red from the OTHER side,
+   `Assertions: 224 | Failures: 1`, so the probe is two-sided and neither half can satisfy the other.
+
+**No golden lost.** `git status --porcelain judge/traces/` → **2** lines, and `git diff judge/traces/`
+shows `verdict` as the ONLY changed field on each (`{"failed":3,"passed":6}` → `{"failed":0,"passed":9}`),
+with `stepCount`, `blockHash`, `first`, `last` and `budget` byte-identical. The other **448** heads are
+untouched, and the census sums: `clean 446 + zero-pass 3 + partial-pass 1 = 450`, asserted by the S34
+gate itself rather than by eye. The two slices this is not allowed to touch are unchanged:
+`lowest-common-ancestor` L1/L2/L3 at **0 passed / 6 failed** and `sorted-array-to-bst` L1 at **5 passed /
+2 failed** (`npm run test:trace` prints the census line; the per-head numbers are in the heads).
+
+**Determinism — two regenerations, one hash.**
+
+```
+npm run gen:traces && shasum judge/traces/*.head.json | shasum   # bfa4b9ceb88cf1b94a114330c94aac1aa2d2a414
+npm run gen:traces && shasum judge/traces/*.head.json | shasum   # bfa4b9ceb88cf1b94a114330c94aac1aa2d2a414
+```
+
+**Before / after census.** Before: **clean 444 · zero-pass 3 · partial-pass 3** (450). After: **clean 446 ·
+zero-pass 3 · partial-pass 1** (450). `clean` +2, which is the two blocks this slice names and nothing
+else. Reproduce either with `npm run gen:traces && npm run test:trace` and read the `S17 ratchet:` line.
+
+**Suites, all measured on this tree after the change:** `npm run gen:traces` **450 goldens · 450
+validateEnvelope · empty traces 0** · `npm test` **1898 assertions · 0 failures · 150 files ·
+syntax-only 0** · `npm run test:trace` **224·0** (was 219) · `npm run test:codecs` **275·0** ·
+`npm run test:judge` **96·0** · `npm run test:envelope` **129·0** · `npm run validate` **150 files · 0
+errors · 0 warnings** · `npm run test:instrument` **246·0** · `npm run audit:check` **17 passed 0
+failed** · `npm run test:doc-traces` **17·0**. `npm run verify` deliberately NOT run — another agent
+touches this tree next. No server or port was bound at any point.
+
+**Envelope untouched.** `live` rides inside the existing `JSON.stringify(tests)` as case data, exactly as
+`t.via` / `t.ops` / `t.ctor` / `t.draws` already do, so `scripts/test-trace.mjs`'s S10 frozen v1.1 check
+still sees the same field set (S10 is in `test:trace`, and `npm run test:trace` 224·0 includes it; S10
+also asserts the frozen set against `docs/trace-schema.json`, which is untouched). Nothing in
+the comparator, `equivalent()`, the codec registry, `acceptsWire` or `validateEnvelope` was touched —
+`api/_lib/codecs.mjs` is byte-identical to `55d5cb4`.
+
+**Left alone, found on the way.** (1) §3's row-15 cell also carries the old wrong counts in prose, which
+this entry corrects rather than edits. (2) The `ponytail` note on `spyRewrite` claims a call through a loop
+alias "is not recorded"; that stopped being true when the alias was added to the target set, and it is the
+reason `merge-k`'s cases arrive through the `__isTarget` branch at all — a stale comment, not a defect,
+left for whoever owns that note. (3) `21-divide-conquer/01-sorted-array-to-bst` L1 is the last block in the
+partial bucket and is a **`tree`** guide, so no `list` transport change can move it; its owner is a
+different slice. (4) `catalog/problems.json` says this guide's codec is `list` while `build/blocks.json`
+says the L3 **block** is `ops` — the run reads the manifest, so the catalog line is the misleading one.
