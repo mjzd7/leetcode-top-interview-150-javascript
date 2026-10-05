@@ -9,7 +9,10 @@
  */
 
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import http from 'node:http';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 import {
   countTokens, estimateTokens, truncateToTokens, truncateRelevant, buildWindow,
@@ -171,6 +174,56 @@ async function main() {
   };
   globalThis.fetch = noNetwork;
   const restoreFetch = () => { globalThis.fetch = realFetch; };
+
+  // The ambient API key, pinned HERE beside the fetch kill-switch and for the same reason.
+  //
+  // Hermeticity has to hold in BOTH directions: the kill-switch above stops this suite
+  // reaching the network when a developer HAS a real key exported, and this pin stops it
+  // depending on one being exported at all. GitHub Actions exports none, so without this
+  // the suite ran a different path in CI than on any developer machine — and nothing local
+  // could see it, because `npm run test:chat` was green in every shell that had a key.
+  //
+  // `api/chat.mjs` memoises its provider client in a module-level `clientPromise` and does
+  // `if (!apiKey) return null`, so the FIRST call decides the client for the whole process.
+  // With no key that first call memoises `null` and every later request 503s through it. The
+  // streaming block sets a stub key further down, which is exactly why that was not enough:
+  // the stub arrives after the null is already cached, and nothing resets it.
+  //
+  // Measured, both ways, on this tree: `env -u OPENAI_API_KEY npm run test:chat` gave
+  // 68 failures against 0 with a key exported. On CI, with the guide index also absent,
+  // the two causes sum to exactly the 85 that run reported — 85/85 failing assertion
+  // names reproduced locally, name for name, with none left over in either direction.
+  //
+  // The header above already promised "No OPENAI_API_KEY needed". This is the line that
+  // makes that true instead of aspirational.
+  const ambientKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = 'sk-test-stubbed-not-a-real-key';
+
+  // The guide index is a BUILD artefact, so it is absent from any fresh checkout:
+  // `scripts/build-site.mjs` writes api/_lib/guide-index.json and the path is gitignored.
+  // The search_guides tests below read it through `loadGuideIndex()`, and they used to fail
+  // outright when it was missing rather than saying why — 22 assertions, and on CI the
+  // workflow runs this suite at step 8 while `npm run build` does not run until step 13.
+  //
+  // So the suite produces it on demand instead of inheriting the caller's step order. That
+  // covers every caller at once: CI, `npm run verify` (which also reaches test:chat before
+  // build), and a bare clone where someone runs this file directly. One pass takes under a
+  // second and writes only gitignored artefacts, so it is cheap to do only when needed.
+  //
+  // A build that fails to produce the index is a hard error, not a skip: silently skipping
+  // would report a green suite for a corpus this file cannot see, which is the exact shape of
+  // lie this repo treats as its worst failure.
+  const guideIndexPath = fileURLToPath(new URL('../api/_lib/guide-index.json', import.meta.url));
+  if (!fs.existsSync(guideIndexPath)) {
+    const buildScript = fileURLToPath(new URL('./build-site.mjs', import.meta.url));
+    const built = spawnSync(process.execPath, [buildScript], { stdio: 'inherit' });
+    if (built.status !== 0 || !fs.existsSync(guideIndexPath)) {
+      throw new Error(
+        `the guide index is missing and \`node scripts/build-site.mjs\` did not produce it `
+        + `(exit ${built.status}) — the search_guides assertions would be asserting against nothing`,
+      );
+    }
+  }
 
   /* ==================== token accounting ==================== */
   section('token accounting');
@@ -2293,8 +2346,15 @@ async function main() {
     globalThis.fetch === noNetwork,
     'the real fetch was never installed as the active implementation',
   );
+  // Put the environment back exactly as it was found — the AMBIENT key, not the stub — and
+  // then assert that. This used to compare `savedKey`, but `savedKey` is captured inside the
+  // 503 block and is now the stub this suite pinned, so the old form compared the stub with
+  // itself: it would have passed no matter what the restore did, while its label claimed to
+  // be about the developer's real key. Asserting against `ambientKey` makes the label true.
+  if (ambientKey === undefined) delete process.env.OPENAI_API_KEY;
+  else process.env.OPENAI_API_KEY = ambientKey;
   check(
-    typeof savedKey === 'undefined' || process.env.OPENAI_API_KEY === savedKey,
+    process.env.OPENAI_API_KEY === ambientKey,
     'the developer\'s real OPENAI_API_KEY is restored untouched',
   );
 
