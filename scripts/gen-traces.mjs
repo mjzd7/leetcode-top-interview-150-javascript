@@ -552,7 +552,7 @@ function __SPY__(name, target, isCtor, via) {
     // of the first-wins bookkeeping below. It has to sit here: a second arrayToTree([...])
     // arrives when __F__ is already occupied, so the guarded block below never runs for it —
     // which is exactly how isSameTree(A, B) lost its B.
-    if (__TREE__ && __LE__(arguments[0])) { __FL__.push([arguments[0]]); __pushed__ = true; }
+    if (__LE__(arguments[0]) || __LIST_WIRE__(arguments[0])) { __FL__.push([arguments[0]]); __pushed__ = true; }
     // Row 15 / S28 - a TARGET call always re-records, so the case an assertion gets is the call
     // NEAREST it. First-wins was right about HELPER vs TARGET (see the findWords(board, WORDS)
     // note below, which is unchanged) and wrong about two TARGETS before one assertion: a script
@@ -585,6 +585,29 @@ function __SPY__(name, target, isCtor, via) {
               else { __fixed = null; break; }
             }
           }
+          // Row 15 / S34 - and the tree repair above cannot help a LIST guide, because a list wire is
+          // [1, 4, 5] and not a level-order array: there is nothing to substitute and nothing to derive
+          // from, so __fixed stays null and the RAW argument is recorded. That is right for the
+          // argument shapes a list target really takes - merge-k's merged-order case records an array
+          // of chains, [{val:1,next:...}, ...], and list.acceptsWire refuses it, so the driver leaves
+          // it alone and the merge walks the plain objects the author built. It is wrong for ONE shape:
+          // the empty array, which list.acceptsWire([]) accepts, because arrayToList([]) is null and
+          // listToArray(null) is [] - so the round trip holds and the codec claims it. The driver then
+          // decodes the author's fn([]), meaning "no lists at all", into an empty chain and the target
+          // throws on its first iteration.
+          //
+          // __pushed__ is the test, and it is this codec's own: it was computed on the way IN from
+          // __LIST_WIRE__, which IS list.acceptsWire. The empty array is byte-identical in two records
+          // that need opposite handling - invert-binary-tree's empty-tree case is arrayToTree([])'s
+          // wire and must decode, and here it is the author's own [] - so the discriminator is not the
+          // VALUE but the CALL it was handed to, and this branch is the only place that knows the
+          // difference: a value that reached the TARGET is an input, and a value that reached a
+          // constructor is a wire. acceptsWire([]) declined instead fixes these 2 blocks and breaks
+          // invert-binary-tree x3 (measured), so the codec cannot decide this and the case carries it.
+          //
+          // __LIST__ and not the tree flag, deliberately: the positional repair above already owns
+          // every tree argument, including the ones it cannot repair, so no tree golden can move here.
+          __LIVE__ = (__LIST__ && __pushed__) ? 1 : 0;
           if (__fixed !== null) {
             __A__ = __fixed; __AN__ = name; __AV__ = via || null; __TX__ = 0;
           } else if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
@@ -632,9 +655,9 @@ function __SPY__(name, target, isCtor, via) {
       // is-subsequence's class case has no recorded ARGUMENTS (the receiver's construction is left
       // unspied) and is entirely carried by the op list.
       var __unbacked__ = (__A__ === null && __OPS__.length === 0 && __ASSERTERS__.indexOf(__FN__) !== -1) ? 1 : 0;
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, live: __LIVE__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
       __DRAWFROM__ = __DRAWS__.length;
-      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = []; __AV__ = null;
+      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __LIVE__ = 0; __TX__ = 0; __FL__ = []; __AV__ = null;
     }
 
     // A node argument the script never WROTE as a literal. lowestCommonAncestor is called as
@@ -1125,8 +1148,21 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     `var __AV__ = null;`,
     `var __F__ = null;`,
     `var __FN__ = null;`,
+    // Row 15 / S34 — 1 when the arguments just recorded are LIVE values the script wrote for the
+    // TARGET, not a wire this codec's own constructor consumed. Reset with the rest of the
+    // per-assertion state, for `__FN__`'s reason: it describes ONE recorded call.
+    `var __LIVE__ = 0;`,
     `var __TX__ = 0;`,
     `var __TREE__ = ${JSON.stringify(codec === 'tree')};`,
+    // A PARALLEL flag, deliberately not a widening of `__TREE__`. Four of the six `__TREE__` reads in
+    // `SPY_RUNTIME` are tree-specific SEMANTICS, not "is this a node codec": the `__LE__` level-order
+    // push on the way in, the `__GRAPH__` positional repair at the target call, `treeToArray` over the
+    // return, and the keep-the-level-order-recording fallback. Widening the flag would hand every
+    // `list` block all four — pushing level-order arrays and running a TREE encoder over a list
+    // return — and would edit the shared code every tree golden is built from. The ONE thing widened
+    // is `driverCodecSource()`'s emission below, which is codec-agnostic (it emits the whole
+    // registry) and is what makes `__CODECS__` readable for either decoder's own name.
+    `var __LIST__ = ${JSON.stringify(codec === 'list')};`,
     `var __FL__ = [];`,
     `var __TARGETS__ = ${JSON.stringify(targets)};`,
     // Row 15 / S27 — the recorded DRAW sequence. `Math.random` is installed as an ACCESSOR so
@@ -1159,6 +1195,7 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // repair loop demands a recording for the scalar and gives up on the whole call.
     `function __GRAPH__(a) { return a !== null && typeof a === 'object' && !Array.isArray(a); }`,
     `function __LE__(a) {`,
+    `  if (!__TREE__) return false;`,
     `  if (!Array.isArray(a)) return false;`,
     `  for (var i = 0; i < a.length; i++) {`,
     `    var v = a[i];`,
@@ -1167,11 +1204,24 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     `  }`,
     `  return true;`,
     `}`,
+    // Row 15 / S34 — the `list` codec's own answer to "is this value a wire of mine", which is the
+    // `list` analogue of `__LE__` above. Read off the REGISTRY rather than reimplemented, because
+    // `acceptsNodeWire` is already the round-trip test and a second notion of "a list wire" is how
+    // the tree/list pair drifted apart in the first place. A `list` wire is `[1, 4, 5]`, not a
+    // level-order array, so `__LE__` is exactly the wrong question here.
+    `function __LIST_WIRE__(a) { return __LIST__ && __CODECS__.list.acceptsWire(a); }`,
     // `treeToArray`, for the case the spy's own literal test cannot catch: a node argument
     // produced by a HELPER (row 15 / S21). Tree guides only, so the other 413 bundles are
     // byte-identical to before, and LIFTED from codecs.mjs rather than forked — that file
     // records having already forked this once.
-    codec === 'tree' ? driverCodecSource() : '',
+    //
+    // Row 15 / S34 widened the name to `list` as well, and ONLY the name: the emission is the whole
+    // registry, so `list` gets `arrayToList`/`listToArray`/`acceptsNodeWire`/`__CODECS__` it already
+    // needs, and the block's own `function arrayToList` still comes later in the bundle and still
+    // wins the global binding — so a `list` guide's derivation keeps calling the GUIDE's helper, which
+    // is what `DRIVER_DECLARED` below exists to protect. No other codec gains anything: a bundle that
+    // declares neither flag never reaches `__CODECS__` at all.
+    (codec === 'tree' || codec === 'list') ? driverCodecSource() : '',
     SPY_RUNTIME,
     // A no-op. The spy rewrites every asserter's call site to go through `__SPY__`, which is
     // where an assertion is recorded, so this only has to keep the identifier resolvable.
@@ -1224,6 +1274,13 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // that the target RETURNS the mutated array, which it does not.
     if (record.expected !== undefined) testCase.expected = record.expected;
     if (record.callee !== undefined) testCase.callee = record.callee;
+    // Row 15 / S34 — the recorded arguments are LIVE values, so `buildBundle`'s driver must not
+    // decode them. Only ever set when the spy's own provenance test says so, so its absence means
+    // "decode, exactly as before" and a bundle for any other codec is byte-identical.
+    //
+    // DATA on the existing `JSON.stringify(tests)`, the way `via`/`ops`/`ctor`/`draws` already ride:
+    // no envelope field, no golden field, no schema entry, so S10's frozen v1.1 set is untouched.
+    if (record.live) testCase.live = 1;
     // The derivation the SCRIPT applied to this call's return before asserting (row 15 / S22), as
     // a registry key. It is inert in the driver unless a `__VIA_FNS__` entry of that name is
     // present, which `buildBundle` emits from the array property below.

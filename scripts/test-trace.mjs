@@ -200,6 +200,44 @@ async function recordedDrawsAreDeterministic() {
   };
 }
 
+/**
+ * S34's two-direction probe: does `live` suppress the codec's decode for a case the harvest marked
+ * live, and ONLY for those?
+ *
+ * Driven through the REAL driver with hand-made cases, for S29's reason — a probe that re-implements
+ * the decode proves the re-implementation. Both cases carry the byte-identical argument `[2, 1]`,
+ * which is the `tree` codec's wire for a two-node chain, and differ only in what the harvest recorded
+ * about where that argument came from. The target reads `node.val`, which is `2` on a chain and
+ * `undefined` on the raw array, so each direction has its own pass/fail and neither can be satisfied
+ * by the other: decode-everything fails the second, decode-nothing fails the first.
+ *
+ * The first case names `arrayToTree`, which IS `tree.fromWire`, and carries no `live` — that is
+ * `invert-binary-tree`'s `empty tree` exactly. The second names `arrayToList`, which is NOT this
+ * codec's decoder, and carries `live: 1` — that is `merge-k-sorted-lists`'s `empty array`, except
+ * there the name is the loop alias and only `live` distinguishes it. Returns a reason string rather
+ * than a bare false, because a probe that cannot say which direction broke is a probe that gets
+ * "fixed" by deleting the assertion that mattered.
+ */
+async function listWireDecodeRespectsTheRecordedCallee() {
+  const userCode = 'function firstVal(node) { return node.val; }';
+  const run = async (test) => {
+    const bundle = buildBundle({ userCode, fnName: 'firstVal', codec: 'tree', equivalence: 'exact', tests: [test] });
+    const exec = await executeUserCode(bundle, { timeoutMs: 5000 });
+    if (!exec.ok || typeof exec.envelopeRaw !== 'string') return null;
+    const v = JSON.parse(exec.envelopeRaw.slice('__VERDICT__'.length));
+    return v.passed === 1 && v.failed === 0;
+  };
+  const decoded = await run({ name: 'decoded', args: [[2, 1]], expected: 2, callee: 'arrayToTree' });
+  const live = await run({ name: 'live', args: [[2, 1]], expected: 2, callee: 'arrayToList', live: 1 });
+  if (decoded !== true) {
+    return 'the decoder-named case was NOT decoded — `fn([2,1])` never became a chain, so every tree guide whose input was arrayToTree\'s wire stopped being a node';
+  }
+  if (live !== false) {
+    return 'the `live` case WAS decoded anyway — the driver ignores `t.live`, so it still hands `fn([])` a chain and merge-k-sorted-lists stays at 6/3';
+  }
+  return true;
+}
+
 /** The first step index satisfying a predicate — so a mutant targets a step the golden HAS. */
 const findStep = (g, pred) => g.steps.findIndex((s) => plainObject(s) && pred(s));
 
@@ -1529,7 +1567,12 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 3, partialPass: 5 };
+    // Row 15 / S34 dropped partial-pass from 5 to its measured floor of 1: `merge-k-sorted-lists`
+    // L1/L2 went clean and the only block left in the bucket is `21-divide-conquer/01-sorted-array-to-bst`
+    // L1 at 5 passed / 2 failed, which is a `tree` guide and therefore cannot be moved by a `list`
+    // transport change — it stays at `0p/6f`'s sibling slice's expense, and `VERDICT_BASELINE` now says
+    // so exactly rather than leaving 4 counts of slack that nothing has earned.
+    const VERDICT_BASELINE = { zeroPass: 3, partialPass: 1 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1803,6 +1846,68 @@ async function main() {
     check(equivalent('exact', [], null) === false,
       "S31 list nil: the comparator still REJECTS nil against the empty wire on its own — the symmetry is in what the driver hands it, not in the comparator",
       "equivalent('exact', [], null) accepted them — E28's registry changed under this slice");
+
+    // ---- S34 · row 15 — a `[]` the script wrote for the TARGET is not a wire a codec produced ----
+    // S31 recorded the cause of these 3 and got it wrong twice, so this gate is written from a
+    // measurement of the driver's own `tests` array, not from either guess. What the driver reports
+    // is `TypeError: cannot read property 'Symbol.iterator' of null` on the case labelled
+    // `empty array` — i.e. the argument is `null` when it should be `[]`. `merged order`, the
+    // chained-input case both earlier entries named, PASSES at all three levels: a plain object
+    // with a `next` property is a chain the target can already walk, and `list.acceptsWire` refuses
+    // to touch it, which is the right answer. `list.acceptsWire([])` is `true`
+    // (`arrayToList([])` is `null`, `listToArray(null)` is `[]`, so `[]` round-trips to itself), so
+    // `buildBundle`'s `__dec__` decodes the author's `fn([])` — "no lists at all" — into an empty
+    // chain, and `for (const head of null)` throws.
+    //
+    // ── Why `[]` cannot be declined, restated with the reason the codec cannot see ──────────────
+    // `invert-binary-tree`'s `empty tree` case is ALSO `args:[[]]` and MUST decode: the script wrote
+    // `fn(arrayToTree([]))`, so the value that reached the target was `null` and the array is the
+    // constructor's wire. Two byte-identical case records, opposite required handling, so no change
+    // to `acceptsWire` can separate them — which is exactly what the recorded probe measured
+    // (declining `[]` fixes these 2 blocks and breaks `invert-binary-tree` x3; re-measured here).
+    // What the codec cannot see is PROVENANCE, and the harvest saw it. A value that reached the
+    // TARGET is an input; a value that reached a CONSTRUCTOR is a wire. The spy's `__isTarget`
+    // branch is the one place that knows which, so that is where `live` is decided — from
+    // `__pushed__`, which is this codec's OWN `acceptsWire` — and the case carries it as data.
+    //
+    // L3 is clean and this gate says nothing about it: `build/blocks.json` gives the L3 BLOCK codec
+    // `ops` (the catalog's `list` is not what the run uses), and `ops` accepts every wire and
+    // decodes it with the identity, so the transport never mangles anything.
+    const LIST_WIRE_GUIDES = [
+      ['21-divide-conquer__04-merge-k-sorted-lists', 'L1,L2', 'the recorded `[]` is the target\'s own "no lists", not the list codec\'s empty wire'],
+    ];
+    for (const [stem, levels, why] of LIST_WIRE_GUIDES) {
+      for (const level of levels.split(',')) {
+        const gname = names.find((n) => n.startsWith(`${stem}.${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && golden.verdict.failed === 0,
+          `S34 list wire: ${stem} ${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
+            : `no golden named ${stem}.${level}.json — run \`npm run gen:traces\``);
+      }
+    }
+    // The census gate, and the one that matters most here. A guard that DROPS a guide from the
+    // manifest instead of failing loudly is invisible to every other check in this file: the
+    // sibling probe that did that shipped 428 goldens instead of 450 and every assertion still
+    // passed, because a corpus that shrank cannot fail a gate that only asks about the guides it
+    // can see. So the corpus SIZE is asserted, and `clean` is asserted to have RISEN by the two
+    // blocks this slice names — a change that fixed them by removing them reads as 448.
+    check(verdictCensus.zeroPass + verdictCensus.partialPass + verdictCensus.clean === 450,
+      'S34 list wire: the census still accounts for all 450 heads — a guide dropped from the manifest is not an improvement',
+      `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != 450`);
+    check(verdictCensus.clean === 446,
+      'S34 list wire: `clean` is 446 — the two blocks this slice names went from partial to clean and nothing else moved',
+      `clean ${verdictCensus.clean} (444 before this slice), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
+    // The negative that distinguishes the two sides of the rule. A case whose recorded call WAS the
+    // codec's decoder must still be decoded — that is `invert-binary-tree`'s `empty tree`, and if
+    // the rule ever says "never decode", every tree guide's harvested level-order input stops being
+    // a node. Driven through the REAL driver with a hand-made case, because a probe that re-implements
+    // the decode proves the re-implementation.
+    const liveProbe = await listWireDecodeRespectsTheRecordedCallee();
+    check(liveProbe === true,
+      'S34 list wire negative: a case recorded from this codec\'s OWN decoder is still decoded — `live` suppresses the decode only for an argument no codec produced',
+      liveProbe === true ? '' : String(liveProbe));
 
     // ---- S29 · row 15 — the recorded call must be the one NEAREST the assertion ----
     // `const got = fn(2.1, 3); if (Math.abs(got - 9.261) > 1e-9) { … process.exit(1) }` asserts
