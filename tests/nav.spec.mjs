@@ -43,23 +43,19 @@ test.describe('prev / next', () => {
     expect(prev, 'nothing before the first guide').toBeNull();
   });
 
-  test('is reachable without scrolling to the end of a long guide', async ({ page }) => {
+  test('is reachable at the top of a long guide without scrolling at all', async ({ page }) => {
+    // It used to sit at the very end, three thousand pixels down a long guide,
+    // which is why it was pinned to the scrollport. It is in the article head now,
+    // so the guarantee is the opposite and simpler one: no scrolling to begin with.
     await open(page, '08-linked-list_06-reverse-nodes-in-k-group');
     await page.evaluate(() => { document.getElementById('contentContainer').scrollTop = 0; });
     await page.waitForTimeout(300);
     const atTop = await page.evaluate(() => {
       const b = document.querySelector('#prevNext [data-nav]').getBoundingClientRect();
-      return b.top < innerHeight && b.bottom > 0;
+      return { onScreen: b.top < innerHeight && b.bottom > 0, scrolled: document.getElementById('contentContainer').scrollTop };
     });
-    expect(atTop, 'a nav control is on screen at the top of the article').toBe(true);
-
-    await page.evaluate(() => { document.getElementById('contentContainer').scrollTop = 99999; });
-    await page.waitForTimeout(300);
-    const atEnd = await page.evaluate(() => {
-      const b = document.querySelector('#prevNext [data-nav]').getBoundingClientRect();
-      return b.top < innerHeight && b.bottom > 0;
-    });
-    expect(atEnd, 'and still on screen at the end').toBe(true);
+    expect(atTop.scrolled, 'the reader has not scrolled').toBe(0);
+    expect(atTop.onScreen, 'and a nav control is already on screen').toBe(true);
   });
 
   test('follows a pasted guide URL into an already-open portal', async ({ page }) => {
@@ -254,31 +250,28 @@ test('scrolls the rail with the wheel while collapsed', async ({ page }) => {
 });
 
 test('never leaves a blank half-width cell where a neighbour is missing', async ({ page }) => {
-  // The bar is a 2-column grid. Where there is no previous guide it used to
-  // render an empty <span>, which still occupied half the row — a visible hole
-  // on the home page and at either end of the curriculum.
+  // Where there is no previous guide it used to render an empty <span>, which
+  // still occupied half the row — a visible hole on the home page and at either
+  // end of the curriculum. The home page now has no prev/next at all: it opens
+  // with "Start studying", which is the same door by a better name.
   await page.goto('/');
   await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
   await page.waitForTimeout(600);
 
   const home = await page.evaluate(() => {
     const bar = document.getElementById('prevNext');
-    const kids = [...bar.children];
     return {
-      cells: kids.length,
-      // a placeholder is any child that is not itself a destination button —
-      // not "a child containing a button", since a button contains no button
-      blanks: kids.filter(k => k.tagName !== 'BUTTON').length,
-      width: Math.round(bar.getBoundingClientRect().width),
-      cols: getComputedStyle(bar).gridTemplateColumns,
+      cells: bar.children.length,
+      hidden: bar.hidden,
+      hasStart: !!document.getElementById('homeStart'),
     };
   });
-  expect(home.blanks, 'no empty cell on the home page').toBe(0);
-  expect(home.cells, 'and the lone Next is there').toBe(1);
-  expect(home.cols.split(' ').length, 'a lone Next spans the full row, not half').toBe(1);
+  expect(home.hidden, 'the home page offers no prev/next').toBe(true);
+  expect(home.cells, 'and renders no leftovers').toBe(0);
+  expect(home.hasStart, 'because it starts the reader instead').toBe(true);
 });
 
-test('the bar collapses to one column when only one neighbour exists', async ({ page }) => {
+test('the bar shows only the next guide when there is no previous one', async ({ page }) => {
   await open(page, '00-foundations_01-js-interview-runtime-quirks'); // the very first guide
   const r = await page.evaluate(() => {
     const bar = document.getElementById('prevNext');
@@ -286,14 +279,22 @@ test('the bar collapses to one column when only one neighbour exists', async ({ 
     return {
       cells: kids.length,
       blanks: kids.filter(k => k.tagName !== 'BUTTON').length,
-      cols: getComputedStyle(bar).gridTemplateColumns.split(' ').length,
-      label: kids[0]?.textContent.trim().slice(0, 20),
+      text: kids[0]?.innerText.replace(/\s+/g, ' ').trim() || '',
+      aria: kids[0]?.getAttribute('aria-label') || '',
+      // The title is truncated, not wrapped, so the button cannot grow past the
+      // row and push the head onto a third line.
+      rows: kids[0] ? Math.round(kids[0].getBoundingClientRect().height / 44) : 0,
     };
   });
   expect(r.blanks, 'no placeholder where Prev does not exist').toBe(0);
-  expect(r.cells, 'just the Next cell').toBe(1);
-  expect(r.cols, 'and it is full width').toBe(1);
-  expect(r.label, 'which is the next guide').toMatch(/Next/);
+  expect(r.cells, 'just the one neighbour').toBe(1);
+  expect(r.rows, 'and it stays one row tall').toBe(1);
+  // The button names the guide instead of saying "Next": the arrow on the
+  // outside edge is what says which way it goes.
+  expect(r.text, 'it carries the guide code').toContain('P02');
+  expect(r.text, 'and the guide name').toMatch(/Zero-Dependency/);
+  expect(r.text, 'with the arrow on the trailing edge').toMatch(/→\s*$/);
+  expect(r.aria, 'and a screen reader is told which neighbour it is').toMatch(/^Next: /);
 });
 
 test('reveals a label on hover and on keyboard focus', async ({ page }) => {
@@ -357,4 +358,227 @@ test('a long guide title wraps on two lines rather than running off screen', asy
   expect(t.h, 'so it wrapped instead of truncating to one line').toBeGreaterThan(24);
   expect(t.right, 'and it is fully on screen').toBeLessThanOrEqual(1440);
 });
+});
+
+/* A filter that matches nothing used to leave the reader staring at 653px of
+   empty sidebar with no explanation. renderNav only ever wrote a message when
+   DATA itself was empty, which is a missing build, not an empty result. */
+test.describe('a filter that matches nothing', () => {
+  test('says so, and names the query', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'zzzznomatch');
+    await page.waitForTimeout(300);
+    const r = await page.evaluate(() => {
+      const nav = document.getElementById('curriculumNav');
+      return { text: nav.innerText.trim(), items: nav.querySelectorAll('.nav-item').length };
+    });
+    expect(r.items, 'nothing matched, so there is nothing to list').toBe(0);
+    expect(r.text, 'the reader is told why the list is empty').not.toBe('');
+    expect(r.text, 'and which query emptied it').toContain('zzzznomatch');
+  });
+
+  test('a difficulty filter with no matches reads as a filter, not a query', async ({ page }) => {
+    // The sidebar is an off-canvas drawer below md, so the pills are not reachable
+    // without opening it. This case is about the message, which needs no drawer.
+    test.skip(page.viewportSize().width < 768, 'the filter pills need a docked sidebar');
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'zzzznomatch');
+    await page.waitForTimeout(250);
+    await page.fill('#searchInput', '');
+    await page.click('.filter-btn[data-diff="Hard"]');
+    await page.waitForTimeout(300);
+    const items = await page.evaluate(() =>
+      document.querySelectorAll('#curriculumNav .nav-item').length);
+    expect(items, 'this corpus has Hard guides, so the filter is not empty').toBeGreaterThan(0);
+    const noData = await page.evaluate(() =>
+      document.getElementById('curriculumNav').innerText.includes('No curriculum data'));
+    expect(noData, 'a filter that matched is not a missing build').toBe(false);
+  });
+});
+
+/* The drawer opened with one control — the hamburger — and could only be put
+   away by tapping the scrim, by Escape, or by opening a guide. Tapping a dimmed
+   area is not an affordance you can see. */
+test.describe('the drawer on a phone', () => {
+  test.skip(({ viewport }) => viewport.width >= 768, 'below md the sidebar is an off-canvas drawer');
+
+  test('offers a visible way to close it', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('#menuBtn');
+    await page.waitForTimeout(400);
+    const btn = page.locator('#sideClose');
+    await expect(btn, 'a control you can see that closes the drawer').toBeVisible();
+    const box = await btn.boundingBox();
+    expect(box.height, 'and it is a real tap target').toBeGreaterThanOrEqual(44);
+    await btn.click();
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => ({
+      offscreen: document.getElementById('sidebar').classList.contains('-translate-x-full'),
+      scrimGone: document.getElementById('sideOverlay').classList.contains('hidden'),
+    }));
+    expect(r.offscreen, 'the drawer is put away').toBe(true);
+    expect(r.scrimGone, 'and the scrim goes with it').toBe(true);
+  });
+});
+
+/* One glyph served three states. Its path was a left chevron at every stage, so
+   on the 56px rail — where the button's job is to widen — it pointed away from
+   the side the sidebar was on. Only the aria-label changed. */
+test('the collapse control points the way it will move', async ({ page }) => {
+  test.skip(page.viewportSize().width < 768, 'the control is md-only');
+
+  await open(page, PROBLEM_01);
+  await page.evaluate(() => localStorage.removeItem('lt150-nav-stage'));
+  await page.reload();
+  await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+
+  const read = () => page.evaluate(() => ({
+    stage: document.getElementById('sidebar').dataset.stage,
+    label: document.getElementById('ltNavCollapse').getAttribute('aria-label'),
+    d: document.querySelector('#ltNavCollapse path').getAttribute('d'),
+  }));
+  const seen = [];
+  for (let i = 0; i < 4; i += 1) {
+    seen.push(await read());
+    await page.click('#ltNavCollapse');
+    await page.waitForTimeout(250);
+  }
+
+  expect(seen.map((s) => s.stage), 'the control cycles every stage and wraps')
+    .toEqual(['0', '1', '2', '0']);
+  expect(seen[0].label, 'stage 0 collapses').toMatch(/collapse/i);
+  expect(seen[1].label, 'stage 1 widens').toMatch(/widen/i);
+  expect(seen[0].d, 'collapsing must not look like widening').not.toBe(seen[1].d);
+  expect(seen[1].d, 'both widening steps point the same way').toBe(seen[2].d);
+  expect(seen[3].d, 'and collapsing looks the same again on the way round').toBe(seen[0].d);
+});
+
+/* The sidebar was roomier on a phone than on a desktop: 44px between groups
+   below md, 20px from md up. The cause was a default that lived inside the
+   min-width query — .nav-cat-btn fell back to inline-block below md, and a 0x0
+   empty button still builds a line box from the font strut. 24px of nothing
+   above each of the 27 group headers. */
+test('the sidebar keeps the same rhythm at every width', async ({ page }) => {
+  const gapsAt = async (width) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/#' + PROBLEM_01);
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(300);
+    return page.evaluate(() => {
+      const groups = [...document.querySelectorAll('#curriculumNav .nav-group')];
+      const gaps = [];
+      for (let i = 0; i < groups.length - 1; i += 1) {
+        const last = groups[i].querySelector('.nav-item:last-of-type');
+        const head = groups[i + 1].querySelector('.nav-group-text');
+        if (last && head) gaps.push(Math.round(head.getBoundingClientRect().top - last.getBoundingClientRect().bottom));
+      }
+      return {
+        gaps,
+        laidOutGlyphs: [...document.querySelectorAll('#curriculumNav .nav-cat-btn')]
+          .filter((e) => getComputedStyle(e).display !== 'none').length,
+      };
+    });
+  };
+
+  const phone = await gapsAt(412);
+  const desktop = await gapsAt(1440);
+
+  expect(phone.laidOutGlyphs, 'no category glyph is laid out below md').toBe(0);
+  expect(Math.max(...phone.gaps), 'a phone is not roomier than a desktop').toBeLessThanOrEqual(20);
+  expect(phone.gaps[0], 'the gap between groups is the same at both widths').toBe(desktop.gaps[0]);
+});
+
+/* prev/next used to be a sticky bar over the scrollport, so the pair was always
+   on screen and always competing with the assistant's button for the
+   bottom-right corner. It lives with the page's own actions instead. */
+test('prev/next sits with the page actions, not pinned to the scrollport', async ({ page }) => {
+  const at = async (width) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/#' + PROBLEM_01);
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(400);
+    return page.evaluate(() => {
+      const pn = document.getElementById('prevNext');
+      const art = document.querySelector('#contentContainer article').getBoundingClientRect();
+      const cells = [...pn.querySelectorAll('[data-nav]')].map((c) => c.getBoundingClientRect());
+      const done = document.getElementById('doneToggle');
+      return {
+        inHead: document.getElementById('articleHead').contains(pn),
+        position: getComputedStyle(pn).position,
+        aboveContent: pn.getBoundingClientRect().bottom
+          <= document.getElementById('articleContent').getBoundingClientRect().top + 1,
+        overflows: pn.scrollWidth > pn.clientWidth + 1 || cells.some((b) => b.right > art.right + 1),
+        pairTogether: cells.length < 2 || Math.abs(cells[0].top - cells[1].top) < 2,
+        sharesRow: !done || cells.length === 0
+          ? false
+          : cells.every((b) => b.top < done.getBoundingClientRect().bottom
+            && b.bottom > done.getBoundingClientRect().top),
+      };
+    });
+  };
+
+  for (const width of [360, 768, 1440]) {
+    const r = await at(width);
+    expect(r.position, `nothing is pinned at ${width}px`).not.toBe('sticky');
+    expect(r.inHead, `prev/next is in the article head at ${width}px`).toBe(true);
+    expect(r.aboveContent, `and above the guide body at ${width}px`).toBe(true);
+    expect(r.overflows, `and inside the column at ${width}px`).toBe(false);
+    expect(r.pairTogether, `the two halves stay together at ${width}px`).toBe(true);
+  }
+
+  // Four controls need ~694px and the column caps at 768, so they only share one
+  // row on the widest screens. Below that the pair wraps as a unit under the
+  // actions rather than being squeezed.
+  expect((await at(1920)).sharesRow, 'a wide column fits them all on one row').toBe(true);
+  expect((await at(1440)).sharesRow, 'a 1440 column wraps rather than squeezing').toBe(false);
+});
+/* Clicking a category glyph in the 56px rail widened the rail and scrolled the
+   group into view. scrollIntoView scrolls every scrollable ancestor, and
+   #sidebar is one of them — overflow:hidden still makes a box scrollable
+   programmatically — so it scrolled the sidebar as well, pushing the 191px
+   header block (ring, filter, difficulty pills) out of view and leaving exactly
+   that much blank space at the bottom. */
+test.describe('revealing a category from the collapsed rail', () => {
+  test.skip(({ viewport }) => viewport.width < 1280, 'the rail is md-only');
+
+  test('scrolls the list without moving the sidebar itself', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.evaluate(() => localStorage.removeItem('lt150-nav-stage'));
+    await page.reload();
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(400);
+
+    await page.click('#ltNavCollapse'); // 200px text rail
+    await page.click('#ltNavCollapse'); // 56px icon rail
+    await page.waitForTimeout(400);
+    await expect(page.locator('#sidebar')).toHaveAttribute('data-stage', '2');
+
+    await page.click('.nav-cat-btn[data-cat="HASHMAP"]');
+    await page.waitForTimeout(1200); // the scroll is smooth
+
+    const r = await page.evaluate(() => {
+      const sb = document.getElementById('sidebar');
+      const nav = document.getElementById('curriculumNav');
+      const sbb = sb.getBoundingClientRect();
+      const header = sb.firstElementChild.getBoundingClientRect();
+      const nb = nav.getBoundingClientRect();
+      return {
+        sidebarScrollTop: sb.scrollTop,
+        stage: sb.dataset.stage,
+        headerH: Math.round(header.height),
+        headerVisible: header.height > 0 && header.bottom > sbb.top + 1,
+        navBelowHeader: Math.round(nb.top - header.bottom),
+        scrolledInNav: nav.scrollTop > 0,
+        blankBelowNav: Math.round(sbb.bottom - nb.bottom),
+      };
+    });
+
+    expect(r.stage, 'the rail widened back out').toBe('0');
+    expect(r.scrolledInNav, 'and the list did scroll to the group').toBe(true);
+    expect(r.sidebarScrollTop, 'the sidebar itself is not scrolled — that was the blank space').toBe(0);
+    expect(r.headerVisible, 'the progress ring, filter and pills are still on screen').toBe(true);
+    expect(r.navBelowHeader, 'the list still starts under the header block').toBe(0);
+    expect(r.blankBelowNav, 'and the list still reaches the bottom of the sidebar').toBe(0);
+    expect(r.headerH, 'the header block is its full height, not collapsed').toBe(191);
+  });
 });
