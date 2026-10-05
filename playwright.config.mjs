@@ -38,7 +38,17 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `npm run build && npx --yes serve@14 -l ${PORT} docs`,
+    // Serve only. The build is NOT here: `npm run build` regenerates 3 MB of curriculum data plus the
+    // trace index, and under load it exceeds `webServer.timeout` (120 s) — Playwright then gives up
+    // before the server ever listens, and every test fails with `ERR_CONNECTION_REFUSED`. Measured: 157
+    // connection-refused failures and a 3.0-minute run, versus a 6-minute run with 0 when the machine
+    // was idle. A build step inside the server's own startup budget is a race with the timeout.
+    //
+    // Freshness is the caller's job, and `verify` now does it explicitly: `npm run build` runs
+    // IMMEDIATELY BEFORE `npm run test:e2e`, so the suite still tests a build made seconds earlier —
+    // it is just not racing a 120 s watchdog to produce it. Combined with `reuseExistingServer: false`
+    // (below), a stale server can never be adopted either.
+    command: `npx --yes serve@14 -l ${PORT} docs`,
     url: `http://127.0.0.1:${PORT}/index.html`,
     // NEVER adopt a server that is already listening, locally or in CI.
     //
