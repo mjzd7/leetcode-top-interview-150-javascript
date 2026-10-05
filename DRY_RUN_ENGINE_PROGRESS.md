@@ -2272,3 +2272,37 @@ without this change, so it cannot certify anything today. It is **not in `verify
 how a red suite goes unnoticed here — and wiring it in is now the honest next move rather than a
 nicety, because a fixture that is load-sensitive enough to fail 5 assertions on an idle box will fail
 in CI too.
+
+### 2026-10-05 — row 15 slice 11 (S32b): the runner suite joins `verify`, which immediately made a failure visible
+
+**Shipped, two small changes with one purpose — close the gap that let two red suites go unnoticed today.**
+
+1. **E22's own timeout 120 s → 300 s.** The fixture is *constructively* slow: n=5000 re-encodes 5 000
+   numbers per step, and its own comment already said "Bytes, not the clock … slow by construction … a
+   3 s default would report a TIMEOUT and prove nothing about bytes". Measured on a loaded box it did
+   exactly that at 120 s: five E22 assertions failed with `error: Time Limit Exceeded` and
+   `budget.mode` still `full` — which to a reader of the log is indistinguishable from a real
+   byte-budget defect. Since the assertion is about BYTES degrading, more clock can only make the
+   measurement more honest, never less. Same precedent as `gen-traces` widening only its own budget to
+   9 s (`0e05af2`). `npm run test:trace-runner` → **269 assertions, 0 failures**.
+2. **`npm run test:trace-runner` is now in `verify`'s chain**, directly after `test:trace`. It was the
+   one suite outside it, and that is precisely how the E22 failures above sat there unnoticed for a whole
+   session while I attributed them, wrongly, to `composeShared`. One-line diff to `package.json`.
+
+**`npm run verify` is currently RED, and the cause is NOT this row.** With the runner suite wired in,
+`verify` reaches `test:e2e` and Playwright reports **271 passed / 1 failed / 18 skipped**; the failure is
+`tests/chat-streaming.spec.js:71` — *"assistant text grows in several steps instead of appearing at once"*,
+15.1 s — and re-running that spec in isolation gives **2 failures** ("text must arrive in multiple
+visible steps, not one dump", "a caret marks the reveal position while text is arriving"). So it is not
+a load artefact: it reproduces.
+
+**It is also not attributable to anything these slices touched.** The chain is `gen-traces.mjs`,
+`api/_lib/problems.mjs`, `api/_lib/codecs.mjs`, `api/_lib/trace-runner.mjs` and four test scripts.
+`api/chat.mjs`, the chat widget, the streaming render path and the chat specs are untouched by every
+commit since `f61e4fd` — and `verify` reported **272 passed / 0 failures** at `60e6465` earlier in this
+same session with all of them in place. So the honest statement is: **unattributed, reproduces in
+isolation, and not yet bisected.** It is recorded rather than dismissed, because "not my change" is a
+claim, and this one has not been tested.
+
+The ordering is deliberate and worth keeping: wiring the suite in is what made this visible at all. A
+green `verify` that excludes a suite is worth less than a red one that includes it.

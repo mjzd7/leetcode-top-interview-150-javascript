@@ -1331,7 +1331,14 @@ section('S2 · E22 · n=5000 two-sum degrades inside the sandbox');
     cases,
     // Bytes, not the clock. Every step re-encodes 5 000 numbers, so the traced run is slow by
     // construction and a 3 s default would report a TIMEOUT and prove nothing about bytes.
-    timeoutMs: 120000,
+    //
+    // Widened 120 s -> 300 s, measured: at 120 s this fixture TIMED OUT on a loaded machine and the
+    // five E22 assertions failed with `error: Time Limit Exceeded` and `budget.mode` still `full` —
+    // which is indistinguishable, to a reader of the log, from a real byte-budget defect. A
+    // constructively-slow fixture needs a budget that is constructively generous; the assertion is
+    // about BYTES degrading, so giving the clock more room can only make the measurement more honest,
+    // never less. Same reasoning as `gen-traces` widening only its own budget to 9 s (`0e05af2`).
+    timeoutMs: 300000,
   });
   if (env) {
     const v = validateEnvelope(env);
