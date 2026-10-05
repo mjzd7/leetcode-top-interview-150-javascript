@@ -157,65 +157,16 @@
       * { scrollbar-width: none; -ms-overflow-style: none; }
       *::-webkit-scrollbar { display: none; }
     }
-    .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
-    .toc-link.active { color: var(--accent); border-color: var(--accent); }
-
-    /* One-liner page navigation. Only the section in view is painted, so the
-       panel is never more than one section deep and never lists sections out
-       of article order. */
-    .toc-sec { display: none; }
-    .toc-sec.is-active { display: block; }
-    .toc-row { display: flex; align-items: center; gap: 0.25rem; }
-    .toc-sec.is-active .toc-link { color: var(--accent); }
-    .toc-toggle { transition: color 0.15s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
-    .toc-toggle svg { transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
-    .toc-sec[data-collapsed="false"] .toc-toggle svg { transform: rotate(90deg); }
-    .toc-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; border-radius: 3px; }
-
-    /* Children hang off a guide line so they read as children of the heading
-       above them. The row is a 1fr grid so it can animate to auto height. */
-    .toc-sub {
-      display: grid; grid-template-rows: 0fr;
-      transition: grid-template-rows 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-      margin-left: 0.55rem; padding-left: 0.7rem;
-      border-left: 1px solid rgba(148, 163, 184, 0.22);
-    }
-    .toc-sec[data-collapsed="false"] .toc-sub { grid-template-rows: 1fr; }
-    .toc-sub-inner { overflow: hidden; }
-    .toc-sub-link {
-      display: block; padding: 0.2rem 0.25rem 0.2rem 0.4rem;
-      font-size: 12px; color: #7C8699; text-align: left;
-      border-left: 2px solid transparent; transition: color 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
-    }
-    .toc-sub-link:hover { color: var(--accent); }
-    .toc-sub-link.is-current { color: var(--accent); border-left-color: var(--accent); }
-
-    /* Staggered cascade: children rise in sequence once the row has opened. */
-    .toc-sec[data-collapsed="false"] .toc-sub-link { animation: toc-rise 0.22s ease both; }
-    @keyframes toc-rise {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: none; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .toc-sub, .toc-toggle, .toc-toggle svg { transition: none; }
-      .toc-sec[data-collapsed="false"] .toc-sub-link { animation: none; }
-    }
-/* Prev/next sat at the very end of the article — on a long guide that is
-       three thousand pixels down, so the only way to reach it was to scroll the
-       whole page. Sticky bottom pins it to the scrollport instead: the article
-       is the containing block, so it stays put for the entire scroll and only
-       releases at the very end. */
+/* Prev/next sat at the very end of the article — on a long guide that is three
+       thousand pixels down, so it was pinned to the scrollport to be reachable at
+       all, and then it and the assistant's button both wanted the bottom-right
+       corner. It now lives in the article head, beside Solve on LeetCode and
+       Mark complete, where the reader's other per-guide controls already are. */
     #prevNext {
-      position: sticky; bottom: 0; z-index: 5;
-      margin-top: 2.5rem; padding: 0.6rem 0.15rem 0.15rem;
-      background: linear-gradient(180deg, rgba(8, 9, 13, 0) 0%, rgba(8, 9, 13, 0.92) 34%, #08090D 72%);
-      backdrop-filter: blur(6px);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
     }
-    /* The columns follow the cells that exist: one neighbour spans the row
-       rather than leaving half of it blank. */
-    #prevNext[data-count="2"] { grid-template-columns: 1fr 1fr; }
-    #prevNext[data-count="1"] { grid-template-columns: 1fr; }
     #prevNext[hidden] { display: none; }
+    #prevNext [data-nav] { min-width: 0; }
     kbd.k {
       font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
       background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
@@ -246,8 +197,15 @@
     }
     .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
     .lt-rail { display: contents; }
-    .lt-rail-toc { display: none; }
     #ltRailResizer { display: none; }
+    .nav-group-rule { display: none; }
+    /* Hidden at every width, not just from md up. These two defaults used to live
+       inside the min-width: 768px query, so below it .nav-cat-btn fell back to
+       inline-block: a 0x0 empty button, but an inline-level box still builds a
+       line box from the font strut, and that put 24px of dead space above each of
+       the 27 group headers. Sidebar groups were 44px apart on a phone and 20px on
+       a desktop — denser the other way round. */
+    .nav-cat-btn, .nav-group-rule { display: none; }
     @media (min-width: 768px) {
       #sidebar[data-stage="1"] { width: 200px; }
       #sidebar[data-stage="2"] { width: 56px; }
@@ -335,7 +293,14 @@
       opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
     }
     .ltc-backdrop.is-open { opacity: 1; pointer-events: auto; }
-    @media (min-width: 1024px) {
+    /* The rail docks at 1280, not 1024. A docked sidebar (320px) plus a docked
+       rail (380px) leaves the reader 580px, and after the column's own px-10 that
+       is 500px of prose — at 1024 it was 244px, which wrapped every sentence to
+       one or two words a line and broke URLs mid-token. 1280 is the width where
+       the column can still afford the rail. All three docking queries move
+       together: the rail, .ltc-close and .ltc-fab. Moving only this one would
+       leave the assistant with no way in and no way out between 1024 and 1280. */
+    @media (min-width: 1280px) {
       .ltc-backdrop { display: none; }
       .lt-rail {
         display: flex; flex-direction: column; min-height: 0;
@@ -359,28 +324,22 @@
       #ltRailResizer:focus-visible::after,
       #ltRailResizer.is-dragging::after { background: var(--accent); }
       #ltRailResizer:focus-visible { outline: none; }
-      .lt-rail-toc {
-        display: block; flex: 0 1 auto; max-height: 45%; min-height: 0;
-        overflow-y: auto; padding: 1.5rem 0 0.75rem 1rem;
-      }
+      /* The assistant is the rail, so it takes the column outright rather than
+         sharing it with a list. flex:1 rather than a fixed height, and min-height
+         0 so the log scrolls inside it instead of the panel growing past the
+         viewport and pushing the composer off the bottom. */
       .ltc-panel {
         position: relative; top: auto; left: auto; right: auto; bottom: auto;
         flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
         transform: none; visibility: visible; box-shadow: none;
-        border-top: 1px solid var(--line); border-left: none;
+        border-left: none;
         background: var(--rail-bg);
       }
-      /* Only once the reader has dragged: until then the panel keeps filling
-         whatever the TOC leaves, which is the better default than any number.
-         margin-top: auto keeps it welded to the rail's bottom edge, so the space
-         a shorter panel gives up goes above it rather than leaving a void below. */
+      /* Only once the reader has dragged: until then the panel keeps filling the
+         column, which is the better default than any number. margin-top: auto
+         keeps it welded to the rail's bottom edge, so the space a shorter panel
+         gives up goes above it rather than leaving a void below. */
       .ltc-panel[data-resized] { flex: 0 0 var(--ltc-panel-h); margin-top: auto; }
-      /* A pinned panel can fill the rail exactly, which means the TOC has
-         collapsed to nothing — and a collapsed box still keeps its 36px of
-         padding, which pushed the panel that far past the rail's bottom edge and
-         the bottom of the composer off-screen. :has() is what lets that padding
-         go when the panel takes the column. */
-      .lt-rail:has(> .ltc-panel[data-resized]) .lt-rail-toc { padding: 0; }
     }
     /* Height divider on the panel's top edge, mirroring #ltRailResizer. It
        straddles the edge (top: -5px) so the grab strip is not half hidden under
@@ -454,7 +413,7 @@
     @media (max-width: 1180px) { .ltc-status-txt { display: none; } .ltc-status { padding: 0.35rem; } }
     .ltc-icon-btn {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; flex-shrink: 0; padding: 0; border-radius: 9px;
+      width: 44px; height: 44px; flex-shrink: 0; padding: 0; border-radius: 9px;
       border: 1px solid transparent; background: transparent;
       color: var(--muted); cursor: pointer;
       transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
@@ -465,7 +424,7 @@
       border-color: rgba(148, 163, 184, 0.18);
     }
     .ltc-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    @media (min-width: 1024px) { .ltc-close { display: none; } }
+    @media (min-width: 1280px) { .ltc-close { display: none; } }
     .ltc-log-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
     /* The scroll-down chevron floats over the last message, so that message has
        to fade out under it rather than sit raw behind a circle. The gradient
@@ -493,7 +452,7 @@
     .ltc-scroll-down {
       position: absolute; left: 50%; bottom: 0.75rem; z-index: 2;
       display: inline-flex; align-items: center; justify-content: center;
-      width: 34px; height: 34px; border-radius: 999px;
+      width: 44px; height: 44px; border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.2);
       background: rgba(20, 25, 36, 0.86); color: #C6CDDB;
       backdrop-filter: blur(10px);
@@ -551,7 +510,7 @@
       border: 1px solid rgba(148, 163, 184, 0.18); background: rgba(255, 255, 255, 0.03);
       color: #C6CDDB; border-radius: 999px; padding: 0.45rem 0.8rem;
       font-size: 11.5px; font-family: "Inter", system-ui, sans-serif;
-      text-align: left; line-height: 1.4; min-height: 34px; cursor: pointer;
+      text-align: left; line-height: 1.4; min-height: 44px; cursor: pointer;
       transition: background-color 0.16s ease, border-color 0.16s ease,
                   color 0.16s ease, transform 0.16s ease;
     }
@@ -886,7 +845,9 @@
     .ltc-actions { display: flex; gap: 0.35rem; align-items: center; flex-shrink: 0; }
     .ltc-send, .ltc-stop {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 34px; height: 34px; flex-shrink: 0; padding: 0;
+      /* 44px: WCAG 2.5.8 AA only asks 24, and 34 cleared it. This is the one
+         control below that is aimed at rather than looked at. */
+      width: 44px; height: 44px; flex-shrink: 0; padding: 0;
       border-radius: 11px; border: 1px solid transparent; cursor: pointer;
       transition: background-color 0.16s ease, color 0.16s ease,
                   border-color 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
@@ -915,7 +876,13 @@
     .ltc-hint .k { font-size: 0.6rem; padding: 0.05rem 0.25rem; }
     @media (max-width: 420px) { .ltc-hint { display: none; } }
     .ltc-fab {
-      position: fixed; right: 1rem; bottom: 1rem; z-index: 41;
+      position: fixed; right: 1rem;
+      /* Clears the reader's sticky prev/next pair, which is 75px tall at every
+         width and every cell count. Both want the bottom-right corner and
+         neither yielded: at 360px the button covered the whole pair, and 2648px²
+         of the Next cell, which is the only route to the next guide. */
+      bottom: calc(1rem + 75px);
+      z-index: 41;
       display: inline-flex; align-items: center; justify-content: center;
       width: 56px; height: 56px; border-radius: 999px;
       background: var(--accent); color: var(--accent-ink);
@@ -927,7 +894,7 @@
     /* The FAB sits exactly where the sheet's Send button is, so it must tuck
        away while the sheet is up or it swallows the tap. */
     .ltc-fab.is-tucked { opacity: 0; pointer-events: none; transform: scale(0.7); }
-    @media (min-width: 1024px) { .ltc-fab { display: none; } }
+    @media (min-width: 1280px) { .ltc-fab { display: none; } }
     @media (prefers-reduced-motion: reduce) {
       .ltc-panel { transition: none; }
       /* Reduced motion drops the travel, not the signal. A chip crossing the
@@ -1056,7 +1023,7 @@
       <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0"></div>
       <div id="authArea" class="shrink-0"></div>
       <button id="guidesBtn" title="Open the MAANG interview guides" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 h-10 text-sm font-semibold shrink-0 whitespace-nowrap" style="color:var(--accent);">Guides</button>
-      <button id="paletteBtn" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
+      <button id="paletteBtn" aria-label="Jump to a guide" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         <span class="hidden md:inline">Jump to…</span>
         <span class="hidden md:flex items-center gap-1"><kbd class="k">⌘</kbd><kbd class="k">K</kbd></span>
@@ -1082,7 +1049,14 @@
           </div>
           <button id="ltNavCollapse" type="button" aria-label="Collapse the navigation"
                   class="hidden shrink-0 w-8 h-8 rounded-lg items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path id="ltNavChevron" d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <!-- The drawer's way out. ltNavCollapse above is md-only on purpose (collapsing
+               a drawer means nothing), which left the drawer closable only by the
+               scrim, Escape, or opening a guide. 44px: this is the touch case. -->
+          <button id="sideClose" type="button" aria-label="Close navigation"
+                  class="md:hidden shrink-0 w-11 h-11 -mr-2 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
         <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
@@ -1101,10 +1075,10 @@
     <main id="contentContainer" class="flex-1 min-w-0 overflow-y-auto h-[calc(100dvh-3.5rem)] scroll-smooth">
       <div class="flex items-start justify-center gap-8 px-4 md:px-10 py-6 md:py-10 max-w-6xl mx-auto w-full">
         <article class="flex-1 min-w-0 max-w-3xl">
+          <div id="prevNext" hidden data-count="0"></div>
           <div id="crumbRow" class="hidden mb-3 items-center gap-2 text-xs font-mono text-slate-500"></div>
           <div id="articleHead" class="mb-6"></div>
           <div id="articleContent" class="prose max-w-none"></div>
-          <div id="prevNext" class="mt-10 grid gap-3" data-count="2"></div>
           <footer class="mt-10 pb-6 text-xs text-slate-600 font-mono">Top Interview 150 · Visual JS Manual · built from executable guides</footer>
         </article>
       </div>
@@ -1112,15 +1086,11 @@
 
     <div id="ltcBackdrop" class="ltc-backdrop"></div>
 
-    <!-- Right rail: table of contents on top, study assistant below. Below
-         1024px the rail is display:contents, so the assistant keeps working
-         as a full-width bottom sheet and the TOC is simply not rendered. -->
-    <aside id="ltRail" class="lt-rail" aria-label="Page tools">
-      <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the page tools rail"></div>
-      <div class="lt-rail-toc">
-        <div class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">On this page</div>
-        <nav id="tocNav" class="space-y-1 border-l border-[rgba(148,163,184,0.13)]" aria-label="Table of contents"></nav>
-      </div>
+    <!-- Right rail: the study assistant, and nothing else. It shared the column with
+         an "On this page" list capped at 45% of the height until that was removed.
+         Below 1280px the rail is display:contents and the assistant is a sheet. -->
+    <aside id="ltRail" class="lt-rail" aria-label="Study assistant">
+      <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the study assistant"></div>
 
       <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
       <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
@@ -1297,7 +1267,7 @@
     /* ---------- element refs ---------- */
     const $ = (id) => document.getElementById(id);
     const nav = $('curriculumNav'), contentArea = $('articleContent'), articleHead = $('articleHead'),
-      crumbRow = $('crumbRow'), prevNext = $('prevNext'), tocNav = $('tocNav'),
+      crumbRow = $('crumbRow'), prevNext = $('prevNext'),
       searchInput = $('searchInput'), sidebar = $('sidebar'), sideOverlay = $('sideOverlay'),
       palette = $('palette'), paletteCard = $('paletteCard'), paletteInput = $('paletteInput'),
       paletteList = $('paletteList'), scroller = $('contentContainer'), progressBar = $('progressBar');
@@ -1380,6 +1350,7 @@
         nav.innerHTML = '<p class="text-sm text-slate-500 px-2">No curriculum data found. Run <span class="font-mono">npm run build</span>.</p>';
         return;
       }
+      let shown = 0;
       DATA.forEach(cat => {
         const all = cat.items;
         const items = cat.items.filter(item => {
@@ -1455,7 +1426,19 @@
         });
         wrap.appendChild(list);
         nav.appendChild(wrap);
+        shown += items.length;
       });
+      /* An empty result is not a missing build. The sidebar is a flex column and
+         the nav takes every pixel the header leaves, so a filter that matches
+         nothing used to leave the reader looking at 653px of empty column with
+         nothing to say why. */
+      if (!shown) {
+        nav.innerHTML = '<p class="text-sm text-slate-500 px-2">'
+          + (searchQuery
+            ? 'No guide matches “' + esc(searchQuery) + '”.'
+            : 'No guide has difficulty ' + esc(activeFilter) + '.')
+          + '</p>';
+      }
       renderProgress();
     }
 
@@ -1468,11 +1451,17 @@
       const STAGE_LABELS = ['Collapse the navigation',
                             'Widen the navigation to a text rail',
                             'Widen the navigation fully'];
+      /* The glyph follows the label. It used to be a left chevron at all three
+         stages, so on the 56px rail — where the button widens — it pointed away
+         from the edge the sidebar is on. Only the accessible name changed. */
+      const STAGE_CHEVRONS = ['M15 6l-6 6 6 6', 'M9 6l6 6-6 6', 'M9 6l6 6-6 6'];
       const stage = ((s % 3) + 3) % 3;
       el.dataset.stage = String(stage);
       if (btn) {
         btn.setAttribute('aria-label', STAGE_LABELS[stage]);
         btn.title = STAGE_LABELS[stage];
+        const chev = $('ltNavChevron');
+        if (chev) chev.setAttribute('d', STAGE_CHEVRONS[stage]);
       }
       ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
         const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
@@ -1548,7 +1537,16 @@
       requestAnimationFrame(() => {
         const group = [...nav.querySelectorAll('.nav-group')]
           .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === category);
-        if (group) group.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        if (!group) return;
+        /* nav.scrollTop, not scrollIntoView. That walks up every scrollable
+           ancestor, and #sidebar is one: overflow:hidden still makes a box
+           programmatically scrollable. So it scrolled the sidebar as well,
+           pushing the 191px header block out of view and leaving exactly that
+           much blank space under the list. */
+        nav.scrollTo({
+          top: nav.scrollTop + group.getBoundingClientRect().top - nav.getBoundingClientRect().top,
+          behavior: 'smooth',
+        });
       });
     }
 
@@ -1590,12 +1588,15 @@
         '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
         verifyLabel(entry) +
         '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
-        '<div class="flex flex-wrap items-center gap-3">' +
+        /* One row owns every per-guide control. renderPrevNext appends #prevNext
+           into it, which is why the node is moved rather than re-created: it is
+           already wired and its dataset has to survive the re-render. */
+        '<div id="headRow" class="flex flex-wrap items-center gap-2">' +
         (item.leetcodeLink
-          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Solve on LeetCode' +
+          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Solve on LeetCode' +
             '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>'
           : '') +
-        '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
+        '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
             (done ? 'border-color:rgba(200,250,75,.4);color:#C8FA4B;background:rgba(200,250,75,.07);' : 'border-color:rgba(148,163,184,.25);color:#8B94A7;') + '">' +
           '<span>' + (done ? '✓ Completed' : '○ Mark complete') + '</span></button>' +
         '</div>';
@@ -1605,6 +1606,13 @@
         renderHead(entry);
         renderNav();
       };
+      /* renderHead owns prev/next, not openArticle. articleHead.innerHTML above
+         discards everything inside it, and the row below is inside it, so any
+         re-render of the head detaches a prevNext node parked in that row. The
+         trace badge re-renders the head asynchronously after the first paint, so
+         the pair used to vanish a moment after the page settled. Re-attaching it
+         here means every head render leaves it in place, whenever that is. */
+      renderPrevNext();
     }
 
     function renderPrevNext() {
@@ -1612,147 +1620,46 @@
          indexOf returned -1 and Next jumped to the first MAANG guide instead of
          the next primer. */
       const idx = allOrder.indexOf(currentItemId);
-      const at = (i) => (i >= 0 && i < allOrder.length ? byId.get(allOrder[i]).item : null);
-      const cell = (it, label, align) => {
-        if (!it) return '';
-        return '<button data-nav="' + it.id + '" class="text-left rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/10 px-4 py-3 min-h-[56px] transition-colors ' + align + '">' +
-          '<span class="block text-[10px] font-mono uppercase tracking-widest text-slate-500">' + label + '</span>' +
-          '<span class="block text-sm font-medium text-slate-200 truncate mt-0.5">' + esc(it.title) + '</span></button>';
+      const entry = (i) => (i >= 0 && i < allOrder.length ? byId.get(allOrder[i]) : null);
+      /* The button carries the guide's own code and name — the same pairing the
+         sidebar uses — rather than the words "Prev" and "Next". Which neighbour
+         it is, the arrow on the outside edge already says. For a problem the
+         code is the number the title itself starts with, so it is stripped from
+         the title rather than printed twice; for a MAANG guide the title has no
+         number at all and the code is the only thing that carries one. */
+      const cell = (entry, dir) => {
+        if (!entry) return '';
+        const code = guideCode(entry, 0);
+        const title = entry.item.title.replace(/^\s*\d{1,3}\.\s*/, '');
+        const arrow = '<span class="text-slate-500 shrink-0" aria-hidden="true">' + (dir === 'prev' ? '←' : '→') + '</span>';
+        const num = code
+          ? '<span class="font-mono text-[11px] tabular-nums shrink-0" style="color:var(--accent)">' + esc(code) + '</span>'
+          : '';
+        const name = '<span class="truncate max-w-[9ch] sm:max-w-[12ch]">' + esc(title) + '</span>';
+        return '<button data-nav="' + entry.item.id + '" title="' + esc(entry.item.title) + '"' +
+          ' aria-label="' + (dir === 'prev' ? 'Previous: ' : 'Next: ') + esc(entry.item.title) + '"' +
+          ' class="inline-flex items-center gap-2 px-3 h-11 rounded-xl border border-[rgba(148,163,184,0.2)] text-sm text-slate-300 hover:bg-white/[0.06] hover:text-slate-100 active:bg-white/10 transition-colors">' +
+          (dir === 'prev' ? arrow + num + name : name + num + arrow) +
+          '</button>';
       };
       /* Only emit the guides that exist. The bar used to render an empty
          <span> for the missing half, which in a 2-column grid still took half
-         the row — a visible hole on the home page and at both ends. The column
-         count follows the number of real cells. */
-      const parts = [cell(at(idx - 1), '← Prev', ''), cell(at(idx + 1), 'Next →', 'text-right')]
-        .filter(Boolean);
-      prevNext.dataset.count = String(parts.length);
-      prevNext.hidden = parts.length === 0;
-      prevNext.innerHTML = parts.join('');
-      prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
-    }
-
-    let tocObserver = null;
-
-    function renderTOC() {
-      tocNav.innerHTML = '';
-      if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
-      const heads = [...contentArea.querySelectorAll('h2')];
-      const sections = [];
-
-      const setOpen = (sec, open) => {
-        sec.dataset.collapsed = open ? 'false' : 'true';
-        sec.querySelector('.toc-toggle').setAttribute('aria-expanded', String(open));
-      };
-
-      heads.forEach((h, i) => {
-        if (!h.id) h.id = 'sec-' + i;
-        const sec = document.createElement('div');
-        sec.className = 'toc-sec';
-        sec.dataset.sec = h.id;
-        sec.dataset.collapsed = 'true';
-
-        const row = document.createElement('div');
-        row.className = 'toc-row';
-
-        const a = document.createElement('a');
-        a.href = '#' + h.id;
-        a.textContent = h.textContent;
-        a.title = h.textContent;
-        a.className = 'toc-link block text-[13px] pl-3 py-1 truncate min-w-0 flex-1';
-        a.onclick = (e) => {
-          e.preventDefault();
-          h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          history.replaceState(null, '', '#' + h.id);
-        };
-
-        const sub = document.createElement('div');
-        sub.className = 'toc-sub';
-        sub.id = 'toc-sub-' + h.id;
-        // Single inner wrapper: the 0fr->1fr row trick only collapses a
-        // container that holds exactly one child.
-        const subInner = document.createElement('div');
-        subInner.className = 'toc-sub-inner';
-        sub.appendChild(subInner);
-
-        const toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = 'toc-toggle shrink-0 text-slate-600 hover:text-slate-300 px-1';
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-controls', sub.id);
-        toggle.setAttribute('aria-label', 'Subsections of ' + h.textContent);
-        toggle.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
-        toggle.onclick = () => setOpen(sec, sec.dataset.collapsed === 'true');
-
-        row.append(a, toggle);
-        sec.append(row, sub);
-        tocNav.appendChild(sec);
-
-        let n = h.nextElementSibling;
-        while (n && n.tagName !== 'H2') {
-          if (n.tagName === 'H3') {
-            if (!n.id) n.id = h.id + '-s' + subInner.children.length;
-            const s = document.createElement('a');
-            s.href = '#' + n.id;
-            s.textContent = n.textContent;
-            s.title = n.textContent;
-            s.className = 'toc-sub-link truncate';
-            s.dataset.for = n.id;
-            s.onclick = (e) => {
-              e.preventDefault();
-              n.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              history.replaceState(null, '', '#' + n.id);
-            };
-            subInner.appendChild(s);
-          }
-          n = n.nextElementSibling;
-        }
-
-        sections.push({ sec, h, subs: [...subInner.children] });
-      });
-
-      if (!heads.length) {
-        tocNav.innerHTML = '<span class="text-xs text-slate-600 pl-3">No sections</span>';
+         the row — a visible hole on the home page and at both ends. */
+      const parts = [cell(entry(idx - 1), 'prev'), cell(entry(idx + 1), 'next')].filter(Boolean);
+      /* No headRow means the home page, which opens with "Start studying" and has
+         no prev/next to offer. Owning that check here rather than in openHome
+         keeps one place responsible, and this runs after it. */
+      const host = $('headRow');
+      if (!host || parts.length === 0) {
+        prevNext.hidden = true;
+        prevNext.innerHTML = '';
         return;
       }
-
-      const markCurrentChild = (id) => {
-        const owner = sections.find((s) => s.subs.some((a) => a.dataset.for === id));
-        sections.forEach((s) => s.subs.forEach((a) =>
-          a.classList.toggle('is-current', a.dataset.for === id)));
-        // Jumping straight to a subsection skips its h2 entirely, so the
-        // owning section is promoted here or the one-liner goes stale.
-        if (owner) markActive(owner.h.id);
-      };
-
-      const markActive = (id) => {
-        const target = sections.find((s) => s.h.id === id) || sections[0];
-        sections.forEach((s) => {
-          s.sec.classList.toggle('is-active', s === target);
-          setOpen(s.sec, false);
-        });
-      };
-
-      // A heading counts as "in view" inside the top band of the scroller. The
-      // sticky header is a sibling of the scroller, not an overlay on it, so
-      // the top edge needs no offset: a heading jumped to `start` sits at y=0
-      // and must still count.
-      tocObserver = new IntersectionObserver(
-        (entries) => {
-          // Several headings can share the band at once, so take the topmost
-          // of each kind rather than whichever the observer happened to batch
-          // last. Sections first, then children, so the most specific wins.
-          const top = (tag) => entries
-            .filter((e) => e.isIntersecting && e.target.tagName === tag)
-            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-          const h2 = top('H2'), h3 = top('H3');
-          if (h2) markActive(h2.target.id);
-          if (h3) markCurrentChild(h3.target.id);
-        },
-        { root: contentContainer, rootMargin: '0px 0px -70% 0px', threshold: 0 },
-      );
-      heads.forEach((h) => tocObserver.observe(h));
-      contentArea.querySelectorAll('h3').forEach((h) => tocObserver.observe(h));
-      markActive(heads[0].id);
+      prevNext.dataset.count = String(parts.length);
+      prevNext.innerHTML = parts.join('');
+      prevNext.hidden = false;
+      host.appendChild(prevNext);
+      prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
     }
 
     function enhanceCodeBlocks() {
@@ -1915,8 +1822,6 @@
         } catch (e) {}
       }
       renderJudgePanel(entry);
-      renderTOC();
-      renderPrevNext();
       scroller.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
       history.replaceState(null, '', '#' + id);
       closeSidebar();
@@ -1994,7 +1899,6 @@
         '<h2 id="sec-how">How to use it</h2>' +
         '<ol><li><strong class="text-slate-100">Start with the MAANG guides</strong> above — roadmap, core CS, system design, behavioral — to know what the bar actually is.</li><li><strong class="text-slate-100">Read the 4 foundation primers</strong> in the sidebar — runtime quirks, polyfills, patterns, complexity.</li><li><strong class="text-slate-100">Pick a track</strong> (arrays → graphs) and work each guide L1 → L3, dry-running by hand.</li><li><strong class="text-slate-100">Say it out loud</strong> using the “How to Explain to Interviewer” script in each guide.</li></ol>';
       enhanceCodeBlocks();
-      renderTOC();
       renderPrevNext();
       scroller.scrollTo({ top: 0 });
       history.replaceState(null, '', location.pathname);
@@ -2141,6 +2045,7 @@
     }
     $('menuBtn').onclick = openSidebar;
     sideOverlay.onclick = closeSidebar;
+    $('sideClose').onclick = closeSidebar;
 
     /* ---------- left nav collapse, two stages (item E) ---------- */
     (function initNavCollapse() {
@@ -2294,23 +2199,6 @@
       progressBar.style.width = pct + '%';
     }
     scroller.addEventListener('scroll', updateProgressBar, { passive: true });
-
-    /* ---------- scroll-spy for TOC ---------- */
-    const spy = new IntersectionObserver((entries) => {
-      entries.forEach(en => {
-        if (en.isIntersecting) {
-          tocNav.querySelectorAll('.toc-link').forEach(a => {
-            a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id);
-          });
-        }
-      });
-    }, { root: scroller, rootMargin: '-20% 0px -70% 0px' });
-    const origRenderTOC = renderTOC;
-    renderTOC = function () {
-      spy.disconnect();
-      origRenderTOC();
-      contentArea.querySelectorAll('h2[id]').forEach(h => spy.observe(h));
-    };
 
     /* ---------- in-article cross-links (#<article-id>) ---------- */
     // Guide pages link to each other via #bundle-id anchors. Open those as
