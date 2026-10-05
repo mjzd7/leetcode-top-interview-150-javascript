@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 4/450 verdicts still wrong** (was 11, 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. Wrong-verdict census (row 15 / S17, from the 450 committed heads): **clean 446 · zero-pass 3 · partial-pass 1** — the 4 wrong verdicts are `lowest-common-ancestor` L1/L2/L3 at 0p/6f and `sorted-array-to-bst` L1 at 5p/2f, both owned by other slices. E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 1/450 verdicts still wrong** (was 4, 11, 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. Wrong-verdict census (row 15 / S17, from the 450 committed heads): **clean 449 · zero-pass 0 · partial-pass 1** — the 1 wrong verdict is `sorted-array-to-bst` L1 at 5p/2f, a `tree` guide owned by another slice. `lowest-common-ancestor` L1/L2/L3 went clean at 6p/0f (S35: three arguments that share nodes are recorded as ONE graph, decoded once). E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -2762,3 +2762,191 @@ left for whoever owns that note. (3) `21-divide-conquer/01-sorted-array-to-bst` 
 partial bucket and is a **`tree`** guide, so no `list` transport change can move it; its owner is a
 different slice. (4) `catalog/problems.json` says this guide's codec is `list` while `build/blocks.json`
 says the L3 **block** is `ops` — the run reads the manifest, so the catalog line is the misleading one.
+
+### 2026-10-05 — row 15, part 12 (S35): three arguments that SHARE nodes are ONE graph, and the wire could always say so
+
+**Mechanism.** `lowestCommonAncestor` is called as `fn(t1, findNode(t1, 5), findNode(t1, 1))`. The two
+derived nodes are not independent inputs — they are nodes **of `t1`** — and the target finds the answer by
+comparing them against `root`'s own nodes with `===` (`09-binary-tree-general/10-lowest-common-ancestor.md:305`,
+"Compare nodes by IDENTITY (`===` on objects), never by `.val`"). S21 recorded **one level-order wire per
+argument position**, and `buildBundle` decodes each with its own `fromWire`, so positions 1 and 2 came back as
+two FRESH graphs. `pathToNode(root, p, pp)` then walked `root` for a node that was never in it, the target
+returned `null`, and the authored `.val` projection read `null` — measured as
+`TypeError: cannot read property 'val' of null` (L2's own residual was
+`TypeError: cannot read property 'left' of undefined`).
+
+**The design, and why this one.** The harvest now records the arguments as **one synthetic graph, one wire, one
+decode**: `__CONTAINER__` hangs every argument as a child of a synthetic root, `treeToArray` encodes the whole
+thing in a SINGLE pass — so every node reachable twice leaves the codec's OWN `{__ref: N}` behind — and
+`shared.paths[i]` records the walk from that root to argument `i`. The driver decodes that wire once and hands
+the target the three projections. The rejected alternative was *per-argument wires plus a recorded in-argument
+reference into the first*: it would put a SECOND, hand-written resolution rule beside the codec's, and a second
+definition of what a back-reference means is exactly the rot this repo's other slices were bitten by. The
+container's only new logic is a **path walk over nodes the registry already minted**. The other rejected option —
+keeping three wires and comparing by value — is not a transport at all: it is the defect the guide's prose
+forbids, and it would be a green verdict earned by answering a different question.
+
+**RED.** The gate was written first, naming ONLY this guide's three levels, and run against the committed
+corpus. `npm run test:trace` printed, from the S17 census line and the three level gates:
+
+```
+S17 ratchet: 450 heads · zero-pass 3 (baseline 3) · partial-pass 1 (baseline 1) · clean 446
+❌ [FAIL] S35 shared graph: 09-binary-tree-general__10-lowest-common-ancestor L1 passes every case …
+❌ [FAIL] S35 shared graph: 09-binary-tree-general__10-lowest-common-ancestor L2 passes every case …
+❌ [FAIL] S35 shared graph: 09-binary-tree-general__10-lowest-common-ancestor L3 passes every case …
+❌ [FAIL] S35 shared graph: `clean` is 449 — … and nothing else moved
+   clean 446 (446 before this slice), zero-pass 3, partial-pass 1
+Assertions: 230 | Failures: 4
+```
+
+The heads' recorded errors at that point, read with
+`python3 -c "import json;print(json.load(open('judge/traces/09-binary-tree-general__10-lowest-common-ancestor.L1.head.json'))['verdict'])"`,
+were `{"failed":6,"passed":0}` at all three levels, with L2's `error` the `left of undefined` TypeError above.
+
+**GREEN.** After the change, `npm run gen:traces && npm run test:trace`:
+
+```
+S17 ratchet: 450 heads · zero-pass 0 (baseline 0) · partial-pass 1 (baseline 1) · clean 449
+✅ [PASS] S35 shared graph: 09-binary-tree-general__10-lowest-common-ancestor L1 passes every case
+✅ [PASS] S35 shared graph: 09-binary-tree-general__10-lowest-common-ancestor L2 passes every case
+✅ [PASS] S35 shared graph: 09-binary-tree-general__10-lowest-common-ancestor L3 passes every case
+✅ [PASS] S35 shared graph: the projected arguments are `===` the nodes inside the one decoded graph
+Assertions: 230 | Failures: 0
+```
+
+`test:trace` went **224 → 230** assertions, 0 failures. `VERDICT_BASELINE` tightened from
+`{ zeroPass: 3, partialPass: 1 }` to **`{ zeroPass: 0, partialPass: 1 }`** — the measured floor, so the last
+three zero-pass blocks can never come back unnoticed — and all three S17 negative probes still bite
+(`breaches(at(1,0))`, `breaches(at(0,1))`, `breaches(at(-1,-1))`), each written RELATIVE to the baseline so the
+tightening did not rot them.
+
+**The identity assertion, and why it is the load-bearing one.** `sharedArgsAreViewsOfOneGraph()` drives the
+REAL `buildBundle` (not a re-implementation) with two hand-made cases that are byte-identical in every value:
+the same root, the same three trees, the same expected `2`. The target does not compare values at all — it walks
+`root` and counts the nodes it reaches that are `===` the `p` and `q` it was handed. With `shared` the answer is
+`2`; with the same three wires decoded separately the answer is `0` and the case FAILS. **The negative half is
+the assertion that matters:** `failed === 0` on three blocks is a claim about a number, and a defect that
+compared values would produce the same number. The probe is two-sided, so neither half can be satisfied by the
+other, and it names in its failure message which direction broke (S34's rule — a probe that cannot say is a
+probe that gets "fixed" by deleting the assertion that mattered).
+
+**Mutant proof — three levers, each restored and the corpus re-proved after every restore.**
+
+1. **Driver ignores `t.shared`** (the line replaced by a comment, so arguments decode separately again) →
+   `npm run gen:traces && npm run test:trace`: `zero-pass 3 · partial-pass 1 · clean 446`,
+   `Assertions: 230 | Failures: 7` — the three level gates, both census counts, the S17 ratchet AND the identity
+   probe all red. Restored → `zero-pass 0 · partial-pass 1 · clean 449`, `230·0`.
+2. **Detector compares VALUES instead of identity** (`__WITHIN__` swapped for a `n.val === target.val` walk) →
+   corpus hash `634f289aa6125bff1b04c8c94203e398a593411d`, UNCHANGED, `230·0`. Measured, not assumed: for THIS
+   guide the two detectors agree, because the values the author looked up are unique in the tree, so a value walk
+   finds the same node. That is exactly why the identity assertion had to be stated on the DRIVER's output rather
+   than on the detector's rule — and the value-comparison mutant is a **real, unmeasured risk recorded here**:
+   a tree with duplicate values would make the detector pick the wrong node. The `===` in `__WITHIN__` is the
+   correct rule regardless; it is simply not what makes this corpus green.
+3. **Projection paths wrong** (every `paths[i]` forced to `['left']`, so all three arguments project to the same
+   node) → `zero-pass 0 · partial-pass 4 · clean 446`, `Assertions: 230 | Failures: 6`, corpus hash
+   `f5a9214277ec97f6e1bf51b2fb0ecbbf9d603ead`. This is the mutant that proves the PATH is load-bearing and not
+   decorative: the identity probe stayed green (the projected `p` and `q` are still nodes of the graph the
+   target walks — they are the wrong ones), and the three level gates caught it, which is the honest division of
+   labour between the two assertions. Restored → hash back to `634f289a…`, `230·0`.
+
+**No golden lost.** `git diff --name-only HEAD -- judge/` → **3 lines**, and they are exactly the heads whose
+verdict this slice moved: `09-binary-tree-general__10-lowest-common-ancestor.L{1,2,3}.head.json`. `verdict` went
+`{"failed":6,"passed":0}` → `{"failed":0,"passed":6}` on each; `stepCount` moved 8 → 11, 65 → 26 and 65 → 9,
+which is the trace becoming SHORTER because the target now terminates on the real tree instead of walking a
+graph it can never match. The census sums: **clean 449 + zero-pass 0 + partial-pass 1 = 450**, asserted by the
+gate itself (`S35 shared graph: the census still accounts for all 450 heads`) rather than by eye, and
+`VERDICT_BASELINE` is now `{ zeroPass: 0, partialPass: 1 }`. The full (gitignored) corpus was hashed before and
+after with `find judge/traces -name '*.json' | sort | xargs shasum` and compared with `comm -13`: the only
+differing files are this guide's three goldens, its three heads, and `manifest.json` — **the other 447 goldens
+and 447 heads are byte-identical**.
+
+**The four guides this slice must not touch, compared before and after** (`cmp` against copies taken from
+`HEAD` before the change, then re-checked against `git show HEAD:<path>`):
+
+```
+IDENTICAL 09-binary-tree-general__08-path-sum.L1 / .L2 / .L3
+IDENTICAL 09-binary-tree-general__14-next-right-pointers-ii.L1 / .L2 / .L3
+IDENTICAL 21-divide-conquer__01-sorted-array-to-bst.L1 / .L2 / .L3
+IDENTICAL 21-divide-conquer__04-merge-k-sorted-lists.L1 / .L2 / .L3
+IDENTICAL 09-binary-tree-general__02-same-tree.L1 / .L2 / .L3
+```
+
+`kth-smallest-element` is named here for the record because a first pass reported it CHANGED: that was the
+comparison against a copy this slice never made, and `git show HEAD:… | shasum` against the working file is
+byte-identical at all three levels. **Why they are provably untouched rather than luckily untouched:** the new
+detector fires only when a call has **more than one live node-graph argument** AND one of them is reachable from
+an earlier one **by `===`**. `path-sum`'s `T()` is one graph, `next-right-pointers-ii` and
+`sorted-array-to-bst` take one tree each, and `same-tree` passes two trees that are *equal by value and distinct
+by identity* — which is the case the `===` test exists to exclude, and the guide whose golden would break first
+if the detector compared values (mutant 2 above is the measurement of that). A direct check of the harvested
+cases confirms the mechanism reaches exactly one guide:
+
+```
+node /tmp/lca/cmp.mjs
+09-binary-tree-general/10-lowest-common-ancestor.md  cases 6  withShared 6
+09-binary-tree-general/02-same-tree.md                cases 9  withShared 0
+11-binary-search-tree/02-kth-smallest-element.md      cases 6  withShared 0
+09-binary-tree-general/14-next-right-pointers-ii.md   cases 9  withShared 0
+09-binary-tree-general/08-path-sum.md                 cases 9  withShared 0
+21-divide-conquer/01-sorted-array-to-bst.md           cases 7  withShared 0
+21-divide-conquer/04-merge-k-sorted-lists.md         cases 9  withShared 0
+```
+
+**Determinism — two regenerations, one hash.**
+
+```
+npm run gen:traces && shasum judge/traces/*.head.json | shasum   # 634f289aa6125bff1b04c8c94203e398a593411d
+npm run gen:traces && shasum judge/traces/*.head.json | shasum   # 634f289aa6125bff1b04c8c94203e398a593411d
+```
+
+**Before / after census.** Before: **clean 446 · zero-pass 3 · partial-pass 1** (450). After: **clean 449 ·
+zero-pass 0 · partial-pass 1** (450). `clean` +3, which is this guide's three levels and nothing else.
+Reproduce either with `npm run gen:traces && npm run test:trace` and read the `S17 ratchet:` line.
+
+**The withdrawn note, and how the contradictory gate was handled.** `scripts/test-trace.mjs` carried a gate
+reading *"S22 replay: lowest-common-ancestor L1 is still wrong — recorded as REMAINING WORK (identity needs a
+codec that carries it)"*, asserting `lcaVerdict.failed > 0`, with a long comment beside it claiming *"a
+level-order wire is a VALUE encoding and cannot express object identity"*. **That claim was wrong and is
+withdrawn.** `api/_lib/codecs.mjs`'s `tree` codec has always minted `{__ref: N}` for a node it has already
+emitted, and `arrayToTree` resolves those against its own `made[]` table, so sharing survives a round trip —
+verified directly through the registry:
+
+```
+node -e "…getCodec('tree').toWire(box)  // [1,7,{\"__ref\":1}]
+        …getCodec('tree').fromWire(w); back.left === back.right   // true"
+```
+
+Leaving that gate in place would have meant two contradictory gates in one file, so it was **replaced, not
+deleted or weakened**: the `failed > 0` assertion and its reasoning were replaced by the S35 gates (three
+levels at `failed === 0`, plus the two-sided identity probe, plus the 450/449 census), and the comment above the
+surviving checks now records that the old conclusion was withdrawn and why. The two assertions that were
+genuinely still true — the block still produces a golden, and its residual is not an `of undefined` arity
+failure — were **kept**, since both still hold and both still guard S21. Nothing was skipped or disabled.
+
+**Envelope untouched.** `shared` rides inside the existing `JSON.stringify(tests)` as case data, exactly as
+`t.via` / `t.ops` / `t.ctor` / `t.draws` / `t.live` already do, so S10's frozen v1.1 set is untouched
+(`npm run test:trace` 230·0 includes S10; `docs/trace-schema.json` untouched). Nothing in `equivalent()`, the
+comparator registry, `acceptsWire`, `toWire`/`fromWire` or `validateEnvelope` was changed — the `__ref` wire
+format is byte-identical, so the 20 `tree` guides and every committed head that uses it are unmoved, and
+`api/_lib/codecs.mjs` is **byte-identical to `8b6d4bd`**. The guide's `findNode` was **not** injected: it is in
+the guide's PROSE (`10-lowest-common-ancestor.md:128`, docstring "Test helper") and in no solution block, and
+executing authored script text inside the driver is what decision C3 fences. The new mechanism needs no
+authored text at all — the sharing is DETECTED from the live arguments, not reconstructed from the script.
+
+**Suites, all measured on this tree after the change:** `npm run gen:traces` **450 goldens · 450
+validateEnvelope · empty traces 0** · `npm test` **1898 assertions · 0 failures · 150 files ·
+syntax-only 0** · `npm run test:trace` **230·0** (was 224) · `npm run test:codecs` **275·0** ·
+`npm run test:judge` **96·0** · `npm run test:envelope` **129·0** · `npm run validate` **150 files · 0 errors ·
+0 warnings** · `npm run test:instrument` **246·0** · `npm run audit:check` **17 passed 0 failed** ·
+`npm run test:doc-traces` **17·0**. `npm run verify` deliberately NOT run — another agent touches this tree next.
+No server or port was bound at any point, and no Playwright was used, so there is nothing to tear down.
+
+**Left alone, found on the way.** (1) §3's row-15 cell carried the old wrong counts in prose; that ONE cell is
+corrected here and nothing else in the table was touched. (2) `scripts/gen-traces.mjs` still has the stale
+`ponytail` note on `spyRewrite` claiming a call through a loop alias "is not recorded" (S34's entry recorded the
+same thing; it stopped being true when the alias joined the target set). (3) `21-divide-conquer/
+01-sorted-array-to-bst` L1 is the last wrong verdict in the corpus and is a `tree` guide, so it is a different
+slice. (4) The spy's `__FL__` positional repair is now **redundant for this guide's case** — `__A__` still
+records it and the driver ignores it, exactly as it does for a class target's `args` beside `ops`. It is left in
+place because `isSameTree` and `kthSmallest` still depend on it, and deleting it would be a second slice.

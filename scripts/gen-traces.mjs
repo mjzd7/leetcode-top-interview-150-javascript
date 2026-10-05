@@ -585,6 +585,36 @@ function __SPY__(name, target, isCtor, via) {
               else { __fixed = null; break; }
             }
           }
+          // Row 15 / S35 - and the positional repair CANNOT express this call. It records ONE
+          // level-order wire per POSITION, and buildBundle decodes each with its own fromWire, so
+          // two arguments that are NODES OF THE SAME TREE come back as two unrelated graphs.
+          // fn(t1, findNode(t1, 5), findNode(t1, 1)) is exactly that call: the guide's own line 305
+          // says to compare nodes by IDENTITY (=== on objects) and never by .val, so decoding them
+          // separately answers a DIFFERENT question - the target walks root for a node that is not
+          // in it, returns null, and the authored .val projection reads null.
+          //
+          // Detected on the LIVE arguments by identity, not on the JSON clone above: __WITHIN__
+          // compares objects with ===, so a value-equal copy answers false and the common case
+          // (isSameTree(arrayToTree(A), arrayToTree(B)) - two independent trees) is untouched. A
+          // guide with no shared node argument never reaches __CONTAINER__, so its case bytes and
+          // its golden are identical to before.
+          var __shared__ = null;
+          if (__TREE__ && __args !== null && __args.length > 1) {
+            var __live__ = Array.prototype.slice.call(arguments);
+            var __joined__ = false;
+            for (var __a__ = 0; __a__ < __live__.length && !__joined__; __a__++) {
+              if (!__GRAPH__(__live__[__a__])) continue;
+              for (var __b__ = __a__ + 1; __b__ < __live__.length; __b__++) {
+                if (__GRAPH__(__live__[__b__]) && __WITHIN__(__live__[__a__], __live__[__b__])) { __joined__ = true; break; }
+              }
+            }
+            if (__joined__) {
+              var __box__ = __CONTAINER__(__live__);
+              // The codec's OWN encoder, so the sharing is expressed in the registry's __ref
+              // vocabulary rather than a second one invented here.
+              __shared__ = { wire: treeToArray(__box__.box), paths: __box__.paths };
+            }
+          }
           // Row 15 / S34 - and the tree repair above cannot help a LIST guide, because a list wire is
           // [1, 4, 5] and not a level-order array: there is nothing to substitute and nothing to derive
           // from, so __fixed stays null and the RAW argument is recorded. That is right for the
@@ -608,6 +638,11 @@ function __SPY__(name, target, isCtor, via) {
           // __LIST__ and not the tree flag, deliberately: the positional repair above already owns
           // every tree argument, including the ones it cannot repair, so no tree golden can move here.
           __LIVE__ = (__LIST__ && __pushed__) ? 1 : 0;
+          // Row 15 / S35 - __A__ still records the positional repair above, unchanged and unused on
+          // this branch: the driver reads __SH__ instead, exactly as it reads __OPS__ in place of
+          // __A__ for a class target. Keeping both is what makes the change additive - a case with no
+          // shared node argument carries no shared key and takes the old path byte for byte.
+          __SH__ = __shared__;
           if (__fixed !== null) {
             __A__ = __fixed; __AN__ = name; __AV__ = via || null; __TX__ = 0;
           } else if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
@@ -655,9 +690,9 @@ function __SPY__(name, target, isCtor, via) {
       // is-subsequence's class case has no recorded ARGUMENTS (the receiver's construction is left
       // unspied) and is entirely carried by the op list.
       var __unbacked__ = (__A__ === null && __OPS__.length === 0 && __ASSERTERS__.indexOf(__FN__) !== -1) ? 1 : 0;
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, live: __LIVE__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, live: __LIVE__, via: __AV__, shared: __SH__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
       __DRAWFROM__ = __DRAWS__.length;
-      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __LIVE__ = 0; __TX__ = 0; __FL__ = []; __AV__ = null;
+      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __LIVE__ = 0; __TX__ = 0; __FL__ = []; __AV__ = null; __SH__ = null;
     }
 
     // A node argument the script never WROTE as a literal. lowestCommonAncestor is called as
@@ -1152,6 +1187,10 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // TARGET, not a wire this codec's own constructor consumed. Reset with the rest of the
     // per-assertion state, for `__FN__`'s reason: it describes ONE recorded call.
     `var __LIVE__ = 0;`,
+    // Row 15 / S35 — the ONE graph three arguments are projected out of, when the script's own call
+    // passes nodes of a single tree (`fn(t1, findNode(t1, 5), findNode(t1, 1))`). Reset with the rest
+    // of the per-assertion state, for `__FN__`'s reason: it describes ONE recorded call.
+    `var __SH__ = null;`,
     `var __TX__ = 0;`,
     `var __TREE__ = ${JSON.stringify(codec === 'tree')};`,
     // A PARALLEL flag, deliberately not a widening of `__TREE__`. Four of the six `__TREE__` reads in
@@ -1194,6 +1233,53 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // array", which is true of a graph AND of kthSmallest's integer k — without this the
     // repair loop demands a recording for the scalar and gives up on the whole call.
     `function __GRAPH__(a) { return a !== null && typeof a === 'object' && !Array.isArray(a); }`,
+    // Row 15 / S35 — does this node graph CONTAIN `target`, by IDENTITY? `===` on objects is the
+    // whole question: a value-equal copy answers `false`, which is exactly the distinction the
+    // positional repair below cannot see. `visited` is not defensive — a target may legitimately
+    // be handed a cyclic graph (copy-list-with-random-pointer's own input is), and a reachability
+    // walk that loops is a harvest that hangs.
+    `function __WITHIN__(node, target) {`,
+    `  var seen = [];`,
+    `  var stack = [node];`,
+    `  while (stack.length > 0) {`,
+    `    var n = stack.pop();`,
+    `    if (n === target) return true;`,
+    `    if (n === null || typeof n !== 'object' || seen.indexOf(n) !== -1) continue;`,
+    `    seen.push(n);`,
+    `    if (n.left !== null && n.left !== undefined) stack.push(n.left);`,
+    `    if (n.right !== null && n.right !== undefined) stack.push(n.right);`,
+    `  }`,
+    `  return false;`,
+    `}`,
+    // Row 15 / S35 — the ONE graph, and how to get the arguments back out of it. The three trees of
+    // `fn(t1, findNode(t1, 5), findNode(t1, 1))` are hung as children of a synthetic root and encoded
+    // in a SINGLE `treeToArray` pass, so every node reachable twice leaves the codec's own
+    // `{__ref: N}` behind and `arrayToTree` hands back the SAME object. `paths[i]` is the walk from
+    // that root to argument `i`, and `null` marks an argument that is not a node at all (`k`'s
+    // integer), which the driver keeps from `args` as it already does.
+    //
+    // The alternative — one wire per argument plus a recorded reference into the first — was rejected
+    // because it puts a SECOND, hand-written resolution rule next to the codec's. This uses the
+    // registry's own encoder and decoder and adds only the path walk, which is a projection onto
+    // nodes the codec already minted rather than a second definition of what a back-reference means.
+    `function __CONTAINER__(args) {`,
+    `  var box = { val: 0, left: null, right: null };`,
+    `  var paths = [];`,
+    `  var tail = box;`,
+    `  for (var i = 0; i < args.length; i++) {`,
+    `    var a = args[i];`,
+    `    if (!__GRAPH__(a)) { paths.push(null); continue; }`,
+    `    if (i === 0) { box.left = a; paths.push(['left']); continue; }`,
+    `    var mid = { val: 0, left: a, right: null };`,
+    `    tail.right = mid;`,
+    `    tail = mid;`,
+    `    var path = [];`,
+    `    for (var k = 0; k < i; k++) path.push('right');`,
+    `    path.push('left');`,
+    `    paths.push(path);`,
+    `  }`,
+    `  return { box: box, paths: paths };`,
+    `}`,
     `function __LE__(a) {`,
     `  if (!__TREE__) return false;`,
     `  if (!Array.isArray(a)) return false;`,
@@ -1281,6 +1367,16 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // DATA on the existing `JSON.stringify(tests)`, the way `via`/`ops`/`ctor`/`draws` already ride:
     // no envelope field, no golden field, no schema entry, so S10's frozen v1.1 set is untouched.
     if (record.live) testCase.live = 1;
+    // Row 15 / S35 — the arguments as VIEWS OF ONE GRAPH, and the projection back. `shared.wire` is a
+    // single `treeToArray` encoding of a synthetic root carrying every argument, so the codec's own
+    // `{__ref: N}` tokens span them; `shared.paths[i]` is the walk from that root to argument `i`, and
+    // a `null` entry is an argument that is not a node at all.
+    //
+    // DATA on the existing `JSON.stringify(tests)`, like `live` above and `t.via` before it: no
+    // envelope field, no golden field, no schema entry, so S10's frozen v1.1 set is untouched. Absent
+    // for every case whose arguments do not share a node, and the driver ignores it then, so no other
+    // guide's bundle moves a byte.
+    if (record.shared) testCase.shared = record.shared;
     // The derivation the SCRIPT applied to this call's return before asserting (row 15 / S22), as
     // a registry key. It is inert in the driver unless a `__VIA_FNS__` entry of that name is
     // present, which `buildBundle` emits from the array property below.
