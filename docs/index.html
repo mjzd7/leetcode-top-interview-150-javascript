@@ -157,49 +157,6 @@
       * { scrollbar-width: none; -ms-overflow-style: none; }
       *::-webkit-scrollbar { display: none; }
     }
-    .toc-link { transition: color 0.15s ease, border-color 0.15s ease; }
-    .toc-link.active { color: var(--accent); border-color: var(--accent); }
-
-    /* One-liner page navigation. Only the section in view is painted, so the
-       panel is never more than one section deep and never lists sections out
-       of article order. */
-    .toc-sec { display: none; }
-    .toc-sec.is-active { display: block; }
-    .toc-row { display: flex; align-items: center; gap: 0.25rem; }
-    .toc-sec.is-active .toc-link { color: var(--accent); }
-    .toc-toggle { transition: color 0.15s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
-    .toc-toggle svg { transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
-    .toc-sec[data-collapsed="false"] .toc-toggle svg { transform: rotate(90deg); }
-    .toc-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; border-radius: 3px; }
-
-    /* Children hang off a guide line so they read as children of the heading
-       above them. The row is a 1fr grid so it can animate to auto height. */
-    .toc-sub {
-      display: grid; grid-template-rows: 0fr;
-      transition: grid-template-rows 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-      margin-left: 0.55rem; padding-left: 0.7rem;
-      border-left: 1px solid rgba(148, 163, 184, 0.22);
-    }
-    .toc-sec[data-collapsed="false"] .toc-sub { grid-template-rows: 1fr; }
-    .toc-sub-inner { overflow: hidden; }
-    .toc-sub-link {
-      display: block; padding: 0.2rem 0.25rem 0.2rem 0.4rem;
-      font-size: 12px; color: #7C8699; text-align: left;
-      border-left: 2px solid transparent; transition: color 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
-    }
-    .toc-sub-link:hover { color: var(--accent); }
-    .toc-sub-link.is-current { color: var(--accent); border-left-color: var(--accent); }
-
-    /* Staggered cascade: children rise in sequence once the row has opened. */
-    .toc-sec[data-collapsed="false"] .toc-sub-link { animation: toc-rise 0.22s ease both; }
-    @keyframes toc-rise {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: none; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .toc-sub, .toc-toggle, .toc-toggle svg { transition: none; }
-      .toc-sec[data-collapsed="false"] .toc-sub-link { animation: none; }
-    }
 /* Prev/next sat at the very end of the article — on a long guide that is three
        thousand pixels down, so it was pinned to the scrollport to be reachable at
        all, and then it and the assistant's button both wanted the bottom-right
@@ -240,7 +197,6 @@
     }
     .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
     .lt-rail { display: contents; }
-    .lt-rail-toc { display: none; }
     #ltRailResizer { display: none; }
     .nav-group-rule { display: none; }
     /* Hidden at every width, not just from md up. These two defaults used to live
@@ -368,15 +324,15 @@
       #ltRailResizer:focus-visible::after,
       #ltRailResizer.is-dragging::after { background: var(--accent); }
       #ltRailResizer:focus-visible { outline: none; }
-      .lt-rail-toc {
-        display: block; flex: 0 1 auto; max-height: 45%;
-        overflow-y: auto; padding: 1.5rem 0 0.75rem 1rem;
-      }
+      /* The assistant is the rail, so it takes the column outright rather than
+         sharing it with a list. flex:1 rather than a fixed height, and min-height
+         0 so the log scrolls inside it instead of the panel growing past the
+         viewport and pushing the composer off the bottom. */
       .ltc-panel {
         position: static; top: auto; left: auto; right: auto; bottom: auto;
         flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
         transform: none; visibility: visible; box-shadow: none;
-        border-top: 1px solid var(--line); border-left: none;
+        border-left: none;
         background: var(--rail-bg);
       }
     }
@@ -1021,15 +977,11 @@
 
     <div id="ltcBackdrop" class="ltc-backdrop"></div>
 
-    <!-- Right rail: table of contents on top, study assistant below. Below
-         1024px the rail is display:contents, so the assistant keeps working
-         as a full-width bottom sheet and the TOC is simply not rendered. -->
-    <aside id="ltRail" class="lt-rail" aria-label="Page tools">
-      <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the page tools rail"></div>
-      <div class="lt-rail-toc">
-        <div class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">On this page</div>
-        <nav id="tocNav" class="space-y-1 border-l border-[rgba(148,163,184,0.13)]" aria-label="Table of contents"></nav>
-      </div>
+    <!-- Right rail: the study assistant, and nothing else. It shared the column with
+         an "On this page" list capped at 45% of the height until that was removed.
+         Below 1280px the rail is display:contents and the assistant is a sheet. -->
+    <aside id="ltRail" class="lt-rail" aria-label="Study assistant">
+      <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the study assistant"></div>
 
       <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
       <div class="ltc-head">
@@ -1205,7 +1157,7 @@
     /* ---------- element refs ---------- */
     const $ = (id) => document.getElementById(id);
     const nav = $('curriculumNav'), contentArea = $('articleContent'), articleHead = $('articleHead'),
-      crumbRow = $('crumbRow'), prevNext = $('prevNext'), tocNav = $('tocNav'),
+      crumbRow = $('crumbRow'), prevNext = $('prevNext'),
       searchInput = $('searchInput'), sidebar = $('sidebar'), sideOverlay = $('sideOverlay'),
       palette = $('palette'), paletteCard = $('paletteCard'), paletteInput = $('paletteInput'),
       paletteList = $('paletteList'), scroller = $('contentContainer'), progressBar = $('progressBar');
@@ -1541,130 +1493,6 @@
       prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
     }
 
-    let tocObserver = null;
-
-    function renderTOC() {
-      tocNav.innerHTML = '';
-      if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
-      const heads = [...contentArea.querySelectorAll('h2')];
-      const sections = [];
-
-      const setOpen = (sec, open) => {
-        sec.dataset.collapsed = open ? 'false' : 'true';
-        sec.querySelector('.toc-toggle').setAttribute('aria-expanded', String(open));
-      };
-
-      heads.forEach((h, i) => {
-        if (!h.id) h.id = 'sec-' + i;
-        const sec = document.createElement('div');
-        sec.className = 'toc-sec';
-        sec.dataset.sec = h.id;
-        sec.dataset.collapsed = 'true';
-
-        const row = document.createElement('div');
-        row.className = 'toc-row';
-
-        const a = document.createElement('a');
-        a.href = '#' + h.id;
-        a.textContent = h.textContent;
-        a.title = h.textContent;
-        a.className = 'toc-link block text-[13px] pl-3 py-1 truncate min-w-0 flex-1';
-        a.onclick = (e) => {
-          e.preventDefault();
-          h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          history.replaceState(null, '', '#' + h.id);
-        };
-
-        const sub = document.createElement('div');
-        sub.className = 'toc-sub';
-        sub.id = 'toc-sub-' + h.id;
-        // Single inner wrapper: the 0fr->1fr row trick only collapses a
-        // container that holds exactly one child.
-        const subInner = document.createElement('div');
-        subInner.className = 'toc-sub-inner';
-        sub.appendChild(subInner);
-
-        const toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = 'toc-toggle shrink-0 text-slate-600 hover:text-slate-300 px-1';
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-controls', sub.id);
-        toggle.setAttribute('aria-label', 'Subsections of ' + h.textContent);
-        toggle.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
-        toggle.onclick = () => setOpen(sec, sec.dataset.collapsed === 'true');
-
-        row.append(a, toggle);
-        sec.append(row, sub);
-        tocNav.appendChild(sec);
-
-        let n = h.nextElementSibling;
-        while (n && n.tagName !== 'H2') {
-          if (n.tagName === 'H3') {
-            if (!n.id) n.id = h.id + '-s' + subInner.children.length;
-            const s = document.createElement('a');
-            s.href = '#' + n.id;
-            s.textContent = n.textContent;
-            s.title = n.textContent;
-            s.className = 'toc-sub-link truncate';
-            s.dataset.for = n.id;
-            s.onclick = (e) => {
-              e.preventDefault();
-              n.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              history.replaceState(null, '', '#' + n.id);
-            };
-            subInner.appendChild(s);
-          }
-          n = n.nextElementSibling;
-        }
-
-        sections.push({ sec, h, subs: [...subInner.children] });
-      });
-
-      if (!heads.length) {
-        tocNav.innerHTML = '<span class="text-xs text-slate-600 pl-3">No sections</span>';
-        return;
-      }
-
-      const markCurrentChild = (id) => {
-        const owner = sections.find((s) => s.subs.some((a) => a.dataset.for === id));
-        sections.forEach((s) => s.subs.forEach((a) =>
-          a.classList.toggle('is-current', a.dataset.for === id)));
-        // Jumping straight to a subsection skips its h2 entirely, so the
-        // owning section is promoted here or the one-liner goes stale.
-        if (owner) markActive(owner.h.id);
-      };
-
-      const markActive = (id) => {
-        const target = sections.find((s) => s.h.id === id) || sections[0];
-        sections.forEach((s) => {
-          s.sec.classList.toggle('is-active', s === target);
-          setOpen(s.sec, false);
-        });
-      };
-
-      // A heading counts as "in view" inside the top band of the scroller. The
-      // sticky header is a sibling of the scroller, not an overlay on it, so
-      // the top edge needs no offset: a heading jumped to `start` sits at y=0
-      // and must still count.
-      tocObserver = new IntersectionObserver(
-        (entries) => {
-          // Several headings can share the band at once, so take the topmost
-          // of each kind rather than whichever the observer happened to batch
-          // last. Sections first, then children, so the most specific wins.
-          const top = (tag) => entries
-            .filter((e) => e.isIntersecting && e.target.tagName === tag)
-            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-          const h2 = top('H2'), h3 = top('H3');
-          if (h2) markActive(h2.target.id);
-          if (h3) markCurrentChild(h3.target.id);
-        },
-        { root: contentContainer, rootMargin: '0px 0px -70% 0px', threshold: 0 },
-      );
-      heads.forEach((h) => tocObserver.observe(h));
-      contentArea.querySelectorAll('h3').forEach((h) => tocObserver.observe(h));
-      markActive(heads[0].id);
-    }
-
     function enhanceCodeBlocks() {
       // Wrap tables for safe mobile horizontal scroll (global fix)
       contentArea.querySelectorAll('table').forEach(tbl => {
@@ -1819,7 +1647,6 @@
         } catch (e) {}
       }
       renderJudgePanel(entry);
-      renderTOC();
       renderPrevNext();
       scroller.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
       history.replaceState(null, '', '#' + id);
@@ -1898,7 +1725,6 @@
         '<h2 id="sec-how">How to use it</h2>' +
         '<ol><li><strong class="text-slate-100">Start with the MAANG guides</strong> above — roadmap, core CS, system design, behavioral — to know what the bar actually is.</li><li><strong class="text-slate-100">Read the 4 foundation primers</strong> in the sidebar — runtime quirks, polyfills, patterns, complexity.</li><li><strong class="text-slate-100">Pick a track</strong> (arrays → graphs) and work each guide L1 → L3, dry-running by hand.</li><li><strong class="text-slate-100">Say it out loud</strong> using the “How to Explain to Interviewer” script in each guide.</li></ol>';
       enhanceCodeBlocks();
-      renderTOC();
       renderPrevNext();
       scroller.scrollTo({ top: 0 });
       history.replaceState(null, '', location.pathname);
@@ -2199,23 +2025,6 @@
       progressBar.style.width = pct + '%';
     }
     scroller.addEventListener('scroll', updateProgressBar, { passive: true });
-
-    /* ---------- scroll-spy for TOC ---------- */
-    const spy = new IntersectionObserver((entries) => {
-      entries.forEach(en => {
-        if (en.isIntersecting) {
-          tocNav.querySelectorAll('.toc-link').forEach(a => {
-            a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id);
-          });
-        }
-      });
-    }, { root: scroller, rootMargin: '-20% 0px -70% 0px' });
-    const origRenderTOC = renderTOC;
-    renderTOC = function () {
-      spy.disconnect();
-      origRenderTOC();
-      contentArea.querySelectorAll('h2[id]').forEach(h => spy.observe(h));
-    };
 
     /* ---------- in-article cross-links (#<article-id>) ---------- */
     // Guide pages link to each other via #bundle-id anchors. Open those as
