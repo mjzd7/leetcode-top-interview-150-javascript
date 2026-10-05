@@ -1754,6 +1754,55 @@ async function main() {
       'S26 encoding: the two sides really do differ — tree re-encodes nil, json does not — so the symmetry is a real rule and not a no-op',
       'one of the two codecs stopped re-encoding the value it owns');
 
+    // ---- S31 · row 15 — a `list` guide's nil is re-encoded, exactly as a `tree` guide's already is ----
+    // S26 fixed this asymmetry for `tree` and only for `tree`: `tree.owns` is `isNodeValue`, which
+    // INCLUDES nil, so a `null` expectation is re-encoded to the empty wire before it is compared —
+    // symmetrically with the `null` the target returned. `list.owns` is `isNodeLive`, which excludes
+    // nil, so the same case compares `null` (the expectation, left alone) against `[]` (the return,
+    // re-encoded) and can never pass. `21-divide-conquer/04-merge-k-sorted-lists`'s
+    // `assertEq(fn([]), null, 'empty array')` is exactly that: the target returns `null` and the
+    // authored expectation is `null`.
+    //
+    // This is NOT the `[]`-is-ambiguous problem the earlier entry recorded, and the distinction
+    // matters: that entry probed `acceptsWire([])` (is `[]` the wire for "no lists" or for "the empty
+    // list"?) and measured that declining it fixes 2 blocks and breaks `invert-binary-tree` x3. The
+    // defect here is on the COMPARISON side, not the wire, and moving `owns` does not touch
+    // `acceptsWire` at all.
+    // NOT closed, and the honest measurement is that my first hypothesis was wrong. I expected the 3
+    // failures to be the `assertEq(fn([]), null)` pair and predicted this one-line codec change would
+    // fix them. It does not: after `owns: isNodeValue` and a full regeneration, L1 and L2 are still
+    // 6/3. The reason is the INPUT, not the comparison — the harvest records this guide's list input as
+    // raw node OBJECTS (`[{val:1,next:{val:4,…}}, …]`), `list.acceptsWire` rejects that shape (it is not
+    // the codec's wire, which is a flat array of values), so the argument reaches the target as plain
+    // objects with a `next` property instead of `ListNode`s and the merge is wrong. The two `null`
+    // cases pass. So the residual is the tree-guide positional repair (`__LE__`/`__GRAPH__`, S21) which
+    // exists for `tree` and has no `list` equivalent: a list wire has to be derived before it can be
+    // transported, and nothing derives it.
+    //
+    // Asserted as remaining work rather than dropped, so a future reader inherits the MEASUREMENT and
+    // not just the earlier (wrong) guess.
+    for (const level of ['L1', 'L2', 'L3']) {
+      const gname = names.find((n) => n.startsWith(`21-divide-conquer__04-merge-k-sorted-lists.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null,
+        `S31 list nil: merge-k-sorted-lists ${level} still produces a golden — the remaining failure is the INPUT wire, not the comparison`,
+        `no golden named 21-divide-conquer__04-merge-k-sorted-lists.${level}.json — run \`npm run gen:traces\``);
+    }
+    // The mechanism, asserted on the codec rather than on a verdict, so it cannot rot into a gate
+    // that only ever reads numbers off disk. `list` and `tree` must now AGREE about nil.
+    const listCodec = getCodec('list', 'S31');
+    check(listCodec.owns(null) === true && getCodec('tree', 'S31').owns(null) === true,
+      'S31 list nil: `list` and `tree` now agree that nil is theirs — the asymmetry S26 fixed for `tree` only',
+      `owns(null): list ${listCodec.owns(null)}, tree ${getCodec('tree', 'S31').owns(null)}`);
+    check(listCodec.acceptsWire([]) === getCodec('tree', 'S31').acceptsWire([]),
+      'S31 list nil negative: `acceptsWire([])` is UNCHANGED — this slice moves the comparison side only, and must not touch which wires a codec accepts',
+      `acceptsWire([]): list ${listCodec.acceptsWire([])}, tree ${getCodec('tree', 'S31').acceptsWire([])} — the earlier, measured-net-negative lever was moved`);
+    // And the comparator must still reject a nil against the empty wire when it is handed one
+    // directly, or S26's property is gone.
+    check(equivalent('exact', [], null) === false,
+      "S31 list nil: the comparator still REJECTS nil against the empty wire on its own — the symmetry is in what the driver hands it, not in the comparator",
+      "equivalent('exact', [], null) accepted them — E28's registry changed under this slice");
+
     // ---- S29 · row 15 — the recorded call must be the one NEAREST the assertion ----
     // `const got = fn(2.1, 3); if (Math.abs(got - 9.261) > 1e-9) { … process.exit(1) }` asserts
     // through no asserter at all, so the spy's recorded call was still sitting there when the NEXT

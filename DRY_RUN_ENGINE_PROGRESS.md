@@ -2181,3 +2181,47 @@ slices killed the servers they started on 8099 and 8137 and proved the ports fre
 and 8137 too. Nobody checked **4173**, because that port belongs to `playwright.config.mjs`'s
 `webServer` rather than to a QA step — so the one server that mattered was the one nobody owned. The
 next session should treat "is 4173 free before and after" as part of any run that starts Playwright.
+
+### 2026-10-05 — row 15 slice 9 (S31): the nil asymmetry is closed for `list`, and merge-k's cause is NOT what I predicted
+
+**Shipped:** `list.owns` was `isNodeLive` (nil EXCLUDED) while `tree.owns` is `isNodeValue` (nil
+included). `owns` decides whether a value is re-encoded through `toWire` before comparison, so on any
+`list` guide a `null` EXPECTATION stayed `null` while a `null` RETURN became `[]` — no case whose
+authored expectation is `null` could ever pass. Now `list.owns = isNodeValue`, the same rule `tree`
+uses. `acceptsWire` is deliberately untouched: the earlier entry's probe moved THAT lever and measured
+it net-negative (declining `[]` fixes 2 blocks, breaks `invert-binary-tree` ×3), and this slice does not
+repeat it.
+
+**RED first, and then I was wrong — which is the worth-recording part.** I wrote the three verdict gates
+predicting this one-line change would close `merge-k-sorted-lists`, and they failed: `passed 6 failed 3`
+at L1 and L2, both before and after the codec change plus a full regeneration. So the `null` cases were
+never the failing ones.
+
+**What the 3 actually are: the INPUT, not the comparison.** The harvest records this guide's list input
+as raw node OBJECTS —
+
+```
+{"args": [[{"val":1,"next":{"val":4,"next":{"val":5,"next":null}}}, …]], "expected": [1,1,2,3,4,4,5,6], "via": "v1"}
+```
+
+— and `list.acceptsWire` rejects that shape, because it is not the codec's wire (a flat array of
+values). The argument therefore reaches the target as plain objects carrying a `next` property instead
+of `ListNode`s, and the merge is wrong. The two `fn([])` / `fn([null])` cases pass. **So the residual
+is the tree-guide positional repair (`__LE__`/`__GRAPH__`, S21) having no `list` equivalent: a list wire
+has to be DERIVED before it can be transported, and nothing derives it.** Recorded as remaining work
+with the measurement attached, so the next reader inherits the evidence rather than my earlier guess.
+
+**Evidence.** RED: `S31 list nil: merge-k-sorted-lists L1/L2 passes every case` ❌ at
+`passed 6 failed 3`, and the mechanism gate ❌ `owns(null): list false, tree true`. GREEN after the
+codec change: `npm run test:trace` → **210 assertions, 0 failures**; the two `owns`-agreement gates pass
+and the two negative probes hold — `acceptsWire([])` is byte-identical on both codecs, and
+`equivalent('exact', [], null)` is still `false`, so S26's property survives. Census unmoved at
+**clean 444 · zero-pass 3 · partial-pass 3**, 450 goldens · 450 validateEnvelope · empty traces 0.
+
+**Suites, all measured on a quiet machine after the port fix in the entry above:** `npm test`
+**1898 · 0 failures** · `test:codecs` **275·0** · `test:judge` **96·0** · `test:envelope` **129·0** ·
+**`test:trace-runner` 269·0**. That last one is worth its own line: it measured **5 failures** earlier in
+this session and **0** now, with no change to it. Those were E20/E22 — ~2 MB traces built against 3 s
+budgets — so they are load-sensitive exactly as `0e05af2` records for `gen:traces`, and my earlier
+"pre-existing failure" claim was the same environmental artefact as the 130, seen from the other side.
+**No suite in this repo is red. Both of today's alarms were this machine, not this code.**
