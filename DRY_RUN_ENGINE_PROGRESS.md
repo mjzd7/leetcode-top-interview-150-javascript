@@ -2419,3 +2419,25 @@ testable without executing a real 1 MB trace — it is a pure exported function 
 so a hand-built large envelope exercises the shedding logic deterministically and in milliseconds — or
 keep the end-to-end version as a *nightly* rather than a per-commit gate. Both trade away "a real run
 degrades" for determinism, which is why this is a decision and not a tweak.
+
+### 2026-10-05 — the caret assertion, made deterministic (and my own reintroduction of a frame count)
+
+The previous entry replaced the caret test's timer with a per-frame `takeRecords()` drain, which fixed
+the observer's microtask batching but left one racy assertion behind: `caretStates > 3`. That counts how
+many **frames** the caret survives, which is a function of the reveal animation's speed against the
+machine's frame rate — a property this test is not entitled to assert. It still failed 1 run in 4
+(`test:e2e` → 271 passed / 1 failed, 0 connection-refused), which is what surfaced it.
+
+Replaced with the claim the test's own name makes, and a **stronger** one:
+
+> the caret is present **while the text is still arriving**, not merely present at some point.
+
+Every observed DOM state records `(caretPresent, visibleLength)`; the assertion passes iff some
+caret-bearing state has `0 < length < finalLength`. That is deterministic — an incomplete state always
+exists during a reveal — and it is what "a caret marks the reveal position" actually means. The old
+threshold was not implied by that at all: it was a proxy that a fast reveal could fail while the feature
+worked.
+
+**Evidence: 3 consecutive runs, 15 passed each** (23.0 s / 22.7 s / 23.2 s), against 1 failure in 4 before.
+`caretStates` is still collected and reported, so the frame count is available for diagnosis without being
+gated on.
