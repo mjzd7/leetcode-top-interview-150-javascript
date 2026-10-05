@@ -451,3 +451,41 @@ test('the collapse control points the way it will move', async ({ page }) => {
   expect(seen[1].d, 'both widening steps point the same way').toBe(seen[2].d);
   expect(seen[3].d, 'and collapsing looks the same again on the way round').toBe(seen[0].d);
 });
+
+/* "On this page" showed the section in view and nothing else, and it showed it
+   closed: markActive collapsed every section including the one it had just
+   activated. So the list could not be navigated at all — the subsections of the
+   section you were reading were one click away and stayed there. */
+test.describe('the table of contents', () => {
+  test.skip(({ viewport }) => viewport.width < 1280, 'the TOC is a rail column from 1280');
+
+  test('the section in view is open, so its subsections can be reached', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    const at = async (frac) => {
+      await page.evaluate((f) => {
+        const c = document.getElementById('contentContainer');
+        c.scrollTop = (c.scrollHeight - c.clientHeight) * f;
+      }, frac);
+      await page.waitForTimeout(500);
+      return page.evaluate(() => {
+        const sec = document.querySelector('#tocNav .toc-sec.is-active');
+        return {
+          id: sec ? sec.dataset.sec : null,
+          expanded: sec ? sec.dataset.collapsed === 'false' : false,
+          subs: document.querySelectorAll('.toc-sec[data-collapsed="false"] .toc-sub-link').length,
+          totalSecs: document.querySelectorAll('#tocNav .toc-sec').length,
+        };
+      });
+    };
+
+    const seen = [];
+    for (const f of [0, 0.3, 0.6, 0.95]) seen.push(await at(f));
+
+    expect(seen[0].totalSecs, 'this guide has a table of contents').toBeGreaterThan(2);
+    expect(seen.map((s) => s.id).filter(Boolean).length, 'every position has a section in view')
+      .toBe(seen.length);
+    expect(seen.filter((s) => !s.expanded).map((s) => s.id),
+      'the section you are reading is closed at these positions').toEqual([]);
+    expect(seen.some((s) => s.subs > 0), 'and its subsections are reachable somewhere').toBe(true);
+  });
+});
