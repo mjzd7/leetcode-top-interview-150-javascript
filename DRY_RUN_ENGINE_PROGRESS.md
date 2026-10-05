@@ -2337,3 +2337,48 @@ timing-sensitive chat-streaming test, and is green on everything else including 
 row 15 — and it is now *visible in `verify`* rather than hidden outside it, which is the outcome the
 previous entry wanted. Recorded as debt, deliberately not taken: touching `api/chat.mjs` to make a
 timing assertion deterministic is a different row's work.
+
+### 2026-10-05 — the `chat-streaming` debt, paid: a MutationObserver instead of a timer, and a mock that stopped lying
+
+The entry above recorded this as debt belonging to the chat widget. It turned out to be **two defects in
+the spec file**, both now fixed, and neither required touching the widget.
+
+**Defect 1 — `mockDrip` never dripped.** Its docstring claimed the frames were *"released one per
+`gapMs` so the widget genuinely receives a drip rather than one burst"*, and argued that *"a fulfilled
+route hands over the whole body in a single piece, so the pacing has to be produced here"*. Measured:
+`gapMs` appeared **once** in the function, in the parameter list at line 53, and **never in the body** —
+the route fulfils `chunks.map(delta).join('')` in one burst. So the parameter was dead, the docstring
+described behaviour the code did not have, and every assertion downstream believed it was exercising the
+transport while it was actually timing the widget's own reveal animation. The parameter is gone and the
+docstring now says plainly that the pacing under test is the widget's cadence.
+
+**Defect 2 — both pacing assertions raced the clock.** They polled the DOM on a timer (25 ms and
+`requestAnimationFrame` + 16 ms) and counted distinct intermediate states. Under load a poll can step
+OVER a state, so a progressive reveal reports as a one-shot dump — which is exactly the failure the file's
+own header predicts for a *real* regression ("a single-shot dump … can only ever produce one sample").
+Both now observe DOM state instead, and the gates keep their teeth: a widget that assigned the whole
+buffer in one frame still produces exactly ONE length, so `samples.length > 3` still fails it.
+
+**A third thing found only by fixing the second: a MutationObserver CALLBACK is not enough.** The first
+version used `new MutationObserver(cb)` and still reported the caret as never seen — because the callback
+is delivered as a **microtask**, so a reveal running many frames inside one task collapses into a single
+callback fired *after the fact*, when `docs/chat-widget.js:1067`'s `<span class="ltc-caret">` is already
+gone. The working form drains `observer.takeRecords()` **synchronously once per frame**, which observes
+every state the DOM actually passed through. Worth stating as a rule: **an observer that only counts
+callbacks undercounts a fast animation.**
+
+**Evidence — 4 consecutive runs, and the comparison that matters:**
+
+| | before | after |
+|---|---|---|
+| assertion failures | **2 of 3 runs** (`text must arrive in multiple visible steps`, `a caret marks the reveal position`) | **0 of 4 runs** |
+| result | — | 15 passed · 15 passed · **8 failed (16.3 s)** · 15 passed |
+
+The third run is stated rather than hidden: it mass-failed in 16.3 s with port 4173 empty, which is the
+**server-startup** path failing before any assertion ran — the same `webServer` lifecycle issue as the
+leaked-`serve` entry above, and the reason that entry insists on checking 4173 before and after. It is
+not an assertion failure, and the run either side of it is green.
+
+**Not claimed:** that the spec is now non-flaky. It is *less* flaky in the way that was measured — the
+assertion race is gone — while `test:e2e`'s webServer remains a known source of whole-run failures that
+no change here addresses. One run in four is not a pass rate worth banking.
