@@ -896,7 +896,13 @@
     .ltc-hint .k { font-size: 0.6rem; padding: 0.05rem 0.25rem; }
     @media (max-width: 420px) { .ltc-hint { display: none; } }
     .ltc-fab {
-      position: fixed; right: 1rem; bottom: 1rem; z-index: 41;
+      position: fixed; right: 1rem;
+      /* Clears the reader's sticky prev/next pair, which is 75px tall at every
+         width and every cell count. Both want the bottom-right corner and
+         neither yielded: at 360px the button covered the whole pair, and 2648px²
+         of the Next cell, which is the only route to the next guide. */
+      bottom: calc(1rem + 75px);
+      z-index: 41;
       display: inline-flex; align-items: center; justify-content: center;
       width: 56px; height: 56px; border-radius: 999px;
       background: var(--accent); color: var(--accent-ink);
