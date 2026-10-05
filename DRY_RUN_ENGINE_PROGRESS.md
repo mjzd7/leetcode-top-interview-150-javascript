@@ -2015,3 +2015,63 @@ function *through* a wrapper, which is the same class of problem as S21's derive
 recording (already solved for node arguments, unsolved for the owning function) and would need its
 own RED-first gate whose negative probe is **"no guide loses a golden"** — the assertion this
 attempt violated and the one I should have written first.
+
+### 2026-10-05 — row 15 slice 7 (S29): a draw sequence is DATA, so `insert-delete-getrandom-o1` is closed
+
+**The three `random-o1` blocks were the last CORRECTLY-refused item, and the refusal's own stated
+reason turned out to be removable.** The earlier entry refused them because replaying an op list
+against a live `Math.random` gave `6/1`, `4/3`, `6/1` on three consecutive regenerations of ONE tree
+— and that measurement is exactly right: a golden whose verdict moves cannot be gated on. What was
+missing is that the refusal threw away the *draw sequence* along with the nondeterminism.
+
+**The fix is the recorded-parameter model, not a seed and not a stub.** openleetcode's suite format
+carries a top-level `out:` — *"Global random seed (used when a test case doesn't specify its own)"* —
+and Kattis pins nondeterministic problems to a seed the same way; LeetCode's own statement for 380
+defines correctness as *"should return either 1 or 2 randomly"*, i.e. membership, never one fixed
+draw. So the sequence is **recorded at harvest and replayed** rather than re-rolled:
+
+- the harvest installs `Math.random` as an **accessor** (`Object.defineProperty`), so it observes
+  whatever draw function the authored script installs — this guide's is
+  `() => DRAWS[draw++ % DRAWS.length]` — instead of racing it. Every value the target receives is
+  pushed to `__DRAWS__`, and each case carries the slice its own assertion consumed (mirroring S23's
+  `__FROM__`, because the script resets its cursor between sequences);
+- `buildBundle` replays `t.draws` from a cursor before the call and **restores `Math.random`
+  immediately after it**, so one case's draws cannot leak into the next;
+- a non-deterministic block whose cases carry **no** recorded draws are DROPPED and counted
+  (`unpinned`), so the old moving-verdict state is now unreachable rather than merely discouraged.
+
+**This is not the global stub §5d forbade.** No authored text executes in the driver and the stub's
+*logic* is not shipped — only the values it returned, as committed, reviewable case data riding the
+existing `JSON.stringify(tests)`. Envelope v1.1 is untouched (no new field anywhere), the same
+carriage `t.via` and `t.ops` already use.
+
+**Evidence, RED first:**
+
+- the three `S29 draws: insert-delete-getrandom-o1 L1/L2/L3` gates and the determinism probe were
+  written BEFORE the implementation and failed: `passed 0, failed 7` at all three levels, and
+  `S29 draws: replaying a recorded draw sequence … the randomness is pinned` FAIL.
+- after: `npm run test:trace` → **199 assertions, 0 failures** (was 197; +2 net — the three
+  "still wrong on purpose" assertions became three real ones and one probe became two).
+- **reproducibility, which is the actual claim, measured two ways.** `npm run gen:traces` twice over
+  one tree → `shasum judge/traces/*.head.json | shasum` =
+  `840e9c2229e404442474d0705b7ff6fe1d365da3` **twice**, byte-identical; before this slice the same
+  tree gave `6/1`, `4/3`, `6/1`. And the S29 probe drives the REAL `buildBundle` + `executeUserCode`
+  twice and compares the produced VALUES, not a verdict read off disk (reading another verdict off
+  disk is what made the original defect invisible): pinned → `["lo","mid","hi"]` twice; the negative,
+  same case with `draws` removed → `["lo","mid","hi"]` then `["lo","mid","lo"]`, so the probe can
+  tell a moving answer from a stable one.
+- the probe deliberately uses a **plain function on the `json` codec**, not the `ops` branch: the claim
+  under test is the draw replay, and going through ops would make a failure ambiguous between the two
+  mechanisms. (It first did use ops and produced `[null,null,null]` — the probe was wrong about the op
+  shape, not the driver.)
+- census **clean 439 → 442, zero-pass 6 → 3**, partial-pass **5 unchanged**. Ratchet baseline
+  `{6,5}` → `{3,5}`, all three negative probes re-confirmed biting (they are written relative to the
+  baseline: `at(1,0)`=4/5 → 1 breach, `at(0,1)`=3/6 → 1 breach, `at(-1,-1)`=2/4 → 0 breaches).
+- suites unmoved: `npm test` **1898 · 0 failures** · `test:judge` **96·0** · `test:codecs` **275·0** ·
+  `test:envelope` **129·0** · `gen:traces` **450 goldens · 450 validateEnvelope · empty traces 0**.
+
+**Note on gate numbering.** Three earlier slices had already claimed S26, S27 and S28, so this row is
+**S29**. Worth recording as a process cost: the numbering collided twice (S26 "encoding", S27 "sibling
+helper"/"nearest") before I checked `grep -o 'S[0-9]\+' | sort -uV` and found S0–S28 all taken. The
+collision was caught by reading the PASS lines rather than by the suite going red, because two gates
+sharing a label still both run.
