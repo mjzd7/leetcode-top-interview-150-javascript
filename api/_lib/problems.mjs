@@ -206,7 +206,17 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `      try {`,
     // Only a value that IS this codec's canonical wire is decoded. A tree guide whose target
     // takes a plain array (`buildTree(preorder, inorder)`, `sortedArrayToBST(nums)`) keeps it.
-    `        var args = (t.args || []).map(__dec__);`,
+    //
+    // Row 15 / S34 - and `t.live` is the harvest declining that judgement for ONE case, because it
+    // saw which call produced the argument. `[]` is byte-identical in two records that need opposite
+    // handling: `invert-binary-tree`'s `empty tree` is `arrayToTree([])`'s wire and MUST decode, while
+    // `merge-k-sorted-lists`' `empty array` is the author writing `fn([])` - "no lists at all" - and
+    // `list.acceptsWire([])` is `true`, so decoding it hands the target `null` and the target throws
+    // on `for (const head of null)`. No codec change can separate them: `acceptsWire([])` declined
+    // fixes 2 blocks and breaks `invert-binary-tree` x3, measured. The PROVENANCE differs, and the
+    // harvest is the only party that saw it. Absent `live` this line is the old one, argument for
+    // argument, so no other block's bundle moves a byte.
+    `        var args = (t.args || []).map(function (a, i) { return t.live === 1 ? a : __dec__(a); });`,
     `        var before = args.map(__snap__);`,
     // Row 15 / S23 — a CLASS target's op sequence. The harvest records the method calls the authored
     // script made on ONE constructed instance, and this is where they are replayed AGAINST THE
