@@ -2202,7 +2202,13 @@ test('only the icon rail drops the nav labels', async ({ page }) => {
   await page.locator(navCollapse).click();
   await expect(page.locator(nav)).toHaveAttribute('data-stage', '2');
   await expect(title, 'icon rail drops the labels').toBeHidden();
-  await expect(page.locator('#curriculumNav .nav-item').first()).toBeVisible();
+  // The 56px rail has two modes: categories, or numbers. In category mode the
+  // guide rows are hidden behind their glyphs, so what must be visible is the
+  // category rail; number mode brings the rows back.
+  await expect(page.locator('#curriculumNav .nav-cat-btn').first(), 'category rail is what shows').toBeVisible();
+  await page.locator(nav).press('Alt+KeyV');
+  await expect(page.locator(nav)).toHaveAttribute('data-rail-mode', 'num');
+  await expect(page.locator('#curriculumNav .nav-item').first(), 'number mode shows the guides').toBeVisible();
 });
 
 test('the nav stage survives a reload', async ({ page }) => {
@@ -2215,10 +2221,15 @@ test('the nav stage survives a reload', async ({ page }) => {
   await page.locator(navCollapse).click();
   await page.locator(navCollapse).click();
   await expect(page.locator(nav)).toHaveAttribute('data-stage', '2');
+  await page.locator(nav).press('Alt+KeyV');
+  await expect(page.locator(nav)).toHaveAttribute('data-rail-mode', 'num');
 
   await page.reload();
   await page.waitForSelector('#curriculumNav .nav-item');
+  // Both halves of the collapsed rail's state are remembered, or a deliberate
+  // choice silently resets on the next reload.
   await expect(page.locator(nav)).toHaveAttribute('data-stage', '2');
+  await expect(page.locator(nav)).toHaveAttribute('data-rail-mode', 'num');
   expect(await navWidth(page)).toBeCloseTo(NAV_WIDTHS[2], 0);
 });
 
