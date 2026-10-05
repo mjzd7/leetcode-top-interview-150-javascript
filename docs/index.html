@@ -51,6 +51,7 @@
       --muted: #8B94A7;
       --accent: #C8FA4B;
       --accent-ink: #101303;
+      --rail-bg: #0B0D12;
     }
     html { background: var(--bg); overflow-x: hidden; overflow-x: clip; }
     body { overflow-x: hidden; overflow-x: clip;
@@ -118,6 +119,27 @@
     .mermaid svg { max-width: 620px !important; width: 100%; height: auto; }
     .mermaid .edgeLabel { background-color: #1A2130 !important; color: #E9EDF4 !important; }
     .nav-item { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+/* The name a collapsed destination belongs to. Two separate jobs: the
+       sr-only span is what assistive tech always reads, and this tooltip is the
+       sighted affordance. `title` would do neither — announced inconsistently,
+       absent on touch, and undismissable.
+
+       It lives on <body>, not inside the nav, because #curriculumNav is the
+       scroll container: overflow-y:auto forces overflow-x to clip as well, so a
+       tooltip nested in there is painted exactly where it must not be — off the
+       right edge of a 56px rail, invisible. */
+    .nav-tip {
+      position: fixed; z-index: 70; left: 0; top: 0;
+      padding: 0.3rem 0.55rem; border-radius: 8px;
+      width: max-content; max-width: 260px;
+      background: #1A2130; border: 1px solid #2A3448;
+      color: #E9EDF4; font-size: 12px; line-height: 1.35;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transition: opacity 0.12s ease, visibility 0.12s ease;
+    }
+    .nav-tip.is-shown { opacity: 1; visibility: visible; }
+    @media (prefers-reduced-motion: reduce) { .nav-tip { transition: none; } }
     .mod-bar { height: 3px; border-radius: 999px; background: #1C2333; overflow: hidden; }
     .mod-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s ease; }
     #sidebar { transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
@@ -178,10 +200,32 @@
       .toc-sub, .toc-toggle, .toc-toggle svg { transition: none; }
       .toc-sec[data-collapsed="false"] .toc-sub-link { animation: none; }
     }
+/* Prev/next sat at the very end of the article — on a long guide that is
+       three thousand pixels down, so the only way to reach it was to scroll the
+       whole page. Sticky bottom pins it to the scrollport instead: the article
+       is the containing block, so it stays put for the entire scroll and only
+       releases at the very end. */
+    #prevNext {
+      position: sticky; bottom: 0; z-index: 5;
+      margin-top: 2.5rem; padding: 0.6rem 0.15rem 0.15rem;
+      background: linear-gradient(180deg, rgba(8, 9, 13, 0) 0%, rgba(8, 9, 13, 0.92) 34%, #08090D 72%);
+      backdrop-filter: blur(6px);
+    }
+    /* The columns follow the cells that exist: one neighbour spans the row
+       rather than leaving half of it blank. */
+    #prevNext[data-count="2"] { grid-template-columns: 1fr 1fr; }
+    #prevNext[data-count="1"] { grid-template-columns: 1fr; }
+    #prevNext[hidden] { display: none; }
     kbd.k {
       font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
       background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
       border-radius: 0.375rem; padding: 0.1rem 0.4rem; color: #AEB8CC;
+      line-height: 1.1;
+    }
+    /* Chips sitting inside a 40px header button: the default keycap is 26px,
+       which is most of the button's height and reads as a nested control. */
+    #paletteBtn kbd.k {
+      font-size: 0.62rem; padding: 0.05rem 0.3rem; line-height: 1.15;
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
@@ -214,10 +258,77 @@
       #sidebar[data-stage="2"] .nav-group-count { display: none; }
       /* At 56px these collapse to unusable slivers, so they go too. */
       #sidebar[data-stage="2"] #searchInput,
-      #sidebar[data-stage="2"] #difficultyFilters { display: none; }
-      #sidebar[data-stage="2"] .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
-      #sidebar[data-stage="2"] .nav-item > .shrink-0 { width: auto; }
+      #sidebar[data-stage="2"] #difficultyFilters,
+      #sidebar[data-stage="2"] .mod-bar { display: none; }
+      /* 16px of padding plus the 12px flex gap pushed the 32px collapse button
+         to x=28..60 inside a 56px rail, so it hung 4px over the content edge. */
+      #sidebar[data-stage="2"] > div:first-child { padding-left: 0; padding-right: 0; gap: 0; }
       #ltNavCollapse { display: flex; }
+
+      /* ---- the 56px rail has two modes, toggled with the option key ----
+         A collapsed rail of 175 identical dots is a memory test: nothing says
+         what you are about to click. Category mode trades the list for the 28
+         destinations it contains; number mode trades it for the guide's own
+         number. Both are learnable, which a dot is not. */
+      #sidebar[data-stage="2"] .nav-group-text { display: none; }
+      #sidebar[data-stage="2"] .nav-cat-btn { display: flex; }
+      #sidebar[data-stage="2"] #curriculumNav { padding-left: 0; padding-right: 0; }
+
+      /* Category mode: one accent glyph per category, the guide list hidden. */
+      #sidebar[data-stage="2"][data-rail-mode="cat"] .nav-item { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="cat"] .nav-group { margin-bottom: 2px; }
+      .nav-cat-btn {
+        display: none; align-items: center; justify-content: center;
+        width: 40px; height: 40px; margin: 0 auto; border-radius: 11px;
+        color: var(--muted); cursor: pointer;
+        border: 1px solid transparent; background: transparent;
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      }
+      .nav-cat-btn svg { width: 19px; height: 19px; }
+      .nav-cat-btn:hover { color: var(--accent); background: rgba(200, 250, 75, 0.08); }
+      .nav-cat-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      /* The category the open guide belongs to, so the rail still says where
+         you are when the guide list itself is hidden. */
+      .nav-cat-btn[data-current="true"] {
+        color: var(--accent); background: rgba(200, 250, 75, 0.12);
+        border-color: rgba(200, 250, 75, 0.35);
+      }
+      .nav-cat-btn[data-done="true"]::after {
+        content: ''; position: absolute; margin: -20px 0 0 20px;
+        width: 5px; height: 5px; border-radius: 999px; background: var(--accent);
+      }
+
+      /* Number mode: the guide's own number stands in for the title. */
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-cat-btn { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-item {
+        justify-content: center; padding-left: 0; padding-right: 0; gap: 0;
+      }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-mark { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-group { margin-bottom: 2px; }
+      /* The category divider keeps number mode scannable without becoming one
+         of the 4px voids the old headers left behind. */
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-group-rule {
+        display: block; height: 1px; margin: 6px 10px;
+        background: rgba(148, 163, 184, 0.16);
+      }
+      .nav-group-rule { display: none; }
+      .nav-code { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-code {
+        display: block; font-family: "JetBrains Mono", monospace;
+        font-size: 11px; line-height: 1; letter-spacing: -0.03em;
+        color: #AEB8CC; font-variant-numeric: tabular-nums;
+      }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-item[data-done="true"] .nav-code { color: var(--accent); }
+
+      /* The old active state was rgba(200,250,75,.1) — invisible at 56px. The
+         rail's whole job is orientation, so it gets a filled accent chip plus a
+         left bar, and the row is marked for assistive tech. */
+      #sidebar[data-stage="2"] .nav-item[aria-current="page"] {
+        background: rgba(200, 250, 75, 0.16) !important;
+        color: var(--accent) !important;
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      #sidebar[data-stage="2"] .nav-item[data-done="true"] .nav-title { opacity: 0.75; }
     }
     .ltc-backdrop {
       position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
@@ -257,7 +368,7 @@
         flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
         transform: none; visibility: visible; box-shadow: none;
         border-top: 1px solid var(--line); border-left: none;
-        background: #0B0D12;
+        background: var(--rail-bg);
       }
     }
     .ltc-head {
@@ -329,6 +440,17 @@
     .ltc-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     @media (min-width: 1024px) { .ltc-close { display: none; } }
     .ltc-log-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
+    /* The scroll-down chevron floats over the last message, so that message has
+       to fade out under it rather than sit raw behind a circle. The gradient
+       starts at the rail's own background colour, so the log dissolves into the
+       panel instead of ending on a visible edge. */
+    .ltc-log-wrap::after {
+      content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
+      pointer-events: none; z-index: 1; opacity: 0;
+      background: linear-gradient(to top, var(--rail-bg), transparent);
+      transition: opacity 0.2s ease;
+    }
+    .ltc-log-wrap:has(.ltc-scroll-down.is-shown)::after { opacity: 1; }
     .ltc-log {
       flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
       padding: 1rem 0.9rem 1.25rem; display: flex; flex-direction: column; gap: 1.15rem;
@@ -802,8 +924,11 @@
     <div id="progressBar" class="h-full w-0" style="background: var(--accent);"></div>
   </div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-30 border-b border-[rgba(148,163,184,0.13)] bg-[#08090D]/85 backdrop-blur-md">
+  <!-- Header. The hairline is an inset shadow, not a border: a border would make
+       the header 57px tall while every column below it (sidebar, main, rail) is
+       positioned at 3.5rem = 56px, pushing all three 1px off the bottom of the
+       screen and clipping the assistant's composer hint. -->
+  <header class="sticky top-0 z-30 bg-[#08090D]/85 backdrop-blur-md" style="box-shadow: inset 0 -1px 0 rgba(148,163,184,0.13);">
     <div class="h-14 px-3 md:px-6 flex items-center gap-2 md:gap-4">
       <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -815,8 +940,8 @@
       <div class="flex-1"></div>
       <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0"></div>
       <div id="authArea" class="shrink-0"></div>
-      <button id="guidesBtn" title="Open the MAANG interview guides" class="hidden sm:flex items-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 py-2 text-sm font-semibold min-h-[40px]" style="color:var(--accent);">Guides</button>
-      <button id="paletteBtn" class="flex items-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 py-2 text-sm text-slate-400 min-h-[40px]">
+      <button id="guidesBtn" title="Open the MAANG interview guides" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 h-10 text-sm font-semibold shrink-0 whitespace-nowrap" style="color:var(--accent);">Guides</button>
+      <button id="paletteBtn" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         <span class="hidden md:inline">Jump to…</span>
         <span class="hidden md:flex items-center gap-1"><kbd class="k">⌘</kbd><kbd class="k">K</kbd></span>
@@ -864,7 +989,7 @@
           <div id="crumbRow" class="hidden mb-3 items-center gap-2 text-xs font-mono text-slate-500"></div>
           <div id="articleHead" class="mb-6"></div>
           <div id="articleContent" class="prose max-w-none"></div>
-          <div id="prevNext" class="mt-10 grid grid-cols-2 gap-3"></div>
+          <div id="prevNext" class="mt-10 grid gap-3" data-count="2"></div>
           <footer class="mt-10 pb-6 text-xs text-slate-600 font-mono">Top Interview 150 · Visual JS Manual · built from executable guides</footer>
         </article>
       </div>
@@ -966,10 +1091,79 @@
     const DATA = (window.CURRICULUM_DATA || []).filter(c => c && Array.isArray(c.items));
     const byId = new Map();
     const flatOrder = [];
+    const allOrder = [];
     DATA.forEach(cat => cat.items.forEach(item => {
       byId.set(item.id, { item, category: cat.category });
+      allOrder.push(item.id);
       if (cat.category !== 'FOUNDATIONS') flatOrder.push(item.id);
     }));
+
+    /* ---------- the 56px rail ---------- */
+    /* One glyph per category, drawn to be told apart at 19px: a grid reads as a
+       matrix, stacked bars as a stack, connected nodes as a linked list. Detail
+       is the enemy here — silhouette does the identifying, and the tooltip
+       carries the name. */
+    const CAT_ICON = {
+      'FOUNDATIONS': '<path d="M4 6.5h16M4 12h16M4 17.5h10"/>',
+      'MAANG GUIDES': '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22"/>',
+      'MODERN ENGINEER SKILLS': '<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/>',
+      'FRESHER ROADMAP': '<path d="M6 21V4M6 4.5h11l-2.4 3.6L17 12H6"/>',
+      'MID-LEVEL ROADMAP': '<path d="M3 20h5v-5h5v-5h5V5"/>',
+      'ARRAY STRING': '<path d="M4 8h16M4 12h16M4 16h16"/>',
+      'TWO POINTERS': '<path d="M4 12h13M13 8l4 4-4 4M20 5v14"/>',
+      'SLIDING WINDOW': '<rect x="3" y="7" width="12" height="10" rx="1.6"/><path d="M17 12h4M19 10l2 2-2 2"/>',
+      'MATRIX': '<rect x="4" y="4" width="16" height="16" rx="1.6"/><path d="M4 12h16M12 4v16"/>',
+      'HASHMAP': '<rect x="3" y="9" width="8" height="6" rx="1.4"/><rect x="14" y="9" width="7" height="6" rx="1.4"/><path d="M11 12h3M6 6v3M18 6v3"/>',
+      'INTERVALS': '<path d="M4 8h16M7 13h13M4 18h9"/>',
+      'STACK': '<path d="M4 8h16M6 12h12M8 16h8"/><path d="M12 19v2.5M10 20l2 2 2-2"/>',
+      'LINKED LIST': '<circle cx="5" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/>',
+      'BINARY TREE GENERAL': '<circle cx="12" cy="5" r="2.2"/><circle cx="5.5" cy="18" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="M10.4 6.8 7 15.9M13.6 6.8 17 15.9"/>',
+      'BINARY TREE BFS': '<circle cx="12" cy="5" r="2.1"/><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="12" r="2.1"/><path d="M12 7.1V10M6 14.1V18M18 14.1V18M3 18h6M15 18h6"/>',
+      'BINARY SEARCH TREE': '<circle cx="12" cy="5" r="2.1"/><circle cx="6" cy="13" r="2.1"/><circle cx="18" cy="13" r="2.1"/><path d="M10.5 6.6 7.6 11M13.5 6.6 16.4 11M8.1 13v4h7.8v-4"/>',
+      'BINARY SEARCH': '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5"/>',
+      'HEAP': '<path d="M12 4l7 6H5z"/><circle cx="12" cy="4" r="1.5"/><circle cx="5" cy="10" r="1.5"/><circle cx="19" cy="10" r="1.5"/><path d="M12 13v3M6.6 18.5h10.8"/>',
+      'BACKTRACKING': '<path d="M9 20H6a3 3 0 0 1-3-3v-4a3 3 0 0 1 3-3h3"/><path d="M8 6l3.5 3.5L8 13"/><path d="M13 20h5"/>',
+      'MATH': '<path d="M5 7h14M5 12h14M5 17h14M9 4v16M15 4v16"/>',
+      'ONE DP': '<rect x="4" y="5" width="16" height="14" rx="1.6"/><path d="M4 12h16M9 9.5v5M13 9.5v5"/>',
+      'MULTI DP': '<rect x="4" y="5" width="16" height="14" rx="1.6"/><path d="M4 10h16M4 14.5h16M9.5 5v14M15 5v14"/>',
+      'GRAPH GENERAL': '<circle cx="6" cy="7" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="12" cy="18" r="2.1"/><path d="M7.7 8.4 10.6 16M16.4 7.6 13.4 16M8 6.6l7.9-.4"/>',
+      'GRAPH BFS': '<circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="4.5" r="1.8"/><circle cx="19" cy="16" r="1.8"/><circle cx="5" cy="16" r="1.8"/><path d="M12 6.3v3.6M13.7 13.3l3.6 1.7M10.3 13.3l-3.6 1.7"/>',
+      'TRIE': '<circle cx="12" cy="4.5" r="1.9"/><circle cx="6" cy="12" r="1.9"/><circle cx="18" cy="12" r="1.9"/><circle cx="6" cy="19.5" r="1.9"/><path d="M10.6 6.1 7.3 10.4M13.4 6.1l3.3 4.3M6 13.9v3.7"/>',
+      'DIVIDE CONQUER': '<path d="M12 3v5M12 8L5.5 15M12 8l6.5 7"/><circle cx="5.5" cy="18" r="2"/><circle cx="18.5" cy="18" r="2"/><path d="M4 21.5h16"/>',
+      'BIT MANIPULATION': '<path d="M6 4v16M11 4v16M16 4v16M21 4v16"/><path d="M3.5 8.5h5M8.5 15.5h5M13.5 8.5h5M18.5 15.5h5"/>',
+      'KADANES ALGORITHM': '<path d="M3 17l4.5-6 4 3.5L21 6"/><path d="M15.5 6H21v5.5"/>',
+    };
+    const catIcon = (cat) =>
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
+      + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+      + (CAT_ICON[cat] || CAT_ICON['MAANG GUIDES']) + '</svg>';
+
+    /* A short code that identifies a guide in the number-mode rail. The 150
+       problems keep their own LeetCode number, which a reader already knows.
+       The 25 non-problem rows would collide with problems 1..4 on a bare leading
+       digit, so they get a letter that says which kind of guide they are. */
+    const PRIMER_CODE = { 'FOUNDATIONS': 'P', 'MAANG GUIDES': 'G', 'MODERN ENGINEER SKILLS': 'S', 'FRESHER ROADMAP': 'F', 'MID-LEVEL ROADMAP': 'M' };
+    const guideCode = (entry, indexInCategory) => {
+      const cat = entry.category;
+      const letter = PRIMER_CODE[cat];
+      if (!letter) {
+        const m = /^\s*(\d{1,3})\./.exec(entry.item.title);
+        return m ? m[1] : '';
+      }
+      if (cat === 'MAANG GUIDES') return maangCode(entry.item);
+      const own = new RegExp('^\\s*(?:' + letter + ')?(\\d{1,2})\\s*(?:[.)]|—)').exec(entry.item.title);
+      if (own) return letter + own[1];
+      return letter;
+    };
+    /* MAANG's five guides carry no number in their titles, so the letter alone
+       would repeat five times. Their position in the category is stable — the
+       order comes from the build, not from render order — so it is a code that
+       never collides and never needs resetting. */
+    const maangCode = (item) => {
+      const cat = DATA.find(c => c.category === 'MAANG GUIDES');
+      const i = cat ? cat.items.findIndex(x => x.id === item.id) : -1;
+      return 'G' + (i + 1);
+    };
 
     /* ---------- persistent progress ---------- */
     const LS_KEY = 'lt150-done-v1';
@@ -1028,6 +1222,7 @@
         return;
       }
       DATA.forEach(cat => {
+        const all = cat.items;
         const items = cat.items.filter(item => {
           const diffOk = activeFilter === 'ALL' ? true : item.difficulty === activeFilter;
           if (!diffOk) return false;
@@ -1039,8 +1234,27 @@
         const isFound = cat.category === 'FOUNDATIONS';
         const doneCount = isFound ? 0 : items.filter(i => doneSet.has(i.id)).length;
         const wrap = document.createElement('div');
+        wrap.className = 'nav-group';
+        const catDone = all.filter(i => doneSet.has(i.id)).length;
+        const catCurrent = all.some(i => i.id === currentItemId);
+        /* Category mode's destination: the glyph opens the rail and scrolls to
+           this group, so the rail is navigation rather than decoration. */
+        const catBtn = document.createElement('button');
+        catBtn.type = 'button';
+        catBtn.className = 'nav-cat-btn';
+        catBtn.dataset.cat = cat.category;
+        catBtn.dataset.guideId = all[0] ? all[0].id : '';
+        if (catCurrent) catBtn.dataset.current = 'true';
+        if (catDone === all.length && all.length) catBtn.dataset.done = 'true';
+        catBtn.setAttribute('aria-label', cat.category + ' — ' + catDone + ' of ' + all.length + ' complete');
+        catBtn.innerHTML = catIcon(cat.category)
+          + '<span class="ltc-sr-only">' + esc(cat.category) + '</span>';
+        catBtn.dataset.tip = cat.category;
+        catBtn.onclick = () => revealCategory(cat.category);
+        wrap.appendChild(catBtn);
+
         const head = document.createElement('div');
-        head.className = 'px-2 pt-1';
+        head.className = 'px-2 pt-1 nav-group-text';
         head.innerHTML = '<div class="flex items-baseline justify-between gap-2">' +
           '<span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">' + esc(cat.category) + '</span>' +
           (isFound
@@ -1049,23 +1263,34 @@
           '</div>' +
           (isFound ? '' : '<div class="mod-bar mt-1.5"><span style="width:' + Math.round((doneCount / items.length) * 100) + '%"></span></div>');
         wrap.appendChild(head);
+        const rule = document.createElement('div');
+        rule.className = 'nav-group-rule';
+        wrap.appendChild(rule);
         const list = document.createElement('div');
         list.className = 'space-y-0.5 mt-1';
         items.forEach(item => {
           const done = doneSet.has(item.id);
           const active = item.id === currentItemId;
           const btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = 'nav-item w-full text-left px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-2 border min-h-[44px] md:min-h-0';
           btn.style.cssText = active
             ? 'background:rgba(200,250,75,.1);color:#fff;border-color:rgba(200,250,75,.35);'
             : 'color:#C2C9D8;border-color:transparent;';
+          if (active) btn.setAttribute('aria-current', 'page');
+          btn.dataset.guideId = item.id;
+          if (done) btn.dataset.done = 'true';
+          if (active) btn.dataset.active = 'true';
           btn.onmouseenter = () => { if (!active) btn.style.background = 'rgba(255,255,255,.05)'; };
           btn.onmouseleave = () => { if (!active) btn.style.background = 'transparent'; };
+          const code = guideCode({ item, category: cat.category }, 0);
           btn.innerHTML =
-            '<span class="shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+            '<span class="nav-mark shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+            '<span class="nav-code" aria-hidden="true">' + esc(code) + '</span>' +
             '<span class="nav-title truncate flex-1 ' + (done && !active ? 'line-through opacity-60' : '') + '">' + esc(item.title) + '</span>' +
+            '<span class="ltc-sr-only">' + esc(item.title) + '</span>' +
             badge(item.difficulty);
-          btn.title = item.title;
+          btn.dataset.tip = item.title;
           btn.onclick = () => openArticle(item.id);
           list.appendChild(btn);
         });
@@ -1074,6 +1299,126 @@
       });
       renderProgress();
     }
+
+    /* The collapse control owns stage AND, because the two are the same gesture on
+       the same rail, the hidden header fields. renderNav re-reads stage from
+       here rather than keeping a second copy that can disagree. */
+    function setNavStage(s, persist) {
+      const el = $('sidebar'), btn = $('ltNavCollapse');
+      if (!el) return;
+      const STAGE_LABELS = ['Collapse the navigation',
+                            'Widen the navigation to a text rail',
+                            'Widen the navigation fully'];
+      const stage = ((s % 3) + 3) % 3;
+      el.dataset.stage = String(stage);
+      if (btn) {
+        btn.setAttribute('aria-label', STAGE_LABELS[stage]);
+        btn.title = STAGE_LABELS[stage];
+      }
+      ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
+        const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
+      });
+      if (persist) { try { localStorage.setItem('lt150-nav-stage', String(stage)); } catch (e) {} }
+    }
+
+    /* One tooltip for the whole rail, parked on <body> and positioned in
+       viewport coordinates. Per-item tooltips were unreachable: the nav is the
+       scroll container, and overflow-y:auto clips overflow-x too, so anything
+       drawn outside the 56px rail never painted. */
+    (function initNavTip() {
+      const el = $('sidebar');
+      const nav = $('curriculumNav');
+      if (!el || !nav) return;
+      const tip = document.createElement('div');
+      tip.className = 'nav-tip';
+      tip.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(tip);
+
+      const show = (target) => {
+        const text = target?.dataset?.tip;
+        if (!text) return;
+        tip.textContent = text;
+        tip.classList.add('is-shown');
+        const r = target.getBoundingClientRect();
+        // Measure at the rail's edge, then clamp so a long guide title stays on
+        // screen instead of running off the right.
+        tip.style.left = '0px';
+        tip.style.top = '0px';
+        const h = tip.offsetHeight, w = tip.offsetWidth;
+        const x = r.right + 10;
+        tip.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+        tip.style.top = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, innerHeight - h - 8)) + 'px';
+      };
+      const hide = () => tip.classList.remove('is-shown');
+
+      nav.addEventListener('pointerover', (e) => {
+        if (el.dataset.stage !== '2') return;
+        const t = e.target.closest('[data-tip]');
+        if (t) show(t); else hide();
+      });
+      nav.addEventListener('pointerleave', hide);
+      nav.addEventListener('focusin', (e) => {
+        if (el.dataset.stage !== '2') return;
+        const t = e.target.closest('[data-tip]');
+        if (t) show(t); else hide();
+      });
+      nav.addEventListener('focusout', hide);
+      window.addEventListener('scroll', hide, true);
+      window.addEventListener('resize', hide);
+    })();
+
+    /* The category glyph doubles as the rail's scroll thumb: since only icons
+       show, the reader has no other way to move through 28 of them. */
+    (function initRailScroller() {
+      const el = $('sidebar');
+      const nav = $('curriculumNav');
+      if (!el || !nav) return;
+      nav.addEventListener('wheel', (e) => {
+        if (el.dataset.stage !== '2') return;
+        const max = nav.scrollHeight - nav.clientHeight;
+        if (max <= 0) return;
+        e.preventDefault();
+        nav.scrollTop = Math.max(0, Math.min(max, nav.scrollTop + e.deltaY));
+      }, { passive: false });
+    })();
+
+    /* Opened from a category glyph: widen the rail and scroll the group into
+       view, so the click lands somewhere legible instead of just toggling. */
+    function revealCategory(category) {
+      if ($('sidebar').dataset.stage === '2') setNavStage(0, true);
+      requestAnimationFrame(() => {
+        const group = [...nav.querySelectorAll('.nav-group')]
+          .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === category);
+        if (group) group.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+    }
+
+    /* ⌥V swaps what the 56px rail shows: the 28 categories, or the guide
+       numbers. Persisted, because a rail that silently resets each session is the
+       thing that makes people stop trusting it. */
+    (function initRailMode() {
+      const el = $('sidebar');
+      if (!el) return;
+      const KEY = 'lt150-rail-mode';
+      let mode = 'cat';
+      try { const v = localStorage.getItem(KEY); if (v === 'cat' || v === 'num') mode = v; } catch (e) {}
+      const apply = (m, persist) => {
+        mode = m === 'num' ? 'num' : 'cat';
+        el.dataset.railMode = mode;
+        const btn = $('ltNavCollapse');
+        if (btn) btn.setAttribute('aria-keyshortcuts', 'Alt+V');
+        if (persist) { try { localStorage.setItem(KEY, mode); } catch (e) {} }
+      };
+      apply(mode, false);
+      window.addEventListener('keydown', (e) => {
+        if (!e.altKey || e.ctrlKey || e.metaKey) return;
+        if (e.key !== 'v' && e.key !== 'V') return;
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        apply(mode === 'cat' ? 'num' : 'cat', true);
+        e.preventDefault();
+      });
+    })();
 
     /* ---------- article ---------- */
     function renderHead(entry) {
@@ -1103,15 +1448,26 @@
     }
 
     function renderPrevNext() {
-      const idx = flatOrder.indexOf(currentItemId);
-      const at = (i) => (i >= 0 && i < flatOrder.length ? byId.get(flatOrder[i]).item : null);
+      /* allOrder, not flatOrder: flatOrder omits the primers, so on a primer page
+         indexOf returned -1 and Next jumped to the first MAANG guide instead of
+         the next primer. */
+      const idx = allOrder.indexOf(currentItemId);
+      const at = (i) => (i >= 0 && i < allOrder.length ? byId.get(allOrder[i]).item : null);
       const cell = (it, label, align) => {
-        if (!it) return '<span></span>';
+        if (!it) return '';
         return '<button data-nav="' + it.id + '" class="text-left rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/10 px-4 py-3 min-h-[56px] transition-colors ' + align + '">' +
           '<span class="block text-[10px] font-mono uppercase tracking-widest text-slate-500">' + label + '</span>' +
           '<span class="block text-sm font-medium text-slate-200 truncate mt-0.5">' + esc(it.title) + '</span></button>';
       };
-      prevNext.innerHTML = cell(at(idx - 1), '← Prev', '') + cell(at(idx + 1), 'Next →', 'text-right');
+      /* Only emit the guides that exist. The bar used to render an empty
+         <span> for the missing half, which in a 2-column grid still took half
+         the row — a visible hole on the home page and at both ends. The column
+         count follows the number of real cells. */
+      const parts = [cell(at(idx - 1), '← Prev', ''), cell(at(idx + 1), 'Next →', 'text-right')]
+        .filter(Boolean);
+      prevNext.dataset.count = String(parts.length);
+      prevNext.hidden = parts.length === 0;
+      prevNext.innerHTML = parts.join('');
       prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
     }
 
@@ -1497,7 +1853,7 @@
       const area = $('authArea');
       const paintLoggedOut = () => {
         judgeUser = null;
-        area.innerHTML = '<a href="/api/auth/login" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-[13px] font-semibold border min-h-[40px] transition-colors whitespace-nowrap" style="border-color:rgba(148,163,184,.25);color:#8B94A7;"><span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span></a>';
+        area.innerHTML = '<a href="/api/auth/login" class="inline-flex items-center justify-center gap-2 px-3.5 h-10 rounded-lg text-[13px] font-semibold border transition-colors whitespace-nowrap" style="border-color:rgba(148,163,184,.25);color:#8B94A7;"><span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span></a>';
       };
       let me = null;
       try {
@@ -1516,7 +1872,7 @@
       area.innerHTML =
         '<div class="flex items-center gap-2">' +
         '<span class="hidden sm:inline text-xs font-mono text-slate-400 max-w-[120px] truncate" title="' + esc(me.login || '') + '">' + esc(me.login || 'github') + '</span>' +
-        '<button id="logoutBtn" class="inline-flex items-center px-3 py-2 rounded-lg text-[13px] font-semibold border min-h-[40px]" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Logout</button></div>';
+        '<button id="logoutBtn" class="inline-flex items-center justify-center px-3 h-10 rounded-lg text-[13px] font-semibold border" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Logout</button></div>';
       $('logoutBtn').onclick = async () => {
         try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
         paintLoggedOut();
@@ -1625,24 +1981,13 @@
       const el = $('sidebar'), btn = $('ltNavCollapse');
       if (!el || !btn) return;
       const KEY = 'lt150-nav-stage';
-      const LABELS = ['Collapse the navigation',
-                      'Widen the navigation to a text rail',
-                      'Widen the navigation fully',
-                      'Collapse the navigation'];
       let stage = 0;
       try { const v = parseInt(localStorage.getItem(KEY), 10); if (v >= 0 && v <= 2) stage = v; } catch (e) {}
-      const apply = (s, persist) => {
-        stage = ((s % 3) + 3) % 3;
-        el.dataset.stage = String(stage);
-        btn.setAttribute('aria-label', LABELS[stage]);
-        btn.title = LABELS[stage];
-        ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
-          const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
-        });
-        if (persist) { try { localStorage.setItem(KEY, String(stage)); } catch (e) {} }
+      setNavStage(stage, false);
+      btn.onclick = () => {
+        stage = parseInt(el.dataset.stage, 10) || 0;
+        setNavStage(stage + 1, true);
       };
-      apply(stage, false);
-      btn.onclick = () => apply(stage + 1, true);
     })();
 
     /* ---------- rail resize (item C) ---------- */
@@ -1820,6 +2165,15 @@
     else openHome();
     checkLoginError();
     updateProgressBar();
+
+    /* A pasted #guide URL, or the browser's own Back/Forward, changes the hash
+       without reloading — and nothing listened, so the page silently stayed on
+       the old guide while the address bar claimed otherwise. */
+    window.addEventListener('hashchange', () => {
+      const id = location.hash.slice(1);
+      if (!id) { openHome(); return; }
+      if (byId.has(id) && id !== currentItemId) openArticle(id);
+    });
   </script>
   <script src="chat-widget.js"></script>
 </body>
