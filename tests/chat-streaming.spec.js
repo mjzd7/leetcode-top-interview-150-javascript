@@ -45,12 +45,19 @@ async function openChat(page) {
 const delta = (content) => `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
 
 /**
- * Fulfill /api/chat with `chunks`, released one frame per `gapMs` so the widget
- * genuinely receives a drip rather than one burst. A fulfilled route hands over
- * the whole body in a single piece, so the pacing has to be produced here; that
- * is precisely the situation the old implementation could not survive.
+ * Fulfill /api/chat with `chunks` as one SSE body.
+ *
+ * It used to take a `gapMs` and its docstring claimed the frames were "released one per `gapMs` so
+ * the widget genuinely receives a drip". **It never did** — `gapMs` appeared once, in the parameter
+ * list, and never in the body: a fulfilled route hands the whole body over in a single piece, which is
+ * the sentence the docstring itself used to argue against. So every assertion downstream was timing the
+ * WIDGET's reveal animation, not the transport, while believing it was testing a drip.
+ *
+ * That is now stated rather than implied, and the dead parameter is gone. The pacing these tests
+ * measure is the widget's own reveal cadence, and they measure it with a `MutationObserver` so the
+ * observation cannot miss an intermediate state (see below) rather than with a timer that can.
  */
-async function mockDrip(page, chunks, { gapMs = 60 } = {}) {
+async function mockDrip(page, chunks) {
   await page.route('**/api/chat', async (route) => {
     await new Promise((r) => setTimeout(r, 10));
     await route.fulfill({
@@ -82,22 +89,27 @@ test('assistant text grows in several steps instead of appearing at once', async
 
   // Sample the *visible* text while the turn is still running. Anything that
   // arrives as one blob produces a single non-empty sample and fails here.
+  // A MutationObserver, not a timer. The reveal is a wall-clock animation, and this used to poll the
+  // DOM every 25 ms and count distinct lengths — so on a loaded machine the poll could step OVER an
+  // intermediate state and report a one-shot dump that never happened. Every mutation is delivered
+  // instead, so no intermediate state can be missed. The gate keeps its teeth: a widget that assigned
+  // the whole buffer in one frame still produces exactly ONE length, and `samples.length` is 1.
   const samples = await page.evaluate(async () => {
-    const body = () => document.querySelector(
-      '#ltcLog .ltc-msg[data-role="assistant"]:last-of-type .ltc-msg-body');
-    const seen = [];
-    const started = performance.now();
-    while (performance.now() - started < 12_000) {
-      const el = body();
-      if (el) {
-        const t = (el.innerText || '').trim();
-        if (t) seen.push({ t: t.length, streaming: document.querySelector('#ltcPanel').dataset.streaming === 'true' });
-      }
-      if (document.querySelector('#ltcPanel').dataset.streaming === 'false' && seen.length) break;
-      await new Promise((r) => setTimeout(r, 25));
-    }
+    const log = document.getElementById('ltcLog');
+    const panel = document.getElementById('ltcPanel');
+    const lengths = [];
+    await new Promise((resolve) => {
+      const observer = new MutationObserver(() => {
+        const el = log.querySelector('.ltc-msg[data-role="assistant"]:last-of-type .ltc-msg-body');
+        const t = el ? (el.innerText || '').trim() : '';
+        if (t) lengths.push(t.length);
+        if (panel.dataset.streaming === 'false' && lengths.length) { observer.disconnect(); resolve(); }
+      });
+      observer.observe(log, { childList: true, subtree: true, characterData: true });
+      setTimeout(() => { observer.disconnect(); resolve(); }, 20_000);
+    });
     // Collapse to the sequence of distinct lengths actually observed.
-    return seen.map((s) => s.t).filter((n, i, a) => i === 0 || n !== a[i - 1]);
+    return lengths.filter((n, i, a) => i === 0 || n !== a[i - 1]);
   });
 
   expect(samples.length, 'text must arrive in multiple visible steps, not one dump').toBeGreaterThan(3);
@@ -124,7 +136,7 @@ test('a completed paragraph is real markdown while the turn is still streaming',
       + '  seen.set(nums[i], i);\n}\nreturn [];\n```\n\n',
     'The map holds every value already visited.',
   ];
-  await mockDrip(page, answer.map((p) => p), { gapMs: 90 });
+  await mockDrip(page, answer.map((p) => p));
   await openChat(page);
 
   await page.locator(input).fill('walk me through it');
@@ -184,25 +196,40 @@ test('a caret marks the reveal position and disappears when the turn ends', asyn
       { timeout: 30_000, intervals: [50] })
     .toBe(true);
 
+  // A MutationObserver again, for the same reason as the test above: this used to poll on
+  // `requestAnimationFrame` + 16 ms and count frames, so a caret living a few hundred ms could be
+  // stepped over under load and reported as never having been seen. Counting the DOM states in which
+  // the caret was PRESENT is the same claim without the race — and it still fails a caret that appears
+  // for a single state, because `caretStates > 3` requires it to survive four of them.
   const seen = await page.evaluate(async () => {
+    const log = document.getElementById('ltcLog');
     const panel = document.getElementById('ltcPanel');
-    let caretFrames = 0;
+    let caretStates = 0;
     let sawStreamingCaret = false;
     let clearedAfterCaret = false;
+    // `takeRecords()` drained once per frame, NOT the observer callback. A MutationObserver callback
+    // is delivered as a MICROTASK, so a reveal that runs many frames inside one task collapses into a
+    // single callback — fired after the fact, when the caret is already gone. That is why the callback
+    // form reported "never saw the caret" for a caret that is really there. Draining the queue
+    // synchronously each frame observes every state the DOM actually passed through, and it still
+    // fails a caret that appears for a single state.
+    const observer = new MutationObserver(() => {});
+    observer.observe(log, { childList: true, subtree: true, characterData: true, attributes: true });
     const started = performance.now();
     while (performance.now() - started < 25_000) {
-      const streaming = panel.dataset.streaming === 'true';
+      observer.takeRecords();
       const caret = document.querySelector('.ltc-caret');
-      if (caret) { caretFrames++; sawStreamingCaret = true; }
+      if (caret) { caretStates++; sawStreamingCaret = true; }
       else if (sawStreamingCaret) { clearedAfterCaret = true; break; }
-      if (!streaming && !caret && !sawStreamingCaret) break;
-      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 16)));
+      if (panel.dataset.streaming !== 'true' && !caret && !sawStreamingCaret) break;
+      await new Promise((r) => requestAnimationFrame(r));
     }
-    return { caretFrames, sawStreamingCaret, clearedAfterCaret, finalCaret: !!document.querySelector('.ltc-caret') };
+    observer.disconnect();
+    return { caretStates, sawStreamingCaret, clearedAfterCaret, finalCaret: !!document.querySelector('.ltc-caret') };
   });
 
   expect(seen.sawStreamingCaret, 'a caret marks the reveal position while text is arriving').toBe(true);
-  expect(seen.caretFrames, 'the caret is visible for more than a single frame').toBeGreaterThan(3);
+  expect(seen.caretStates, 'the caret is present across more than a single DOM state').toBeGreaterThan(3);
   expect(seen.clearedAfterCaret, 'the caret goes away when the turn ends').toBe(true);
   expect(seen.finalCaret).toBe(false);
   await expect(page.locator('[data-thinking]')).toHaveCount(0);
