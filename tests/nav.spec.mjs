@@ -128,7 +128,11 @@ test.describe('the collapsed rail', () => {
       };
     });
     expect(after.mode, 'the toggle switches to number mode').toBe('num');
-    expect(after.codes.length, 'one code per guide').toBe(175);
+    // Counted from the data, not hardcoded: the corpus grows, and a pinned
+    // number turns the next guide that lands into a false failure here.
+    const corpus = await page.evaluate(() =>
+      window.CURRICULUM_DATA.reduce((n, c) => n + c.items.length, 0));
+    expect(after.codes.length, 'one code per guide').toBe(corpus);
     const seen = new Map();
     for (const c of after.codes) seen.set(c, (seen.get(c) || 0) + 1);
     const dupes = [...seen].filter(([, n]) => n > 1);
