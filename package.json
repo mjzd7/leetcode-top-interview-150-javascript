@@ -50,6 +50,7 @@
     "tiktoken": "^1.0.22"
   },
   "devDependencies": {
+    "@ast-grep/cli": "^0.45.3",
     "@mermaid-js/mermaid-cli": "^11.17.0",
     "@playwright/test": "^1.63.0",
     "acorn": "^8.18.0",
