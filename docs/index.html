@@ -1384,7 +1384,16 @@
       requestAnimationFrame(() => {
         const group = [...nav.querySelectorAll('.nav-group')]
           .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === category);
-        if (group) group.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        if (!group) return;
+        /* nav.scrollTop, not scrollIntoView. That walks up every scrollable
+           ancestor, and #sidebar is one: overflow:hidden still makes a box
+           programmatically scrollable. So it scrolled the sidebar as well,
+           pushing the 191px header block out of view and leaving exactly that
+           much blank space under the list. */
+        nav.scrollTo({
+          top: nav.scrollTop + group.getBoundingClientRect().top - nav.getBoundingClientRect().top,
+          behavior: 'smooth',
+        });
       });
     }
 
