@@ -63,7 +63,9 @@ FUNCTION twoSumBruteForce(numbers, target):
 
 | `i` | `j` | `numbers[i]` | `numbers[j]` | Sum | Sum === Target? | Action |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 0 | 1 | 2 | 7 | 9 | **Yes** | Return `[0 + 1, 1 + 1] = [1, 2]` |
+| 0 | — | 2 | — | — | — | Outer loop head: `i = 0 < n - 1 = 3` |
+| 0 | 1 | 2 | 7 | $2 + 7 = 9$ | **Yes** ($9 === 9$) | Inner loop head: `j = i + 1 = 1` |
+| 0 | 1 | 2 | 7 | $2 + 7 = 9$ | **Yes** | Return `[i + 1, j + 1] = [1, 2]` |
 
 ### Modern JavaScript Implementation
 ```javascript
@@ -124,7 +126,9 @@ FUNCTION twoSumBinarySearch(numbers, target):
 
 | `i` | `numbers[i]` | `complement = 9 - numbers[i]` | Binary Search Range | Found Index `j` | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 0 | 2 | 7 | `[1 ... 3]` (`[7, 11, 15]`) | Index 1 | Return `[1, 2]` |
+| 0 | 2 | 7 | `[1 ... 3]` = `[7, 11, 15]` | — | Seed `left = i + 1 = 1`, `right = n - 1 = 3` |
+| 0 | 2 | 7 | `left = 1`, `right = 3`, `mid = 2` | — | `numbers[2] = 11 > 7` $\implies$ `right = mid - 1 = 1` |
+| 0 | 2 | 7 | `left = 1`, `right = 1`, `mid = 1` | Index 1 | `numbers[1] === 7` $\implies$ Return `[i + 1, mid + 1] = [1, 2]` |
 
 ### Modern JavaScript Implementation
 ```javascript

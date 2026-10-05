@@ -71,10 +71,16 @@ FUNCTION findMinBruteForce(nums):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`nums = [3, 4, 5, 1, 2]`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | `i = 1..3` | `4, 5` then `1` | `best` drops to `1` | Track min |
-| 1 | `i = 4` | `2 > 1` | No change | Return `1` |
+| 0 | `best = nums[0]` | `3` | `[3, 4, 5, 1, 2]` | Seed `best = 3` |
+| 1 | `i = 1` | `nums[1] = 4` | `[3, 4, 5, 1, 2]` | $4 < 3$ is `false` — `best` stays `3` |
+| 2 | `i = 2` | `nums[2] = 5` | `[3, 4, 5, 1, 2]` | $5 < 3$ is `false` — `best` stays `3` |
+| 3 | `i = 3` | `nums[3] = 1` | `[3, 4, 5, 1, 2]` | $1 < 3$ ✓ — `best = 1`, the rotation point |
+| 4 | `i = 4` | `nums[4] = 2` | `[3, 4, 5, 1, 2]` | $2 < 1$ is `false` — `best` stays `1` |
+| 5 | `i = 5` | — | — | `i === nums.length` ends the loop — Return `1` |
 
 ### Modern JavaScript Implementation
 ```javascript

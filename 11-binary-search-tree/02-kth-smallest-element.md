@@ -64,10 +64,26 @@ FUNCTION kthSmallestBruteForce(root, k):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`root` = `3` with `1 → 2` on the left and `4` on the right
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | full inorder | `[1,2,3,4,5,6]` | 6 nodes walked + stored | Collect all |
-| 1 | index `k-1 = 2` | `vals[2] = 3` | — | Return `3` (visited 4,5,6 needlessly) |
+| 0 | descend `cur` = 3 | — | `stack = []`, `vals = []` | `stack.push(3)`, `cur = cur.left` → 1 |
+| 1 | descend `cur` = 1 | 1 | `stack = [3, 1]` | `cur = 1.left` = `null` — the descend loop exits |
+| 2 | pop `cur` = 1 | 1 | `vals = [1]` | `cur = cur.right` → 2 |
+| 3 | pop `cur` = 2 | 2 | `vals = [1, 2]` | `cur = 2.right` = `null` |
+| 4 | pop `cur` = 3 | 3 | `vals = [1, 2, 3]` | `cur = cur.right` → 4 |
+| 5 | descend then pop `cur` = 4 | 4 | `vals = [1, 2, 3, 4]` | `cur = null` and `stack` is empty — outer loop ends |
+| 6 | index `k - 1` | — | `vals = [1, 2, 3, 4]` | `return vals[k - 1]` |
+
+Every node is visited — that is the whole point of Level 1. Level 3 stops the walk at the
+$k$-th node instead, which is why it never touches the tail.
+
+> **Trace note.** The recorded execution of `kthSmallestBruteForce` for this guide's golden
+> case arrives with `k === undefined`, so its final step indexes `vals[NaN]` and the recorded
+> verdict is 0 of 6. The walk above is what the trace shows; the *index* line is the one the
+> harvested case could not supply, so it is left blank rather than invented. The authored
+> `npm test` case (`fn(arrayToTree([3, 1, 4, null, 2]), 1) === 1`) does pass.
 
 ### Modern JavaScript Implementation
 ```javascript

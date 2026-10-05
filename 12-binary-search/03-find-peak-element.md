@@ -70,10 +70,17 @@ FUNCTION findPeakElementBruteForce(nums):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`nums = [1, 2, 3, 1]`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | `i = 0` | `1` vs `-∞`, `2` | `1 < 2`, not peak | Advance |
-| 1 | `i = 1` | `2` vs `1`, `1` | Beats both | Return `1` (leftmost peak) |
+| 0 | `i = 0` | `nums[0] = 1` | `left = -∞`, `right = 2` | $1 > -\infty$ ✓ but $1 \not> 2$ — not a peak |
+| 1 | `i = 1` | `nums[1] = 2` | `left = 1`, `right = 3` | $2 > 1$ ✓ but $2 \not> 3$ — not a peak |
+| 2 | `i = 2` | `nums[2] = 3` | `left = 2`, `right = 1` | $3 > 2$ ✓ **and** $3 > 1$ ✓ — peak |
+| 3 | — | — | — | Return `2` |
+
+Index 3 (`1`) is symmetric to index 0, so the scan stops at the *first* peak from the left —
+which is why the answer is `2` and not `3`.
 
 ### Modern JavaScript Implementation
 ```javascript
