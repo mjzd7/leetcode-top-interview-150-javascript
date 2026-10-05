@@ -444,6 +444,61 @@ test('renders a dry-run table inside a scroll wrapper without blowing out the ra
   if (m.tableWiderThanBubble) expect(m.wrapperScrollable, 'overflowing table is scrollable').toBe(true);
 });
 
+test('a scrolled table keeps its columns from overlapping', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+  // The shape that broke: a narrow label column beside a long prose column, so
+  // the table is far wider than the rail and has to scroll.
+  const wide = '| CONCEPT | EXPLANATION |\n'
+    + '| --- | --- |\n'
+    + '| Valley | The active balance point. Everything before it is a net contribution to the tank. |\n'
+    + '| Starting valley | The first station of the circuit. |\n'
+    + '| total >= 0 check | The whole circuit has a net deficit, so no start works and we return -1. |\n'
+    + '| Single pass | You do not need to simulate from every start. |';
+  await mockChat(page, ['Here is the intuition:\n\n' + wide]);
+  await openChat(page);
+
+  await page.locator(input).fill('why does it work');
+  await page.locator(sendBtn).click();
+
+  const bubble = assistantBubble(page);
+  const wrap = bubble.locator('.ltc-table-scroll');
+  await expect(wrap).toHaveCount(1);
+
+  // Scroll to the far end, which is where a sticky first column rides over its
+  // own neighbours.
+  await wrap.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+
+  const m = await bubble.evaluate((el) => {
+    const w = el.querySelector('.ltc-table-scroll');
+    const rows = [...w.querySelectorAll('tr')];
+    const gaps = rows.map((r) => {
+      const cells = [...r.children].map((c) => c.getBoundingClientRect());
+      const over = [];
+      for (let i = 0; i + 1 < cells.length; i++) over.push(Math.round(cells[i].right - cells[i + 1].left));
+      return over;
+    });
+    const head = w.querySelector('th');
+    const firstCell = w.querySelector('tbody tr td');
+    return {
+      scrollLeft: Math.round(w.scrollLeft),
+      scrollable: w.scrollWidth - w.clientWidth,
+      thPosition: getComputedStyle(head).position,
+      firstCellPosition: getComputedStyle(firstCell).position,
+      gaps,
+    };
+  });
+
+  expect(m.scrollable, 'the table overflows its wrapper').toBeGreaterThan(0);
+  expect(m.scrollLeft, 'the wrapper really is scrolled').toBeGreaterThan(0);
+  const worst = Math.max(...m.gaps.flat());
+  expect(
+    worst,
+    `no cell may overlap the next one (sticky th=${m.thPosition}, sticky first td=${m.firstCellPosition})`,
+  ).toBeLessThanOrEqual(1);
+});
+
 test('renders a mermaid block as a diagram, not as a copyable code block', async ({ page }) => {
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
@@ -2149,6 +2204,143 @@ test('the rail width survives a reload and resets on double-click', async ({ pag
   await expect
     .poll(() => railWidth(page), { timeout: 5000 })
     .toBeCloseTo(RAIL_DEFAULT, 0);
+});
+
+/* ------------------------------------------------------------------ *
+ * Resizing the assistant's height
+ * ------------------------------------------------------------------ *
+ * The rail handles width; nothing handled height, so the sheet was stuck at
+ * 72dvh on mobile and the rail split the leftover space on desktop. One
+ * divider on the panel's top edge, clamped so the header and composer can
+ * never be dragged out of reach, persisted, double-click to reset.
+ */
+
+const panelResizer = '#ltcPanelResizer';
+const PANEL_MIN = 200;
+
+/** Headroom above a max-height panel, so the page stays visible behind it. */
+const PANEL_TOP_PEEK = 56;
+
+const panelHeight = (page) =>
+  page.locator(panel).evaluate((el) => el.getBoundingClientRect().height);
+
+/** Tallest the panel may be at the current viewport: the rail, or the window. */
+const panelCeiling = (page) =>
+  page.evaluate((peek) => {
+    const p = document.getElementById('ltcPanel');
+    const sheet = window.matchMedia('(max-width: 1023px)').matches;
+    return sheet ? window.innerHeight - peek : p.closest('.lt-rail').clientHeight;
+  }, PANEL_TOP_PEEK);
+
+/**
+ * The panel is anchored to a bottom edge, so a resize must not move that edge:
+ * the space it gives up belongs above it, never to a void below.
+ */
+async function expectAnchored(page, label) {
+  const edges = await page.locator(panel).evaluate((el) => {
+    const p = el.getBoundingClientRect();
+    const rail = el.closest('.lt-rail');
+    const sheet = window.matchMedia('(max-width: 1023px)').matches;
+    return {
+      top: p.top,
+      bottom: p.bottom,
+      anchor: sheet ? window.innerHeight : rail.getBoundingClientRect().bottom,
+      ceilingTop: sheet ? 0 : rail.getBoundingClientRect().top,
+    };
+  });
+  expect(edges.bottom, `bottom edge holds — ${label}`).toBeCloseTo(edges.anchor, 0);
+  expect(edges.top, `stays inside the rail — ${label}`).toBeGreaterThanOrEqual(edges.ceilingTop - 1);
+}
+
+/** Drag the assistant's top edge to an absolute y, the way a reader moves it. */
+async function dragPanelTo(page, y) {
+  const box = await page.locator(panelResizer).boundingBox();
+  const x = box.x + box.width / 2;
+  await page.mouse.move(x, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(x, y, { steps: 12 });
+  await page.mouse.up();
+}
+
+test('the assistant has a draggable top edge', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
+
+  await expect(page.locator(panelResizer)).toBeVisible();
+  await expect(page.locator(panelResizer)).toHaveAttribute('role', 'separator');
+  await expect(page.locator(panelResizer)).toHaveAttribute('aria-orientation', 'horizontal');
+  // The divider sits on the panel's own top edge, not floating in the log.
+  const offEdge = await page.evaluate(() => {
+    const p = document.getElementById('ltcPanel').getBoundingClientRect();
+    const h = document.getElementById('ltcPanelResizer').getBoundingClientRect();
+    return Math.abs(h.top + h.height / 2 - p.top);
+  });
+  expect(offEdge, 'the handle straddles the top edge').toBeLessThanOrEqual(8);
+});
+
+test('dragging the top edge resizes the assistant and clamps', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
+
+  const ceiling = await panelCeiling(page);
+  const bottom = await page.locator(panel).evaluate((el) => el.getBoundingClientRect().bottom);
+
+  await dragPanelTo(page, bottom - 260);
+  expect(await panelHeight(page), 'drag to 260px tall').toBeCloseTo(260, 0);
+  await expectAnchored(page, 'at 260px');
+
+  await dragPanelTo(page, 0);
+  expect(await panelHeight(page), 'clamped at the ceiling').toBeLessThanOrEqual(ceiling + 1);
+  await expectAnchored(page, 'at full stretch');
+
+  await dragPanelTo(page, 900);
+  expect(await panelHeight(page), 'clamped at the min').toBeGreaterThanOrEqual(PANEL_MIN - 1);
+  await expectAnchored(page, 'at the min');
+  await expect(page.locator(input), 'the composer survives a full shrink').toBeVisible();
+});
+
+test('the top edge resizes with the keyboard too', async ({ page }) => {
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
+
+  const handle = page.locator(panelResizer);
+  const start = Number(await handle.getAttribute('aria-valuenow'));
+
+  await handle.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect
+    .poll(() => handle.getAttribute('aria-valuenow').then(Number))
+    .toBeGreaterThan(start);
+
+  await handle.press('ArrowDown');
+  await handle.press('ArrowDown');
+  const after = Number(await handle.getAttribute('aria-valuenow'));
+  expect(after, 'arrows move it back down').toBeLessThan(start);
+});
+
+test('the assistant height survives a reload and resets on double-click', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(ARTICLE_URL);
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
+
+  const bottom = await page.locator(panel).evaluate((el) => el.getBoundingClientRect().bottom);
+  await dragPanelTo(page, bottom - 300);
+  const dragged = await panelHeight(page);
+
+  await page.reload();
+  await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  expect(await panelHeight(page), 'height persisted across reload').toBeCloseTo(dragged, 0);
+
+  await page.locator(panelResizer).dblclick();
+  await expect
+    .poll(() => panelHeight(page), { timeout: 5000 })
+    .not.toBeCloseTo(dragged, 0);
+  expect(await panelHeight(page), 'back to the default').toBeGreaterThan(dragged);
 });
 
 /* ------------------------------------------------------------------ *

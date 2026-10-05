@@ -68,7 +68,10 @@ FUNCTION strStrBruteForce(haystack, needle):
 
 | `i` | Window Substring `haystack[i ... i+2]` | `needle` | Match? | Action |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | `"sad"` | `"sad"` | **Yes** | Return `i = 0` |
+| 0 | `"sad"` | `"sad"` | $j = 0$: `haystack[0] === needle[0]` $\Rightarrow$ `'s' === 's'` ✓ | Keep comparing |
+| 0 | `"sad"` | `"sad"` | $j = 1$: `haystack[1] === needle[1]` $\Rightarrow$ `'a' === 'a'` ✓ | Keep comparing |
+| 0 | `"sad"` | `"sad"` | $j = 2$: `haystack[2] === needle[2]` $\Rightarrow$ `'d' === 'd'` ✓ | `match` stays `true` |
+| 0 | `"sad"` | `"sad"` | `if (match)` $\Rightarrow$ `true` | Return `i = 0` |
 
 ### Modern JavaScript Implementation
 ```javascript
@@ -157,7 +160,9 @@ FUNCTION strStrRabinKarp(haystack, needle):
 
 | Window `i` | Window Substring | Window Hash | Needle Hash | Hash Match? | Action |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 0 | `"sad"` | $H_0$ | $H_{\text{needle}}$ | **True** | String verification matches $\implies$ Return `0` |
+| — | — | `power`: $1 \to 256 \to 65536$ | — | — | Precompute $256^{m-1} \bmod \text{MOD}$ for the slide |
+| 0 | `"sad"` | $H_0$: $115 \to 29537 \to 7561572$ | $H_{\text{needle}}$: $115 \to 29537 \to 7561572$ | **True** | Rolling hashes land on the same value |
+| 0 | `"sad"` | $H_0 = 7561572$ | $H_{\text{needle}} = 7561572$ | **True** | String verification matches $\implies$ Return `0` |
 
 ### Modern JavaScript Implementation
 ```javascript

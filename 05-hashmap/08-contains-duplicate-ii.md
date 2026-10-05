@@ -80,11 +80,20 @@ FUNCTION containsNearbyDuplicateBruteForce(nums, k):
 ```
 
 ### Step-by-Step Dry Run
-`nums = [1, 2, 3, 1]`, `k = 3`
+`nums = [1, 2, 3, 1, 2, 3]`, `k = 2`
 
 | `i` | `nums[i]` | `j` Range | Values Checked at `j` | Match Found? |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | 1 | `1..3` | `nums[1]=2`, `nums[2]=3`, `nums[3]=1` | **Yes ($nums[0] == nums[3]$) $\to$ `true`** |
+| 0 | 1 | `1..2` (`limit = min(0 + 2, 5) = 2`) | `nums[1] = 2`, `nums[2] = 3` | No |
+| 1 | 2 | `2..3` (`limit = 3`) | `nums[2] = 3`, `nums[3] = 1` | No |
+| 2 | 3 | `3..4` (`limit = 4`) | `nums[3] = 1`, `nums[4] = 2` | No |
+| 3 | 1 | `4..5` (`limit = 5`) | `nums[4] = 2`, `nums[5] = 3` | No |
+| 4 | 2 | `5..5` (`limit = 5`) | `nums[5] = 3` | No |
+| — | — | `i === 5` ends the outer loop (`i < n - 1`) | — | Return `false` |
+
+The equal values are all 3 apart — `1` repeats at index 3 and `2` at index 4 — so `k = 2`
+can never see them. Raise `k` to 3 and the very first window, `nums[0]` vs `nums[3]`,
+matches.
 
 ### Modern JavaScript Implementation
 ```javascript

@@ -58,11 +58,13 @@ FUNCTION majorityElementBruteForce(nums):
 ```
 
 ### Step-by-Step Dry Run
-`nums = [3, 2, 3]`, $n = 3$, threshold = $\lfloor 3 / 2 \rfloor = 1$
+`nums = [2, 2, 1, 1, 1, 2, 2]`, $n = 7$, threshold = $\lfloor 7 / 2 \rfloor = 3$
 
-| `i` | `nums[i]` | Inner Loop Count of `nums[i]` | Condition (`count > 1`) | Result |
+| `i` | `nums[i]` | Inner Loop Count of `nums[i]` | Condition (`count > 3`) | Result |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | 3 | Scan `[3, 2, 3]` $\to$ Count = 2 | $2 > 1$ (True) | Return 3 |
+| 0 | 2 | `j = 0…6`: hits at $j \in \{0, 1, 5, 6\}$ $\to$ Count = 4 | $4 > 3$ (True) | Return 2 |
+| 1 | 2 | not reached | — | — |
+| 2…6 | 1, 1, 1, 2, 2 | not reached | — | — |
 
 ### Modern JavaScript Implementation
 ```javascript

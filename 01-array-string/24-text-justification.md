@@ -89,12 +89,14 @@ FUNCTION fullJustifyBruteForce(words, maxWidth):
 ```
 
 ### Step-by-Step Dry Run
-`words = ["This", "is", "an"]`, `maxWidth = 16`
-- Words: `"This"` (4), `"is"` (2), `"an"` (2). Total word chars = 8.
-- Remaining spaces = $16 - 8 = 8$ spaces.
-- Gaps = 2.
-- Round-robin: 8 spaces split across 2 gaps $\implies$ 4 spaces per gap.
-- Result: `"This    is    an"` (Length = 16).
+`words = ["This", "is", "an", "example", "of", "text", "justification."]`, `maxWidth = 16`
+
+| Line | `line` Grew To | `totalWordLen` | `totalSpaces` | `gaps` | Gap Fill (`gapArray`) | Line Pushed |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `["This", "is", "an"]` | $4 + 2 + 2 = 8$ | $16 - 8 = 8$ | 2 | 4 passes of `while (totalSpaces > 0)`, each handing one space to gap 0 **and** gap 1 $\Rightarrow$ 4 per gap | `"This    is    an"` |
+| 2 | `["example", "of", "text"]` | $7 + 2 + 4 = 13$ | $16 - 13 = 3$ | 2 | `g < gaps && totalSpaces > 0` stops mid-pass $\Rightarrow$ `["  ", " "]` | `"example  of text"` |
+| 3 (last) | `["justification."]` | — | — | — | `i === n` takes the last-line branch: `line.join(' ')` then right-pad to 16 | `"justification.  "` |
+| — | — | — | — | — | `return result` | `["This    is    an", "example  of text", "justification.  "]` |
 
 ### Modern JavaScript Implementation
 ```javascript
@@ -197,15 +199,14 @@ FUNCTION fullJustifyMath(words, maxWidth):
 ```
 
 ### Step-by-Step Dry Run
-`words = ["example", "of", "text"]`, `maxWidth = 16`
-- Words length = $7 + 2 + 4 = 13$.
-- `spacesNeeded` = $16 - 13 = 3$.
-- `gaps` = 2.
-- `baseSpaces` = $\lfloor 3 / 2 \rfloor = 1$.
-- `extraSpaces` = $3 \pmod 2 = 1$.
-- Gap 0: $1 + 1 = 2$ spaces.
-- Gap 1: $1 + 0 = 1$ space.
-- Result: `"example  of text"` (Length = 16).
+`words = ["This", "is", "an", "example", "of", "text", "justification."]`, `maxWidth = 16`
+
+| Line | `words.slice(i, j)` | `numWords` | `wordChars` | `totalSpaces` | `gaps` | `baseSpaces` / `extraSpaces` | `gapSize` per Gap | Line Pushed |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `["This", "is", "an"]` | 3 | $4 + 2 + 2 = 8$ | $16 - 8 = 8$ | 2 | $\lfloor 8 / 2 \rfloor = 4$ / $8 \bmod 2 = 0$ | $4, 4$ | `"This    is    an"` |
+| 2 | `["example", "of", "text"]` | 3 | $7 + 2 + 4 = 13$ | $16 - 13 = 3$ | 2 | $\lfloor 3 / 2 \rfloor = 1$ / $3 \bmod 2 = 1$ | $1 + 1 = 2, 1 + 0 = 1$ | `"example  of text"` |
+| 3 (last) | `["justification."]` | 1 | — | — | — | `isLastLine` $\Rightarrow$ left-justify, then right-pad | — | `"justification.  "` |
+| — | — | — | — | — | — | `return result` | — | `["This    is    an", "example  of text", "justification.  "]` |
 
 ### Modern JavaScript Implementation
 ```javascript

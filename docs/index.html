@@ -237,7 +237,7 @@
        one element and the JS only has to know which mode it is in. */
     .ltc-panel {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-      height: 72dvh; display: flex; flex-direction: column; min-height: 0;
+      height: var(--ltc-panel-h, 72dvh); display: flex; flex-direction: column; min-height: 0;
       background: var(--surface); border-top: 1px solid var(--line);
       box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
       transform: translateY(101%);
@@ -360,17 +360,44 @@
       #ltRailResizer.is-dragging::after { background: var(--accent); }
       #ltRailResizer:focus-visible { outline: none; }
       .lt-rail-toc {
-        display: block; flex: 0 1 auto; max-height: 45%;
+        display: block; flex: 0 1 auto; max-height: 45%; min-height: 0;
         overflow-y: auto; padding: 1.5rem 0 0.75rem 1rem;
       }
       .ltc-panel {
-        position: static; top: auto; left: auto; right: auto; bottom: auto;
+        position: relative; top: auto; left: auto; right: auto; bottom: auto;
         flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
         transform: none; visibility: visible; box-shadow: none;
         border-top: 1px solid var(--line); border-left: none;
         background: var(--rail-bg);
       }
+      /* Only once the reader has dragged: until then the panel keeps filling
+         whatever the TOC leaves, which is the better default than any number.
+         margin-top: auto keeps it welded to the rail's bottom edge, so the space
+         a shorter panel gives up goes above it rather than leaving a void below. */
+      .ltc-panel[data-resized] { flex: 0 0 var(--ltc-panel-h); margin-top: auto; }
+      /* A pinned panel can fill the rail exactly, which means the TOC has
+         collapsed to nothing — and a collapsed box still keeps its 36px of
+         padding, which pushed the panel that far past the rail's bottom edge and
+         the bottom of the composer off-screen. :has() is what lets that padding
+         go when the panel takes the column. */
+      .lt-rail:has(> .ltc-panel[data-resized]) .lt-rail-toc { padding: 0; }
     }
+    /* Height divider on the panel's top edge, mirroring #ltRailResizer. It
+       straddles the edge (top: -5px) so the grab strip is not half hidden under
+       the border, and the panel is position:relative/fixed to anchor it. */
+    .ltc-panel-resizer {
+      position: absolute; left: 0; right: 0; top: -5px; height: 10px; z-index: 3;
+      cursor: row-resize; touch-action: none; background: none;
+      user-select: none; -webkit-user-select: none;
+    }
+    .ltc-panel-resizer::after {
+      content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 3px;
+      background: transparent; transition: background 0.15s ease;
+    }
+    .ltc-panel-resizer:hover::after,
+    .ltc-panel-resizer:focus-visible::after,
+    .ltc-panel-resizer.is-dragging::after { background: var(--accent); }
+    .ltc-panel-resizer:focus-visible { outline: none; }
     .ltc-head {
       display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;
       padding: 0.7rem 0.75rem 0.7rem 0.85rem;
@@ -617,8 +644,13 @@
       overflow-x: auto; overscroll-behavior-x: contain; margin: 0.6rem 0;
       border: 1px solid var(--line); border-radius: 0.6rem;
     }
+    /* width: max-content gives every column the width of its widest cell, which
+       is what the wrapper's overflow-x exists to handle; min-width: 100% keeps a
+       narrow table filling the bubble. A `width: 100%` table instead squeezed
+       columns under their nowrap content, which is what let a sticky cell spill
+       over its neighbour. */
     .ltc-msg-body table {
-      width: 100%; border-collapse: collapse; margin: 0;
+      width: max-content; min-width: 100%; border-collapse: collapse; margin: 0;
       font-size: 0.78rem; line-height: 1.5;
       font-family: "JetBrains Mono", monospace;
     }
@@ -626,17 +658,16 @@
       border-bottom: 1px solid var(--line);
       padding: 0.4rem 0.55rem; text-align: left; white-space: nowrap;
     }
+    /* No sticky cells: `border-collapse: collapse` paints every cell background
+       in one layer beneath all cell content, so a stuck cell cannot cover the
+       text that scrolls under it — the row label ends up written on top of its
+       own neighbours. The wrapper scrolls, so the label is a short scroll away. */
     .ltc-msg-body th {
       background: rgba(200, 250, 75, 0.07); color: var(--accent);
       font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
-      font-size: 0.7rem; position: sticky; top: 0;
+      font-size: 0.7rem;
     }
-    /* Long cells must wrap rather than stretch the row; nowrap above keeps
-       short numeric columns aligned and scannable. */
-    .ltc-msg-body td:first-child, .ltc-msg-body th:first-child {
-      color: var(--muted); position: sticky; left: 0; background: var(--surface);
-    }
-    .ltc-msg-body th:first-child { background: rgba(200, 250, 75, 0.07); }
+    .ltc-msg-body td:first-child, .ltc-msg-body th:first-child { color: var(--muted); }
     .ltc-msg-body tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
     .ltc-msg-body tbody tr:last-child td { border-bottom: none; }
     .ltc-msg-body strong { color: #fff; }
@@ -915,6 +946,90 @@
       .ltc-panel[data-streaming="true"] .ltc-status-dot { animation: none; }
       .ltc-scroll-down { transition: none; }
     }
+
+    /* ---------- Dry-run table player (docs/dryrun/index.js) ---------- */
+    /* The array itself is drawn with the .viz-* classes above — the same boxes the
+       chat uses for an array, from this same stylesheet — so this block is only the
+       chrome the chat has no equivalent for: a caption, a transport, a scrubber, and
+       the highlight on the table row the current step came from. Everything is the
+       manual's existing vocabulary: --line borders, --raised fills, --accent for the
+       live value, JetBrains Mono for anything numeric. */
+    .dr-player { margin: 0 0 1.6rem; }
+    .dr-head {
+      display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.7rem;
+      color: var(--muted);
+    }
+    .dr-title {
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em;
+      font-size: 0.62rem;
+    }
+    .dr-col { color: #7C8699; }
+    .dr-player .dr-array { margin: 0.5rem 0 0; width: fit-content; max-width: 100%; }
+    /* In the chat rail a 1fr cell is 40px; in the article it is 165px and the array
+       reads as a table row. Same --viz-cols token, capped track, and the cap falls back
+       to a share of the viewport so a four-element array still fits a phone without the
+       reader having to scroll it sideways. A genuinely wide array overflows into the
+       box's own scroller, which is what `.viz-array`'s overflow-x is already for. */
+    .dr-player .dr-array .viz-grid {
+      grid-template-columns: repeat(var(--viz-cols, 1), minmax(34px, min(108px, 21vw)));
+    }
+    /* Only the highlight animates: a cell that just changed is the whole point of
+       stepping, so it is the one thing allowed to move. transform only, and the
+       global reduced-motion rule above already neutralises it. */
+    .dr-player .viz-cell { transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease; }
+    .dr-player .viz-cell.dr-pop { animation: dr-pop 0.22s cubic-bezier(0.32, 0.72, 0, 1); }
+    @keyframes dr-pop {
+      from { transform: scale(1.16); }
+      to { transform: none; }
+    }
+    .dr-bar {
+      display: flex; align-items: center; gap: 0.4rem; margin-top: 0.55rem;
+    }
+    .dr-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; flex-shrink: 0; padding: 0; border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.18); background: rgba(255, 255, 255, 0.03);
+      color: var(--muted); cursor: pointer;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .dr-btn svg { width: 15px; height: 15px; }
+    .dr-btn:hover:not(:disabled) { color: #E9EDF4; background: rgba(255, 255, 255, 0.07); }
+    .dr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* Disabled, not hidden: a transport whose ends vanish cannot say why it stopped. */
+    .dr-btn:disabled { opacity: 0.32; cursor: default; }
+    .dr-btn[aria-pressed="true"] { color: var(--accent); border-color: rgba(200, 250, 75, 0.4); background: rgba(200, 250, 75, 0.1); }
+    .dr-range {
+      flex: 1 1 auto; min-width: 60px; height: 20px; margin: 0;
+      background: transparent; cursor: pointer;
+    }
+    /* `accent-color` alone is wrong at article width: Chromium fills the ENTIRE
+       track with it, which paints a solid accent bar wider than the array itself and
+       makes the transport the loudest thing in the block. The track is a hairline in
+       the manual's own .mod-bar colour and only the thumb carries the accent. */
+    .dr-range { -webkit-appearance: none; appearance: none; accent-color: var(--accent); }
+    .dr-range::-webkit-slider-runnable-track {
+      height: 3px; border-radius: 999px; background: #1C2333;
+    }
+    .dr-range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 13px; height: 13px; margin-top: -5px; border-radius: 999px;
+      background: var(--accent); border: none;
+      box-shadow: 0 0 0 3px rgba(200, 250, 75, 0.15);
+    }
+    .dr-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .dr-count {
+      flex-shrink: 0; font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    /* The row of the table the current step came from, so the picture and the numbers
+       above it are visibly the same step. */
+    .prose tr[data-dryrun-current] > td { background: rgba(200, 250, 75, 0.07); }
+    .prose tr[data-dryrun-current] > td:first-child { color: var(--accent); }
+    @media (prefers-reduced-motion: reduce) {
+      .dr-player .viz-cell.dr-pop { animation: none; }
+    }
   </style>
 </head>
 <body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh">
@@ -1008,6 +1123,7 @@
       </div>
 
       <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
+      <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
       <div class="ltc-head">
         <span class="ltc-head-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
@@ -1194,6 +1310,49 @@
     };
     const badge = (d) => `<span class="nav-badge text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="${DIFF_STYLE[d] || DIFF_STYLE.Primer}">${d}</span>`;
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    /* ---------- row 32: the "Unverified" label ----------
+     *
+     * A label that is a stored flag rots into a lie the moment the gate behind it moves; that was
+     * the rot plan A2 feared. So the rule lives in exactly ONE place — `scripts/lib/v9.mjs`, a pure
+     * predicate checked by `node scripts/lib/v9.mjs` — and `scripts/gen-doc-traces.mjs` runs it at
+     * build time over the corpus, publishing one verdict per guide in `traces/index.json`.
+     *
+     * This block only READS that verdict. It does not decide anything, so the badge cannot disagree
+     * with the gate: a guide V9 certifies gets no badge at all, and `uncomparable` is rendered as
+     * its own state rather than folded into "Unverified", because `test-trace.mjs:1170-1173` is
+     * explicit that reporting "no comparison possible" as drift is the same sin as calling it
+     * agreement.
+     *
+     * What this is NOT, contrary to row 32 as originally written: a browser-side pure function of
+     * V9. The predicate needs every step's text/operands/snap and only a head's first/last survive
+     * into what ships, so the verdict is computed by the build. The row was renamed for that.
+     */
+    let TABLE_TRACE = null;
+    let tableTraceLoad = null;
+    const loadTableTrace = () => (tableTraceLoad ||= fetch('traces/index.json', { cache: 'no-cache' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(i => { TABLE_TRACE = (i && i.guides) || {}; })
+      .catch(() => { TABLE_TRACE = {}; }));
+
+    const VERDICT_STYLE = {
+      disagrees: 'background:rgba(251,113,133,.12);color:#FB7185;border:1px solid rgba(251,113,133,.35)',
+      uncomparable: 'background:rgba(251,191,36,.12);color:#FBBF24;border:1px solid rgba(251,191,36,.35)',
+    };
+    const VERDICT_TEXT = {
+      disagrees: 'Unverified · table disagrees with trace',
+      uncomparable: 'Unverified · not comparable',
+    };
+    /** Empty string when V9 certified the guide — absence of the badge IS the verified state. */
+    function verifyLabel(entry) {
+      const verdict = TABLE_TRACE && entry.item.relPath ? TABLE_TRACE[entry.item.relPath] : null;
+      if (!verdict || !VERDICT_TEXT[verdict.tableTrace]) return '';
+      return '<span id="verifyBadge" data-verdict="' + esc(verdict.tableTrace) + '" title="'
+        + esc('Row 32: V9 — the authored Level 3 dry-run table of this guide, cross-checked against the trace the code actually ran. '
+          + 'Verdict computed at build time by scripts/lib/v9.mjs and published in traces/index.json.')
+        + '" class="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="' + VERDICT_STYLE[verdict.tableTrace] + '">'
+        + VERDICT_TEXT[verdict.tableTrace] + '</span>';
+    }
 
     /* ---------- sidebar ---------- */
     function paintFilterPills() {
@@ -1429,6 +1588,7 @@
       crumbRow.innerHTML = '<span>' + esc(category) + '</span><span>/</span><span class="text-slate-300">' + esc((item.pattern || '').split('/')[0].trim() || item.difficulty) + '</span>';
       articleHead.innerHTML =
         '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
+        verifyLabel(entry) +
         '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
         '<div class="flex flex-wrap items-center gap-3">' +
         (item.leetcodeLink
@@ -1714,6 +1874,12 @@
       currentItemId = id;
       renderNav();
       renderHead(entry);
+      // Row 32's verdict arrives after the first paint, so the label lands without gating a guide
+      // on a fetch. Re-render only if the reader is still on this page — otherwise the badge for
+      // the guide they left would overwrite the one they are reading.
+      loadTableTrace().then(() => {
+        if (currentItemId === id) renderHead(byId.get(id));
+      });
       if (window.marked && marked.parse) {
         contentArea.innerHTML = marked.parse(entry.item.content);
       } else {
@@ -2159,6 +2325,8 @@
     /* ---------- init ---------- */
     paintFilterPills();
     renderNav();
+    // Row 32: warm the per-guide verdict index so the first guide a reader opens already has it.
+    loadTableTrace();
     refreshAuth();
     const startId = location.hash ? location.hash.slice(1) : null;
     if (startId && byId.has(startId)) openArticle(startId);
@@ -2176,5 +2344,9 @@
     });
   </script>
   <script src="chat-widget.js"></script>
+  <!-- Row 22: the dry-run table player. A module, imported once, no global (plan G4);
+       it attaches to the existing `lt150:article` event, so openArticle() is untouched.
+       Deferred like every module, hence its own initial mount for the hash article. -->
+  <script type="module" src="dryrun/index.js"></script>
 </body>
 </html>
