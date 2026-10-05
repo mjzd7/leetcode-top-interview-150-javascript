@@ -532,3 +532,53 @@ test('prev/next sits with the page actions, not pinned to the scrollport', async
   expect((await at(1920)).sharesRow, 'a wide column fits them all on one row').toBe(true);
   expect((await at(1440)).sharesRow, 'a 1440 column wraps rather than squeezing').toBe(false);
 });
+/* Clicking a category glyph in the 56px rail widened the rail and scrolled the
+   group into view. scrollIntoView scrolls every scrollable ancestor, and
+   #sidebar is one of them — overflow:hidden still makes a box scrollable
+   programmatically — so it scrolled the sidebar as well, pushing the 191px
+   header block (ring, filter, difficulty pills) out of view and leaving exactly
+   that much blank space at the bottom. */
+test.describe('revealing a category from the collapsed rail', () => {
+  test.skip(({ viewport }) => viewport.width < 1280, 'the rail is md-only');
+
+  test('scrolls the list without moving the sidebar itself', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.evaluate(() => localStorage.removeItem('lt150-nav-stage'));
+    await page.reload();
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(400);
+
+    await page.click('#ltNavCollapse'); // 200px text rail
+    await page.click('#ltNavCollapse'); // 56px icon rail
+    await page.waitForTimeout(400);
+    await expect(page.locator('#sidebar')).toHaveAttribute('data-stage', '2');
+
+    await page.click('.nav-cat-btn[data-cat="HASHMAP"]');
+    await page.waitForTimeout(1200); // the scroll is smooth
+
+    const r = await page.evaluate(() => {
+      const sb = document.getElementById('sidebar');
+      const nav = document.getElementById('curriculumNav');
+      const sbb = sb.getBoundingClientRect();
+      const header = sb.firstElementChild.getBoundingClientRect();
+      const nb = nav.getBoundingClientRect();
+      return {
+        sidebarScrollTop: sb.scrollTop,
+        stage: sb.dataset.stage,
+        headerH: Math.round(header.height),
+        headerVisible: header.height > 0 && header.bottom > sbb.top + 1,
+        navBelowHeader: Math.round(nb.top - header.bottom),
+        scrolledInNav: nav.scrollTop > 0,
+        blankBelowNav: Math.round(sbb.bottom - nb.bottom),
+      };
+    });
+
+    expect(r.stage, 'the rail widened back out').toBe('0');
+    expect(r.scrolledInNav, 'and the list did scroll to the group').toBe(true);
+    expect(r.sidebarScrollTop, 'the sidebar itself is not scrolled — that was the blank space').toBe(0);
+    expect(r.headerVisible, 'the progress ring, filter and pills are still on screen').toBe(true);
+    expect(r.navBelowHeader, 'the list still starts under the header block').toBe(0);
+    expect(r.blankBelowNav, 'and the list still reaches the bottom of the sidebar').toBe(0);
+    expect(r.headerH, 'the header block is its full height, not collapsed').toBe(191);
+  });
+});
