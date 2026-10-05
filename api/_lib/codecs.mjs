@@ -296,7 +296,16 @@ const list = Object.freeze({
   fromWire: arrayToList,
   encode: (head) => serialize(listToArray(head)),
   decode: (wire) => arrayToList(wire), // no `deserialize` — see the note on `tree.decode`
-  owns: isNodeLive, // NOT isNodeValue — see the nil-asymmetry note there
+  // Row 15 / S31 — was `isNodeLive`, and that is the asymmetry S26 fixed for `tree` ONLY. `owns`
+  // decides whether a value is re-encoded through `toWire` before comparison, so with nil excluded
+  // a `null` EXPECTATION stayed `null` while a `null` RETURN became `[]` — and no case whose
+  // authored expectation is `null` could ever pass, on any list guide. `merge-k-sorted-lists`'s
+  // `assertEq(fn([]), null, 'empty array')` is the measured instance (3 cases, L1 and L2).
+  // `isNodeValue` is `isNil(v) || isNodeLive(v)`, so this is the SAME rule `tree` already uses.
+  // `acceptsWire` is deliberately untouched: the earlier entry's probe moved THAT lever and measured
+  // it net-negative (declining `[]` fixes 2 blocks and breaks `invert-binary-tree` x3). The defect
+  // was on the comparison side, not the wire.
+  owns: isNodeValue,
   acceptsWire: (wire) => acceptsNodeWire(arrayToList, listToArray, wire),
 });
 
