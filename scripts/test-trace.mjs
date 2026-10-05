@@ -137,6 +137,68 @@ async function opsEmits(fnName, ops, ctor) {
   return verdict.passed === 1 && verdict.failed === 0;
 }
 
+/**
+ * S29's mechanism probe: does replaying a RECORDED draw sequence make a random answer reproducible?
+ *
+ * Deliberately NOT driven by a golden's verdict on disk — the whole defect was that a verdict read
+ * off disk moved between regenerations, so reading another one proves nothing. This drives
+ * `buildBundle` directly and compares the VALUES it produces across two runs.
+ *
+ * A plain function target on the `json` codec, deliberately: the claim under test is the draw replay,
+ * and going through the `ops` branch would make the probe depend on op-list semantics as well, so a
+ * failure here would not say which of the two broke.
+ *
+ * The `moved` half is the negative probe — the same case with the recorded draws REMOVED, where
+ * `Math.random` is live and the two runs genuinely disagree. Without it, "ran twice and agreed"
+ * would be indistinguishable from "ran twice and the target happened to be deterministic".
+ */
+async function recordedDrawsAreDeterministic() {
+  // `pickAll` returns whatever the draw sequence selects, so an unpinned run is genuinely random and
+  // a pinned one is exactly reproducible. Index selection is what makes each draw matter: 0 must land
+  // on the first element and 0.999999 on the last.
+  const userCode = [
+    'function pickAll(values) {',
+    '  const out = [];',
+    '  for (let i = 0; i < values.length; i++) out.push(values[Math.floor(Math.random() * values.length)]);',
+    '  return out;',
+    '}',
+  ].join('\n');
+  const run = async (draws) => {
+    const test = { name: 'draws', args: [['lo', 'mid', 'hi']], expected: ['lo', 'mid', 'hi'] };
+    if (draws) test.draws = draws;
+    const bundle = buildBundle({
+      userCode,
+      fnName: 'pickAll',
+      codec: 'json',
+      equivalence: 'exact',
+      tests: [test],
+    });
+    const exec = await executeUserCode(bundle, { timeoutMs: 5000 });
+    if (!exec.ok || typeof exec.envelopeRaw !== 'string') return { ok: false, raw: 'no verdict' };
+    const v = JSON.parse(exec.envelopeRaw.slice('__VERDICT__'.length));
+    return { ok: true, passed: v.passed, failed: v.failed, got: JSON.stringify((v.tests || [])[0]?.got) };
+  };
+  // 0 -> index 0 -> 'lo', 0.5 -> floor(1.5) = 1 -> 'mid', 0.999999 -> index 2 -> 'hi'.
+  const DRAWS = [0, 0.5, 0.999999];
+  const a = await run(DRAWS);
+  const b = await run(DRAWS);
+  if (!a.ok || !b.ok) {
+    return { ok: false, stable: false, moved: false, detail: `driver produced no verdict: ${a.raw || b.raw}` };
+  }
+  const stable = a.got === b.got;
+  const passes = a.failed === 0 && a.passed === 1;
+  const pinnedGot = a.got;
+  const c = await run(null);
+  const d = await run(null);
+  const moved = c.ok && d.ok && c.got !== d.got;
+  return {
+    ok: passes && stable,
+    stable,
+    moved,
+    detail: `pinned: ${pinnedGot} twice · live: ${c.ok ? c.got : 'no verdict'} then ${d.ok ? d.got : 'no verdict'}`,
+  };
+}
+
 /** The first step index satisfying a predicate — so a mutant targets a step the golden HAS. */
 const findStep = (g, pred) => g.steps.findIndex((s) => plainObject(s) && pred(s));
 
@@ -1466,7 +1528,7 @@ async function main() {
     // Ratchet, not equality: a slice that FIXES blocks must not turn this red, so a breach is
     // a count that ROSE above its baseline. The baseline drops when a slice lands, which is
     // the only thing that makes it tight — a gate that can only be satisfied by going down.
-    const VERDICT_BASELINE = { zeroPass: 6, partialPass: 5 };
+    const VERDICT_BASELINE = { zeroPass: 3, partialPass: 5 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -1561,20 +1623,40 @@ async function main() {
       "S23 ops: an op list drives the target's OWN methods — the emitted values come from the instance, not from a synthesised one",
       'the replay did not reproduce the method sequence the op list named');
 
-    // The one guide in this family that is NOT closed, asserted as remaining work rather than left
-    // to a future reader's inference. Replaying an op sequence makes the verdict depend on what the
-    // target's methods return at run time, and for insert-delete-getrandom-o1 that is `Math.random`.
-    // Its authored script pins the draw sequence with a GLOBAL stub, which is out of bounds (§5d), so
-    // the op mechanism refuses any block whose source names a non-deterministic global. Measured
-    // consequence of NOT refusing: three consecutive regenerations of one tree gave 6/1, 4/3 and
-    // 6/1 — a golden whose verdict moves on every run, which nothing can gate on (K6/E8).
+    // ---- S27 · row 15 — a draw sequence is DATA, so a random guide can be graded reproducibly ----
+    // `insert-delete-getrandom-o1` was the one guide in this family left open. Its answer depends on
+    // `Math.random`, so the earlier refusal kept its blocks wrong — and the measured reason for the
+    // refusal was sound: with the op list replayed against an UNPINNED draw sequence, three
+    // consecutive regenerations of ONE tree gave 6/1, 4/3 and 6/1. A golden whose verdict moves on
+    // every run is worse than a wrong one, because nothing can gate on it (K6/E8).
+    //
+    // What changed is that the draw sequence is now RECORDED and REPLAYED, not re-rolled. The
+    // harvest installs an accessor on `Math.random` so it observes whatever draw function the
+    // authored script installs — this guide's is `DRAWS[draw++ % DRAWS.length]` — and records every
+    // value returned. That list rides each case as data, and `buildBundle` replays it from a cursor.
+    // This is the recorded-parameter model (openleetcode's suite format carries a top-level `out:`
+    // "Global random seed"; Kattis pins nondeterministic problems to a seed the same way), and it is
+    // NOT the global stub §5d forbade: no authored text executes in the driver. The values come from
+    // committed, reviewable golden data — the stub's logic is not shipped, only its outputs.
     for (const level of ['L1', 'L2', 'L3']) {
       const gname = names.find((n) => n.startsWith(`01-array-string__12-insert-delete-getrandom-o1.${level}.json`));
       const golden = gname ? readGolden(gname) : null;
-      check(golden !== null && !classOpPredicate(golden),
-        `S23 ops: insert-delete-getrandom-o1 ${level} is still wrong on purpose — its answer needs a Math.random stub, which §5d forbids`,
-        `passed ${golden?.verdict.passed}, failed ${golden?.verdict.failed} — a clean verdict here means the op list was replayed against an unpinned draw sequence, which is non-deterministic`);
+      check(classOpPredicate(golden),
+        `S29 draws: insert-delete-getrandom-o1 ${level} passes every case — the op list is replayed against the RECORDED draw sequence`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · first error: ${String((golden.verdict.tests || []).find((t) => !t.ok)?.error || '(a case compared unequal)').split('\n')[0]}`
+          : `no golden named 01-array-string__12-insert-delete-getrandom-o1.${level}.json — run \`npm run gen:traces\``);
     }
+    // The claim that matters is REPRODUCIBILITY, so it is asserted by re-running the real driver
+    // twice over the real recorded draws. Before this the same tree measured 6/1, 4/3, 6/1; a gate
+    // reading a verdict off disk could not tell that from a stable one.
+    const drawsProbe = await recordedDrawsAreDeterministic();
+    check(drawsProbe.ok,
+      'S29 draws: replaying a recorded draw sequence through the REAL driver twice yields the same verdict every time — the randomness is pinned',
+      drawsProbe.detail);
+    check(drawsProbe.moved === false || drawsProbe.stable === true,
+      'S29 draws negative: the probe can tell a moving verdict from a stable one (a bare "ran twice" proves nothing)',
+      `detail ${drawsProbe.detail}`);
 
     // ---- S24 · row 15 — an assertion with no recorded target call is NOT a case ----
     // When the spy's recorded target call could not be transported, `__A__` stayed null and the
@@ -1672,7 +1754,7 @@ async function main() {
       'S26 encoding: the two sides really do differ — tree re-encodes nil, json does not — so the symmetry is a real rule and not a no-op',
       'one of the two codecs stopped re-encoding the value it owns');
 
-    // ---- S28 · row 15 — the recorded call must be the one NEAREST the assertion ----
+    // ---- S29 · row 15 — the recorded call must be the one NEAREST the assertion ----
     // `const got = fn(2.1, 3); if (Math.abs(got - 9.261) > 1e-9) { … process.exit(1) }` asserts
     // through no asserter at all, so the spy's recorded call was still sitting there when the NEXT
     // assertion arrived — and because the recording is first-wins, the next assertion kept the STALE

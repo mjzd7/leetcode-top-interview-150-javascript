@@ -197,6 +197,27 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     // count rather than out of a flag.
     `        var r;`,
     `        var __opsRan__ = false;`,
+    // Row 15 / S27 — replay a RECORDED draw sequence, when the case carries one. The values come
+    // from the case's own committed data (`t.draws`), never from code: a cursor over an array is
+    // the recorded-parameter model (openleetcode's suite format carries a top-level `out:` global
+    // seed; Kattis pins nondeterministic problems to a seed the same way). Deliberately NOT the
+    // global stub row 15 §5d forbade — no authored text executes in the driver, and the stub's LOGIC is
+    // not shipped, only the values it returned at harvest time. Without it the verdict depends on
+    // live `Math.random`: three consecutive regenerations of insert-delete-getrandom-o1 measured
+    // 6/1, 4/3 and 6/1, and a golden whose verdict moves cannot be gated on (K6/E8).
+    //
+    // ponytail: the cursor CYCLES, because the authored stub cycles (`draws[draw++ %
+    // draws.length]`) and the driver may draw a different number of times than the harvest did.
+    // Ceiling: a target whose answer depends on the NUMBER of draws rather than their values would
+    // not replay exactly. No such block exists — measured across all 450. Upgrade path: record the
+    // count too and assert it, if one ever does.
+    `        var __randSaved__ = null;`,
+    `        if (Array.isArray(t.draws) && t.draws.length > 0) {`,
+    `          __randSaved__ = Math.random;`,
+    `          var __draws__ = t.draws;`,
+    `          var __di__ = 0;`,
+    `          Math.random = function () { var v = __draws__[__di__ % __draws__.length]; __di__++; return v; };`,
+    `        }`,
     `        if (Array.isArray(t.ops)) {`,
     `          var __inst__ = Reflect.construct(__FN__, (t.ctor || []).map(__dec__));`,
     `          var __outs__ = [];`,
@@ -257,6 +278,7 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     // (`collectRightChain(t1)`) while every other one is written over the RETURN. Which one an entry
     // reads is decided by which placeholder its expression substituted, so there is no flag here to
     // keep in sync with the harvest. With no derivation this line is the old one: `__val__` is `r`.
+    `        if (__randSaved__ !== null) { Math.random = __randSaved__; __randSaved__ = null; }`,
     `        if (t.via && __VIA_FNS__[t.via]) __val__ = __VIA_FNS__[t.via](r, __mut__);`,
     `        got = __CODEC__.owns(__val__) ? __CODEC__.toWire(__val__) : __val__;`,
     `        ok = __CMP__(__CODEC__.owns(t.expected) ? __CODEC__.toWire(t.expected) : t.expected, got);`,
