@@ -2075,3 +2075,64 @@ carriage `t.via` and `t.ops` already use.
 helper"/"nearest") before I checked `grep -o 'S[0-9]\+' | sort -uV` and found S0–S28 all taken. The
 collision was caught by reading the PASS lines rather than by the suite going red, because two gates
 sharing a label still both run.
+
+### 2026-10-05 — row 15 slice 8 (S30): a decoded tree node carries the pointer the guide's code walks
+
+**`next-right-pointers-ii` L2 and L3 are closed, and the cause was not the wire.** The research answer
+for this shape was LeetCode's own published format — `[1,#,2,3,#,4,5,6,7,#]`, *"level order as
+connected by the next pointers, with `#` signifying the end of each level"* — i.e. a level-end
+sentinel. Implementing that was **not** necessary, and the measurement says so: the wire was never the
+problem.
+
+`findNextChild` does `node = node.next` and then `while (node !== null)`. The codec's `arrayToTree`
+builds `{val, left, right}`, so a decoded node's `next` is **UNDEFINED** — `undefined !== null` is
+true, the loop is entered, and it dies on `node.left`. Measured
+`TypeError: cannot read property 'left' of undefined`, 3 cases at L2 and 6 at L3. Three fixes, in the
+order they turned out to be unnecessary:
+
+1. **Use the guide's own `arrayToNextTree`.** Dead end, and the reason is worth keeping: it is declared
+   in the guide's markdown at line 103, in NO block. Verified —
+   `buildInstrumented(..., 1/2/3)` → `arrayToNextTree` present at L1 only, `class Node` at L1 and L3,
+   neither at L2. So there is nothing to reuse and the only route would be injecting authored text.
+2. **Initialise `next` on the decoded node when the guide declares a `Node` class** (S30). `Node` IS
+   declared in the L1 block, so it is inside the trust boundary — the distinction from `findNode`.
+3. **Actually get `Node` into L2's bundle**, which is what L2 needed: L2 only *assigns* `node.next`, so
+   it never mentions `Node`, nothing referenced it, and nothing lifted it. Requesting the name through
+   the sibling-declaration lift that already carries derivation helpers (`depNames: ['Node']` for tree
+   guides) puts it there — and `missingDeclarations` skips names a level already declares, so this is
+   safe for every tree guide rather than just this one.
+
+**A latent bug found on the way, and NOT fixed here — recorded, because "fixed" would be a lie.**
+`api/_lib/trace-runner.mjs`'s `composeShared` loaded `scripts/instrument.mjs` with `createRequire`, and
+that module is ESM **with top-level await**, so `require()` raises `ERR_REQUIRE_ASYNC_MODULE`; the
+`catch` cached `null` and `composeShared` returned the block unchanged **for every guide at every level
+above 1**. The entire shared-declaration mechanism was a silent no-op. Fixing it (await the module
+instead) works and does lift `class Node` into L2 — but it also composes sibling code into blocks the
+byte-budget fixtures measure, and `test:trace-runner`'s E20/E22 went red. Since the `depNames` lift in
+(3) is an independent mechanism and closes L2 on its own, `composeShared` is **left exactly as it was**
+and the no-op is logged here instead. Whoever takes it must reconcile E20/E22's budget fixtures.
+
+**Two gate defects I introduced and caught, both worth recording because the repo's own rule is "a
+gate that cannot go red proves nothing":**
+
+- The liveness gate first imported `composeBlockSource` **directly**, so it passed with
+  `composeShared` stubbed to `const mod = null` — tautological about the one thing it claimed to cover.
+  A mutant (`const mod = null`) proved it: still green. Rewritten to assert the composed SOURCE through
+  the real mechanism, after which the same mutant turns it `❌ [FAIL] … Assertions: 203 | Failures: 1`.
+- It also asserted the S22-style "still wrong on purpose" claim about `lca` two gates earlier in the
+  file, which that slice owns. Left alone deliberately: that claim is still true.
+
+**Evidence.** RED first: `S30 tree node: … L2/L3` FAILed at `passed 6 failed 3` / `passed 3 failed 6`
+with `error TypeError: cannot read property 'left' of undefined`. GREEN: `npm run test:trace` →
+**204 assertions, 0 failures** (was 199; +5). Census **clean 442 → 444, partial-pass 5 → 3**, zero-pass
+**3** unchanged, still **450 goldens · 450 validateEnvelope · empty traces 0**. Suites: `npm test`
+**1898 · 0 failures** · `test:codecs` **275·0** · `test:judge` **96·0** · `test:envelope` **129·0**.
+
+**`test:trace-runner` is RED, and it is NOT this row — measured, not asserted.** It reports
+`269 assertions, 5 failures` at **`8e36f30`**, the commit *before* the S27 draws slice, with this row's
+work stashed — so E20/E22 were already failing before either of today's slices. They build ~2 MB traces
+against 3 s budgets, and the count moves run to run (5, 6, 7 observed) with the S30 decode change
+present and with it reverted, which is the signature of load-sensitivity rather than a deterministic
+regression; the ledger already records this class of flake (`flatten-binary-tree` L1 TLE under load,
+`0e05af2`). **It is also not in `verify`'s chain**, which is how a red suite goes unnoticed — noted, not
+wired. Recorded here so the next session does not re-bisect it.
