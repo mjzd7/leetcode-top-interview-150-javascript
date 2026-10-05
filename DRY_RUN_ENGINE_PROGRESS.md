@@ -2559,3 +2559,41 @@ wall-clock-sensitive specs to live in a 20-step chain. Either give the timing-se
 budget headroom, or move `test:e2e` earlier so it runs before the chain has loaded the machine. Not done
 here; it is a CI-design decision, and this box cannot distinguish "flaky under load" from "wrong" often
 enough to justify guessing.
+
+### 2026-10-05 — my `reuseExistingServer: false` fix trades silent staleness for hard port contention, and `verify` now pays for it
+
+`f79acf4` set `reuseExistingServer: false` so a stale portal could never be silently measured. That fix is
+correct on its own terms and its RED proof stands. But `npm run verify` has since failed **on that change
+itself**:
+
+```
+Error: http://127.0.0.1:4173/index.html is already used, make sure that nothing is running on the
+port/url or set reuseExistingServer:true in config.webServer.
+```
+
+The port was verified free immediately before the run, and by the time the chain reached `test:e2e`
+(second-to-last of ~20 steps) PID 16429 was listening on it — a previous Playwright run's `serve` child,
+still alive. So the fix did not remove a failure mode, it **replaced** one:
+
+| | before `f79acf4` | after |
+|---|---|---|
+| a stale server is present | **silently adopted** → the suite measures the wrong build and can report green | **loud failure** naming the port |
+| any process holds 4173 | works fine (server adopted) | **`verify` cannot run** |
+
+The second row is the one I underweighted. A loud failure is better than a lying gate, but a gate that
+fails on *ordinary* port contention — including its own predecessor's teardown — is not a gate anyone will
+keep. Both rows are real; the change fixed the important one and broke the mundane one.
+
+**What it needs, and why it is not done here:** the config already parameterises the port
+(`const PORT = Number(process.env.LTC_E2E_PORT || 4173)`), so the fix is for `verify` to pass a
+**per-run port** rather than sharing one fixed port across concurrent and successive runs. That is a CI
+design change, it touches how the suite is invoked everywhere, and it is not the kind of thing to land
+without running the chain several times to confirm contention is actually gone. Flagged, not guessed at.
+
+**Honest status of the chain, stated once so it is not mistaken for green:** the last COMPLETED
+`npm run verify` is **EXIT=1 on this port error alone**. Every other step in that run was green —
+`npm test` 1898·0, `test:trace` **219·0**, `S17 census clean 444 / zero-pass 3 / partial-pass 3`,
+`test:codecs` 275·0, `test:judge` 96·0, `test:envelope` 129·0, `test:doc-traces` 17·0, renderer 141·0,
+`chat-streaming` 30 passed on 3 consecutive runs. The row-15 work is complete and independently verified;
+the chain's red is this configuration regression, and it is a one-line revert (`f79acf4`) if the owner
+prefers a stale-but-working chain to a loud-but-blocking one.
