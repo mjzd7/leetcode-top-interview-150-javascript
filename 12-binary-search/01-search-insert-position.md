@@ -68,10 +68,15 @@ FUNCTION searchInsertBruteForce(nums, target):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`nums = [1, 3, 5, 6]`, `target = 5`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | `i = 0` | `1 < 2` | advance | `i = 1` |
-| 1 | `i = 1` | `3 >= 2` | stop | Return `1` |
+| 0 | `i = 0` | — | `nums = [1, 3, 5, 6]` | Initialise `i = 0` |
+| 1 | `i = 0` | `nums[0] = 1` | `i < 4` ✓ | $1 < 5$ ✓ — advance, `i` → 1 |
+| 2 | `i = 1` | `nums[1] = 3` | `i < 4` ✓ | $3 < 5$ ✓ — advance, `i` → 2 |
+| 3 | `i = 2` | `nums[2] = 5` | `i < 4` ✓ | $5 < 5$ is `false` — stop |
+| 4 | — | — | — | Return `2` — the value itself is the insert slot |
 
 ### Modern JavaScript Implementation
 ```javascript

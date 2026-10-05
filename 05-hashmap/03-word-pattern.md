@@ -178,12 +178,19 @@ FUNCTION wordPatternTwoMaps(pattern, s):
 ```
 
 ### Step-by-Step Dry Run
-`pattern = "abba"`, `words = ["dog", "dog", "dog", "dog"]`
+`pattern = "abba"`, `s = "dog cat cat dog"` $\Rightarrow$ `words = ["dog", "cat", "cat", "dog"]`
 
 | `i` | `c` | `w` | `charToWord` Check | `wordToChar` Check | Outcome |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 0 | `'a'` | `"dog"` | Unmapped | Unmapped | Bind `'a' <-> "dog"` |
-| 1 | `'b'` | `"dog"` | `'b'` unmapped | `"dog"` already maps to `'a'`! | **Collision detected $\to$ return `false`** |
+| 0 | `'a'` | `"dog"` | `mappedWord` = `undefined` | `mappedChar` = `undefined` | Both unmapped — bind `'a' <-> "dog"` |
+| 1 | `'b'` | `"cat"` | `mappedWord` = `undefined` | `mappedChar` = `undefined` | Both unmapped — bind `'b' <-> "cat"` |
+| 2 | `'b'` | `"cat"` | `mappedWord` = `"cat"` ✓ | `mappedChar` = `'b'` ✓ | Already consistent — the guard passes, nothing written |
+| 3 | `'a'` | `"dog"` | `mappedWord` = `"dog"` ✓ | `mappedChar` = `'a'` ✓ | Already consistent — the guard passes, nothing written |
+| 4 | — | — | — | — | `i === 4` ends the loop — Return `true` |
+
+The collision case is the same walk with a different `s`: `"dog dog cat cat"` gives
+`i = 1` where `'b'` is unmapped but `wordToChar.get("dog")` is already `'a'`, the guard at
+step 19 fires, and the function returns `false`.
 
 ### Modern JavaScript Implementation
 ```javascript

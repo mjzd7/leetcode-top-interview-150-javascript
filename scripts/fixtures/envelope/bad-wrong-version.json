@@ -1,0 +1,75 @@
+{
+  "v": 2,
+  "path": "05-hashmap/06-two-sum.md",
+  "level": 3,
+  "fnName": "twoSum",
+  "codec": "json",
+  "block": {
+    "hash": "sha256:8a58bb9023650b931054f9fe41ed499e1e43db9529a362a9efc0e505421d8a64",
+    "startLine": 250,
+    "lines": 24
+  },
+  "watch": [
+    "nums",
+    "target",
+    "seen",
+    "n",
+    "i",
+    "num",
+    "complement",
+    "prev"
+  ],
+  "steps": [
+    {
+      "n": 6,
+      "line": {
+        "h": "sha256:8a58bb9023650b931054f9fe41ed499e1e43db9529a362a9efc0e505421d8a64",
+        "off": 14
+      },
+      "type": "if-test",
+      "text": "if (seen.has(complement)) {",
+      "operands": {
+        "seen.get(complement)": {
+          "__u": 1
+        },
+        "complement": 7
+      },
+      "cond": false,
+      "snap": {
+        "seen": {
+          "__map": []
+        },
+        "n": 4,
+        "i": 0,
+        "num": 2,
+        "complement": 7,
+        "prev": {
+          "__u": 1
+        }
+      },
+      "delta": [],
+      "out": "Step 6: seen.has(7) is false, so 2 has no partner yet — fall through and record it.",
+      "override": null
+    }
+  ],
+  "result": [
+    0,
+    1
+  ],
+  "verdict": {
+    "passed": 3,
+    "failed": 0
+  },
+  "truncated": {
+    "execution": false,
+    "display": false,
+    "trace": false
+  },
+  "budget": {
+    "bytes": 742,
+    "mode": "full",
+    "chunks": 1
+  },
+  "stepCount": 1,
+  "error": null
+}

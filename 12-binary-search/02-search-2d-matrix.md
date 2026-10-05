@@ -63,10 +63,14 @@ FUNCTION searchMatrixBruteForce(matrix, target):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`matrix = [[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]]`, `target = 3`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | cells `1, 3` | `3 == 3` at `(0,1)` | Match on 2nd cell | Return `true` |
-| 1 | target `13` | all 12 cells scanned | No match | Return `false` |
+| 0 | `for (const row of matrix)` — row 0 | — | `[[1, 3, 5, 7], …]` | Enter the row loop |
+| 1 | row 0, cell 0 | `val = 1` | `[1, 3, 5, 7]` | $1 \neq 3$ — keep scanning |
+| 2 | row 0, cell 1 | `val = 3` | `[1, 3, 5, 7]` | $3 === 3$ ✓ — match |
+| 3 | — | — | — | Return `true` |
 
 ### Modern JavaScript Implementation
 ```javascript
