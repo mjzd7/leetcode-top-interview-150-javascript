@@ -173,7 +173,31 @@ export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exa
     `    if (typeof __FN__ !== 'function') throw new Error('Function ' + __FN_NAME__ + ' is not defined');`,
     `    var __IS_CLASS__ = false;`,
     `    try { __IS_CLASS__ = /^\\s*class[\\s{]/.test(String(__FN__)); } catch (e) { __IS_CLASS__ = false; }`,
-    `    function __dec__(a) { return __CODEC__.acceptsWire(a) ? __CODEC__.fromWire(a) : a; }`,
+    // Row 15 / S30 - a decoded tree node gets its THIRD pointer initialised, when the guide's own
+    // node class declares one. The codec's `arrayToTree` builds `{val, left, right}`, which is the
+    // right shape for a plain binary tree and the wrong shape for `next-right-pointers-ii`, whose
+    // `findNextChild` does `node = node.next` and then `while (node !== null)`: a node whose `next`
+    // is UNDEFINED enters that loop and dies on `node.left`, measured as
+    // `TypeError: cannot read property 'left' of undefined` (3 cases at L2, 6 at L3).
+    //
+    // `Node` is the guide's own and is inside the trust boundary - it is declared in the Level 1
+    // BLOCK, so row 10's `composeBlockSource` puts it in this bundle for L2 and L3 as well. That is
+    // the distinction from `lowest-common-ancestor`'s `findNode`, which is in the guide's prose and
+    // in NO block: there is nothing to reuse, and the only route would be injecting authored text.
+    // `typeof` on an undeclared name is safe, so a guide with no `Node` keeps the codec's decoder
+    // byte for byte.
+    `    var __hasNode__ = (typeof Node === 'function');`,
+    `    function __initNext__(n) {`,
+    `      if (n === null || typeof n !== 'object') return n;`,
+    `      if (!('next' in n)) n.next = null;`,
+    `      __initNext__(n.left); __initNext__(n.right);`,
+    `      return n;`,
+    `    }`,
+    `    function __dec__(a) {`,
+    `      if (!__CODEC__.acceptsWire(a)) return a;`,
+    `      var v = __CODEC__.fromWire(a);`,
+    `      return __hasNode__ ? __initNext__(v) : v;`,
+    `    }`,
     `    for (var ti = 0; ti < __TESTS__.length; ti++) {`,
     `      var t = __TESTS__[ti];`,
     `      var got;`,
