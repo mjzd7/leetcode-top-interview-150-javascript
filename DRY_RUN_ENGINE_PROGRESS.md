@@ -2597,3 +2597,38 @@ without running the chain several times to confirm contention is actually gone. 
 `chat-streaming` 30 passed on 3 consecutive runs. The row-15 work is complete and independently verified;
 the chain's red is this configuration regression, and it is a one-line revert (`f79acf4`) if the owner
 prefers a stale-but-working chain to a loud-but-blocking one.
+
+### 2026-10-05 — the CI question, answered by measurement: the build was inside the server's startup budget
+
+The open item was *"test:e2e is the wrong home for 3 wall-clock-sensitive specs in a 20-step chain —
+give them headroom, or move test:e2e earlier."* **I tried the move first, and it is worse.** Moving
+`npm run test:e2e` to position 4 (right after `gen:traces` and `validate`, before any suite loads the
+box) produced **123 failed with 119 connection-refused errors in a 3.0-minute run**. Reverted; the original
+order stands.
+
+The measurement then showed the move was treating a symptom, and the real cause was somewhere else:
+
+> `webServer.command` was `npm run build && npx --yes serve@14 -l ${PORT} docs`. **`npm run build`
+> regenerates 3 MB of curriculum data plus the trace index, inside Playwright's `webServer.timeout` of
+> 120 s.** Under load it exceeds that budget, Playwright gives up **before the server ever listens**, and
+> every test fails with `ERR_CONNECTION_REFUSED`. That is not a flake — it is a build racing a watchdog,
+> and it is why a chain run could produce 157 server errors while the same command standalone produced
+> none.
+
+**Two changes, both about where the work happens rather than about timing:**
+
+1. `webServer.command` is now `npx --yes serve@14 -l ${PORT} docs` — **serve only**. Nothing is built
+   inside the server's own startup budget.
+2. `npm run build` moved to **immediately before `npm run test:e2e`** in `verify` (steps 17 and 18 of 18).
+   Freshness is now the caller's explicit job, done seconds earlier rather than raced against a 120 s
+   timeout — so the suite still tests a freshly built portal.
+
+`reuseExistingServer: false` from `f79acf4` is **kept**: it is what stops a stale server being adopted
+silently, and the port contention it also causes is a real signal rather than a wrong measurement. The
+operational rule that falls out of it: **clear 4173 by name, not by PID** (`pkill -f 'serve@14'`, then
+wait for `lsof` to show zero) — a predecessor's `serve` child survives its parent's teardown and re-binding
+it was defeating a PID-based kill.
+
+**Evidence — `npm run verify` → EXIT=0**, server errors **0**, `S17 census clean 444 · zero-pass 3 ·
+partial-pass 3`, `test:trace` **219·0**, `npm test` **1898·0**, Playwright **272 passed / 18 skipped**
+(4.2 min). Same tree, same session, from **157 connection-refused** to **0**.
