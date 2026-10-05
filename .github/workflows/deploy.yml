@@ -23,11 +23,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    # Measured step total is now ~250 s (validate 1.4 · test 15.6 · judge 4.0 · chat 14.8 ·
-    # trace 3.0 · trace-runner 190 · the rest <3), plus `npm ci`, `playwright install` and
-    # `npm run build`. NOT sized to that sum — it would fail a slow runner. Headroom for a
-    # normal run, a hard stop for a hung QuickJS or Playwright one.
-    timeout-minutes: 15
+    # Headroom for a normal run, a hard stop for a hung QuickJS or Playwright one. NOT sized to
+    # the measured step total: at 15 this job was cancelled at 916 s, with the e2e step cut off
+    # and the Pages deploy skipped, because the workflow outgrew the bound it was given. The old
+    # note here claimed ~250 s of steps; that counted neither `npm ci`, nor `playwright install`,
+    # nor `npm run build`, nor the two tool installs. Measure the JOB, not the steps you can see.
+    timeout-minutes: 30
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
