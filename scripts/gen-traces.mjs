@@ -632,7 +632,8 @@ function __SPY__(name, target, isCtor, via) {
       // is-subsequence's class case has no recorded ARGUMENTS (the receiver's construction is left
       // unspied) and is entirely carried by the op list.
       var __unbacked__ = (__A__ === null && __OPS__.length === 0 && __ASSERTERS__.indexOf(__FN__) !== -1) ? 1 : 0;
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null });
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, via: __AV__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
+      __DRAWFROM__ = __DRAWS__.length;
       __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __TX__ = 0; __FL__ = []; __AV__ = null;
     }
 
@@ -1093,7 +1094,7 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     blocksByLevel.map((b) => b.targetFn).filter(Boolean),
     reserved,
     blocksByLevel.map((b) => b.source ?? ''),
-    { ops: !nonDeterministic, mutArgs: voidTarget },
+    { ops: true, mutArgs: voidTarget },
   );
   if (spied.error) return { cases: [], reason: spied.error };
   const targets = spied.targets;
@@ -1128,6 +1129,21 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     `var __TREE__ = ${JSON.stringify(codec === 'tree')};`,
     `var __FL__ = [];`,
     `var __TARGETS__ = ${JSON.stringify(targets)};`,
+    // Row 15 / S27 — the recorded DRAW sequence. `Math.random` is installed as an ACCESSOR so
+    // this observes whatever draw function the authored script installs (`Math.random = () =>
+    // DRAWS[i++ % DRAWS.length]` in insert-delete-getrandom-o1) instead of racing it: the
+    // script's assignment lands in the setter, and every value the target then receives comes
+    // back through the getter. Recorded as DATA and replayed by the driver, so no authored text
+    // executes there. `__DRAWFROM__` mirrors S23's `__FROM__`: an assertion collects only the
+    // draws since the last one, because the script resets its own cursor between sequences.
+    `var __DRAWS__ = [];`,
+    `var __DRAWFROM__ = 0;`,
+    `var __SCRIPT_RANDOM__ = Math.random;`,
+    `Object.defineProperty(Math, 'random', {`,
+    `  configurable: true,`,
+    `  get: function () { return function () { var v = __SCRIPT_RANDOM__(); __DRAWS__.push(v); return v; }; },`,
+    `  set: function (fn) { __SCRIPT_RANDOM__ = fn; },`,
+    `});`,
     `var __ASSERTERS__ = ${JSON.stringify(asserterNames)};`,
     // A level-order encoding: scalars/null, or nested arrays of them. This is the ONLY shape
     // `buildBundle`'s `tree` branch can marshal (`__arrayToTree__(t.args[0])`), so for a `tree`
@@ -1183,6 +1199,8 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
   const cases = [];
   let unserialisable = 0;
   let untransportable = 0;
+  // Row 15 / S27 — cases dropped for want of a RECORDED draw sequence. Counted, never silent.
+  let unpinned = 0;
   let unbacked = 0;
   for (const record of captured) {
     if (record.args === null || record.args === undefined) continue; // no block call before this assertion
@@ -1210,6 +1228,10 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // a registry key. It is inert in the driver unless a `__VIA_FNS__` entry of that name is
     // present, which `buildBundle` emits from the array property below.
     if (record.via !== undefined && record.via !== null) testCase.via = record.via;
+    // Row 15 / S27 — the draw sequence this assertion consumed, as data. Non-empty only for a
+    // target that actually drew, so a deterministic guide carries no `draws` at all and the
+    // driver's replay is inert for it.
+    if (Array.isArray(record.draws) && record.draws.length > 0) testCase.draws = record.draws;
     // Row 15 / S23 — the op list of a class target, and the CONSTRUCTOR arguments it starts from.
     // DATA, not code: it rides inside the existing `JSON.stringify(tests)`, exactly as `t.via` does,
     // so no envelope field, golden field or schema entry was added to carry it (S10's frozen v1.1
@@ -1221,6 +1243,20 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
       testCase.ctor = Array.isArray(record.ctor) ? record.ctor : [];
     }
     cases.push(testCase);
+  }
+  // Row 15 / S27 — a non-deterministic block is only gradable if its draw sequence was RECORDED.
+  // The recorded draws ride the case as data and the driver replays them, so a case that carries
+  // them has a verdict that does not move between runs — that is the whole property, and it is why
+  // the earlier blanket refusal can be lifted. A case from such a block with NO draws would be
+  // graded against a live `Math.random`, which is exactly the moving verdict this row exists to
+  // remove, so it is DROPPED and counted on the same ground as an untransportable one: a golden for
+  // an input the script never pinned is not a golden. Measured before this row, that state gave
+  // 6/1, 4/3 and 6/1 on three consecutive regenerations of one tree.
+  if (nonDeterministic) {
+    const pinned = cases.filter((c) => Array.isArray(c.draws) && c.draws.length > 0);
+    unpinned += cases.length - pinned.length;
+    cases.length = 0;
+    cases.push(...pinned);
   }
   if (cases.length === 0) {
     return {
@@ -1246,7 +1282,7 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
   // `buildInstrumented` and they are not cases. `JSON.stringify` drops them by design, so nothing
   // downstream that only sees the serialised cases is affected.
   if (spied.derivationDeps?.length) cases.derivationDeps = spied.derivationDeps;
-  return { cases, unserialisable, untransportable, viaCount: spied.viaCount ?? 0 };
+  return { cases, unserialisable, untransportable, unpinned, viaCount: spied.viaCount ?? 0 };
 }
 
 /**
