@@ -1950,3 +1950,68 @@ lines where the body no longer is. Pinned to the commit instead: `982264c` made 
 definition, which is the point of the extraction. Comment-only, so no gate —
 `node scripts/lib/v9.mjs` → **12 self-checks, 0 failures** and `npm run test:trace` → **197·0**,
 both unmoved.
+
+### 2026-10-05 — M8 attempted, measured, reverted; and a false claim of mine, struck
+
+**First, my own claim from the entry above is wrong and is struck.** I wrote that `findNode` "is
+declared in the guide's OWN Level 1 block, so it is already inside `userCode` — inside the bundle,
+inside the existing trust boundary". I took that from the script's comment
+(`scripts/test-runner.mjs:364`) and did not check it. It is false. `findNode` is declared in the
+guide's **markdown** at `09-binary-tree-general/10-lowest-common-ancestor.md:128`, inside a testing
+fence ("Test helper: first node with matching value (BFS)"), and in **none** of the three solution
+blocks:
+
+```bash
+node -e "const a=(require('./build/blocks.json').blocks)||require('./build/blocks.json');
+for(const l of [1,2,3]){const x=a.find(g=>g.path==='09-binary-tree-general/10-lowest-common-ancestor.md'&&g.level===l);
+console.log('L'+l, /findNode/.test(JSON.stringify(x)));}"      # -> L1 false  L2 false  L3 false
+```
+
+So evaluating `findNode(decodedT1, 5)` inside the driver means injecting **authored test-scaffolding
+text** — the C3 trust expansion, not a bundle-internal call. And the guide says so itself at line
+305: *"The harness's `findNode` is test-only scaffolding, not solution logic"*, warning that value
+comparison "make[s] value comparison return the wrong node" because trees reuse small ints.
+**The slice's original stop was right and my reframing was wrong: `lowest-common-ancestor` ×3 is
+correctly blocked, and more firmly than I wrote.**
+
+**Now the attempt I did make: M8, a per-level case partition.** `sorted-array-to-bst` L1 is the one
+partial-pass block whose cause is neither the wire nor a derivation, and it is fully diagnosed.
+`scripts/test-runner.mjs:367-373` runs **two** loops; the second is
+`for (const fn of [sortedArrayToBSTSliced, sortedArrayToBST])` — **L2 and L3 only** — and asserts
+`treeHeight(fn([-10,-3,0,5,9])) <= 3`. That is true of a balanced tree and **false of L1**, which the
+guide documents at line 115 as degenerating ("sorted input degenerates to a chain"), so L1's height
+is 5. Every guide's cases are harvested once and handed to all three bundles, so L1 was graded two
+assertions authored for other levels: **5 passed / 2 failed, and the 2 are exactly the `v2` pair.**
+
+Fix attempted: record the CONCRETE target on each case (`callee` is the loop **alias** `fn`, so
+nothing downstream could tell), then partition a level's case list in `traceOne` — deliberately not
+in `buildBundle`, since the generator already knows the level and the driver is the component this
+repo fences hardest. Gate written first and **RED for the right reason**: `sorted-array-to-bst L1`
+FAIL / `L2` PASS / `L3` PASS, plus the asymmetry check FAIL (7/7/7, not selective), while the
+sort-list negative probe PASSED — so it was not tautological. A corpus scan found the blast radius
+appearing safe: **exactly one subset loop in all 150 guides** (`[sortedArrayToBSTSliced,
+sortedArrayToBST]`, 1 occurrence; every other `for (const fn of [...])` lists all three targets).
+
+**It worked, and it was still wrong to ship.** For the target guide it did exactly what it should —
+L1 `1 passed / 0 failed` (5 applied cases), L2 and L3 `3/0` (7 applied), the asymmetry the gate
+wanted. But the regenerated corpus was **428 goldens, not 450**, and it silently changed
+`merge-k-sorted-lists` (6 → 2 applied) and `next-right-pointers-ii` too. Root cause, measured:
+`__TARGETS__` is the **union across all three levels**, and the recorded call is frequently
+**wrapper-mediated** — `is-subsequence`'s L3 class case is driven through a wrapper that is itself
+named `isSubsequence`, which is L2's target, so `Function.prototype.name` attributes L3's case to
+L2. Two guides ended with **no** surviving case at some level, and `traceOne`'s "partition left
+nothing" guard then removed the guide from the manifest instead of failing loudly — which is how 22
+goldens disappeared without a single error.
+
+**Reverted.** `git checkout` on both files, `npm run gen:traces` → **450 goldens · 450
+validateEnvelope · empty traces 0**, census back to **clean 439 / zero-pass 6 / partial-pass 5**,
+`npm run test:trace` → **197·0**, `git status --porcelain | wc -l` → **0**. Byte-identical regeneration,
+so the revert is complete and nothing from the attempt landed. Two blocks do not justify a
+corpus-wide attribution change that cannot be shown correct — and a change that makes guides vanish
+from the manifest is worse than the defect it fixes.
+
+**What a real M8 needs, for whoever takes it.** The recorded call must carry the concrete owning
+function *through* a wrapper, which is the same class of problem as S21's derived-argument
+recording (already solved for node arguments, unsolved for the owning function) and would need its
+own RED-first gate whose negative probe is **"no guide loses a golden"** — the assertion this
+attempt violated and the one I should have written first.
