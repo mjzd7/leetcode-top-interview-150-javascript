@@ -394,3 +394,28 @@ test.describe('a filter that matches nothing', () => {
     expect(noData, 'a filter that matched is not a missing build').toBe(false);
   });
 });
+
+/* The drawer opened with one control — the hamburger — and could only be put
+   away by tapping the scrim, by Escape, or by opening a guide. Tapping a dimmed
+   area is not an affordance you can see. */
+test.describe('the drawer on a phone', () => {
+  test.skip(({ viewport }) => viewport.width >= 768, 'below md the sidebar is an off-canvas drawer');
+
+  test('offers a visible way to close it', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('#menuBtn');
+    await page.waitForTimeout(400);
+    const btn = page.locator('#sideClose');
+    await expect(btn, 'a control you can see that closes the drawer').toBeVisible();
+    const box = await btn.boundingBox();
+    expect(box.height, 'and it is a real tap target').toBeGreaterThanOrEqual(44);
+    await btn.click();
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => ({
+      offscreen: document.getElementById('sidebar').classList.contains('-translate-x-full'),
+      scrimGone: document.getElementById('sideOverlay').classList.contains('hidden'),
+    }));
+    expect(r.offscreen, 'the drawer is put away').toBe(true);
+    expect(r.scrimGone, 'and the scrim goes with it').toBe(true);
+  });
+});
