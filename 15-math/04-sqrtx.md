@@ -64,10 +64,16 @@ FUNCTION mySqrtBruteForce(x):
 ```
 
 ### Step-by-Step Dry Run (Visual Trace)
+`x = 4`
+
 | Step | Iteration / Pointer ($i, j$) | Current Value | State / Sub-array | Action Taken |
 | :--- | :--- | :--- | :--- | :--- |
-| 0 | `i = 0, 1, 2` | `0, 1, 4 ≤ 8` | Survive | Advance |
-| 1 | `i = 3` | `9 > 8` | Fail | Return `3 - 1 = 2` |
+| 0 | `i = 0` | — | `x = 4` | Initialise `i = 0` |
+| 1 | `i = 0` | $0 \times 0 = 0$ | $0 \le 4$ ✓ | `i++` → `i = 1` |
+| 2 | `i = 1` | $1 \times 1 = 1$ | $1 \le 4$ ✓ | `i++` → `i = 2` |
+| 3 | `i = 2` | $2 \times 2 = 4$ | $4 \le 4$ ✓ | `i++` → `i = 3` |
+| 4 | `i = 3` | $3 \times 3 = 9$ | $9 \le 4$ is `false` | Loop exits — `i` overshot by exactly one |
+| 5 | — | — | — | Return `i - 1 = 2` |
 
 ### Modern JavaScript Implementation
 ```javascript

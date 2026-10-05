@@ -1,0 +1,211 @@
+{
+  "title": "Dry-run trace envelope v1.1",
+  "version": 1,
+  "schemaKind": "documented-spec",
+  "plan": "DRY_RUN_ENGINE_PLAN_v5.md §5 (supersedes v4 §5; frozen at row 13)",
+  "validator": "scripts/validate-envelope.mjs — hand-rolled, executed by scripts/test-envelope.mjs (row 5)",
+  "whyNotAjv": "Plan §0.2 admits exactly two new devDependencies, acorn and acorn-walk, and neither is a schema validator. A JSON Schema cannot express the cross-field invariants that actually matter here anyway (I1, I3, I4, I5, I7), so the dependency would buy shape checking and leave the five real checks to hand-written code regardless. docs/trace-schema.json is therefore the readable contract; the executable one is validate-envelope.mjs, and the two are asserted to agree in test-envelope.mjs.",
+  "purpose": "One trace of one canonical case, machine-assembled from the sandbox and consumed by docs/dryrun/index.js. It is deliberately NOT a verdict: `verdict` is copied from an uninstrumented run so a trace can never move it.",
+  "identity": "Identity is sha256(blockSource), never a line number. Steps carry `line: {h, off}`, and the guide line is resolved at render time, so editing a guide re-derives the hash instead of shifting every golden (plan §1 U4, §3 K5).",
+
+  "caps": {
+    "source": "api/_lib/sandbox.mjs — measured constants, not wishes (plan §1 P5)",
+    "envelopeSlotChars": 1048576,
+    "envelopeSlotNote": "sandbox.mjs:11 `ENVELOPE_MAX_CHARS`. This is the REAL per-chunk ceiling: v4's 4 MB byte budget was fiction, because overflow at sandbox.mjs:117-123 DROPS the payload and reuses the log-spam `truncated` flag, so an oversized trace surfaced as a plausible trace with no steps.",
+    "chunksPerTrace": 12,
+    "degradeAtFraction": 0.6,
+    "byteBudget": 7549747,
+    "byteBudgetNote": "floor(slot x chunks x 0.6). Degrading at 60% leaves room to ship the truncation flag itself; ponytail: raise only with a measured need, e.g. the median step size across 3000 problems.",
+    "execStepCap": 200000,
+    "execStepCapNote": "ponytail: arbitrary, ~4x the worst guide measured. Exceeding it aborts with a TLE-shaped verdict and flushes the partial trace.",
+    "displayStepCap": 2000,
+    "displayStepCapNote": "ponytail: UI-only ceiling, above the 2 s render budget. Exceeding it sets truncated.display — a cosmetic cut, distinct from the execution abort.",
+    "timeoutMs": 3000,
+    "timeoutNote": "sandbox.mjs:98 default timeoutMs. Crossing it sets truncated.execution (E24).",
+    "heapBytes": 16777216,
+    "heapNote": "sandbox.mjs:98 memoryLimitBytes. Crossing it is an error verdict with the trace flushed if any steps were captured (E25).",
+    "maxLogChars": 100000,
+    "maxLogCharsNote": "sandbox.mjs:98 maxLogChars — the LOG cap. It has nothing to do with the trace slot, which is exactly why `truncated` must be an object and not that boolean (I3)."
+  },
+
+  "fields": [
+    {
+      "name": "v",
+      "type": "number",
+      "required": true,
+      "const": 1,
+      "meaning": "The envelope CONTRACT revision, not the schema document's version. It is 1 for v1.1. A reader that sees anything else must refuse the document rather than guess: v2 may reuse these field names for different meanings, and the whole point of freezing at row 13 is that v1.1's meanings are pinned."
+    },
+    {
+      "name": "path",
+      "type": "string",
+      "required": true,
+      "meaning": "Repo-relative path of the guide this trace belongs to, e.g. `05-hashmap/06-two-sum.md`. The registry is keyed by PATH, never by slug or title, because two guides can share a title (E30)."
+    },
+    {
+      "name": "level",
+      "type": "number",
+      "required": true,
+      "enum": [1, 2, 3],
+      "meaning": "Which of the guide's three solution levels was instrumented — 1 brute force, 2 optimized, 3 canonical. Goldens pin level 3; levels 1 and 2 tables are derived from it (E34)."
+    },
+    {
+      "name": "fnName",
+      "type": "string",
+      "required": true,
+      "meaning": "Name of the traced function, resolved from `build/blocks.json` rather than stored a second time in a per-problem test table (plan §7 row 2, P3 deletes the `fns` duplication)."
+    },
+    {
+      "name": "codec",
+      "type": "string",
+      "required": true,
+      "meaning": "Which codec interprets `result` and renders it. Five are implemented (`json`, `tree`, `list`, `ops`, `graph`); naming a sixth fails CI loudly with no default fallback (plan §3 G1). The whitelist is the codec registry's job (row 17), so this field's SHAPE is checked here and its MEMBERSHIP there."
+    },
+    {
+      "name": "block",
+      "type": "object",
+      "required": true,
+      "meaning": "The solution block the steps came from, as {hash, startLine, lines}. This is the anchor that makes an offset meaningful: `line.h` is re-derived from the source on every edit, so a stale golden is a named hash mismatch rather than a line diff that shifts whenever the guide is touched.",
+      "subfields": [
+        { "name": "hash", "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "meaning": "sha256 of the block source, prefixed `sha256:`. Computed once by gen-blocks.mjs and compared, never recomputed, by the validator." },
+        { "name": "startLine", "type": "number", "meaning": "1-based line of the block's first code line in the guide. Advisory: the renderer resolves guide lines through `hash` + `off`, so this can move without invalidating a golden." },
+        { "name": "lines", "type": "number", "meaning": "How many lines the block spans. It bounds every step's `off` (I1)." }
+      ]
+    },
+    {
+      "name": "watch",
+      "type": "string[]",
+      "required": true,
+      "meaning": "Every binding the instrumenter captures at each step, derived statically from the block (plan §1 A1). This is the single source that invariant 5 checks operands against: an operand naming something outside `watch` renders a value nobody captured."
+    },
+    {
+      "name": "steps",
+      "type": "object[]",
+      "required": true,
+      "meaning": "The traced steps in execution order. May be SHORTER than `stepCount` when the display cap cut them (see `truncated.display`), and must never be longer.",
+      "subfields": [
+        { "name": "n", "type": "number", "meaning": "1-based execution index. Strictly increasing, because two steps sharing an index means the runner restarted or double-counted." },
+        { "name": "line", "type": "object", "meaning": "{h, off} — the block hash plus a 0-based offset into it. `h` MUST equal `block.hash` and `off` MUST be less than `block.lines` (I1). The guide line is `block.startLine + off`." },
+        { "name": "type", "type": "string", "enum": ["decl", "assign", "if-test", "loop-head", "loop-back", "call", "return", "exit", "throw"], "meaning": "What kind of source construct this step is, chosen statically at instrument time so the renderer can pick an overlay without re-parsing." },
+        { "name": "text", "type": "string", "meaning": "The guide source at that offset, verbatim. Carried in the envelope so the portal needs no source fetch (plan §4: static traces, no server)."},
+        { "name": "operands", "type": "object", "meaning": "The sub-expression values the `if-test`/`loop-head`/`call` decision read, keyed by the expression as written (`nums[left]`, `seen.get(complement)`, `2`). Every binding named in a key must be in `watch` or be a literal (I5)."},
+        { "name": "cond", "type": "boolean|null", "required": true, "meaning": "The branch outcome for `if-test` and loop steps; null everywhere else. Null rather than omitted so a consumer can tell \"not a branch\" from \"producer forgot\"." },
+        { "name": "snap", "type": "object|null", "required": true, "meaning": "Watched values at this step, ALREADY in canonical serializer form — `{\"__u\":1}`, `{\"__nan\":1}`, `{\"__n0\":1}`, `{\"__bi\":\"…\"}`, `{\"__map\":[…]}`, `{\"__set\":[…]}`, `{\"__ta\":\"Uint8\",\"v\":[…]}`, `{\"__ref\":N}`. A live `undefined`/`NaN`/`-0`/`BigInt`/`Map` is a defect: the envelope is text, and only tokenised values survive it (I6). Null in `budget.mode: \"diff\"`." },
+        { "name": "delta", "type": "object[]", "required": true, "meaning": "[{path, from, to}] changes against the previous step. In `full` mode the client derives it from the snapshots; in `diff` mode it is the ONLY payload, server-emitted (I4)."},
+        { "name": "out", "type": "string", "meaning": "Human narration of the step, pre-rendered so the portal shows the guide's own explanation rather than an engine-generated one." },
+        { "name": "override", "type": "string|null", "required": true, "meaning": "A hand-written narration replacing `out` when the engine's phrasing is wrong for this step (plan §3 D12). CI-guarded: the override must name an identifier that exists in `watch`." }
+      ]
+    },
+    {
+      "name": "result",
+      "type": "any",
+      "required": true,
+      "meaning": "What the traced call returned, in canonical form, interpreted by `codec`. Null when the run threw or timed out — the steps are still valid then (plan §3 G3)."
+    },
+    {
+      "name": "verdict",
+      "type": "object",
+      "required": true,
+      "meaning": "{passed, failed} ONLY, copied from an UNINSTRUMENTED run of the same canonical case. A trace can never move a verdict (I2), so the field has no room for a per-step breakdown: the sandbox's own verdict envelope carries a `tests` array (sandbox.mjs:64-69), and copying that wholesale is how a traced run would get to edit the counts it is meant to report. `passed + failed` must exceed 0 unless `truncated.execution` (I7).",
+      "subfields": [
+        { "name": "passed", "type": "number", "meaning": "Cases the RAW run passed. Instrumentation is not part of the measurement." },
+        { "name": "failed", "type": "number", "meaning": "Cases the RAW run failed. A non-zero value is what makes a failing golden meaningful." }
+      ]
+    },
+    {
+      "name": "truncated",
+      "type": "object",
+      "required": true,
+      "meaning": "Exactly {execution, display, trace}, each a boolean. This is an OBJECT on purpose: `sandbox.mjs` reports truncation as a single boolean meaning \"the 100 k log cap was hit\", and borrowing that flag is how an oversized trace once looked like a run with no steps — the payload was dropped silently and the only signal pointed at the log buffer (I3). `trace` means THIS trace shed its payload, so it is always paired with `budget.mode: \"diff\"`.",
+      "subfields": [
+        { "name": "execution", "type": "boolean", "meaning": "The run itself stopped early — 3 s timeout (E24), 200 k step cap, or 16 MB heap (E25). The only case where a zero-sum verdict is legal (I7), and the one that yields a TLE-shaped verdict." },
+        { "name": "display", "type": "boolean", "meaning": "The trace was cut to the 2000-step display cap. Purely cosmetic: the steps that remain are all true." },
+        { "name": "trace", "type": "boolean", "meaning": "The assembled trace exceeded the byte budget and degraded to `diff` mode (E20). Its own flag, attributable to the trace alone." }
+      ]
+    },
+    {
+      "name": "budget",
+      "type": "object",
+      "required": true,
+      "meaning": "What the envelope cost to ship, so a caller can see the cap before it hits one.",
+      "subfields": [
+        { "name": "bytes", "type": "number", "meaning": "Canonical byte length of the assembled envelope. May not exceed `caps.byteBudget` (60% of 12 x the 1 MB slot)."},
+        { "name": "mode", "type": "string", "enum": ["full", "diff"], "meaning": "`full` carries snapshots per step and the client computes deltas; `diff` carries NO snapshots and the server emits the deltas (I4)."},
+        { "name": "chunks", "type": "number", "meaning": "How many `__TRACE__<seq>` slots the trace occupied. A gap in the sequence is a hard error, never a silent short trace (E21)."}
+      ]
+    },
+    {
+      "name": "stepCount",
+      "type": "number",
+      "required": true,
+      "meaning": "Steps EXECUTED, which may exceed `steps.length` when `truncated.display` cut them. It is never below the steps actually shipped — that would mean the count and the payload disagree about the same run."
+    },
+    {
+      "name": "error",
+      "type": "string|null",
+      "required": true,
+      "meaning": "Set when a step threw, the run timed out, or serialization hit its depth cap (`\"maxDepth\"`, E9). The partial trace is flushed anyway — one throw in 2000 steps must not silently truncate a trace (plan §3 G3)."
+    }
+  ],
+
+  "invariants": [
+    {
+      "id": "I1",
+      "plan": "§5 invariant 1 (D2x); ledger E19",
+      "statement": "`line.h === block.hash` for every step, and `line.off < block.lines`.",
+      "why": "The link between a step and the guide line it renders at. Deriving it from the block hash rather than a stored line number is what lets a guide be edited without invalidating every golden — and what turns a stale golden into a NAMED failure instead of an unreadable diff.",
+      "check": "Per step: `STEP_HASH_MISMATCH` when `line.h !== block.hash`; `STEP_OFFSET_OUT_OF_RANGE` when `line.off >= block.lines`.",
+      "defendedBy": "bad-line-hash-mismatch.json, plus an in-test mutation for the offset arm"
+    },
+    {
+      "id": "I2",
+      "plan": "§5 invariant 2; §3 G3",
+      "statement": "`verdict` is copied from an uninstrumented run — a trace can never move a verdict.",
+      "why": "Instrumentation perturbs what it measures: probes read state, add cost, and change timing. A verdict produced while the probe suite is live describes the probe suite. The runner therefore runs the canonical case twice — instrumented for steps, raw for the verdict.",
+      "check": "`VERDICT_EXTRA_FIELD` when `verdict` is anything other than exactly {passed, failed}. Provenance is enforced by CONSTRUCTION in the runner (row 10) and is not observable from a single envelope; the closed key set is what this validator can hold, and it blocks the concrete failure — copying sandbox.mjs's `tests` array into the verdict, which would hand a traced run the counts it reports.",
+      "defendedBy": "in-test mutation: a verdict carrying a tests array"
+    },
+    {
+      "id": "I3",
+      "plan": "§5 invariant 3 (K2)",
+      "statement": "`truncated.trace` carries exactly one traceTruncated flag, never borrowed from the log cap.",
+      "why": "sandbox.mjs reports truncation as one boolean meaning \"the 100 k log cap was hit\", and reuses it when the envelope slot overflows — dropping the payload and setting the log flag at once (sandbox.mjs:117-123). The caller then sees an empty envelope and a `truncated: true` that looks like chatty output. Silent-wrong is the worst failure mode this system has, so the trace flag is its own key.",
+      "check": "`TRUNCATED_FLAG_ALIAS` when `truncated` is not exactly {execution, display, trace} (a bare boolean is the log cap); `TRACE_TRUNCATED_WITHOUT_DIFF` when `trace: true` is not paired with `budget.mode: \"diff\"`.",
+      "defendedBy": "in-test mutations: truncated set to a boolean, and to a four-key object"
+    },
+    {
+      "id": "I4",
+      "plan": "§5 invariant 4 (D2/F1); ledger E20",
+      "statement": "`budget.mode === \"diff\"` implies no `snap` and a server-emitted `delta` present.",
+      "why": "Degrade-to-diff is how an oversized trace survives the 1 MB slot. It only works if the payload actually went away: a diff envelope still carrying snapshots ships the same bytes that overflowed the slot, and a diff envelope with no deltas ships nothing at all — the trace renders blank with no error anywhere.",
+      "check": "`DIFF_MODE_HAS_SNAP` per step with a snap under diff mode; `DIFF_MODE_NO_DELTA` when no step carries a non-empty delta.",
+      "defendedBy": "bad-diff-mode-with-snap.json, plus an in-test mutation for the no-delta arm"
+    },
+    {
+      "id": "I5",
+      "plan": "§5 invariant 5; §1 A1",
+      "statement": "Every identifier named in an `operands` key exists in `watch`, or is a literal.",
+      "why": "`operands` is what the dry-run table shows for a decision. If a key names something the instrumenter never captured, the table renders a plausible value with nothing behind it, and every CI guard downstream (V9 table cross-check, region isolation) trusts it. Literals are exempt because there is nothing to capture.",
+      "check": "`OPERAND_NOT_WATCHED` per unwatched binding. A dot means the next identifier is a property, not a binding, so `seen.get(complement)` demands `seen` and `complement` but not `get`.",
+      "defendedBy": "bad-operand-not-watched.json"
+    },
+    {
+      "id": "I6",
+      "plan": "§5 invariant 6 (K6); ledger E1–E9",
+      "statement": "Every `snap` value round-trips through the canonical serializer.",
+      "why": "The envelope is text. `JSON.stringify` drops `undefined`, turns `NaN`/`Infinity` into `null`, prints `-0` as `0`, flattens `Map`/`Set` to `{}`, and THROWS on `BigInt` — which inside the sandbox kills the whole run (plan §1 U5). 64 guides use Map/Set, 19 use typed arrays, 14 carry BigInt-scale literals. A snap therefore arrives already tokenised, and the only honest check compares the canonical form against the plain-JSON form: if they differ, the producer skipped the serializer.",
+      "check": "`SNAP_NOT_CANONICAL` when the snap is a live value rather than a canonical token, when its depth passes the serializer's MAX_DEPTH, or when the serializer refuses to decode it (a dangling `__ref`, an unknown typed-array name). The comparison is made through scripts/lib/serialize.mjs, never JSON.stringify alone.",
+      "defendedBy": "bad-raw-bigint-snap.mjs — a `.mjs` fixture, because a raw BigInt cannot be written in JSON at all — plus in-test mutations for a live NaN, -0, undefined, Map, typed array, dangling __ref and an over-deep tree"
+    },
+    {
+      "id": "I7",
+      "plan": "§5 invariant 7; ledger E24",
+      "statement": "`verdict.passed + verdict.failed > 0`, unless `truncated.execution`.",
+      "why": "A zero-sum verdict with a complete run means no case executed, which reads as a green run that measured nothing. The single exception is a truncated EXECUTION — the 3 s timeout or the 200 k cap — where the raw run produced no verdict either, and a TLE-shaped result is the honest answer.",
+      "check": "`VERDICT_ZERO_SUM` when the sum is 0 and `truncated.execution` is not true.",
+      "defendedBy": "bad-zero-verdict.json, plus a positive in-test case proving truncated.execution is exempt"
+    }
+  ],
+
+  "example": "scripts/fixtures/envelope/good-two-sum.json — one canonical two-sum run, 12 steps, real sha256 of the guide's Level 3 block."
+}

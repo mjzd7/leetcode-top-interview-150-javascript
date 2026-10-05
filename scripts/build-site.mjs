@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { splitSections } from '../api/_lib/chat-tokens.mjs';
+import { publishDocTraces } from './gen-doc-traces.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -162,3 +163,14 @@ console.log(
 if (guideIndex.guides.some((g) => g.sections.length === 0)) {
   console.warn('⚠️  At least one guide produced zero sections — retrieval cannot score it.');
 }
+
+/* ------------------------------------------------------------------ *
+ * Static traces — the third artefact, and the one that needs no server
+ * ------------------------------------------------------------------ */
+
+await publishDocTraces();
+console.log(
+  '✅ Published docs/traces/ — the portal reads a trace over plain HTTP, so W1 needs no '
+  + 'server, no auth and no rate limit (plan §7 row 16, §9 decisions 3 and 4). '
+  + 'The full goldens stay a CI artifact: see docs/traces/index.json `decision`.',
+);

@@ -236,11 +236,21 @@ FUNCTION isPalindrome(s):
 ```
 
 ### Step-by-Step Dry Run
-`s = "0P"`
+`s = "A man, a plan, a canal: Panama"`
+
+<!-- ponytail: 20 recorded pointer states folded into 5 rows — one row per pair of
+     alphanumeric characters actually compared, with the skipped `isAlphanumeric` hops named
+     in the Action cell. Expand to one row per `left`/`right` step when the skipping itself is
+     the thing being taught. -->
 
 | Step | `left` | `right` | `s[left]` | `s[right]` | Action | Comparison |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | 0 | 1 | `'0'` (48) | `'P'` (80) | Both alphanumeric | `'0' !== 'p'` $\implies$ **Return false** |
+| 1 | 0 | 29 | `'A'` (65) | `'a'` (97) | Both alphanumeric — compare | `'a' === 'a'` ✓ |
+| 2 | 2 | 28 | `'m'` (109) | `'m'` (109) | `s[1] = ' '` skipped on the left; `s[29] = 'a'` already consumed | `'m' === 'm'` ✓ |
+| 3 | 7 | 25 | `'a'` (97) | `'a'` (97) | `s[5] = ','`, `s[6] = ' '` skipped on the left | `'a' === 'a'` ✓ |
+| 4 | 10 | 21 | `'l'` (108) | `'l'` (108) | `s[8]`, `s[9]` skipped on the left; `s[23] = ' '`, `s[22] = ':'` on the right | `'l' === 'l'` ✓ |
+| 5 | 17 | 17 | `'c'` (99) | `'c'` (99) | Pointers meet — `left < right` is now `false` | Loop ends |
+| 6 | 18 | 16 | — | — | `return true` | Every mirrored pair matched |
 
 ### Modern JavaScript Implementation
 ```javascript

@@ -50,6 +50,11 @@ v4 asserted a §1 audit and built 27 rows on it. Re-measured:
 builds goldens and a differential oracle for 41 guides that have never been
 executed.
 
+**Counts are now measured, not asserted.** `npm run audit`
+(`scripts/audit-curriculum.mjs`, row 0) prints every §1 count as measured-vs-claimed
+and exits non-zero on `--check`; its exported `selectSolutionBlocks()` is the K7
+predicate rows 4, 7 and 21 import instead of re-inventing.
+
 ### 0.1 v3 → v4 delta, re-verified
 
 F1 (delta becomes an envelope field) **survives** and hardens: `full` ⇒ client
@@ -118,7 +123,7 @@ cover it) · `bun`/`deno`/`uv` (QuickJS is the bottleneck; the repo is Node-20-p
 | **L2** | **Per-preset Playwright specs are 13 files of copy-paste.** One table-driven spec over the preset list gives identical coverage. | v4 row 17, V10 |
 | **L3** | **Row 26's wiring is smaller than stated.** `verify` already runs `test:e2e`, and Playwright already has both viewports. | `package.json`, `playwright.config.mjs` |
 | **A1** | **`watch` derivation is the real product and is unspecified.** Destructuring, `for (const x of y)`, catch params, class fields, module-level consts, loop-scoped shadowing. Every CI guard in the plan depends on this one function being right. | v4 §4, D6 |
-| **A2** | **"Unverified" as a label will rot into a lie.** It should be a *derived* function of evidence (`V9 ∧ V10` per guide), rendered from data — never a stored flag. | F12, hardened |
+| **A2** | **"Unverified" as a label will rot into a lie.** It should be a *derived* function of evidence (`V9 ∧ V10` per guide), rendered from data — never a stored flag. **Half upheld, half withdrawn (row 32):** "never a stored flag" is unachievable — the label's input is not published — so the verdict IS stored, at build time, and the anti-rot property is delivered instead by ONE predicate definition that the CI gate and the portal both read. | F12, hardened |
 | **A3** | **Steps that throw lose the trace.** Guide code contains `try`/`catch`, comparators can throw, `assertEq` in `script`-style entries throws by design. A thrown step must still flush what it has plus an `error` field — otherwise one throw in 2 000 steps silently truncates the trace. | 28 `script`-style entries |
 | **P1** | **The route, the custom-input form, the scoring UI and the degraded mode are four features no one has asked for.** All four are downstream of "does the static path work". Trigger-gate them. | ladder rung 1 |
 | **P2** | **The engine is ~5 % of the cost of the scale-up; the content is 95 %.** 20 KB of prose per guide × 3 400 = 68 MB of markdown and ~3 400 hand-adjudicated solution sets. The judge's gates (V1/V3/V4) *are* the adjudication machinery — which is why W0-first is right and why the content track, not the renderer, is the thing to design for. | measured bytes/line |
@@ -161,7 +166,7 @@ Survive as **K** (kills/rewrites of v4) and **G** (gains):
 | **G2** | **`scripts/audit-curriculum.mjs`** pins every count in §1 and every doc number cites it. Ends the "27 vs 22" class of argument. |
 | **G3** | **Throw-safe trace flush.** Any thrown step flushes the partial trace with `error` set; verdict still comes from the raw run. |
 | **G4** | **Table player and stepper are one ES module** under `docs/dryrun/`, imported once. No new globals. |
-| **G5** | **"Unverified" is a pure function** of per-guide evidence (`V9 ∧ V10`), rendered, never stored. |
+| **G5** | ~~**"Unverified" is a pure function** of per-guide evidence (`V9 ∧ V10`), rendered, never stored.~~ **SUPERSEDED by row 32's rename (measured):** the RULE is pure and has one definition (`scripts/lib/v9.mjs`), but the verdict is computed by the build and STORED in `traces/index.json` — the predicate needs per-step data that is not published. `V10` is row 25, a corpus-level Playwright gate with no per-guide verdict, so the label is a function of `V9` alone. |
 | **G6** | **One table-driven Playwright spec** covers S1–S5 + all presets; both existing viewports supply the 1440/390 evidence. |
 
 Kept unchanged from v4 and *not* re-litigated: D1 snapshot-tracked roots · D2
@@ -322,9 +327,11 @@ Every row is a required test. Grouped by the failure it prevents.
 
 ---
 
-## 7. Task table (serial; one atomic action per row)
+## 7. Task table (Dependency-Aware for Parallel Execution)
 
 Ladder applied per row: `[Y]` = deleted by rung 1 (does it need to exist), `[R]` = reused existing repo code, `[S]` = smallest thing that works, `[P]` = carry a `ponytail:` ceiling comment.
+
+While rows are listed numerically, they are **not strictly serial**. Agents can execute tasks in parallel based on the dependency graph below.
 
 | # | Task | Files / Target | Scenario | Verify by | Ponytail | Status |
 |---|---|---|---|---|---|---|
@@ -361,31 +368,33 @@ Ladder applied per row: `[Y]` = deleted by rung 1 (does it need to exist), `[R]`
 | 29 | V8 report-only scan → repair thin tables **with the trace open** | `scripts/validate-guide.mjs` + guides | S1 | audit reports 0 thin | [S] | pending |
 | 30 | Promote V8 warnings → errors; wire `audit`/`gen:traces`/`test:trace` into `verify`; add `cache: 'npm'` to `actions/setup-node@v4` and a job time budget | `package.json`, `scripts/validate-guide.mjs`, `.github/workflows/deploy.yml` | S3 | `verify` exit 0; seeded bad guide exits 1; CI log shows the npm cache hit and the budget | [R] L3 | pending |
 | 31 | Design pass: timing, contrast, keyboard, reduced-motion | `docs/dryrun/index.js` | S1 | axe-core passes; 1440 + 390 diff ≤ threshold | [R] F11 | pending |
-| 32 | "Unverified" label = pure function of per-guide evidence | `docs/dryrun/index.js` | S1 | label clears automatically when V9 ∧ V10 green; no stored flag | [R] A2 | pending |
+| 32 | **"Unverified" label, rendered per guide from ONE extracted predicate** — the predicate is extracted out of row 27's inline block into `scripts/lib/v9.mjs`, the **verdict is computed and stored at build time** in `traces/index.json`, and `renderHead` in `docs/index.html` renders it. **RENAMED from "pure function, never stored":** that half was unachievable, because V9 needs every step's `text`/`operands`/`snap` and only a head's `first`/`last` are published | `scripts/lib/v9.mjs`, `scripts/gen-doc-traces.mjs`, `docs/index.html` | S1 | `node scripts/lib/v9.mjs` green **and provably able to fail**; `docs/traces/index.json` carries `guides[<path>].tableTrace` for all 150 guides with counts `142 agrees / 0 disagrees / 8 uncomparable`, matching `test:trace`'s live S14 line; Playwright: an `agrees` guide shows **no** badge, an `uncomparable` one shows `Unverified · not comparable`, a `disagrees` one shows `Unverified · table disagrees with trace` | [R] A2 — the rot A2 feared (rule drifting from the gate) is foreclosed by the single definition; the provenance claim it rested on was not achievable | **partial** — shipped as build-time verdict; the client-side-purity claim is withdrawn, see `DRY_RUN_ENGINE_PROGRESS.md` |
 | 33 | V12 **logging-only** prediction events (no UI, no scoring) | `docs/dryrun/index.js`, existing `api/_lib/kv.mjs` | S4 | events land in KV or degrade to `{ok:false}` | [Y] P4 cut | pending |
 | **—** | **Trigger-gated — build only when the trigger fires** | | | | | |
 | T-a | `/api/judge/trace` route + custom-input form | new | S2 | *trigger:* ≥5 readers ask, **or** W2 lands and static traces show p95 > 800 ms | [Y] H3 | deferred |
 | T-b | Prediction scoring UI + S4 target picker | `docs/dryrun/index.js` | S4 | *trigger:* ≥1 guide repair attributable to the row-33 aggregate | [Y] P4 | deferred |
 | T-c | V13 degraded interview mode | `docs/dryrun/index.js` | S4 | *trigger:* owner decision 6 = default-on **and** ≥20 sessions observed | [Y] | deferred |
 
-### Waves
+### Execution DAG & Parallel Phases
 
-| Wave | Rows | Exit criterion | Visible? |
+To maximize agent throughput, tasks are restructured into parallel phases. A phase can begin once its dependencies are met. Within a phase, agents can take unblocked tasks concurrently.
+
+| Phase | Description | Parallel/Independent Tasks | Sequential/Dependency Chains |
 |---|---|---|---|
-| **W-1 Truth** | 0–4 | audit pinned; **0 syntax-only**; registry 150/150 | No UI — finds real bugs |
-| **W0 Schema + goldens** | 5–20 | envelope v1.1 frozen at row 13; 150 goldens; V1/V2/V3/V4/V6/V11 green | No UI |
-| **W1 First pixels** | 21–23, 29 | table player + `array` primitive; 0 thin tables; static traces, **no server** | **Yes** |
-| **W2 Tier 2 render** | 24–26 | all 5 primitives + overlay; S1–S5 evidenced | **Yes** |
-| **W3 Integrity** | 27, 28, 30–32 | floors + cross-check enforced; `verify` green; label auto-derived | Indirect |
+| **Phase 1** | **Foundations** (Data, Specs, Base UI) | `0`, `0b`, `1`, `3`, `4`, `5`, `6`, `7`, `8`, `21`, `31` | All tasks in Phase 1 can be started immediately and concurrently. |
+| **Phase 2** | **Engine & UI Primitives** | `22`, `23` | **Engine Chain:** `9` → `10` → `11` → `12`.<br>**Cleanup Chain:** `7` → `2`. |
+| **Phase 3** | **Trace Freeze & Goldens** | `24`, `29` | **Freeze Chain:** (`8`, `12`) → `13` → `14`.<br>**Trace Gen:** (`1`, `7`, `13`) → `15` → (`16`, `28`, `17`). |
+| **Phase 4** | **Validation Guards & Logic** | `20`, `26`, `30` | **Codec Chain:** `17` → `18` → `19`.<br>**Cross-check:** `15` → `27`. |
+| **Phase 5** | **Final UI Polish** | `25`, `33` | **Label Chain:** (`25`, `27`) → `32`. |
 
 **Kill criteria.**
-- W-1: if executing the 41 previously-unexecuted guides surfaces **> 15**
+- Phase 1: if executing the 41 previously-unexecuted guides surfaces **> 15**
   genuinely wrong canonical solutions → **stop the visual product**, fix code
   first. (This is v4's kill criterion, moved earlier — it fires sooner and
   cheaper.)
-- W0: if the differential oracle needs **> 25 %** manual adjudication of its own
+- Phase 4: if the differential oracle needs **> 25 %** manual adjudication of its own
   equivalence kinds, the oracle is wrong, not the solutions.
-- W2: if the static path serves < 10 users/week after a month, T-a stays deferred
+- Phase 5: if the static path serves < 10 users/week after a month, T-a stays deferred
   indefinitely.
 
 ---
