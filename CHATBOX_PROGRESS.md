@@ -1468,3 +1468,123 @@ recommendation that was declined.
   451/0. The *count* differs by three, so something took a different code path rather than an
   assertion merely failing. I could not reproduce it and I am not going to invent a cause. If it
   recurs, the three-assertion delta is the thing to chase, not the two failures.
+
+---
+
+# ✅ T17 — Chat tables stop overlapping; the assistant's height is the reader's
+
+Two defects reported from a real screenshot of the live portal, both in the widget's rendering
+layer. No server, prompt or tool code changed.
+
+## T17.1 — Wide tables drew their cells on top of each other
+
+**Symptom (reported, then reproduced):** a wide table in the chat — the 2-column
+concept/explanation shape — rendered its row labels *written over* the second column, and the
+header labels on top of each other. Reproduced at 381px of cell overlap on desktop, 414px on
+mobile.
+
+**Root cause, verified not inferred.** Three things compounded:
+
+1. `.ltc-msg-body td:first-child, … th:first-child { position: sticky; left: 0 }` pinned the
+   first column inside the horizontal scroller. Once the wrapper was scrolled, that cell rode at
+   the scrollport's left edge — over its own neighbour.
+2. The table was `width: 100%` while every cell is `white-space: nowrap`, so the columns were
+   **narrower than their content**. The stuck cell therefore spilled sideways instead of merely
+   covering its column.
+3. `border-collapse: collapse` is why it *looked* like overlapping text rather than a covered
+   cell: collapse paints every cell background in one layer **beneath all cell content**, so the
+   sticky cell's opaque background could never hide the text scrolling under it. Two rows whose
+   labels have different widths overlapped by different amounts, which is the ragged result in
+   the report.
+
+**Fix:** drop both stickies (the header's `sticky top: 0` was doing nothing — the wrapper never
+scrolls vertically) and size columns to their content with `width: max-content; min-width: 100%`,
+so the wrapper's `overflow-x` is what handles a wide table, which is what it was built for.
+`enhanceTables()` and its `.ltc-table-scroll` wrapper are unchanged.
+
+- **Deliberately not done:** a genuinely frozen first column. It needs
+  `border-collapse: separate` so a stuck cell's background paints above content, plus a z-order
+  and a freeze edge — and it would contradict the recorded decision that the chat grid collapses
+  borders (asserted by the item-D test). That is a new affordance, not this bug. Say the word and
+  it is a small change.
+- **Guard added:** a test that scrolls the wrapper to its end and asserts no cell's right edge
+  crosses the next cell's left edge, on both viewports. It is the assertion the old suite was
+  missing — every existing check passed while the table was unreadable.
+
+## T17.2 — The assistant's height was fixed; now the reader sets it
+
+The rail resizes **width** (item C) but nothing resized height: the sheet was pinned at `72dvh`
+and the desktop panel took whatever the TOC left. So a dry-run trace taller than the leftover
+space could not be given room, and the panel could not be shrunk to get the article back.
+
+- **One divider, both surfaces.** `#ltcPanelResizer` straddles the panel's top edge
+  (`top: -5px`, 10px strip), `role="separator"` / `aria-orientation="horizontal"`,
+  `tabindex="0"`, and the same affordance as `#ltRailResizer` (accent line on hover/focus/drag).
+  On mobile it resizes the sheet, on desktop the panel in the rail — one handle, no mode branch.
+- **Height comes from a pointer→distance-to-anchor conversion, not from an absolute position**,
+  because both surfaces are bottom-anchored. The anchor is read once at `pointerdown`, so the
+  panel cannot chase the cursor.
+- **Clamped to 200px–(the rail on desktop / the window less 56px on mobile).** 200px is measured,
+  not guessed: it is the header plus the composer, so a fully shrunk panel still has an input in
+  it. The ceiling keeps the sheet from becoming a full-screen takeover, and on desktop the rail
+  is the real ceiling — the panel shares it with the TOC and `position: fixed` is not an option
+  without covering the article.
+- **Default preserved until it is not wanted.** `flex: 1 1 auto` (fill the leftover space) is
+  better than any fixed number, so `--ltc-panel-h` is only written once the reader drags, and
+  `data-resized` is what switches the panel from flexible to pinned. Double-click, `Home` or
+  `End` hands it back; the height persists in `lt150-chat-h` beside the rail's `lt150-rail-w`.
+- **A window resize re-clamps a pinned height** — it is a px count, so a shorter window would
+  otherwise leave the panel taller than the rail.
+- Listeners are on `document`, not `setPointerCapture`, because capture suppresses the `dblclick`
+  the reset depends on. Same reasoning, same comment shape as the rail divider.
+- **The keyboard path is not optional.** `↑`/`↓` move 32px, `Home`/`End` reset, and
+  `aria-valuenow/min/max` are updated on every change, so the handle is operable without a
+  pointer and reports its value to assistive tech.
+
+## T17.3 — A layout bug the assertions could not see
+
+The first implementation pinned the panel with `flex: 0 0 <px>` and nothing else. Every
+functional assertion passed; the **screenshot** showed the panel sitting 555px above the bottom of
+the rail with a void under it, because nothing was left to absorb the freed space. Fixed with
+`margin-top: auto` on `[data-resized]`, so the panel stays welded to the rail's bottom edge and
+the space goes above it, to the TOC side. `.lt-rail-toc` also needed `min-height: 0` to be able
+to collapse when the panel is dragged to full height.
+
+- **This is why the anchor assertion exists** ("the panel keeps its bottom edge"), added red
+  first: it failed at 901 vs 349 before the fix. A height assertion alone would have passed both
+  before and after.
+
+**And the same anchor check then caught a second, opposite defect at full stretch.** Driving the
+live server by hand (not the test) reported the panel at 844px with its bottom edge at **937**
+against a rail bottom of **901** — 36px past the rail, which is the bottom of the composer hanging
+off-screen. Cause: a flex item that has collapsed to nothing still keeps its **padding**, and
+`.lt-rail-toc` carries `padding: 1.5rem 0 0.75rem 1rem` = exactly 36px. With the TOC at its floor
+of 36px, a panel pinned to the full rail height overflowed by that much. Fixed by dropping the TOC
+padding when the panel owns the column
+(`.lt-rail:has(> .ltc-panel[data-resized]) .lt-rail-toc { padding: 0 }`), and the anchor assertion
+now runs after **every** drag state — 260px, full stretch, minimum — because the bug was invisible
+at two of the three.
+
+## Evidence
+
+| Suite | Result |
+|---|---|
+| `npm run validate` | ✅ 0 errors, 0 warnings |
+| `npm test` | ✅ 450 syntax blocks, 828 runtime assertions, 0 failures |
+| `npm run test:judge` | ✅ 64 assertions, 0 failures |
+| `npm run test:chat` | ✅ **471** assertions, 0 failures |
+| `npm run build` | ✅ 175 modules bundled, 175 guides indexed |
+| `npx playwright test` (full) | ✅ **158 passed, 18 skipped, 0 failures** (176 tests, 2 files) |
+| new table test | ✅ red at **381px** (desktop) / **414px** (mobile) overlap → green |
+| new resize tests | ✅ red (`#ltcPanelResizer` absent) → green, 8/8 across both viewports |
+| visual QA | ✅ 4 screenshots reviewed on the live server: table at rest, table scrolled fully right, panel at 200px, panel at 844px |
+| live drag, measured | ✅ default 752 → min **200** (bottom 901 = rail 901) → max **844** (bottom 901 = rail 901) → double-click **752** |
+
+## Landmine added
+
+- **A stale `serve` on the e2e port will silently invalidate evidence.** `playwright.config.mjs`
+  sets `reuseExistingServer: !CI`, so if *any* `serve docs` already holds port 4173, Playwright
+  reuses it — including one started in a **sibling worktree**, which then serves that worktree's
+  files. The first red/green cycle here ran against the wrong worktree's build and its numbers
+  were meaningless. Every e2e run in this worktree now uses `LTC_E2E_PORT=4183`; if a run's
+  failures disagree with the source on disk, check `lsof -ti :4173` before believing either.

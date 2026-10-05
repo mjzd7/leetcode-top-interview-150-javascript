@@ -237,7 +237,7 @@
        one element and the JS only has to know which mode it is in. */
     .ltc-panel {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-      height: 72dvh; display: flex; flex-direction: column; min-height: 0;
+      height: var(--ltc-panel-h, 72dvh); display: flex; flex-direction: column; min-height: 0;
       background: var(--surface); border-top: 1px solid var(--line);
       box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
       transform: translateY(101%);
@@ -360,17 +360,44 @@
       #ltRailResizer.is-dragging::after { background: var(--accent); }
       #ltRailResizer:focus-visible { outline: none; }
       .lt-rail-toc {
-        display: block; flex: 0 1 auto; max-height: 45%;
+        display: block; flex: 0 1 auto; max-height: 45%; min-height: 0;
         overflow-y: auto; padding: 1.5rem 0 0.75rem 1rem;
       }
       .ltc-panel {
-        position: static; top: auto; left: auto; right: auto; bottom: auto;
+        position: relative; top: auto; left: auto; right: auto; bottom: auto;
         flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
         transform: none; visibility: visible; box-shadow: none;
         border-top: 1px solid var(--line); border-left: none;
         background: var(--rail-bg);
       }
+      /* Only once the reader has dragged: until then the panel keeps filling
+         whatever the TOC leaves, which is the better default than any number.
+         margin-top: auto keeps it welded to the rail's bottom edge, so the space
+         a shorter panel gives up goes above it rather than leaving a void below. */
+      .ltc-panel[data-resized] { flex: 0 0 var(--ltc-panel-h); margin-top: auto; }
+      /* A pinned panel can fill the rail exactly, which means the TOC has
+         collapsed to nothing — and a collapsed box still keeps its 36px of
+         padding, which pushed the panel that far past the rail's bottom edge and
+         the bottom of the composer off-screen. :has() is what lets that padding
+         go when the panel takes the column. */
+      .lt-rail:has(> .ltc-panel[data-resized]) .lt-rail-toc { padding: 0; }
     }
+    /* Height divider on the panel's top edge, mirroring #ltRailResizer. It
+       straddles the edge (top: -5px) so the grab strip is not half hidden under
+       the border, and the panel is position:relative/fixed to anchor it. */
+    .ltc-panel-resizer {
+      position: absolute; left: 0; right: 0; top: -5px; height: 10px; z-index: 3;
+      cursor: row-resize; touch-action: none; background: none;
+      user-select: none; -webkit-user-select: none;
+    }
+    .ltc-panel-resizer::after {
+      content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 3px;
+      background: transparent; transition: background 0.15s ease;
+    }
+    .ltc-panel-resizer:hover::after,
+    .ltc-panel-resizer:focus-visible::after,
+    .ltc-panel-resizer.is-dragging::after { background: var(--accent); }
+    .ltc-panel-resizer:focus-visible { outline: none; }
     .ltc-head {
       display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;
       padding: 0.7rem 0.75rem 0.7rem 0.85rem;
@@ -617,8 +644,13 @@
       overflow-x: auto; overscroll-behavior-x: contain; margin: 0.6rem 0;
       border: 1px solid var(--line); border-radius: 0.6rem;
     }
+    /* width: max-content gives every column the width of its widest cell, which
+       is what the wrapper's overflow-x exists to handle; min-width: 100% keeps a
+       narrow table filling the bubble. A `width: 100%` table instead squeezed
+       columns under their nowrap content, which is what let a sticky cell spill
+       over its neighbour. */
     .ltc-msg-body table {
-      width: 100%; border-collapse: collapse; margin: 0;
+      width: max-content; min-width: 100%; border-collapse: collapse; margin: 0;
       font-size: 0.78rem; line-height: 1.5;
       font-family: "JetBrains Mono", monospace;
     }
@@ -626,17 +658,16 @@
       border-bottom: 1px solid var(--line);
       padding: 0.4rem 0.55rem; text-align: left; white-space: nowrap;
     }
+    /* No sticky cells: `border-collapse: collapse` paints every cell background
+       in one layer beneath all cell content, so a stuck cell cannot cover the
+       text that scrolls under it — the row label ends up written on top of its
+       own neighbours. The wrapper scrolls, so the label is a short scroll away. */
     .ltc-msg-body th {
       background: rgba(200, 250, 75, 0.07); color: var(--accent);
       font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
-      font-size: 0.7rem; position: sticky; top: 0;
+      font-size: 0.7rem;
     }
-    /* Long cells must wrap rather than stretch the row; nowrap above keeps
-       short numeric columns aligned and scannable. */
-    .ltc-msg-body td:first-child, .ltc-msg-body th:first-child {
-      color: var(--muted); position: sticky; left: 0; background: var(--surface);
-    }
-    .ltc-msg-body th:first-child { background: rgba(200, 250, 75, 0.07); }
+    .ltc-msg-body td:first-child, .ltc-msg-body th:first-child { color: var(--muted); }
     .ltc-msg-body tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
     .ltc-msg-body tbody tr:last-child td { border-bottom: none; }
     .ltc-msg-body strong { color: #fff; }
@@ -1008,6 +1039,7 @@
       </div>
 
       <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
+      <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
       <div class="ltc-head">
         <span class="ltc-head-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
