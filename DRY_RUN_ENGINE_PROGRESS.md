@@ -2505,3 +2505,30 @@ never blank (§5 I4).
 *reaches* the degrade path. That is E22's transport proof, it genuinely needs the slow fixture, and it
 stays where it is, outside `verify`. S33 is the half that was silently ungated, not a replacement for the
 half that is expensive.
+
+### 2026-10-05 — the third frame-count proxy, removed on the same grounds
+
+`npm run verify` went red on `tests/chat-streaming.spec.js:404` — *"a half-typed `$a+b` is never typeset
+while the turn is running"*. It is the **same defect class** as the caret test, in the same file: a
+`while` loop polling on `requestAnimationFrame(() => setTimeout(r, 16))` for up to 25 s, with
+`frames > 3` as its load-bearing assertion.
+
+`frames > 3` counts **frames**, so it measures the reveal animation's speed against the machine's frame
+rate — not whether the tail behaved. Removed, on the same grounds as `caretStates > 3` two entries up,
+and it is **redundant** besides: `tailSamples.length > 0` already asserts, deterministically, that a
+partial `$` reached the tail across several appends, which is exactly what "observed over many frames,
+not one" stood in for. The other four assertions here are state-based and stay.
+
+**Evidence: 3 consecutive runs, 30 passed each** (31.1 s / 32.3 s / 42.4 s, both projects), against
+1 failure in the preceding verify run.
+
+**Stated rather than papered over:** `tailHadKatex === false` is still a once-per-frame sample, so a
+`.katex` that existed *only between two frames* would be missed and the assertion would pass when it
+should fail. That is a false-negative window, not a flake, and it is not closed here — closing it means
+observing the reveal through a `MutationObserver` **on the tail itself**, which is a real change to what
+this test proves and was not worth making while re-scoping a flaky assertion. Recorded so the next person
+knows the limit is deliberate.
+
+**Pattern worth keeping for this file:** three tests, three failures, one cause — a wall-clock animation
+asserted through a timer. Every assertion that counted frames or timeouts was a proxy for a state claim,
+and every state claim held.
