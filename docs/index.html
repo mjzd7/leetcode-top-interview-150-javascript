@@ -1239,6 +1239,7 @@
         nav.innerHTML = '<p class="text-sm text-slate-500 px-2">No curriculum data found. Run <span class="font-mono">npm run build</span>.</p>';
         return;
       }
+      let shown = 0;
       DATA.forEach(cat => {
         const all = cat.items;
         const items = cat.items.filter(item => {
@@ -1314,7 +1315,19 @@
         });
         wrap.appendChild(list);
         nav.appendChild(wrap);
+        shown += items.length;
       });
+      /* An empty result is not a missing build. The sidebar is a flex column and
+         the nav takes every pixel the header leaves, so a filter that matches
+         nothing used to leave the reader looking at 653px of empty column with
+         nothing to say why. */
+      if (!shown) {
+        nav.innerHTML = '<p class="text-sm text-slate-500 px-2">'
+          + (searchQuery
+            ? 'No guide matches “' + esc(searchQuery) + '”.'
+            : 'No guide has difficulty ' + esc(activeFilter) + '.')
+          + '</p>';
+      }
       renderProgress();
     }
 

@@ -358,3 +358,39 @@ test('a long guide title wraps on two lines rather than running off screen', asy
   expect(t.right, 'and it is fully on screen').toBeLessThanOrEqual(1440);
 });
 });
+
+/* A filter that matches nothing used to leave the reader staring at 653px of
+   empty sidebar with no explanation. renderNav only ever wrote a message when
+   DATA itself was empty, which is a missing build, not an empty result. */
+test.describe('a filter that matches nothing', () => {
+  test('says so, and names the query', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'zzzznomatch');
+    await page.waitForTimeout(300);
+    const r = await page.evaluate(() => {
+      const nav = document.getElementById('curriculumNav');
+      return { text: nav.innerText.trim(), items: nav.querySelectorAll('.nav-item').length };
+    });
+    expect(r.items, 'nothing matched, so there is nothing to list').toBe(0);
+    expect(r.text, 'the reader is told why the list is empty').not.toBe('');
+    expect(r.text, 'and which query emptied it').toContain('zzzznomatch');
+  });
+
+  test('a difficulty filter with no matches reads as a filter, not a query', async ({ page }) => {
+    // The sidebar is an off-canvas drawer below md, so the pills are not reachable
+    // without opening it. This case is about the message, which needs no drawer.
+    test.skip(page.viewportSize().width < 768, 'the filter pills need a docked sidebar');
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'zzzznomatch');
+    await page.waitForTimeout(250);
+    await page.fill('#searchInput', '');
+    await page.click('.filter-btn[data-diff="Hard"]');
+    await page.waitForTimeout(300);
+    const items = await page.evaluate(() =>
+      document.querySelectorAll('#curriculumNav .nav-item').length);
+    expect(items, 'this corpus has Hard guides, so the filter is not empty').toBeGreaterThan(0);
+    const noData = await page.evaluate(() =>
+      document.getElementById('curriculumNav').innerText.includes('No curriculum data'));
+    expect(noData, 'a filter that matched is not a missing build').toBe(false);
+  });
+});
