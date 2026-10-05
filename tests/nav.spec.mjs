@@ -419,3 +419,35 @@ test.describe('the drawer on a phone', () => {
     expect(r.scrimGone, 'and the scrim goes with it').toBe(true);
   });
 });
+
+/* One glyph served three states. Its path was a left chevron at every stage, so
+   on the 56px rail — where the button's job is to widen — it pointed away from
+   the side the sidebar was on. Only the aria-label changed. */
+test('the collapse control points the way it will move', async ({ page }) => {
+  test.skip(page.viewportSize().width < 768, 'the control is md-only');
+
+  await open(page, PROBLEM_01);
+  await page.evaluate(() => localStorage.removeItem('lt150-nav-stage'));
+  await page.reload();
+  await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+
+  const read = () => page.evaluate(() => ({
+    stage: document.getElementById('sidebar').dataset.stage,
+    label: document.getElementById('ltNavCollapse').getAttribute('aria-label'),
+    d: document.querySelector('#ltNavCollapse path').getAttribute('d'),
+  }));
+  const seen = [];
+  for (let i = 0; i < 4; i += 1) {
+    seen.push(await read());
+    await page.click('#ltNavCollapse');
+    await page.waitForTimeout(250);
+  }
+
+  expect(seen.map((s) => s.stage), 'the control cycles every stage and wraps')
+    .toEqual(['0', '1', '2', '0']);
+  expect(seen[0].label, 'stage 0 collapses').toMatch(/collapse/i);
+  expect(seen[1].label, 'stage 1 widens').toMatch(/widen/i);
+  expect(seen[0].d, 'collapsing must not look like widening').not.toBe(seen[1].d);
+  expect(seen[1].d, 'both widening steps point the same way').toBe(seen[2].d);
+  expect(seen[3].d, 'and collapsing looks the same again on the way round').toBe(seen[0].d);
+});

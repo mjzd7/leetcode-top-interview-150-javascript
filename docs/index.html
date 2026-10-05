@@ -985,7 +985,7 @@
           </div>
           <button id="ltNavCollapse" type="button" aria-label="Collapse the navigation"
                   class="hidden shrink-0 w-8 h-8 rounded-lg items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path id="ltNavChevron" d="M15 6l-6 6 6 6"/></svg>
           </button>
           <!-- The drawer's way out. ltNavCollapse above is md-only on purpose (collapsing
                a drawer means nothing), which left the drawer closable only by the
@@ -1347,11 +1347,17 @@
       const STAGE_LABELS = ['Collapse the navigation',
                             'Widen the navigation to a text rail',
                             'Widen the navigation fully'];
+      /* The glyph follows the label. It used to be a left chevron at all three
+         stages, so on the 56px rail — where the button widens — it pointed away
+         from the edge the sidebar is on. Only the accessible name changed. */
+      const STAGE_CHEVRONS = ['M15 6l-6 6 6 6', 'M9 6l6 6-6 6', 'M9 6l6 6-6 6'];
       const stage = ((s % 3) + 3) % 3;
       el.dataset.stage = String(stage);
       if (btn) {
         btn.setAttribute('aria-label', STAGE_LABELS[stage]);
         btn.title = STAGE_LABELS[stage];
+        const chev = $('ltNavChevron');
+        if (chev) chev.setAttribute('d', STAGE_CHEVRONS[stage]);
       }
       ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
         const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
