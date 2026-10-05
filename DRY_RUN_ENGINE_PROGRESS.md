@@ -120,7 +120,7 @@ One atomic action per row. `Evidence` is the receipt; empty means not done.
 | 12 | Execution/display caps, verdict isolation | §7 | **done** | `ef65555` | `n=5000` → display truncation, `truncated.display` set, **verdict asserted UNCHANGED** — the acceptance test that proves a trace cannot move a verdict. |
 | 13 | **V3 green → envelope v1.1 frozen** | §7 | **done — v1.1 FROZEN** | `4c06aa1` | `node scripts/test-trace.mjs` → **85 assertions, 0 failures** (was 59). **V3 green over all 450 real goldens.** Freeze **proven to bite by hand**: deleting `codec` from one real golden turned V3 red (1 failure); restoring returned it green. S10 asserts `docs/trace-schema.json` documents exactly the frozen set and the validator enforces all 14 envelope + 10 step fields — and **names the one field row 5 does not enforce**. `delta` renders the failing step side-by-side and degrades gracefully when absent. |
 | 14 | V2 replay determinism | §7 | **done (rewritten)** | `2f1b9cd` | `npm run test:trace` → **107 assertions, 0 failures** (was 85). **The obvious check is a tautology and was replaced**: `delta` is always `[]` in `full` mode (portal derives it), so a forward walk of derived deltas reproduces the next snapshot *by construction*. What a random jump actually needs: `stepCount === steps.length` (450/450), `n` exactly 1..N with no gap/duplicate, and snapshots name only watched ids — **53 862 snapshots checked**. 18 487 steps carry `snap:null` (exit/throw) and are counted, not assumed to be objects. |
-| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 1/450 verdicts still wrong** (was 4, 11, 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. Wrong-verdict census (row 15 / S17, from the 450 committed heads): **clean 449 · zero-pass 0 · partial-pass 1** — the 1 wrong verdict is `sorted-array-to-bst` L1 at 5p/2f, a `tree` guide owned by another slice. `lowest-common-ancestor` L1/L2/L3 went clean at 6p/0f (S35: three arguments that share nodes are recorded as ONE graph, decoded once). E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
+| 15 | `gen-traces.mjs` → 150 goldens | §7 | **PARTIAL — 1/450 verdicts still wrong** (was 4, 11, 14, 17, 23, 26, 33, 52, 58) | `1cf4e0c` `6a194d6` | **450 goldens (150 guides × 3 levels), 450 passed `validateEnvelope`**, `empty traces: 0` — now counted from the same tally failures land in. **Determinism proven**: two runs byte-identical (`sha256 76135f71…`). 54 assertions 0 failures. Cases resolved from 3 authored sources, never invented. Wrong-verdict census (row 15 / S17, from the 450 committed heads): **clean 450 · zero-pass 0 · partial-pass 0** — the corpus is fully correct, the last wrong verdict having been `sorted-array-to-bst` L1 at 5p/2f, closed by S36 (a case belongs to the level whose TARGET the script called; its authored second loop excludes L1). `lowest-common-ancestor` L1/L2/L3 went clean at 6p/0f (S35: three arguments that share nodes are recorded as ONE graph, decoded once). E32 honoured: full traces ignored, 450 `*.head.json` committed (mean 1255 B; **10 exceed the ~2 KB cap, largest 2.9 KiB**). |
 | 16 | `docs/traces/*.json` static copies | §7 | **done — heads only, 1.9 MB** | `df49a3f` | `node scripts/test-doc-traces.mjs` → **17 assertions, 0 failures**. **Shipped the 450 `*.head.json`, NOT the 35.1 MiB raw corpus** — the portal already loads 3.09 MB per page view and §8 names the portal the scale wall. **Proven serverless by `curl`: `traces/index.json` → HTTP 200 / 154538 B / parses; a head → HTTP 200 / 1082 B / parses.** Publishing is idempotent and removes orphaned heads. Whole tree gitignored. |
 | 17 | Codec registry + 5 codecs | §7 | **done** | `81f0ee8` | `npm run test:codecs` → **275 assertions, 0 failures**. 5 codecs `json`/`tree`/`list`/`ops`/`graph`, **no default branch** — unknown name throws naming the slug. Covers catalog **150/150, leftovers `[]`, unmapped 0**. 35 round trips, each with a mutant that FAILS. All 6 E28 equivalence kinds. |
 | 18 | Widen or delete `problems.mjs` | §7 | **done** | `3af029d` | **Deletions, not a widening.** `PILOT_SLUGS` gone; pilot registry now = the files in `judge/tests/`, identity from `catalog/problems.json`. Slug/fnName/codec removed from all 5 judge specs (they keep only `tests`). `['json','tree']` whitelist deleted — it silently rejected 3 codecs covering 42 guides. Keyed by path (E30); shared slug = loud error. `npm run test:judge` → **64/0**. |
@@ -2950,3 +2950,209 @@ same thing; it stopped being true when the alias joined the target set). (3) `21
 slice. (4) The spy's `__FL__` positional repair is now **redundant for this guide's case** — `__A__` still
 records it and the driver ignores it, exactly as it does for a class target's `args` beside `ops`. It is left in
 place because `isSameTree` and `kthSmallest` still depend on it, and deleting it would be a second slice.
+
+### 2026-10-05 — row 15, part 13 (S36): a case belongs to the level whose TARGET the script called, and `450 of 450` is finally true
+
+**The last wrong verdict in the corpus, and it was an attribution defect.** `21-divide-conquer/01-sorted-array-to-bst.md`'s
+authored script (`scripts/test-runner.mjs:996-1007`) runs **two** loops. The first is over all three targets; the second is over
+**L2 and L3 only** and asserts `treeHeight(fn([-10,-3,0,5,9])) <= 3`. Cases are harvested ONCE and handed to all three bundles,
+so L1 was graded two assertions authored for other levels. Measured at the source, through the real block loader — L1's own
+block declares both the brute force and the `treeHeight` helper:
+
+```
+L1 sortedArrayToBSTBruteForce height=5 balanced(<=3)=false
+L1 inorder=[-10,-3,0,5,9]
+L1 empty inorder=[]
+```
+
+`false` is the guide's own documented behaviour, not a bug: line 115 says "sorted input degenerates to a chain", and a chain
+of 5 is height 5. So L1 was being marked wrong for a claim that is true of L2/L3 **by design**. `5 passed / 2 failed`, and
+the 2 were exactly that pair.
+
+**Why `callee` could not see it, measured.** The loops bind `fn`, so every harvested case records `callee: 'fn'` — an alias
+names no block, so no level can tell its own cases from a sibling's. Surveying all 150 guides: **62 carry a `callee`, 88 carry
+none at all** (they come from `judge/tests/`, `catalog/cases.json` or `test-runner`'s authored triples, which have no callee).
+
+**What a real M8 needs, and the rule it must follow — `Function.prototype.name`, read AT THE TARGET CALL.** The previous
+attempt recorded the concrete target and reverted with 428 goldens. The reason is now measured rather than guessed, and it is
+**where** the name is read, not whether:
+
+| where `target.name` is read | what the 150 guides record |
+|---|---|
+| at the ASSERTER invocation | `assertEq` · `inorderVals` · `treeHeight` · `normCombos` · `approxArr` — **every guide mis-attributes** |
+| at the TARGET call, written only there | the concrete target, **0 foreign names across all 150 guides** |
+
+`assertEq(inorderVals(fn(x)))` evaluates the target and then the derivation, so a name read at the asserter is the
+DERIVATION's name — which is the same bug `__AV__` already documents and already fixed by letting only a target call write it.
+The new `__TGT__` follows `__AV__`'s rule exactly: written at the two `__A__` assignment sites, never at the `__F__` fallback,
+reset with the rest of the per-assertion state. This is the single fact the reverted attempt was missing.
+
+**The 428 mechanism, reproduced and then guarded.** A naive "keep only cases whose owner is this level's target" starves
+**10 guides** — their script calls the CANONICAL directly and never an alias (`01-array-string/01-merge-sorted-array.md`
+writes `assertEq(merge(a, b), …)`), so all six cases name one target and L1/L2 get nothing. A level with no cases does not
+fail loudly: `traceOne` throws, `main()` tallies the throw, the guide leaves the manifest, and the corpus **shrinks**.
+Measured with mutant A below: **430 goldens, 20 failures = 10 guides × 2 levels**, `gen:traces` exit 1. So the rule carries two
+guards, and they are the same two the probe asserts:
+
+- `named.size > 1` — more than one target is named, i.e. there IS a per-level signal. One name partitions nothing.
+- the **count spread** — a partition keeping the same number of cases at all three levels moves no verdict, because an alias
+  loop over all three records one case per target per assertion. Partitioning it is pure de-duplication, and de-duplication is
+  not this row's defect. Measured: **148 of 150 guides keep a byte-identical case list**; only the two that genuinely
+  discriminate move.
+
+**RED — the gate first, behavioural.** `selectCasesForLevel` was extracted out of `main()` as a pure function (a pure move, no
+behaviour change) so the rule could be probed through the REAL selector rather than a re-implementation, then the gate was
+run against the committed corpus before any `tgt` was recorded:
+
+```
+S17 ratchet: 450 heads · zero-pass 0 (baseline 0) · partial-pass 1 (baseline 0) · clean 449
+❌ S17 ratchet: no wrong-verdict census has risen above its committed baseline
+❌ S34/S35 list wire + shared graph: `clean` is 450 — … S36's one went from partial-pass to clean …
+❌ S36 subset loop: 21-divide-conquer__01-sorted-array-to-bst L1 passes every case — the second loop excludes L1
+❌ S36 subset loop: 21-divide-conquer__01-sorted-array-to-bst grades 1/3/3 cases at L1/L2/L3
+❌ S36 subset loop: 18-graph-general__02-surrounded-regions grades 1/1/2 cases at L1/L2/L3
+Assertions: 239 | Failures: 6
+```
+
+A first attempt at this gate was **wrong in my own code** and was rewritten before it was trusted: it asserted "L1 grades
+strictly fewer than L2 **and** L3", which is false for the second guide (its asymmetry is L3 > L1 = L2, because
+`solve(singleX)` names the canonical directly). Exact per-level counts are the honest observable, so the gate states them.
+`VERDICT_BASELINE` tightened `{0,1}` → **`{0,0}`**, the measured floor, and all three S17 negatives still bite because they
+are written relative to the baseline.
+
+**GREEN.**
+
+```
+[gen-traces] 450 goldens  ·  450 passed validateEnvelope  ·  problems 150  covered 150  uncovered 0  failures 0
+S17 ratchet: 450 heads · zero-pass 0 (baseline 0) · partial-pass 0 (baseline 0) · clean 450
+Assertions: 241 | Failures: 0
+```
+
+`450 of 450`. `test:trace` went **230 → 241** assertions. The two moving guides and their counts:
+
+| guide | before | after | why |
+|---|---|---|---|
+| `21-divide-conquer/01-sorted-array-to-bst` | 7/7/7 (L1 5p/2f) | **1/3/3** | loop 2 excludes L1 |
+| `18-graph-general/02-surrounded-regions` | 4/4/4 | **1/1/2** | `solve(singleX)` names the canonical directly |
+
+**The second guide was found by the measurement, not chosen.** Partitioning the corpus surfaced it as the only other guide
+whose attribution is asymmetric; reading its script confirmed the same defect class (`solve(singleX)` is written against the
+canonical alone). It was already `0 failed`, so this is a correctness-of-attribution fix, not a verdict repair — and it is
+named in the gate so it cannot rot unnoticed.
+
+**Mutant proofs — four levers, each restored and the corpus re-proved after every restore.**
+
+1. **The naive M8 rule** (`named.size > 1` dropped from `isMine`) → `430 goldens · FAILURES (20)`, `gen:traces` **exit 1**,
+   20 named failures. `test:trace`: the probe FAILS naming the direction — *"a guide whose cases name ONE target had its list
+   narrowed to 1/1/3 — ten of the 150 guides call their canonical directly, so this empties their L1/L2 and drops them out of
+   the manifest, which is how a corpus reads 428 when it should read 450"* — and S34/S35's 450-sum plus four pre-existing gates
+   (S8 V3, S11 V11, S24, S27) go red independently. Restored → hash `0b607dee…`, `241·0`.
+2. **`tgt` read at the asserter** (the reverted attempt's actual defect) → corpus stays **450**, so every count gate stays
+   SILENT, and the census returns to `partial-pass 1 · clean 449` with L1 back to `{"failed":2,"passed":5}`. `241 · Failures: 7`.
+   **This is the mutant that proves S36's own gates are load-bearing**: a 450-golden corpus is not evidence that the fix landed.
+   Restored → hash `0b607dee…`, `241·0`.
+3. **The count-spread guard removed** (partition everything) → `450 goldens`, `clean 450`, all six level gates GREEN, and the
+   blast-radius gate plus the coverage gate both red: **`450 goldens grading 1574 cases (2272 expected)`** — **698 cases of
+   coverage silently lost**. This is why the coverage gate exists: an always-partition rule is *correct*, so nothing about
+   correctness catches it.
+4. **A guard I wrote and then measured to be DEAD.** The first version repeated `named.size > 1` in `discriminated` as well as
+   in `isMine`. Dropping that copy changed **nothing** — corpus hash identical, `241·0` — because `counts` already reads
+   `0,0,6` for a single-named guide and the spread test refuses it. The duplicate clause was deleted, and the lesson is the
+   one this repo keeps re-learning: **a mutant that changes nothing is a mutant that proves a guard is decoration.**
+
+**No golden lost, and nothing but a verdict moved.** `git diff --name-only HEAD -- judge/` → **6 lines**, exactly the two guides'
+three heads. The full 901-file corpus was hashed before and after (`find judge/traces -name '*.json' | sort | xargs shasum`,
+`comm -3` and `join` on the path column): **no filename present in one corpus and absent from the other**, and **exactly 12
+of 901 files differ** — the 2 guides × 3 levels × (golden + head). A per-head field diff shows the change is **`verdict`, and
+only `verdict`**:
+
+```
+21-divide-conquer__01-sorted-array-to-bst.L1  changed fields: ['verdict']  {"failed":2,"passed":5} -> {"failed":0,"passed":1}
+21-divide-conquer__01-sorted-array-to-bst.L2  changed fields: ['verdict']  {"failed":0,"passed":7} -> {"failed":0,"passed":3}
+21-divide-conquer__01-sorted-array-to-bst.L3  changed fields: ['verdict']  {"failed":0,"passed":7} -> {"failed":0,"passed":3}
+18-graph-general__02-surrounded-regions.L1    changed fields: ['verdict']  {"failed":0,"passed":4} -> {"failed":0,"passed":1}
+18-graph-general__02-surrounded-regions.L2    changed fields: ['verdict']  {"failed":0,"passed":4} -> {"failed":0,"passed":1}
+18-graph-general__02-surrounded-regions.L3    changed fields: ['verdict']  {"failed":0,"passed":4} -> {"failed":0,"passed":2}
+```
+
+`steps`, `first`, `last`, `stepCount`, `blockHash`, `budget` and `error` are byte-identical on all six, and `manifest.json` is
+byte-identical too — `eventFloors` and `totalBytes` do not move because a golden traces **case 0 only**, and case 0 is the same
+call under both rules. **So the animation a reader sees is unchanged and only the correctness verdict was corrected.** That is
+the strongest form this slice could have shipped and it was measured, not argued.
+
+**Determinism — three regenerations, one hash:** `0b607dee46666769` after the change, after the redundant-clause deletion, and
+after the full mutant cycle.
+
+**Real surface, over HTTP, serving the portal's own published bytes** (`npx serve docs`, then `curl`):
+
+```
+L1 HTTP 200  708B  fnName sortedArrayToBSTBruteForce | stepCount 63 | verdict {"failed":0,"passed":1} | error None
+L2 HTTP 200  764B  fnName sortedArrayToBSTSliced      | stepCount 42 | verdict {"failed":0,"passed":3} | error None
+L3 HTTP 200  708B  fnName sortedArrayToBST            | stepCount 43 | verdict {"failed":0,"passed":3} | error None
+```
+
+against `git show HEAD:…` for the same three heads: `{"failed":2,"passed":5}`, `{"failed":0,"passed":7}`, `{"failed":0,"passed":7}`.
+Also checked in a real browser (Playwright, desktop 1440×900) that this guide mounts **no** `[data-dryrun-player]` and carries
+no `#verifyBadge` — a structural property of its markdown tables, provably unaffected because `git diff --stat` touches only
+`scripts/` and six heads. The badge a reader sees elsewhere comes from `traces/index.json` (V9), measured at **144/150 agreed,
+6 uncomparable BOTH at HEAD and after this slice**, and the served index confirms `counts.tableTraceAgrees: 144`. The ledger's
+`142/150 agreed, 8 uncomparable` is row 32's-era text and was **not** re-measured then; it is corrected here.
+
+**Suites, all measured on this tree after the change.** `npm run verify` → **EXIT=0** (first green `verify` including Playwright
+since this session's work began): **450 goldens · 450 validateEnvelope · uncovered 0 · failures 0** · `npm test` **1898
+assertions · 0 failures · 150 files · syntax-only 0** (V4: 426 execs, 36 divergences — unchanged) · `test:trace` **241·0** ·
+`test:codecs` **275·0** · `test:judge` **96·0** · `test:envelope` **129·0** · `test:instrument` **246·0** · `test:serialize**
+**0 failures** · `test:validate` **23·0** · `test:chat` **471·0** · `test:doc-traces` **17·0** · `validate` **150 files · 0 errors ·
+0 warnings** · `audit:check` **17 passed 0 failed** · Playwright **272 passed / 18 skipped**. No port was left bound; the
+one-off surface spec and `test-results/` were removed and `serve` was killed by name.
+
+**The honest cost, stated because it is real.** All six heads LOST graded cases — L1 of the target guide from 7 to **1**. That is
+the faithful reading of the authored script: loop 2 was never written for L1, and the 5 L1 cases that passed were duplicate
+coverage of L2/L3's work. But it does mean `sorted-array-to-bst` L1 is now certified by ONE assertion, where before it was
+certified by 7 (5 passing, 2 spuriously failing). Nothing here invents cases to cover the gap — the guide's own script is the
+only source, and the corpus-wide count is now a gate (`2272 cases across 450 goldens`) so any future narrowing has to say so.
+
+**Envelope untouched.** `tgt` rides as case data on the existing `JSON.stringify(tests)`, exactly as `t.via` / `t.ops` /
+`t.ctor` / `t.draws` / `t.live` / `t.shared` already do, so S10's frozen v1.1 set is unchanged (`241·0` includes S10;
+`docs/trace-schema.json` untouched) and `buildBundle` never reads `tgt` — it is consumed host-side by `selectCasesForLevel`.
+Nothing in `equivalent()`, the comparator registry, `acceptsWire`, `toWire`/`fromWire` or `validateEnvelope` changed, and
+`api/_lib/codecs.mjs` is byte-identical to `8b6d4bd`. No authored script text was injected into the driver, so decision C3's
+trust boundary is untouched — `findNode` is still not executed anywhere.
+
+**Left alone, found on the way.** (1) §3's row-15 cell still reads `clean 449 · zero-pass 0 · partial-pass 1` and cites S35 as
+the last thing to move; that ONE cell needs the S36 numbers and is corrected in the same commit. (2) The ledger's
+`sorted-array-to-bst L1 is a json guide` note is wrong — it is a **`tree`** guide, as this entry's `treeHeight`/`inorderVals`
+derivation and `buildBundle`'s `__TREE__` branch both show. (3) `__FL__`'s positional repair is still redundant **for this
+guide** (`isSameTree` and `kthSmallest` still need it), and `S29`'s `__FL__` recording ran 450 times to produce cases whose
+`tgt` this slice now reads — deleting it is a separate slice with its own gate.
+
+**Addendum, later the same day — the `test:e2e` half of that `verify` claim, corrected.** The paragraph above says
+`npm run verify` → EXIT=0 including Playwright. **That was measured and it was true when it ran** (272 passed / 18 skipped, on
+exactly this code). It is **not reproducible in the machine's current state**, and the reason is NOT this slice:
+
+- A later `npm run verify` exited **1** with Playwright reporting `217 failed / 55 passed`, and every one of the 217 was
+  `net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173`. The FIRST error in the log is the informative one:
+  `page.addScriptTag: Failed to load script at http://127.0.0.1:4173/dryrun/render.js` — the static server died mid-run, and
+  every later failure is collateral. `docs/` was never touched (`git status --porcelain docs/` empty; `build-site.mjs` cleans
+  nothing), and a hand-started `serve` on another port returned `/dryrun/render.js` HTTP 200 / 112 193 B in 2 ms.
+- One run exited **137** — SIGKILL. Swap sat at exactly `739.56M` before and after, so it is not swap growth; the four
+  `opencode` processes resident on this box hold ~3 GB and Chromium is what the kernel reaps first.
+- **The comparison that settles it.** Measured back to back at the same load, port cleaned by NAME before each
+  (`pkill -f 'serve@14'`, then wait for `lsof -iTCP:4173 -sTCP:LISTEN` to show zero — handoff §7 trap 1):
+
+  | tree | result | connection-refused |
+  |---|---|---|
+  | **pristine HEAD, 1st run** | 271 passed / 1 failed / 18 skipped | **0** |
+  | pristine HEAD, 2nd run | 103 passed / 169 failed / 18 skipped | 101 |
+  | **S36, 1st run** | 272 passed / 0 failed / 18 skipped | **0** |
+  | S36, 2nd run | 189 passed / 83 failed / 18 skipped | 23 |
+
+  Pristine HEAD fails **worse** than the S36 tree under the same load. The cascade is pre-existing, load-induced flakiness in
+  `test:e2e` — handoff §6.1's "the load-sensitive class has now bitten four times", explicitly **not** a row-15 decision. Per the
+  rule this ledger keeps re-learning, the change was measured with the load AND the change removed before anything was
+  concluded, and that measurement exonerates it.
+- **What IS claimed, measured on the final tree:** every deterministic step of `verify` — `audit:check` · `gen:traces` ·
+  `validate` · `npm test` · `test:judge` · `test:chat` · `test:trace` · `test:envelope` · `test:serialize` · `test:validate` ·
+  `test:codecs` · `test:instrument` · `test:cases` · `test:doc-traces` · `test:dryrun-player` · `test:dryrun-render` ·
+  `build` — **EXIT=0, all seventeen**. `test:e2e` is **not** claimed as currently measurable; its last green measurement on this
+  code is 272 passed / 18 skipped, and its current state on BOTH trees is a server-death cascade.

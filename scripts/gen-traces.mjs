@@ -644,11 +644,11 @@ function __SPY__(name, target, isCtor, via) {
           // shared node argument carries no shared key and takes the old path byte for byte.
           __SH__ = __shared__;
           if (__fixed !== null) {
-            __A__ = __fixed; __AN__ = name; __AV__ = via || null; __TX__ = 0;
+            __A__ = __fixed; __AN__ = name; __TGT__ = (typeof target === 'function' && target.name) || null; __AV__ = via || null; __TX__ = 0;
           } else if (__TREE__ && __args !== null && !__LE__(__args[0]) && __F__ !== null && __LE__(__F__[0])) {
             // keep the level-order recording
           } else {
-            __A__ = __args; __AN__ = name; __AV__ = via || null;
+            __A__ = __args; __AN__ = name; __TGT__ = (typeof target === 'function' && target.name) || null; __AV__ = via || null;
             __TX__ = (__args === null) ? 1 : 0;
           }
         } else if (__F__ === null) {
@@ -690,9 +690,9 @@ function __SPY__(name, target, isCtor, via) {
       // is-subsequence's class case has no recorded ARGUMENTS (the receiver's construction is left
       // unspied) and is entirely carried by the op list.
       var __unbacked__ = (__A__ === null && __OPS__.length === 0 && __ASSERTERS__.indexOf(__FN__) !== -1) ? 1 : 0;
-      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, untransportable: __TX__, unbacked: __unbacked__, live: __LIVE__, via: __AV__, shared: __SH__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
+      __CAP__.push({ label: arguments[2] === undefined ? null : String(arguments[2]), expected: arguments[1], args: __A__ !== null ? __A__ : __F__, callee: __A__ !== null ? __AN__ : __FN__, tgt: __A__ !== null ? __TGT__ : null, untransportable: __TX__, unbacked: __unbacked__, live: __LIVE__, via: __AV__, shared: __SH__, ops: __ops__, ctor: __ops__ !== null ? __CTOR__ : null, draws: __DRAWS__.slice(__DRAWFROM__) });
       __DRAWFROM__ = __DRAWS__.length;
-      __A__ = null; __AN__ = null; __F__ = null; __FN__ = null; __LIVE__ = 0; __TX__ = 0; __FL__ = []; __AV__ = null; __SH__ = null;
+      __A__ = null; __AN__ = null; __TGT__ = null; __F__ = null; __FN__ = null; __LIVE__ = 0; __TX__ = 0; __FL__ = []; __AV__ = null; __SH__ = null;
     }
 
     // A node argument the script never WROTE as a literal. lowestCommonAncestor is called as
@@ -1178,6 +1178,12 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     `var __CAP__ = [];`,
     `var __A__ = null;`,
     `var __AN__ = null;`,
+    // Row 15 / S36 — the CONCRETE target behind `__AN__`. `__AN__` is the callee AS WRITTEN, and an
+    // alias loop writes `fn`, which names no block; this is the function that call actually received.
+    // Written ONLY by a target call, for `__AV__`'s reason: `assertEq(inorderVals(fn(x)))` evaluates
+    // the target and then the derivation, so a name read at the asserter is `inorderVals` and every
+    // guide mis-attributes. Reset with the rest, because an owner belongs to one recorded call.
+    `var __TGT__ = null;`,
     // The derivation key for the call currently being recorded, row 15 / S22. Reset with the rest
     // of the per-assertion state, because a derivation belongs to one call site and no other.
     `var __AV__ = null;`,
@@ -1360,6 +1366,13 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
     // that the target RETURNS the mutated array, which it does not.
     if (record.expected !== undefined) testCase.expected = record.expected;
     if (record.callee !== undefined) testCase.callee = record.callee;
+    // Row 15 / S36 — the CONCRETE target, for a level to tell its OWN cases from a sibling's. Absent
+    // for every case the spy did not attribute to a target (a case from `judge/tests/` or
+    // `catalog/cases.json`, or an assertion with no target call behind it), and such a case reaches
+    // every level exactly as before. DATA on the existing `JSON.stringify(tests)`, the way `live` /
+    // `shared` / `draws` / `via` already ride: no envelope field, no golden field, no schema entry,
+    // so S10's frozen v1.1 set is untouched and the driver never reads it.
+    if (record.tgt) testCase.tgt = record.tgt;
     // Row 15 / S34 — the recorded arguments are LIVE values, so `buildBundle`'s driver must not
     // decode them. Only ever set when the spy's own provenance test says so, so its absence means
     // "decode, exactly as before" and a bundle for any other codec is byte-identical.
@@ -1954,6 +1967,101 @@ export function goldenFileName(guidePath, level, suffix = '.json') {
 // CLI
 // ---------------------------------------------------------------------------
 
+/**
+ * Row 15 / S20, S23, S36 — ONE guide's per-level case list. Every level's bundle is built from
+ * this, so the rule lives here and nowhere else.
+ *
+ * A harvested case list is harvested ONCE and shared by all three levels, and that is load-bearing:
+ * an ALIAS loop (`for (const fn of [f1, f2, f3]) assertEq(...)`) records `callee: 'fn'`, and each
+ * level running that one case against its OWN function is how 150 guides are covered by one
+ * authored script. So the list is NOT filtered per level in general.
+ *
+ * Three narrowing rules, each on an exact condition and no other:
+ *
+ *  1. S23 — `Array.isArray(c.ops)`: an op list is a sequence against a CONSTRUCTED INSTANCE, so it
+ *     is structurally meaningless against a plain function. Reaches only `ops` levels. The
+ *     discriminator is `c.ops`, NOT `c.callee` — recording the op sequence takes the receiver's
+ *     construction out of the target-call path, so such a case's `callee` is the ASSERTER.
+ *  2. S20 — the reverse, read from the level side: at an `ops` LEVEL the target is a class, so a case
+ *     recorded against a sibling level's plain FUNCTION is meaningless there too. Measured:
+ *     `is-subsequence` L2 went 21/0 to 18/3 without rule 1, and its L3 block ran 14 function cases
+ *     against a constructor and answered 0 of 21 without rule 2. ONLY a class case is dropped, and
+ *     the discriminator is the block's own `codec`: a case recorded against a different level's
+ *     FUNCTION is still legitimate, because an alias loop asserts one property of all three and an
+ *     assertion naming one level's function outside a loop
+ *     (`assertEq(copyRandomListBruteForce(null), null)`) states a property the other two must satisfy
+ *     too. Dropping those cost 4 blocks their only passing case and was a net loss.
+ *  3. S36 — `c.tgt`, the CONCRETE target the script actually called. `callee` cannot see a subset
+ *     loop: both loops bind `fn`, so `21-divide-conquer/01-sorted-array-to-bst.md`'s second loop —
+ *     which excludes L1 because `treeHeight <= 3` is false of a degenerate brute force — records
+ *     `callee: 'fn'` exactly like the first, and L1 was graded two assertions written for other
+ *     levels (5p/2f). `tgt` names a block, so a level can drop what is not its own.
+ *
+ * Every rule reads the MANIFEST's per-level target, never the catalog's: `fnName.L3` is null for a
+ * guide whose canonical is a class (`02-two-pointers/02-is-subsequence.md` declares
+ * `SubsequenceMatcher`, which `declarations()` cannot see), and reading level targets from the
+ * catalog made its 7 class cases look like an alias's — so they leaked into L1 and L2, which is the
+ * very failure rules 1 and 2 exist to stop.
+ *
+ * Rule 3's guards are load-bearing, not defensive. Ten of the 150 guides call their CANONICAL
+ * directly and never an alias (`01-array-string/01-merge-sorted-array.md` writes `merge(a, b)`), so
+ * every case names ONE target and "keep only my own" would hand L1 and L2 nothing — and a level
+ * with no cases does not fail loudly: `traceOne` throws, the guide leaves the manifest, and the
+ * corpus SHRINKS. That shipped once as 428 goldens instead of 450 with every gate green. So:
+ *
+ *  - no `tgt` (a case from `judge/tests/`, `catalog/cases.json`, or a non-target call) reaches every
+ *    level, which is what keeps coverage intact;
+ *  - a `tgt` this guide does not declare as a target reaches every level, for the same reason;
+ *  - a guide whose cases name at most ONE target is SHARED, because one name carries no per-level
+ *    signal — this is the rule that keeps those ten guides whole;
+ *  - a partition that would keep the SAME number of cases at all three levels is not applied at all:
+ *    an alias loop over all three records one case per target per assertion, so partitioning it is
+ *    pure de-duplication and changes no verdict. That is what holds the blast radius at the two
+ *    guides that genuinely discriminate. Measured: 148 of 150 guides keep a byte-identical list.
+ *
+ * `blocksByGuide` needs `{level, targetFn, codec}` per block and nothing else, so `test-trace.mjs`
+ * can drive this with hand-made blocks rather than a re-implementation of it.
+ */
+export function selectCasesForLevel(cases, blocksByGuide, level) {
+  const codecOfTarget = new Map(blocksByGuide.map((b) => [b.targetFn, b.codec ?? null]));
+  const declared = new Set(blocksByGuide.map((b) => b.targetFn).filter(Boolean));
+  // `tgt` names a block of THIS guide, or it names nothing this guide can discriminate on.
+  const owned = (c) => Boolean(c.tgt) && declared.has(c.tgt);
+  const named = new Set(cases.filter(owned).map((c) => c.tgt));
+
+  // Rules 1 and 2 — the plain-function/ops asymmetry, S23's, carried over unchanged.
+  const asymmetryOk = (c, mine) => {
+    if (Array.isArray(c.ops)) return mine?.codec === 'ops';
+    if (mine?.codec === 'ops') {
+      const owner = blocksByGuide.find((b) => b.targetFn === c.callee);
+      if (owner && owner.codec !== 'ops') return false;
+    }
+    if (c.callee === mine?.targetFn || !blocksByGuide.some((b) => b.targetFn === c.callee)) return true;
+    return !(codecOfTarget.get(c.callee) === 'ops' && mine?.codec !== 'ops');
+  };
+
+  // Rule 3's two guards, in one place so they cannot be applied one without the other:
+  //   `named.size > 1` — there IS a per-level signal. One name (a script that calls its canonical
+  //   directly) partitions nothing, and partitioning it empties a level.
+  //   the COUNT spread — a partition that keeps the same number of cases at all three levels moves
+  //   no verdict (an alias loop over all three records one case per target per assertion, so
+  //   partitioning it is pure de-duplication). Only a DISCRIMINATING partition is applied, which is
+  //   what holds the blast radius at the two guides that genuinely discriminate — measured: 148 of
+  //   150 guides keep a byte-identical list.
+  const isMine = (c, l) => named.size > 1 && owned(c) && c.tgt !== blocksByGuide.find((b) => b.level === l)?.targetFn;
+  const counts = [1, 2, 3].map((l) => cases.filter((c) => {
+    const mine = blocksByGuide.find((b) => b.level === l);
+    return asymmetryOk(c, mine) && !isMine(c, l);
+  }).length);
+  // `named.size > 1` is inside `isMine`, so `counts` already reads 0,0,6 for a guide whose cases all
+  // name one target and the spread test already refuses it. Repeating it here was measured dead: a
+  // mutant that dropped THIS clause changed nothing, which is how a redundant guard survives review.
+  const discriminated = new Set(counts).size > 1;
+
+  const mine = blocksByGuide.find((b) => b.level === level);
+  return cases.filter((c) => asymmetryOk(c, mine) && !(discriminated && isMine(c, level)));
+}
+
 async function main(argv) {
   const only = argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : null;
   const noWrite = argv.includes('--no-write');
@@ -2026,61 +2134,17 @@ async function main(argv) {
     }
     coverage.set(entry.path, { cases: source.cases.length, origin: source.origin });
 
-    // Row 15 / S20 — one harvested case list feeds all three levels, and that is load-bearing:
-    // an ALIAS loop (`for (const fn of [f1, f2, f3]) assertEq(...)`) records `callee: 'fn'`, and
-    // each level running that one case against its OWN function is how 150 guides are covered by
-    // one authored script. So the list is NOT filtered per level in general.
-    //
-    // What must not happen is a case recorded against ANOTHER level's target being replayed here,
-    // which is how is-subsequence's L1 ran `isSubsequenceBruteForce('ahbgdc')` — the L3 CLASS's
-    // constructor argument, one argument short, dying on `.length` of undefined. So a case is
-    // dropped on that exact condition and no other: a `callee` that is not any level's target
-    // (an alias, or a case from `judge/tests` / `test-runner` / `catalog` with no `callee` at
-    // all) still reaches every level, which is what keeps coverage intact.
-    // The MANIFEST's per-level target, not the catalog's: `fnName.L3` is null for a guide whose
-    // canonical is a class (`02-two-pointers/02-is-subsequence.md` declares `SubsequenceMatcher`,
-    // which `declarations()` cannot see), and reading level targets from the catalog made its
-    // 7 class cases look like an alias's — so they leaked into L1 and L2, which is the very
-    // failure this exists to stop.
-    //
-    // ONLY a class case is dropped, and the discriminator is the block's own `codec`. A case
-    // recorded against a different level's FUNCTION is still a legitimate case here: an alias
-    // loop asserts one property of all three, and an assertion that names one level's function
-    // outside such a loop (`assertEq(copyRandomListBruteForce(null), null)`) states a property
-    // the other two must satisfy too. Dropping those cost 4 blocks their only passing case and
-    // was a net loss. An `ops` case is an op sequence against a CONSTRUCTED INSTANCE and is
-    // structurally meaningless against a plain function — that asymmetry is the whole defect.
+    // Row 15 / S20, S23, S36 — the ONE per-level case selector, with all three rules and their
+    // reasoning: `selectCasesForLevel`, above. It is a function rather than a closure here so
+    // `test-trace.mjs` can drive the real rule with hand-made blocks — a probe that re-implements
+    // the filter proves the re-implementation, which is how a filter that empties a level gets to
+    // look like a filter that works. `.filter()` returns a NEW array and does not copy non-index own
+    // properties, so the derivation code `harvestCases` parked on `source.cases.viaCode` is GONE by
+    // default. It has to be re-attached by hand or every level of a derivation guide silently loses
+    // its replay and the block stays in the wrong-verdict census looking like a driver bug.
     const blocksByGuide = blocks.filter((b) => b.path === entry.path);
-    const codecOfTarget = new Map(blocksByGuide.map((b) => [b.targetFn, b.codec ?? null]));
     const casesForLevel = (level) => {
-      const mine = blocksByGuide.find((b) => b.level === level);
-      const kept = source.cases.filter((c) => {
-        // Row 15 / S23: a case carrying an op list is an op sequence against a CONSTRUCTED
-        // INSTANCE, so it is structurally meaningless against a plain function — the same
-        // asymmetry the rule below states for a case whose `callee` is an `ops` target, and it
-        // reaches only the levels whose own block is an `ops` one. The discriminator is `c.ops`,
-        // NOT `c.callee`: recording the op sequence takes the receiver's construction out of the
-        // target-call path, so such a case's `callee` is the ASSERTER and the rule below saw
-        // nothing to drop. Measured: is-subsequence L2 went 21/0 to 18/3 without this, because
-        // three of the L3 class cases reached a plain function.
-        if (Array.isArray(c.ops)) return mine?.codec === 'ops';
-        // …and the same asymmetry read from the other side: at an `ops` LEVEL the target is a class,
-        // so a case recorded against a sibling level's plain FUNCTION is structurally meaningless
-        // there too. `is-subsequence` is the measured instance — one authored script drives the L3
-        // CLASS and the L1/L2 functions, so without this the L3 block ran 14 function cases against
-        // a constructor and answered 0 of 21. `callee: 'C'` (an alias) and `callee: 'assertEq'`
-        // name no block at all, so both still reach the level, which is what keeps coverage intact.
-        if (mine?.codec === 'ops') {
-          const owner = blocksByGuide.find((b) => b.targetFn === c.callee);
-          if (owner && owner.codec !== 'ops') return false;
-        }
-        if (c.callee === mine?.targetFn || !blocksByGuide.some((b) => b.targetFn === c.callee)) return true;
-        return !(codecOfTarget.get(c.callee) === 'ops' && mine?.codec !== 'ops');
-      });
-      // `.filter()` returns a NEW array and does not copy non-index own properties, so the
-      // derivation code `harvestCases` parked on `source.cases.viaCode` is GONE by default. It has
-      // to be re-attached by hand or every level of a derivation guide silently loses its replay
-      // and the block stays in the wrong-verdict census looking like a driver bug.
+      const kept = selectCasesForLevel(source.cases, blocksByGuide, level);
       if (source.cases.viaCode) kept.viaCode = source.cases.viaCode;
       if (source.cases.derivationDeps) kept.derivationDeps = source.cases.derivationDeps;
       return kept;

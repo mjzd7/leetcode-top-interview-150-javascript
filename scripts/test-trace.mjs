@@ -65,6 +65,11 @@ import { equivalent, getCodec } from '../api/_lib/codecs.mjs';
 import { buildBundle } from '../api/_lib/problems.mjs';
 import { executeUserCode } from '../api/_lib/sandbox.mjs';
 import { degradeToDiff as degradeEnvelopeToDiff } from '../api/_lib/trace-runner.mjs';
+// Row 15 / S36 — the ONE per-level case selector. Imported, not reimplemented: a probe that
+// re-implements the rule proves the re-implementation, which is how a filter that empties a level
+// gets to look like a filter that works. `gen-trace.mjs` already imports this module for
+// `buildInstrumented`, so there is no new edge.
+import { selectCasesForLevel } from './gen-traces.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures', 'trace');
@@ -334,6 +339,74 @@ async function sharedArgsAreViewsOfOneGraph() {
   });
   if (separate !== false) {
     return 'the per-argument case passed anyway — either `p`/`q` are not identity-compared here, or the target was handed something that was never a tree, so the shared case proves nothing';
+  }
+  return true;
+}
+
+/**
+ * S36 · row 15 — the per-level case selector, probed in BOTH directions.
+ *
+ * The harvest records which of a guide's three targets actually received each case (`tgt`), and the
+ * selector keeps a case only where it names the level's own target. That is only safe because of the
+ * guard this probe exists for, and the guard is not decoration:
+ *
+ *   - TEN of the 150 guides call their CANONICAL directly and never an alias —
+ *     `01-array-string/01-merge-sorted-array.md` writes `assertEq(merge(a, b), …)`. All six of its
+ *     cases therefore name one target, and a naive "keep only my own" rule hands L1 and L2 NOTHING.
+ *   - A level with no cases does not fail loudly. `traceOne` throws, `main()` tallies the throw, the
+ *     guide leaves the manifest, and the corpus SHRINKS — which a sibling probe once shipped as 428
+ *     goldens instead of 450 with every other assertion in this file green, because a corpus that
+ *     shrank cannot fail a gate that only asks about the guides it can still see.
+ *
+ * So the probe drives the REAL selector with both corpus shapes. Two-sided on purpose: a rule that
+ * always partitions fails the first half (ten guides emptied), a rule that never partitions fails the
+ * second (L1 graded the assertions written for L2/L3), and only the guarded rule satisfies both.
+ * Returns `true`, or the string naming which direction broke.
+ */
+function subsetLoopPartitionIsSelective() {
+  // A guide whose levels are three plain functions — the shape every probe here needs.
+  const blocks = [
+    { path: 'probe/guide.md', level: 1, targetFn: 'aOnly', codec: 'json' },
+    { path: 'probe/guide.md', level: 2, targetFn: 'bOnly', codec: 'json' },
+    { path: 'probe/guide.md', level: 3, targetFn: 'cOnly', codec: 'json' },
+  ];
+  const select = (cases, level) => selectCasesForLevel(cases, blocks, level);
+
+  // ── Half one: one named target, so there is NO per-level signal and the list stays SHARED ──
+  // This is `merge-sorted-array`'s real shape. Every level must keep all of them.
+  const singleNamed = [
+    { name: 'direct-1', args: [1, 2], tgt: 'cOnly' },
+    { name: 'direct-2', args: [3, 4], tgt: 'cOnly' },
+    { name: 'no-owner', args: [5, 6] },
+  ];
+  const sharedCounts = [1, 2, 3].map((level) => select(singleNamed, level).length);
+  if (sharedCounts.join() !== '3,3,3') {
+    return `a guide whose cases name ONE target had its list narrowed to ${sharedCounts.join('/')} — `
+      + 'ten of the 150 guides call their canonical directly, so this empties their L1/L2 and drops '
+      + 'them out of the manifest, which is how a corpus reads 428 when it should read 450';
+  }
+
+  // ── Half two: three named targets with a SUBSET loop, so the partition must discriminate ──
+  // This is `sorted-array-to-bst`'s real shape: one assertion over all three, two over L2/L3 only.
+  const subsetLoop = [
+    { name: 'all-a', args: [1], tgt: 'aOnly' },
+    { name: 'all-b', args: [2], tgt: 'bOnly' },
+    { name: 'all-c', args: [3], tgt: 'cOnly' },
+    { name: 'pair-b', args: [4], tgt: 'bOnly' },
+    { name: 'pair-c', args: [5], tgt: 'cOnly' },
+    { name: 'no-owner', args: [6] },
+  ];
+  const partitioned = [1, 2, 3].map((level) => select(subsetLoop, level).map((c) => c.name).join(','));
+  // `no-owner` rides everywhere — it names no block, exactly like a case from `judge/tests/` or
+  // `catalog/cases.json`, and dropping those would be the second way coverage silently shrinks.
+  if (partitioned[0] !== 'all-a,no-owner') {
+    return `L1 was handed [${partitioned[0]}] — expected [all-a,no-owner]. The subset loop's two `
+      + 'L2/L3 assertions reached a level they were never written for, which is the defect itself';
+  }
+  if (partitioned[1] !== 'all-b,pair-b,no-owner' || partitioned[2] !== 'all-c,pair-c,no-owner') {
+    return `L2/L3 were handed [${partitioned[1]}] and [${partitioned[2]}] — expected `
+      + '[all-b,pair-b,no-owner] and [all-c,pair-c,no-owner]. Each level must keep its OWN share of '
+      + 'the subset loop, or the canonical pair has lost assertions the brute force was spared';
   }
   return true;
 }
@@ -1673,13 +1746,12 @@ async function main() {
     // transport change — it stays at `0p/6f`'s sibling slice's expense, and `VERDICT_BASELINE` now says
     // so exactly rather than leaving 4 counts of slack that nothing has earned.
     // Row 15 / S35 tightened `zeroPass` from 3 to its measured floor, 0: S35 closed the last three
-    // zero-pass blocks (lowest-common-ancestor L1/L2/L3), so the corpus now carries exactly one
-    // wrong-verdict head — sorted-array-to-bst L1 at 5p/2f, the `tree`-guide slice this row does not
-    // own. The floor is the MEASURED value and not 1, because a baseline above the measurement is
-    // slack nothing has earned: the same argument that dropped this from 5 to 1 in S34 drops it to 0
-    // now, and the three negative probes below are written RELATIVE to the baseline so this
-    // tightening cannot rot them.
-    const VERDICT_BASELINE = { zeroPass: 0, partialPass: 1 };
+    // wrong-verdict head — sorted-array-to-bst L1 at 5p/2f — is closed by S36 below, so the corpus
+    // carries none. The floor is the MEASURED value and not 1, because a baseline above the
+    // measurement is slack nothing has earned: the same argument that dropped this from 5 to 1 in
+    // S34, then to 0 in S35, drops it to 0 again here, and the three negative probes below are
+    // written RELATIVE to the baseline so this tightening cannot rot them.
+    const VERDICT_BASELINE = { zeroPass: 0, partialPass: 0 };
     const breaches = (c, base) => Object.keys(base)
       .filter((k) => c[k] > base[k]).map((k) => `${k} rose ${base[k]} -> ${c[k]}`);
     // A one-directional ratchet has a blind spot that is exactly this row's bug: an UNCOMPUTED
@@ -2006,11 +2078,12 @@ async function main() {
     // The COUNT moves with the corpus, never the assertion: this still pins the exact census, and it
     // still fails for a guide that was dropped rather than fixed. `446` was S34's measured value;
     // row 15 slice 12 (S35) took lowest-common-ancestor L1/L2/L3 from zero-pass to clean, so the
-    // number it asserts is now `449`. The claim moved with it — the fix is named, the arithmetic is
+    // number it asserts is now `449`; S36 took sorted-array-to-bst L1 from partial-pass to clean, so
+    // it is now `450`. The claim moved with it each time — the fix is named, the arithmetic is
     // stated, and the sum is asserted independently on the line above.
-    check(verdictCensus.clean === 449,
-      'S34 list wire: `clean` is 449 — the two blocks S34 named went from partial to clean, and S35\'s three went from zero-pass, and nothing else moved',
-      `clean ${verdictCensus.clean} (446 after S34, 444 before it), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
+    check(verdictCensus.clean === 450,
+      'S34 list wire: `clean` is 450 — the two blocks S34 named went from partial to clean, S35\'s three went from zero-pass, S36\'s one went from partial-pass, and nothing else moved',
+      `clean ${verdictCensus.clean} (446 after S34, 449 after S35), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
     // The negative that distinguishes the two sides of the rule. A case whose recorded call WAS the
     // codec's decoder must still be decoded — that is `invert-binary-tree`'s `empty tree`, and if
     // the rule ever says "never decode", every tree guide's harvested level-order input stops being
@@ -2029,9 +2102,131 @@ async function main() {
     check(verdictCensus.zeroPass + verdictCensus.partialPass + verdictCensus.clean === 450,
       'S35 shared graph: the census still accounts for all 450 heads — a guide dropped from the manifest is not an improvement',
       `${verdictCensus.zeroPass} + ${verdictCensus.partialPass} + ${verdictCensus.clean} != 450`);
-    check(verdictCensus.clean === 449,
-      'S35 shared graph: `clean` is 449 — lowest-common-ancestor L1/L2/L3 went from zero-pass to clean and nothing else moved',
+    check(verdictCensus.clean === 450,
+      'S35 shared graph: `clean` is 450 — lowest-common-ancestor L1/L2/L3 went from zero-pass to clean, S36\'s sorted-array-to-bst L1 went from partial-pass to clean, and nothing else moved',
       `clean ${verdictCensus.clean} (446 before this slice), zero-pass ${verdictCensus.zeroPass}, partial-pass ${verdictCensus.partialPass}`);
+
+    // ---- S36 · row 15 — a case belongs to the level whose TARGET the script called ----
+    // `21-divide-conquer/01-sorted-array-to-bst.md`'s authored script runs TWO loops. The first is
+    // over all three targets; the second is over L2 and L3 ONLY, and asserts
+    // `treeHeight(fn([-10,-3,0,5,9])) <= 3` — true of a balanced tree and FALSE of L1, which the
+    // guide itself documents at line 115 as degenerating ("sorted input degenerates to a chain"), so
+    // L1's height is 5. Cases are harvested ONCE and handed to all three bundles, so L1 was graded
+    // two assertions authored for other levels: 5 passed / 2 failed, and the 2 are exactly that pair.
+    //
+    // `callee` could not see it: the loops bind `fn`, so every case records `callee: 'fn'` and the
+    // alias names no block. What names a block is the function the call actually received, and the
+    // harvest now records it as `tgt`. It is read AT THE TARGET CALL and written only there, for the
+    // reason `__AV__` already gives: `assertEq(inorderVals(fn(x)))` evaluates the target and then the
+    // derivation, so a name read at the asserter is `inorderVals`/`treeHeight` and every guide
+    // mis-attributes. Measured over all 150 guides that way: every one of them wrong.
+    const SUBSET_LOOP_GUIDES = [
+      {
+        stem: '21-divide-conquer__01-sorted-array-to-bst',
+        why: 'the second loop excludes L1 — `treeHeight <= 3` is false of the degenerate brute force',
+        // loop 1 runs 3 targets x 1 assertion; loop 2 runs 2 targets x 2 assertions. So L1 keeps only
+        // its own one, and L2/L3 keep theirs plus both of loop 2's.
+        cases: { 1: 1, 2: 3, 3: 3 },
+      },
+      {
+        stem: '18-graph-general__02-surrounded-regions',
+        why: '`solve(singleX)` names the canonical directly, outside any loop',
+        // one loop over all three (1 assertion each) plus one assertion written against `solve` alone.
+        cases: { 1: 1, 2: 1, 3: 2 },
+      },
+    ];
+    for (const { stem, why, cases: want } of SUBSET_LOOP_GUIDES) {
+      for (const level of [1, 2, 3]) {
+        const gname = names.find((n) => n.startsWith(`${stem}.L${level}.json`));
+        const golden = gname ? readGolden(gname) : null;
+        check(golden !== null && golden.verdict.failed === 0,
+          `S36 subset loop: ${stem} L${level} passes every case — ${why}`,
+          golden
+            ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · error ${String(golden.error ?? 'none').split('\n')[0]}`
+            : `no golden named ${stem}.L${level}.json — run \`npm run gen:traces\``);
+      }
+      // ── The load-bearing half: the partition is SELECTIVE, and a verdict cannot show that ──
+      // `failed === 0` at L1 is satisfiable by a level that grades NOTHING, and it is satisfiable by
+      // a level that grades all seven cases and passes the five that agree. Only the CASE COUNT says
+      // which assertions each level was handed, so the exact count is asserted per level — and the
+      // exact count is the partition, stated as data. A partition that stopped discriminating would
+      // restore 7/7/7 and fail here with every verdict still green.
+      const counts = {};
+      for (const level of [1, 2, 3]) {
+        const g = readGolden(`${stem}.L${level}.json`);
+        counts[level] = g ? g.verdict.passed + g.verdict.failed : -1;
+      }
+      const got = `${counts[1]}/${counts[2]}/${counts[3]}`;
+      const expected = `${want[1]}/${want[2]}/${want[3]}`;
+      check(got === expected,
+        `S36 subset loop: ${stem} grades ${expected} cases at L1/L2/L3 — the counts the authored script's loops produce, which is what proves each level was handed only its OWN assertions`,
+        `graded ${got}, expected ${expected} — the partition is not discriminating (a level handed every level's cases would be ${got === expected ? got : '7/7/7'})`);
+    }
+    // ── The negative, and it is the one this row exists because of ──
+    // A partition that narrows a level to ZERO cases does not fail loudly: `traceOne` throws,
+    // `main()` tallies the throw, the guide leaves the manifest, and the corpus SHRINKS. A sibling
+    // probe did exactly that and shipped 428 goldens instead of 450 with every assertion in this
+    // file green, because a corpus that shrank cannot fail a gate that only asks about the guides it
+    // can still see. So the rule is probed through the REAL selector with the corpus shape that
+    // triggers it: ten of the 150 guides call their CANONICAL directly (`01-array-string/
+    // 01-merge-sorted-array.md` writes `merge(a, b)`, never an alias), so all six of their cases name
+    // one target and a naive "keep only my own" rule hands L1 and L2 nothing. Two-sided: the single-
+    // named-target shape must stay SHARED, and the three-named-target shape must partition, and the
+    // probe says which of the two broke.
+    const subsetProbe = subsetLoopPartitionIsSelective();
+    check(subsetProbe === true,
+      'S36 subset loop: the partition narrows ONLY a guide whose cases name more than one target — a guide whose script calls its canonical directly keeps the shared list, so no level can be emptied and no guide can leave the manifest',
+      subsetProbe === true ? '' : String(subsetProbe));
+
+    // ── The BLAST RADIUS, asserted as data, because two of the guards are invisible otherwise ──
+    // The `named.size > 1` guard above is what stops a guide being emptied, and the count-spread guard
+    // is what stops the partition DE-DUPLICATING the other 148. Neither shows in a verdict: an
+    // always-partition rule is still correct, just wider, so every assertion above would stay green
+    // while 51 guides' goldens lost their duplicate cases. So the set of guides whose per-level case
+    // COUNTS differ is asserted, over the whole corpus, and it is exactly the two this slice names.
+    const asymmetric = new Map();
+    for (const name of names) {
+      const g = readGolden(name);
+      if (!g) continue;
+      const stem = name.replace(/\.L[123]\.json$/, '');
+      if (asymmetric.has(stem)) continue;
+      const perLevel = [1, 2, 3].map((l) => {
+        const lg = readGolden(`${stem}.L${l}.json`);
+        return lg ? lg.verdict.passed + lg.verdict.failed : 0;
+      });
+      if (new Set(perLevel).size > 1) asymmetric.set(stem, perLevel.join('/'));
+    }
+    // Three, not two: `is-subsequence` was ALREADY asymmetric before this slice, because S23's
+    // ops rule sends its seven class cases to the `ops` level alone (14/14/7). Naming it is the point
+    // — a gate that listed only the guides this slice moved would go GREEN the day S23's rule
+    // changed, which is the same blindness as a gate listing no guides at all.
+    const ASYMMETRIC_EXPECTED = {
+      '02-two-pointers__02-is-subsequence': '14/14/7',
+      '18-graph-general__02-surrounded-regions': '1/1/2',
+      '21-divide-conquer__01-sorted-array-to-bst': '1/3/3',
+    };
+    const gotAsym = [...asymmetric.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    check(JSON.stringify(Object.fromEntries(gotAsym)) === JSON.stringify(ASYMMETRIC_EXPECTED),
+      `S36 blast radius: exactly ${Object.keys(ASYMMETRIC_EXPECTED).length} guides have asymmetric per-level case counts, and each is the count its authored script produces — a partition that cannot discriminate must narrow nothing, and one that discriminates everywhere would churn the other 147 guides' goldens`,
+      gotAsym.map(([k, v]) => `${k} ${v}`).join('; '));
+
+    // ── And the DIRECT form of the same claim: no guide's graded coverage shrank ──
+    // The set above is indirect about the de-dup guard — dropping it collapses 49 guides from 9/9/9
+    // to 3/3/3, which is symmetric and therefore INVISIBLE to a set of the asymmetric ones. So the
+    // invariant is stated on the thing itself: the corpus-wide count of graded cases. It is the
+    // generalisation of "no guide loses a golden" from goldens to cases, and it is the one number a
+    // narrowing filter cannot reduce without saying so. Measured 2272 across 450 goldens.
+    let gradedTotal = 0;
+    let gradedCount = 0;
+    for (const name of names) {
+      const g = readGolden(name);
+      if (!g) continue;
+      gradedCount++;
+      gradedTotal += g.verdict.passed + g.verdict.failed;
+    }
+    check(gradedCount === 450 && gradedTotal === 2272,
+      'S36 coverage: the corpus still grades 2272 cases across 450 goldens — a narrowing filter cannot shrink any guide\'s coverage without moving this number',
+      `${gradedCount} goldens grading ${gradedTotal} cases (2272 expected across 450)`);
 
     // ---- S29 · row 15 — the recorded call must be the one NEAREST the assertion ----
     // `const got = fn(2.1, 3); if (Math.abs(got - 9.261) > 1e-9) { … process.exit(1) }` asserts
