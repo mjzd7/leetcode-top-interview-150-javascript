@@ -65,7 +65,7 @@ jobs:
       # 190 s measured — the most expensive step by an order of magnitude, because every case
       # boots a QuickJS sandbox. Kept as its own step so the cost is attributable in the log
       # rather than hidden inside a chain, and so a slow runner shows which step paid for it.
-      - name: Trace Runner (sandbox: chunking, budget, caps, verdict isolation)
+      - name: 'Trace Runner (sandbox: chunking, budget, caps, verdict isolation)'
         run: npm run test:trace-runner
 
       - name: Build Web Portal Data Bundle
