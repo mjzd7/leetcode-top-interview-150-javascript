@@ -185,13 +185,19 @@ test.describe('the collapsed rail', () => {
 
   test('a category glyph opens the rail onto that category, not just any guide', async ({ page }) => {
   await page.locator('.nav-cat-btn[data-cat="MATRIX"]').click();
-  await page.waitForTimeout(800);
+  // scrollIntoView({behavior:'smooth'}) has no completion signal, so polling
+  // for the settled position is the only honest wait: measured at 800ms it was
+  // still 20px out, and it had arrived by 2s. A fixed sleep is a coin flip.
+  await expect.poll(async () => page.evaluate(() => {
+    const nav = document.getElementById('curriculumNav');
+    const box = nav.getBoundingClientRect();
+    const g = [...nav.querySelectorAll('.nav-group')]
+      .find(x => x.querySelector('.nav-cat-btn')?.dataset.cat === 'MATRIX');
+    return Math.round(Math.abs(g.getBoundingClientRect().top - box.top));
+  }), { timeout: 5000 }).toBeLessThan(12);
   const r = await page.evaluate(() => {
     const nav = document.getElementById('curriculumNav');
     const box = nav.getBoundingClientRect();
-    const group = [...nav.querySelectorAll('.nav-group')]
-      .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === 'MATRIX');
-    const g = group.getBoundingClientRect();
     const onScreen = [...nav.querySelectorAll('.nav-item')].filter(b => {
       const q = b.getBoundingClientRect();
       return q.bottom > box.top + 4 && q.top < box.bottom - 4;
@@ -199,13 +205,11 @@ test.describe('the collapsed rail', () => {
     return {
       stage: document.getElementById('sidebar').dataset.stage,
       railW: Math.round(document.getElementById('sidebar').getBoundingClientRect().width),
-      groupAtTop: Math.abs(g.top - box.top) < 12,
       firstOnScreen: onScreen[0] || '',
     };
   });
   expect(r.stage, 'the rail widens so the guides are readable').toBe('0');
   expect(r.railW, 'back to the full 320px').toBe(320);
-  expect(r.groupAtTop, 'the clicked category is scrolled to the top of the list').toBe(true);
   // the guide under the cursor afterwards must belong to MATRIX, which is what
   // "36. Valid Sudoku" is. Anything else means it scrolled to the wrong place.
   expect(r.firstOnScreen, 'the first guide on screen belongs to the clicked category')
