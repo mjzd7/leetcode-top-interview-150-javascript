@@ -57,12 +57,27 @@ FUNCTION rotateBruteForce(nums, k):
 ```
 
 ### Step-by-Step Dry Run
-`nums = [1, 2, 3, 4]`, `k = 2`, $n = 4$
+`nums = [1, 2, 3, 4, 5, 6, 7]`, $k = 3$, $n = 7$
 
-| Rotation Step | `previous` (`nums[3]`) | Shift Operation | `nums` State |
+<!-- ponytail: one row per outer `step`, not per inner `i` — the inner loop is 6 steps of
+     pure assignment with no branching. Give it its own rows when a reader needs to watch a
+     single element move. -->
+
+| Rotation Step | `previous` (`nums[n - 1]`) | Shift Operation | `nums` State |
 | :--- | :--- | :--- | :--- |
-| Step 1 | 4 | `nums[3]=nums[2]`, `nums[2]=nums[1]`, `nums[1]=nums[0]`, `nums[0]=4` | `[4, 1, 2, 3]` |
-| Step 2 | 3 | `nums[3]=nums[2]`, `nums[2]=nums[1]`, `nums[1]=nums[0]`, `nums[0]=3` | `[3, 4, 1, 2]` |
+| Step 0 (before loop) | 7 | `k = k % n` $\Rightarrow$ $3 \bmod 7 = 3$ | `[1, 2, 3, 4, 5, 6, 7]` |
+| Step 1 | 7 | `nums[6]=nums[5]` … `nums[1]=nums[0]`, `nums[0]=last` | `[7, 1, 2, 3, 4, 5, 6]` |
+| Step 2 | 6 | `nums[6]=nums[5]` … `nums[1]=nums[0]`, `nums[0]=last` | `[6, 7, 1, 2, 3, 4, 5]` |
+| Step 3 | 5 | `nums[6]=nums[5]` … `nums[1]=nums[0]`, `nums[0]=last` | `[5, 6, 7, 1, 2, 3, 4]` |
+
+Three rotations of a 7-element array move the last three values to the front, so the final
+state is `[5, 6, 7, 1, 2, 3, 4]` — a right rotation by $k = 3$.
+
+> **Trace note.** The recorded execution of `rotateBruteForce` ends at the loop-back for
+> `step = 3` and then an `exit` step — it never emits a `return`, and its recorded result is
+> `undefined` (0 of 6 cases pass). The table above therefore describes the array state the
+> shift loop actually reaches, not a value this Level 1 block returns. The missing
+> `return nums;` is a code defect, not a table defect.
 
 ### Modern JavaScript Implementation
 ```javascript

@@ -2,35 +2,80 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { getCodec, driverCodecSource, equivalent } from './codecs.mjs';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const TESTS_DIR = path.resolve(here, '../../judge/tests');
+const CATALOG_PATH = path.resolve(here, '../../catalog/problems.json');
 
-const PILOT_SLUGS = [
-  'two-sum',
-  'valid-parentheses',
-  'search-insert-position',
-  'climbing-stairs',
-  'invert-binary-tree',
-];
+// Identity — path, slug, codec, canonical fn name — is owned by catalog/problems.json, and
+// nothing here declares it: no slug list, no codec whitelist. A judge spec owns only its cases.
+// Judging whether a codec is implemented is row 17's `codecs.mjs` job, not this module's.
+//
+// ponytail: reads catalog/ + judge/tests/ off disk at import and parses the 81 KB catalog per
+// cold start, so both directories must ship in the bundle (they do — neither is in
+// .vercelignore). When the pilot outgrows a directory of hand-authored specs, swap the two
+// reads for an import.meta.glob over the row-15 trace corpus.
+const BY_PATH = new Map(
+  JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf-8')).problems.map((p) => [p.path, p]),
+);
 
-function loadTests(slug) {
-  const raw = fs.readFileSync(path.join(TESTS_DIR, `${slug}.json`), 'utf-8');
-  const spec = JSON.parse(raw);
-  if (!spec.fnName || !Array.isArray(spec.tests) || !['json', 'tree'].includes(spec.codec)) {
-    throw new Error(`Invalid test spec for problem: ${slug}`);
-  }
-  return spec;
+// E30: the registry is keyed by path. The route's contract is a slug `problemId`, so the slug
+// index is a lookup convenience only — a shared slug is an error, never a silent overwrite.
+const BY_SLUG = new Map();
+for (const entry of BY_PATH.values()) {
+  const first = BY_SLUG.get(entry.slug);
+  if (first) throw new Error(`Catalog slug "${entry.slug}" is shared by ${first.path} and ${entry.path}`);
+  BY_SLUG.set(entry.slug, entry);
 }
 
-/** Pilot registry: slug -> { slug, fnName, codec, tests }. */
+/** Pilot registry: slug -> { slug, path, fnName, codec, tests }. */
 export const PROBLEMS = {};
-for (const slug of PILOT_SLUGS) {
-  const spec = loadTests(slug);
-  PROBLEMS[slug] = { slug, fnName: spec.fnName, codec: spec.codec, tests: spec.tests };
+for (const file of fs.readdirSync(TESTS_DIR)) {
+  if (!file.endsWith('.json')) continue;
+  const slug = file.replace(/\.json$/, '');
+  const entry = BY_SLUG.get(slug);
+  if (!entry?.fnName?.L3) {
+    throw new Error(`No canonical identity in catalog/problems.json for pilot spec: ${slug}`);
+  }
+  const { tests } = JSON.parse(fs.readFileSync(path.join(TESTS_DIR, file), 'utf-8'));
+  if (!Array.isArray(tests) || tests.length === 0) {
+    throw new Error(`Invalid test spec for problem: ${slug}`);
+  }
+  PROBLEMS[slug] = {
+    slug,
+    path: entry.path,
+    fnName: entry.fnName.L3,
+    codec: entry.codec,
+    equivalence: entry.equivalence,
+    returnType: entry.returnType,
+    tests,
+  };
 }
 
 export function isPilotProblem(problemId) {
   return Object.prototype.hasOwnProperty.call(PROBLEMS, problemId);
+}
+
+/**
+ * The catalog's declaration for one guide path — the identity `problems.mjs` does not own.
+ *
+ * `build/blocks.json` owns which function a LEVEL traces; `catalog/problems.json` owns what
+ * comparing that function's answer MEANS (`equivalence`) and what it gives back
+ * (`returnType`). The driver needs the second and never had it, which is why it fell back to
+ * `===` on JSON text and why `void` had nowhere to go.
+ *
+ * @returns {{path: string, codec: string, equivalence: string, returnType: string}|null}
+ */
+export function catalogFor(guidePath) {
+  const entry = BY_PATH.get(guidePath);
+  if (!entry) return null;
+  return {
+    path: entry.path,
+    codec: entry.codec,
+    equivalence: entry.equivalence,
+    returnType: entry.returnType,
+  };
 }
 
 /**
@@ -40,80 +85,280 @@ export function isPilotProblem(problemId) {
  * Notes:
  * - `__JUDGE_LOG__` snapshots the pristine console.log BEFORE user code runs,
  *   so user reassignments cannot swallow the verdict envelope.
- * - `fnName` comes from OUR registry (never user input) — safe to inline.
- * - Tree codec converts level-order arrays to/from linked node objects.
+ * - `fnName` comes from the catalog (never user input) — safe to inline.
+ * - The driver carries NO codec of its own. `driverCodecSource()` hands it this
+ *   registry's own bodies (`toWire`/`fromWire`/`owns`/`acceptsWire` plus E28's six
+ *   comparators) as source text, because the sandbox has no module loader and a
+ *   hand-written second copy is the second source of truth plan §1 U2 forbids.
+ *
+ * Four mechanisms this driver used to get wrong, all now decided by the codec that owns the
+ * value rather than by a hard-coded branch:
+ *
+ * 1. IN-PLACE MUTATOR — `merge(nums1, m, nums2, n)` has no `return`. When the call yields
+ *    `undefined` AND the case states an expectation, the answer is the first argument the
+ *    call changed, snapshotted through the same `toWire` the return path uses.
+ * 2. SCALAR RETURN — `maxDepth(root)` returns the number `3`. Encoding that through `tree`
+ *    yields `[null]`, and `[null] === 3` is a verdict that can never be anything but wrong,
+ *    so `owns` gates it: a value the codec does not own is compared as it is.
+ * 3. LIST NODE — `addTwoNumbers` wants `ListNode`s and returns one; the codec both decodes
+ *    the argument and encodes the result, so the comparison is array-to-array.
+ * 4. CLASS TARGET — `new RandomizedSet()` cannot be `.apply`'d. Detected from the target's
+ *    own source (`String(__FN__)`), which is also why the traced run still works: row 10's
+ *    `buildWrapper` replaces the class with a plain function, so that run correctly applies.
+ *
+ * ponytail: `equivalence` defaults to `'exact'`, the STRICTEST of E28's six, so a caller that
+ * states nothing can never manufacture a pass it would not otherwise earn — and all five
+ * pilot specs are `exact` or `order-insensitive` over already-canonical answers. Ceiling: the
+ * driver does not take `returnType`, because "the call returned `undefined`" is the same fact
+ * observed directly rather than read from a catalog field. Upgrade path: a guide whose target
+ * returns `undefined` while ALSO stating an expectation about something other than a mutated
+ * argument needs an explicit `expect: 'arg'|'return'` per case; no corpus case needs it.
  */
-export function buildBundle({ userCode, fnName, codec, tests }) {
-  return (
-    `var __JUDGE_LOG__ = console.log.bind(console);\n` +
-    `${userCode}\n` +
-    `;(function () {\n` +
-    `  var __TESTS__ = ${JSON.stringify(tests)};\n` +
-    `  var __FN_NAME__ = ${JSON.stringify(fnName)};\n` +
-    `  var __CODEC__ = ${JSON.stringify(codec)};\n` +
-    `  var __RESULT__ = { passed: 0, failed: 0, tests: [], error: null };\n` +
-    `  function __ser__(v) { return typeof v === 'undefined' ? '__undefined__' : JSON.stringify(v); }\n` +
-  `  function __errText__(e) {\n` +
-  `    if (e && typeof e === 'object') {\n` +
-  `      var head = (e.name ? e.name + ': ' : '') + (e.message || '');\n` +
-  `      var st = e.stack || '';\n` +
-  `      if (st && head && st.indexOf(head) === -1) return head + '\\n' + st;\n` +
-  `      return st || head || String(e);\n` +
-  `    }\n` +
-  `    return String(e);\n` +
-  `  }\n` +
-    `  function __arrayToTree__(arr) {\n` +
-    `    if (!arr || arr.length === 0 || arr[0] === null || arr[0] === undefined) return null;\n` +
-    `    function N(val, left, right) { return { val: val, left: left === undefined ? null : left, right: right === undefined ? null : right }; }\n` +
-    `    var root = N(arr[0], null, null);\n` +
-    `    var queue = [root];\n` +
-    `    var i = 1;\n` +
-    `    while (i < arr.length) {\n` +
-    `      var node = queue.shift();\n` +
-    `      if (i < arr.length && arr[i] !== null && arr[i] !== undefined) { node.left = N(arr[i], null, null); queue.push(node.left); }\n` +
-    `      i++;\n` +
-    `      if (i < arr.length && arr[i] !== null && arr[i] !== undefined) { node.right = N(arr[i], null, null); queue.push(node.right); }\n` +
-    `      i++;\n` +
-    `    }\n` +
-    `    return root;\n` +
-    `  }\n` +
-    `  function __treeToArray__(root) {\n` +
-    `    if (root === null || root === undefined) return [];\n` +
-    `    var out = [];\n` +
-    `    var queue = [root];\n` +
-    `    while (queue.length > 0) {\n` +
-    `      var node = queue.shift();\n` +
-    `      if (node === null || node === undefined) { out.push(null); continue; }\n` +
-    `      out.push(node.val);\n` +
-    `      queue.push(node.left === undefined ? null : node.left);\n` +
-    `      queue.push(node.right === undefined ? null : node.right);\n` +
-    `    }\n` +
-    `    while (out.length > 0 && out[out.length - 1] === null) out.pop();\n` +
-    `    return out;\n` +
-    `  }\n` +
-    `  try {\n` +
-    `    var __FN__ = eval(__FN_NAME__);\n` +
-    `    if (typeof __FN__ !== 'function') throw new Error('Function ' + __FN_NAME__ + ' is not defined');\n` +
-    `    for (var ti = 0; ti < __TESTS__.length; ti++) {\n` +
-    `      var t = __TESTS__[ti];\n` +
-    `      var got;\n` +
-    `      var ok = false;\n` +
-    `      var errText = null;\n` +
-    `      try {\n` +
-    `        if (__CODEC__ === 'tree') {\n` +
-    `          got = __treeToArray__(__FN__(__arrayToTree__(t.args[0])));\n` +
-    `        } else {\n` +
-    `          got = __FN__.apply(null, t.args);\n` +
-    `        }\n` +
-    `        ok = __ser__(got) === __ser__(t.expected);\n` +
-    `      } catch (e) { errText = __errText__(e); }\n` +
-    `      if (ok) { __RESULT__.passed++; } else { __RESULT__.failed++; }\n` +
-    `      __RESULT__.tests.push({ name: t.name, ok: ok, expected: t.expected, got: errText !== null ? undefined : got, error: errText });\n` +
-    `    }\n` +
-    `  } catch (e) {\n` +
-    `    __RESULT__.error = __errText__(e);\n` +
-    `  }\n` +
-    `  __JUDGE_LOG__('__VERDICT__' + JSON.stringify(__RESULT__));\n` +
-    `})();\n`
-  );
+export function buildBundle({ userCode, fnName, codec, tests, equivalence = 'exact' }) {
+  // Both names are validated HOST-side, before a byte of driver is emitted: an unimplemented
+  // codec or an unknown E28 kind throws here, loudly, exactly as `getCodec`/`equivalent` do
+  // everywhere else. There is no default branch in the sandbox either — see `__CODEC__`.
+  getCodec(codec, fnName);
+  equivalent(equivalence, null, null);
+  // Row 15 / S22 — the derivation replay. A harvested case records what the authored script
+  // asserted AFTER its own post-processing (`normCombos(fn(4, 2))` is comma-joined STRINGS), while
+  // this driver compares the target's RAW return. No equivalence kind bridges that:
+  // `equivalent('order-insensitive', ['1,2','1,3'], [[1,2],[1,3]])` is `false`, because
+  // order-insensitive forgives ORDERING, not REPRESENTATION. So the author's own derivation is
+  // replayed here, in the driver's own words.
+  //
+  // Read off the RAW array, BEFORE it is serialised: `harvestCases` parks the code as a non-index
+  // own property, which `JSON.stringify` drops by design — so this is the only place it exists, and
+  // reading it here is what keeps the change out of every signature and schema in the system.
+  const viaCode = tests?.viaCode ?? '';
+  return [
+    `var __JUDGE_LOG__ = console.log.bind(console);`,
+    userCode,
+    `;(function () {`,
+    `  var __TESTS__ = ${JSON.stringify(tests)};`,
+    `  var __FN_NAME__ = ${JSON.stringify(fnName)};`,
+    `  var __KIND__ = ${JSON.stringify(equivalence)};`,
+    driverCodecSource(),
+    // INSIDE the IIFE, and AFTER `driverCodecSource()`, for one measured reason. A derivation
+    // expression references helpers that come from the guide's own block (`listToArray`,
+    // `treeToArray`, `graphToAdj`), which `userCode` above declares in the ENCLOSING scope — so
+    // inside the IIFE they resolve through the closure with no redeclaration at all. The filter
+    // that guarantees none of them is re-declared lives in `gen-traces.mjs`
+    // (`collectDerivations`/`DRIVER_DECLARED`): emitting a helper here that shares a name with
+    // `driverCodecSource()`'s own would shadow the codec's encoder for the whole run, which is
+    // what killed four authored scripts the first time this shipped.
+    `  var __VIA_FNS__ = {};`,
+    ...(viaCode ? viaCode.split('\n').map((line) => `  ${line}`) : []),
+    `  var __CODEC__ = __CODECS__[${JSON.stringify(codec)}];`,
+    `  var __CMP__ = __COMPARATORS__[__KIND__];`,
+    `  if (!__CODEC__ || !__CMP__) {`,
+    `    throw new Error('driver: codec ' + ${JSON.stringify(codec)} + ' with equivalence ' + __KIND__ + ' is not in the registry');`,
+    `  }`,
+    `  function __errText__(e) {`,
+    `    if (e && typeof e === 'object') {`,
+    `      var head = (e.name ? e.name + ': ' : '') + (e.message || '');`,
+    `      var st = e.stack || '';`,
+    `      if (st && head && st.indexOf(head) === -1) return head + '\\n' + st;`,
+    `      return st || head || String(e);`,
+    `    }`,
+    `    return String(e);`,
+    `  }`,
+    // One snapshot rule for every codec: a value the codec owns is reduced to its WIRE first,
+    // so comparing "did this argument change" cannot be answered by an object graph that
+    // stringifies to `{}`.
+    `  function __snap__(v) { return stringify(__CODEC__.owns(v) ? __CODEC__.toWire(v) : v); }`,
+    `  var __RESULT__ = { passed: 0, failed: 0, tests: [], error: null };`,
+    `  try {`,
+    `    var __FN__ = eval(__FN_NAME__);`,
+    `    if (typeof __FN__ !== 'function') throw new Error('Function ' + __FN_NAME__ + ' is not defined');`,
+    `    var __IS_CLASS__ = false;`,
+    `    try { __IS_CLASS__ = /^\\s*class[\\s{]/.test(String(__FN__)); } catch (e) { __IS_CLASS__ = false; }`,
+    // Row 15 / S30 - a decoded tree node gets its THIRD pointer initialised, when the guide's own
+    // node class declares one. The codec's `arrayToTree` builds `{val, left, right}`, which is the
+    // right shape for a plain binary tree and the wrong shape for `next-right-pointers-ii`, whose
+    // `findNextChild` does `node = node.next` and then `while (node !== null)`: a node whose `next`
+    // is UNDEFINED enters that loop and dies on `node.left`, measured as
+    // `TypeError: cannot read property 'left' of undefined` (3 cases at L2, 6 at L3).
+    //
+    // `Node` is the guide's own and is inside the trust boundary - it is declared in the Level 1
+    // BLOCK, so row 10's `composeBlockSource` puts it in this bundle for L2 and L3 as well. That is
+    // the distinction from `lowest-common-ancestor`'s `findNode`, which is in the guide's prose and
+    // in NO block: there is nothing to reuse, and the only route would be injecting authored text.
+    // `typeof` on an undeclared name is safe, so a guide with no `Node` keeps the codec's decoder
+    // byte for byte.
+    `    var __hasNode__ = (typeof Node === 'function');`,
+    `    function __initNext__(n) {`,
+    `      if (n === null || typeof n !== 'object') return n;`,
+    `      if (!('next' in n)) n.next = null;`,
+    `      __initNext__(n.left); __initNext__(n.right);`,
+    `      return n;`,
+    `    }`,
+    `    function __dec__(a) {`,
+    `      if (!__CODEC__.acceptsWire(a)) return a;`,
+    `      var v = __CODEC__.fromWire(a);`,
+    `      return __hasNode__ ? __initNext__(v) : v;`,
+    `    }`,
+    // Row 15 / S35 — arguments that are NODES OF ONE TREE, decoded ONCE.
+    //
+    // `fn(t1, findNode(t1, 5), findNode(t1, 1))` is three arguments of which two are the author's
+    // own lookups INSIDE the first. The guide says how to read that call: "Compare nodes by IDENTITY
+    // (`===` on objects), never by `.val`" — so handing the target three separately-decoded graphs
+    // answers a different question. `pathToNode(root, p, pp)` walks `root` for `p` by `===`, does not
+    // find it, the target returns `null`, and the authored projection reads `null`.
+    //
+    // The codec could always express this — `treeToArray` mints `{__ref: N}` for any node it has
+    // already emitted and `arrayToTree` resolves those against its own `made[]` table — so this is the
+    // registry's own decoder doing the work, in ONE pass, and the projection being a PATH WALK over
+    // the result rather than a second definition of what a back-reference means. `paths[i]` is that
+    // walk for argument `i`; a `null` entry is an argument that is not a node, which keeps the decoded
+    // value `args` already produced. Absent for every case whose arguments share nothing, in which
+    // case this whole branch is dead and the line below is the pre-S35 one, byte for byte.
+    `    function __sharedArgs__(sh, fallback) {`,
+    `      var root = __CODEC__.fromWire(sh.wire);`,
+    `      if (__hasNode__) __initNext__(root);`,
+    `      var out = [];`,
+    `      for (var i = 0; i < sh.paths.length; i++) {`,
+    `        var path = sh.paths[i];`,
+    `        if (path === null) { out.push(fallback[i]); continue; }`,
+    `        var n = root;`,
+    `        for (var k = 0; k < path.length; k++) n = n === null || n === undefined ? null : n[path[k]];`,
+    `        out.push(n === undefined ? null : n);`,
+    `      }`,
+    `      return out;`,
+    `    }`,
+    `    for (var ti = 0; ti < __TESTS__.length; ti++) {`,
+    `      var t = __TESTS__[ti];`,
+    `      var got;`,
+    `      var ok = false;`,
+    `      var errText = null;`,
+    `      try {`,
+    // Only a value that IS this codec's canonical wire is decoded. A tree guide whose target
+    // takes a plain array (`buildTree(preorder, inorder)`, `sortedArrayToBST(nums)`) keeps it.
+    //
+    // Row 15 / S34 - and `t.live` is the harvest declining that judgement for ONE case, because it
+    // saw which call produced the argument. `[]` is byte-identical in two records that need opposite
+    // handling: `invert-binary-tree`'s `empty tree` is `arrayToTree([])`'s wire and MUST decode, while
+    // `merge-k-sorted-lists`' `empty array` is the author writing `fn([])` - "no lists at all" - and
+    // `list.acceptsWire([])` is `true`, so decoding it hands the target `null` and the target throws
+    // on `for (const head of null)`. No codec change can separate them: `acceptsWire([])` declined
+    // fixes 2 blocks and breaks `invert-binary-tree` x3, measured. The PROVENANCE differs, and the
+    // harvest is the only party that saw it. Absent `live` this line is the old one, argument for
+    // argument, so no other block's bundle moves a byte.
+    // `t.shared` is read directly rather than through `__dec__`, and deliberately so: `acceptsWire`
+    // answers "is this ALREADY a canonical wire" by round-tripping, which a wire carrying `{__ref}`
+    // cannot do — `acceptsNodeWire` rejects any object cell before it gets that far. That question is
+    // moot here because the harvest minted this wire with the codec's own `toWire`, so it is a wire
+    // by construction. Nothing about `acceptsWire` is relaxed, widened or bypassed for any other
+    // value; this branch never asks it.
+    `        var args = (t.args || []).map(function (a, i) { return t.live === 1 ? a : __dec__(a); });`,
+    `        if (t.shared && Array.isArray(t.shared.paths)) args = __sharedArgs__(t.shared, args);`,
+    `        var before = args.map(__snap__);`,
+    // Row 15 / S23 — a CLASS target's op sequence. The harvest records the method calls the authored
+    // script made on ONE constructed instance, and this is where they are replayed AGAINST THE
+    // TARGET'S OWN METHODS. Nothing is synthesised: every value compared below came out of a method
+    // the guide declares. That is the whole reason this is a replay and not a recorded `expected` —
+    // a recorded value would be a claim about the target made by something other than the target.
+    //
+    // `emitted` is the recorded half of "did the author use this value": `m.pop()` and `c.put(1,1)`
+    // are statements and contributed nothing, `assertEq(m.getMin(), -3)` and `out.push(c.get(1))`
+    // contributed exactly their return value. ONE emitted value answers the author's scalar
+    // assertion and SEVERAL answer the author's collected-array one, so the shape falls out of the
+    // count rather than out of a flag.
+    `        var r;`,
+    `        var __opsRan__ = false;`,
+    // Row 15 / S27 — replay a RECORDED draw sequence, when the case carries one. The values come
+    // from the case's own committed data (`t.draws`), never from code: a cursor over an array is
+    // the recorded-parameter model (openleetcode's suite format carries a top-level `out:` global
+    // seed; Kattis pins nondeterministic problems to a seed the same way). Deliberately NOT the
+    // global stub row 15 §5d forbade — no authored text executes in the driver, and the stub's LOGIC is
+    // not shipped, only the values it returned at harvest time. Without it the verdict depends on
+    // live `Math.random`: three consecutive regenerations of insert-delete-getrandom-o1 measured
+    // 6/1, 4/3 and 6/1, and a golden whose verdict moves cannot be gated on (K6/E8).
+    //
+    // ponytail: the cursor CYCLES, because the authored stub cycles (`draws[draw++ %
+    // draws.length]`) and the driver may draw a different number of times than the harvest did.
+    // Ceiling: a target whose answer depends on the NUMBER of draws rather than their values would
+    // not replay exactly. No such block exists — measured across all 450. Upgrade path: record the
+    // count too and assert it, if one ever does.
+    `        var __randSaved__ = null;`,
+    `        if (Array.isArray(t.draws) && t.draws.length > 0) {`,
+    `          __randSaved__ = Math.random;`,
+    `          var __draws__ = t.draws;`,
+    `          var __di__ = 0;`,
+    `          Math.random = function () { var v = __draws__[__di__ % __draws__.length]; __di__++; return v; };`,
+    `        }`,
+    `        if (Array.isArray(t.ops)) {`,
+    `          var __inst__ = Reflect.construct(__FN__, (t.ctor || []).map(__dec__));`,
+    `          var __outs__ = [];`,
+    `          for (var oi = 0; oi < t.ops.length; oi++) {`,
+    `            var op = t.ops[oi];`,
+    `            if (typeof op[0] !== 'string' || typeof __inst__[op[0]] !== 'function') {`,
+    `              throw new Error('driver: the target has no method ' + op[0] + ', so the recorded op sequence cannot be replayed');`,
+    `            }`,
+    `            var ov = __inst__[op[0]].apply(__inst__, (op[1] || []).map(__dec__));`,
+    `            if (op[2]) __outs__.push(ov);`,
+    `          }`,
+    `          r = __outs__.length === 1 ? __outs__[0] : __outs__;`,
+    `          __opsRan__ = true;`,
+    `        } else {`,
+    `          r = __IS_CLASS__ ? Reflect.construct(__FN__, args) : __FN__.apply(null, args);`,
+    `        }`,
+    // Row 15 / S22: replay the derivation the AUTHOR applied, immediately AFTER the call and
+    // BEFORE the codec's `owns`/`toWire` below. That position is the whole point — after the call,
+    // because the derivation is a function OF the return; before `toWire`, because the codec must
+    // encode the value the author actually asserted (`normCombos` gives strings, which `json`
+    // passes straight through) rather than the raw graph it was derived from. A case with no
+    // `via`, or a key with no registry entry, keeps the raw return, so a guide with no derivation
+    // is byte-identical to before.
+    //
+    // ── It takes the RETURN, not the target and the arguments ────────────────────────────────
+    // The registry is called as `fn(r)`, so the target is invoked EXACTLY ONCE per case. Handing
+    // it `(fn, args)` instead — which looks equivalent, because the derivation text is written
+    // `__FN__.apply(null, __ARGS__)` — calls the target a SECOND time, and for a target that
+    // mutates its argument in place that is not a redundant call, it is a corrupted one:
+    // `mergeTwoLists(a, c)` relinks `a`'s own nodes into the result, so the second call walks a
+    // chain that is no longer a list and never terminates. Measured: 4 linked-list blocks and
+    // 2 divide-conquer blocks went from `passed 6 failed 0` to `passed 0 failed 0` with the
+    // driver reporting `Time Limit Exceeded` and the target entered exactly twice.
+    //
+    // So the derivation is applied to the value the call already produced. The corpus's shapes both
+    // reduce to that: `normCombos(fn(4,2))` becomes `normCombos(r)` and `fn(t1,…).val` becomes
+    // `r.val`, because the substituted call is the outermost expression the derivation is built on.
+    // A void target's answer is an ARGUMENT. Prefer the one the call actually changed, and
+    // fall back to the first: `merge([1], 1, [], 0)` has nothing to merge, so it changes
+    // nothing, and the authored edge case still expects the argument back (`[1]`). The
+    // fallback is only reachable when NO argument moved, so it can never overrule evidence.
+    // `__opsRan__` guards it: an op sequence already produced the value the author asserted, so
+    // falling through to "the answer is a changed argument" would compare an argument against an
+    // array of method returns.
+    `        var __mutSel__ = false;`,
+    `        var __mut__;`,
+    `        if (!__opsRan__ && r === undefined && t.expected !== undefined) {`,
+    `          var __ai__ = 0;`,
+    `          while (__ai__ < args.length && __snap__(args[__ai__]) === before[__ai__]) __ai__++;`,
+    `          if (args.length > 0) {`,
+    `            __mut__ = args[__ai__ < args.length ? __ai__ : 0];`,
+    `            __mutSel__ = true;`,
+    `          }`,
+    `        }`,
+    `        var __val__ = __mutSel__ ? __mut__ : r;`,
+    // Row 15 / S26: the derivation is applied to the SELECTED value and the registry is handed BOTH
+    // candidates, because a void target's derivation is written over the ARGUMENT the call changed
+    // (`collectRightChain(t1)`) while every other one is written over the RETURN. Which one an entry
+    // reads is decided by which placeholder its expression substituted, so there is no flag here to
+    // keep in sync with the harvest. With no derivation this line is the old one: `__val__` is `r`.
+    `        if (__randSaved__ !== null) { Math.random = __randSaved__; __randSaved__ = null; }`,
+    `        if (t.via && __VIA_FNS__[t.via]) __val__ = __VIA_FNS__[t.via](r, __mut__);`,
+    `        got = __CODEC__.owns(__val__) ? __CODEC__.toWire(__val__) : __val__;`,
+    `        ok = __CMP__(__CODEC__.owns(t.expected) ? __CODEC__.toWire(t.expected) : t.expected, got);`,
+    `      } catch (e) { errText = __errText__(e); }`,
+    `      if (ok) { __RESULT__.passed++; } else { __RESULT__.failed++; }`,
+    `      __RESULT__.tests.push({ name: t.name, ok: ok, expected: t.expected, got: errText !== null ? undefined : got, error: errText });`,
+    `    }`,
+    `  } catch (e) {`,
+    `    __RESULT__.error = __errText__(e);`,
+    `  }`,
+    `  __JUDGE_LOG__('__VERDICT__' + JSON.stringify(__RESULT__));`,
+    `})();`,
+  ].join('\n');
 }
