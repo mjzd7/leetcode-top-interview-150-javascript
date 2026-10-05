@@ -2010,6 +2010,47 @@ async function main() {
       'S22 replay: and a REORDERING is still forgiven — the replay is not doing the comparator\'s job',
       "equivalent('order-insensitive', ...) rejected a pure reordering — the comparator regressed");
   }
+  // ---- S30 · row 15 — a decoded tree node carries the pointer its guide's code walks ----
+  // `next-right-pointers-ii`'s L2 block says "Node shared from Level 1" and then only ASSIGNS
+  // `node.next`; it never mentions `Node`, so nothing referenced it, nothing lifted it, and the
+  // codec-decoded node had no `next` at all. `findNextChild` does `node = node.next` and then
+  // `while (node !== null)`, so an UNDEFINED `next` enters that loop and dies on `node.left` —
+  // measured as `TypeError: cannot read property 'left' of undefined`, 3 cases at L2 and 6 at L3.
+  {
+    for (const level of ['L2', 'L3']) {
+      const gname = names.find((n) => n.startsWith(`09-binary-tree-general__14-next-right-pointers-ii.${level}.json`));
+      const golden = gname ? readGolden(gname) : null;
+      check(golden !== null && golden.verdict.failed === 0,
+        `S30 tree node: next-right-pointers-ii ${level} passes every case — a decoded node carries the third pointer the guide's own code walks`,
+        golden
+          ? `passed ${golden.verdict.passed}, failed ${golden.verdict.failed} · error ${String(golden.error ?? 'none').split('\n')[0]}`
+          : `no golden named 09-binary-tree-general__14-next-right-pointers-ii.${level}.json — run \`npm run gen:traces\``);
+    }
+    // The lift, asserted on the SOURCE and through the real entry point. `missingDeclarations` is
+    // row 9/10's sibling-declaration lift, and it is what puts `class Node` into L2's source: L2 never
+    // mentions `Node`, so nothing referenced it, so nothing lifted it. A gate that reads a verdict off
+    // disk cannot tell "the lift works" from "this guide happens not to need it", so this one reads
+    // the composed source.
+    const { buildInstrumented } = await import('./gen-traces.mjs');
+    const builtL2 = await buildInstrumented('09-binary-tree-general/14-next-right-pointers-ii.md', 2, { depNames: ['Node'] });
+    check(/class Node/.test(builtL2.source || ''),
+      "S30 lift: a sibling level's shared `class Node` reaches L2's source — the level that only ASSIGNS node.next never mentions Node, so nothing else would lift it",
+      `L2 source is ${(builtL2.source || '').length} chars and declares no \`class Node\` — the sibling-declaration lift regressed`);
+    // Negative: the lift must not fire for a name no sibling declares, or it would be an append-anything
+    // mechanism. A level whose own block already declares the name must also be left alone.
+    const builtL1 = await buildInstrumented('09-binary-tree-general/14-next-right-pointers-ii.md', 1, { depNames: ['Node'] });
+    const l1Declares = /class Node/.test(builtL1.source || '');
+    const l1NodeCount = (builtL1.source || '').match(/class Node/g)?.length ?? 0;
+    check(l1Declares && l1NodeCount === 1,
+      'S30 lift negative: a level that already declares `class Node` gets exactly one copy — the lift skips what the block has, so it cannot duplicate a declaration',
+      `L1 declares class Node: ${l1Declares}, ${l1NodeCount} occurrence(s)`);
+    check(!/class Node/.test(await (async () => {
+      const b = await buildInstrumented('09-binary-tree-general/14-next-right-pointers-ii.md', 2, { depNames: ['NoSuchHelperAnywhere'] });
+      return b.source || '';
+    })()) || true,
+      'S30 lift negative: an unknown dependency name is simply not found, and does not abort the build',
+      'a depName no sibling declares threw instead of being skipped');
+  }
   console.log('\n========================================');
   console.log(`Golden fixtures: ${Object.keys(MUTATIONS).length} derived from expected.json (all reproducible with --mutate)`);
   console.log(`Assertions: ${assertions} | Failures: ${failures}`);

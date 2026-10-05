@@ -1282,6 +1282,14 @@ async function harvestCases(script, blocksByLevel, codec = null, { voidTarget = 
   // `buildInstrumented` and they are not cases. `JSON.stringify` drops them by design, so nothing
   // downstream that only sees the serialised cases is affected.
   if (spied.derivationDeps?.length) cases.derivationDeps = spied.derivationDeps;
+  // Row 15 / S30 — a tree guide's node CLASS, requested through the same sibling-lift the
+  // derivation helpers use. `09-binary-tree-general/14-next-right-pointers-ii`'s L2 block never
+  // mentions `Node` — it only assigns `node.next` on nodes it is handed — so nothing referenced it,
+  // nothing lifted it, and the decoded node had no `next` for `findNextChild` to walk. Lifting it by
+  // name costs nothing where it is already declared (`missingDeclarations` skips those) and is
+  // simply not found where no sibling declares it, so this is safe for every tree guide, not just
+  // the one that needs it.
+  if (codec === 'tree') cases.derivationDeps = [...new Set([...(cases.derivationDeps ?? []), 'Node'])];
   return { cases, unserialisable, untransportable, unpinned, viaCount: spied.viaCount ?? 0 };
 }
 
