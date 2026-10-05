@@ -200,27 +200,16 @@
       .toc-sub, .toc-toggle, .toc-toggle svg { transition: none; }
       .toc-sec[data-collapsed="false"] .toc-sub-link { animation: none; }
     }
-/* Prev/next sat at the very end of the article — on a long guide that is
-       three thousand pixels down, so the only way to reach it was to scroll the
-       whole page. Sticky bottom pins it to the scrollport instead: the article
-       is the containing block, so it stays put for the entire scroll and only
-       releases at the very end. */
+/* Prev/next sat at the very end of the article — on a long guide that is three
+       thousand pixels down, so it was pinned to the scrollport to be reachable at
+       all, and then it and the assistant's button both wanted the bottom-right
+       corner. It now lives in the article head, beside Solve on LeetCode and
+       Mark complete, where the reader's other per-guide controls already are. */
     #prevNext {
-      position: sticky; bottom: 0; z-index: 5;
-      margin-top: 2.5rem; padding: 0.6rem 0.15rem 0.15rem;
-      background: linear-gradient(180deg, rgba(8, 9, 13, 0) 0%, rgba(8, 9, 13, 0.92) 34%, #08090D 72%);
-      backdrop-filter: blur(6px);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
     }
-    /* The columns follow the cells that exist: one neighbour spans the row
-       rather than leaving half of it blank. minmax(0, 1fr) rather than 1fr: a
-       grid track's automatic minimum is the item's min-content width, and each
-       cell holds a nowrap truncated title, so `1fr` could not shrink below the
-       longest guide name. The cells then overflowed the track and the reader —
-       and because html clips horizontal overflow the document never scrolled, so
-       the spill was invisible to both the reader and the page-level assertion. */
-    #prevNext[data-count="2"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-    #prevNext[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
     #prevNext[hidden] { display: none; }
+    #prevNext [data-nav] { min-width: 0; }
     kbd.k {
       font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
       background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
@@ -1021,10 +1010,10 @@
     <main id="contentContainer" class="flex-1 min-w-0 overflow-y-auto h-[calc(100dvh-3.5rem)] scroll-smooth">
       <div class="flex items-start justify-center gap-8 px-4 md:px-10 py-6 md:py-10 max-w-6xl mx-auto w-full">
         <article class="flex-1 min-w-0 max-w-3xl">
+          <div id="prevNext" hidden data-count="0"></div>
           <div id="crumbRow" class="hidden mb-3 items-center gap-2 text-xs font-mono text-slate-500"></div>
           <div id="articleHead" class="mb-6"></div>
           <div id="articleContent" class="prose max-w-none"></div>
-          <div id="prevNext" class="mt-10 grid gap-3" data-count="2"></div>
           <footer class="mt-10 pb-6 text-xs text-slate-600 font-mono">Top Interview 150 · Visual JS Manual · built from executable guides</footer>
         </article>
       </div>
@@ -1484,12 +1473,15 @@
       articleHead.innerHTML =
         '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
         '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
-        '<div class="flex flex-wrap items-center gap-3">' +
+        /* One row owns every per-guide control. renderPrevNext appends #prevNext
+           into it, which is why the node is moved rather than re-created: it is
+           already wired and its dataset has to survive the re-render. */
+        '<div id="headRow" class="flex flex-wrap items-center gap-2">' +
         (item.leetcodeLink
-          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Solve on LeetCode' +
+          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Solve on LeetCode' +
             '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>'
           : '') +
-        '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
+        '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
             (done ? 'border-color:rgba(200,250,75,.4);color:#C8FA4B;background:rgba(200,250,75,.07);' : 'border-color:rgba(148,163,184,.25);color:#8B94A7;') + '">' +
           '<span>' + (done ? '✓ Completed' : '○ Mark complete') + '</span></button>' +
         '</div>';
@@ -1497,6 +1489,7 @@
         if (doneSet.has(item.id)) doneSet.delete(item.id); else doneSet.add(item.id);
         saveDone();
         renderHead(entry);
+        renderPrevNext();
         renderNav();
       };
     }
@@ -1506,22 +1499,45 @@
          indexOf returned -1 and Next jumped to the first MAANG guide instead of
          the next primer. */
       const idx = allOrder.indexOf(currentItemId);
-      const at = (i) => (i >= 0 && i < allOrder.length ? byId.get(allOrder[i]).item : null);
-      const cell = (it, label, align) => {
-        if (!it) return '';
-        return '<button data-nav="' + it.id + '" class="text-left rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/10 px-4 py-3 min-h-[56px] transition-colors ' + align + '">' +
-          '<span class="block text-[10px] font-mono uppercase tracking-widest text-slate-500">' + label + '</span>' +
-          '<span class="block text-sm font-medium text-slate-200 truncate mt-0.5">' + esc(it.title) + '</span></button>';
+      const entry = (i) => (i >= 0 && i < allOrder.length ? byId.get(allOrder[i]) : null);
+      /* The button carries the guide's own code and name — the same pairing the
+         sidebar uses — rather than the words "Prev" and "Next". Which neighbour
+         it is, the arrow on the outside edge already says. For a problem the
+         code is the number the title itself starts with, so it is stripped from
+         the title rather than printed twice; for a MAANG guide the title has no
+         number at all and the code is the only thing that carries one. */
+      const cell = (entry, dir) => {
+        if (!entry) return '';
+        const code = guideCode(entry, 0);
+        const title = entry.item.title.replace(/^\s*\d{1,3}\.\s*/, '');
+        const arrow = '<span class="text-slate-500 shrink-0" aria-hidden="true">' + (dir === 'prev' ? '←' : '→') + '</span>';
+        const num = code
+          ? '<span class="font-mono text-[11px] tabular-nums shrink-0" style="color:var(--accent)">' + esc(code) + '</span>'
+          : '';
+        const name = '<span class="truncate max-w-[9ch] sm:max-w-[12ch]">' + esc(title) + '</span>';
+        return '<button data-nav="' + entry.item.id + '" title="' + esc(entry.item.title) + '"' +
+          ' aria-label="' + (dir === 'prev' ? 'Previous: ' : 'Next: ') + esc(entry.item.title) + '"' +
+          ' class="inline-flex items-center gap-2 px-3 h-11 rounded-xl border border-[rgba(148,163,184,0.2)] text-sm text-slate-300 hover:bg-white/[0.06] hover:text-slate-100 active:bg-white/10 transition-colors">' +
+          (dir === 'prev' ? arrow + num + name : name + num + arrow) +
+          '</button>';
       };
       /* Only emit the guides that exist. The bar used to render an empty
          <span> for the missing half, which in a 2-column grid still took half
-         the row — a visible hole on the home page and at both ends. The column
-         count follows the number of real cells. */
-      const parts = [cell(at(idx - 1), '← Prev', ''), cell(at(idx + 1), 'Next →', 'text-right')]
-        .filter(Boolean);
+         the row — a visible hole on the home page and at both ends. */
+      const parts = [cell(entry(idx - 1), 'prev'), cell(entry(idx + 1), 'next')].filter(Boolean);
+      /* No headRow means the home page, which opens with "Start studying" and has
+         no prev/next to offer. Owning that check here rather than in openHome
+         keeps one place responsible, and this runs after it. */
+      const host = $('headRow');
+      if (!host || parts.length === 0) {
+        prevNext.hidden = true;
+        prevNext.innerHTML = '';
+        return;
+      }
       prevNext.dataset.count = String(parts.length);
-      prevNext.hidden = parts.length === 0;
       prevNext.innerHTML = parts.join('');
+      prevNext.hidden = false;
+      host.appendChild(prevNext);
       prevNext.querySelectorAll('[data-nav]').forEach(b => { b.onclick = () => openArticle(b.dataset.nav); });
     }
 

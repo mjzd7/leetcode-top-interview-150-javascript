@@ -163,36 +163,34 @@ test.describe('the reading column when everything is docked', () => {
   });
 });
 
-/* Two things want the bottom-right corner and neither knows about the other: the
-   assistant's button is fixed to the viewport, the prev/next pair is sticky to
-   the scrollport. At 360px the button covered 2648px² of the Next cell, which is
-   the only route to the next guide. */
-test.describe('the assistant button against the sticky prev/next pair', () => {
+/* The assistant's button is fixed to the viewport, so anything the reader needs
+   at the bottom edge is in its way. It used to find the prev/next pair there —
+   3136px² of the bar and 2648px² of the Next cell at 360px. The pair now lives
+   in the article head, so the button has the bottom edge to itself. This guards
+   that: nothing may be pinned to the scrollport's bottom edge at all. */
+test.describe('the bottom edge of the reader', () => {
   for (const width of [360, 768]) {
-    test(`nothing is stacked on the Next cell at ${width}px`, async ({ page }) => {
+    test(`nothing is pinned over it at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/#' + GUIDE);
       await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
-      // The pair is sticky, so it only reaches the bottom edge after it settles.
-      // Measuring early reads the pair at its natural position, mid-article, and
-      // reports a collision that is not on screen yet.
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
         const box = (s) => document.querySelector(s).getBoundingClientRect();
         const overlap = (a, c) => Math.max(0, Math.min(a.right, c.right) - Math.max(a.left, c.left))
                                * Math.max(0, Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top));
         const fab = box('.ltc-fab');
-        const pair = box('#prevNext');
-        const cell = box('#prevNext [data-nav]:last-of-type');
+        const pinned = [...document.querySelectorAll('#contentContainer *')]
+          .filter((el) => getComputedStyle(el).position === 'sticky')
+          .filter((el) => { const b = el.getBoundingClientRect(); return b.height > 0 && b.bottom > innerHeight - 40; })
+          .map((el) => el.id || el.className);
         return {
-          pinned: pair.bottom <= innerHeight + 2 && pair.top > 0,
-          onBar: Math.round(overlap(fab, pair)),
-          onCell: Math.round(overlap(fab, cell)),
+          pinnedInArticle: pinned,
+          onPrevNext: Math.round(overlap(fab, box('#prevNext'))),
         };
       });
-      expect(r.pinned, 'the pair is sticky to the bottom edge here').toBe(true);
-      expect(r.onBar, 'the button sits on the prev/next pair').toBe(0);
-      expect(r.onCell, 'the button covers the route to the next guide').toBe(0);
+      expect(r.pinnedInArticle, 'no control is stuck to the bottom of the reader').toEqual([]);
+      expect(r.onPrevNext, 'and the button no longer shares the corner with prev/next').toBe(0);
     });
   }
 });

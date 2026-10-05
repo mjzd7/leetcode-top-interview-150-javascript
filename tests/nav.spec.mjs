@@ -43,23 +43,19 @@ test.describe('prev / next', () => {
     expect(prev, 'nothing before the first guide').toBeNull();
   });
 
-  test('is reachable without scrolling to the end of a long guide', async ({ page }) => {
+  test('is reachable at the top of a long guide without scrolling at all', async ({ page }) => {
+    // It used to sit at the very end, three thousand pixels down a long guide,
+    // which is why it was pinned to the scrollport. It is in the article head now,
+    // so the guarantee is the opposite and simpler one: no scrolling to begin with.
     await open(page, '08-linked-list_06-reverse-nodes-in-k-group');
     await page.evaluate(() => { document.getElementById('contentContainer').scrollTop = 0; });
     await page.waitForTimeout(300);
     const atTop = await page.evaluate(() => {
       const b = document.querySelector('#prevNext [data-nav]').getBoundingClientRect();
-      return b.top < innerHeight && b.bottom > 0;
+      return { onScreen: b.top < innerHeight && b.bottom > 0, scrolled: document.getElementById('contentContainer').scrollTop };
     });
-    expect(atTop, 'a nav control is on screen at the top of the article').toBe(true);
-
-    await page.evaluate(() => { document.getElementById('contentContainer').scrollTop = 99999; });
-    await page.waitForTimeout(300);
-    const atEnd = await page.evaluate(() => {
-      const b = document.querySelector('#prevNext [data-nav]').getBoundingClientRect();
-      return b.top < innerHeight && b.bottom > 0;
-    });
-    expect(atEnd, 'and still on screen at the end').toBe(true);
+    expect(atTop.scrolled, 'the reader has not scrolled').toBe(0);
+    expect(atTop.onScreen, 'and a nav control is already on screen').toBe(true);
   });
 
   test('follows a pasted guide URL into an already-open portal', async ({ page }) => {
@@ -254,31 +250,28 @@ test('scrolls the rail with the wheel while collapsed', async ({ page }) => {
 });
 
 test('never leaves a blank half-width cell where a neighbour is missing', async ({ page }) => {
-  // The bar is a 2-column grid. Where there is no previous guide it used to
-  // render an empty <span>, which still occupied half the row — a visible hole
-  // on the home page and at either end of the curriculum.
+  // Where there is no previous guide it used to render an empty <span>, which
+  // still occupied half the row — a visible hole on the home page and at either
+  // end of the curriculum. The home page now has no prev/next at all: it opens
+  // with "Start studying", which is the same door by a better name.
   await page.goto('/');
   await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
   await page.waitForTimeout(600);
 
   const home = await page.evaluate(() => {
     const bar = document.getElementById('prevNext');
-    const kids = [...bar.children];
     return {
-      cells: kids.length,
-      // a placeholder is any child that is not itself a destination button —
-      // not "a child containing a button", since a button contains no button
-      blanks: kids.filter(k => k.tagName !== 'BUTTON').length,
-      width: Math.round(bar.getBoundingClientRect().width),
-      cols: getComputedStyle(bar).gridTemplateColumns,
+      cells: bar.children.length,
+      hidden: bar.hidden,
+      hasStart: !!document.getElementById('homeStart'),
     };
   });
-  expect(home.blanks, 'no empty cell on the home page').toBe(0);
-  expect(home.cells, 'and the lone Next is there').toBe(1);
-  expect(home.cols.split(' ').length, 'a lone Next spans the full row, not half').toBe(1);
+  expect(home.hidden, 'the home page offers no prev/next').toBe(true);
+  expect(home.cells, 'and renders no leftovers').toBe(0);
+  expect(home.hasStart, 'because it starts the reader instead').toBe(true);
 });
 
-test('the bar collapses to one column when only one neighbour exists', async ({ page }) => {
+test('the bar shows only the next guide when there is no previous one', async ({ page }) => {
   await open(page, '00-foundations_01-js-interview-runtime-quirks'); // the very first guide
   const r = await page.evaluate(() => {
     const bar = document.getElementById('prevNext');
@@ -286,14 +279,22 @@ test('the bar collapses to one column when only one neighbour exists', async ({ 
     return {
       cells: kids.length,
       blanks: kids.filter(k => k.tagName !== 'BUTTON').length,
-      cols: getComputedStyle(bar).gridTemplateColumns.split(' ').length,
-      label: kids[0]?.textContent.trim().slice(0, 20),
+      text: kids[0]?.innerText.replace(/\s+/g, ' ').trim() || '',
+      aria: kids[0]?.getAttribute('aria-label') || '',
+      // The title is truncated, not wrapped, so the button cannot grow past the
+      // row and push the head onto a third line.
+      rows: kids[0] ? Math.round(kids[0].getBoundingClientRect().height / 44) : 0,
     };
   });
   expect(r.blanks, 'no placeholder where Prev does not exist').toBe(0);
-  expect(r.cells, 'just the Next cell').toBe(1);
-  expect(r.cols, 'and it is full width').toBe(1);
-  expect(r.label, 'which is the next guide').toMatch(/Next/);
+  expect(r.cells, 'just the one neighbour').toBe(1);
+  expect(r.rows, 'and it stays one row tall').toBe(1);
+  // The button names the guide instead of saying "Next": the arrow on the
+  // outside edge is what says which way it goes.
+  expect(r.text, 'it carries the guide code').toContain('P02');
+  expect(r.text, 'and the guide name').toMatch(/Zero-Dependency/);
+  expect(r.text, 'with the arrow on the trailing edge').toMatch(/→\s*$/);
+  expect(r.aria, 'and a screen reader is told which neighbour it is').toMatch(/^Next: /);
 });
 
 test('reveals a label on hover and on keyboard focus', async ({ page }) => {
@@ -485,4 +486,49 @@ test('the sidebar keeps the same rhythm at every width', async ({ page }) => {
   expect(phone.laidOutGlyphs, 'no category glyph is laid out below md').toBe(0);
   expect(Math.max(...phone.gaps), 'a phone is not roomier than a desktop').toBeLessThanOrEqual(20);
   expect(phone.gaps[0], 'the gap between groups is the same at both widths').toBe(desktop.gaps[0]);
+});
+
+/* prev/next used to be a sticky bar over the scrollport, so the pair was always
+   on screen and always competing with the assistant's button for the
+   bottom-right corner. It lives with the page's own actions instead. */
+test('prev/next sits with the page actions, not pinned to the scrollport', async ({ page }) => {
+  const at = async (width) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/#' + PROBLEM_01);
+    await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
+    await page.waitForTimeout(400);
+    return page.evaluate(() => {
+      const pn = document.getElementById('prevNext');
+      const art = document.querySelector('#contentContainer article').getBoundingClientRect();
+      const cells = [...pn.querySelectorAll('[data-nav]')].map((c) => c.getBoundingClientRect());
+      const done = document.getElementById('doneToggle');
+      return {
+        inHead: document.getElementById('articleHead').contains(pn),
+        position: getComputedStyle(pn).position,
+        aboveContent: pn.getBoundingClientRect().bottom
+          <= document.getElementById('articleContent').getBoundingClientRect().top + 1,
+        overflows: pn.scrollWidth > pn.clientWidth + 1 || cells.some((b) => b.right > art.right + 1),
+        pairTogether: cells.length < 2 || Math.abs(cells[0].top - cells[1].top) < 2,
+        sharesRow: !done || cells.length === 0
+          ? false
+          : cells.every((b) => b.top < done.getBoundingClientRect().bottom
+            && b.bottom > done.getBoundingClientRect().top),
+      };
+    });
+  };
+
+  for (const width of [360, 768, 1440]) {
+    const r = await at(width);
+    expect(r.position, `nothing is pinned at ${width}px`).not.toBe('sticky');
+    expect(r.inHead, `prev/next is in the article head at ${width}px`).toBe(true);
+    expect(r.aboveContent, `and above the guide body at ${width}px`).toBe(true);
+    expect(r.overflows, `and inside the column at ${width}px`).toBe(false);
+    expect(r.pairTogether, `the two halves stay together at ${width}px`).toBe(true);
+  }
+
+  // Four controls need ~694px and the column caps at 768, so they only share one
+  // row on the widest screens. Below that the pair wraps as a unit under the
+  // actions rather than being squeezed.
+  expect((await at(1920)).sharesRow, 'a wide column fits them all on one row').toBe(true);
+  expect((await at(1440)).sharesRow, 'a 1440 column wraps rather than squeezing').toBe(false);
 });
