@@ -207,6 +207,9 @@ test('a caret marks the reveal position and disappears when the turn ends', asyn
     let caretStates = 0;
     let sawStreamingCaret = false;
     let clearedAfterCaret = false;
+    // (caretPresent, visibleLength) for every state observed — the deterministic claim below is read
+    // off this rather than off a frame count.
+    const states = [];
     // `takeRecords()` drained once per frame, NOT the observer callback. A MutationObserver callback
     // is delivered as a MICROTASK, so a reveal that runs many frames inside one task collapses into a
     // single callback — fired after the fact, when the caret is already gone. That is why the callback
@@ -219,17 +222,28 @@ test('a caret marks the reveal position and disappears when the turn ends', asyn
     while (performance.now() - started < 25_000) {
       observer.takeRecords();
       const caret = document.querySelector('.ltc-caret');
-      if (caret) { caretStates++; sawStreamingCaret = true; }
-      else if (sawStreamingCaret) { clearedAfterCaret = true; break; }
+      const el = log.querySelector('.ltc-msg[data-role="assistant"]:last-of-type .ltc-msg-body');
+      const len = el ? (el.innerText || '').trim().length : 0;
+      if (caret) { caretStates++; sawStreamingCaret = true; states.push({ caret: true, len }); }
+      else if (sawStreamingCaret) { clearedAfterCaret = true; states.push({ caret: false, len }); break; }
       if (panel.dataset.streaming !== 'true' && !caret && !sawStreamingCaret) break;
       await new Promise((r) => requestAnimationFrame(r));
     }
     observer.disconnect();
-    return { caretStates, sawStreamingCaret, clearedAfterCaret, finalCaret: !!document.querySelector('.ltc-caret') };
+    const finalLen = (() => {
+      const el = log.querySelector('.ltc-msg[data-role="assistant"]:last-of-type .ltc-msg-body');
+      return el ? (el.innerText || '').trim().length : 0;
+    })();
+    // The caret marked the reveal position, i.e. it was there while text was still arriving — not
+    // merely present at some point. Deterministic, because an incomplete state always exists during a
+    // reveal, whereas how MANY frames the caret survives is a function of animation speed against
+    // frame rate and is not a property this test is entitled to assert.
+    const caretWhileIncomplete = states.some((st) => st.caret && st.len > 0 && st.len < finalLen);
+    return { caretStates, caretWhileIncomplete, sawStreamingCaret, clearedAfterCaret, finalCaret: !!document.querySelector('.ltc-caret') };
   });
 
   expect(seen.sawStreamingCaret, 'a caret marks the reveal position while text is arriving').toBe(true);
-  expect(seen.caretStates, 'the caret is present across more than a single DOM state').toBeGreaterThan(3);
+  expect(seen.caretWhileIncomplete, 'the caret is present while the text is still arriving, not only once the message is complete').toBe(true);
   expect(seen.clearedAfterCaret, 'the caret goes away when the turn ends').toBe(true);
   expect(seen.finalCaret).toBe(false);
   await expect(page.locator('[data-thinking]')).toHaveCount(0);
