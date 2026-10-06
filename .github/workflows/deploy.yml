@@ -68,6 +68,14 @@ jobs:
       - name: Run Chat Backend Unit Tests
         run: npm run test:chat
 
+      # The type stack resolves through three role vars in docs/assets/fonts/fonts.css,
+      # which build-fonts.mjs regenerates. A role that goes missing, or a @font-face
+      # pointing at a woff2 that never shipped, fails silently in the browser — every
+      # page just falls back — so it has to fail here instead. This is in `verify` too,
+      # but this workflow calls the individual scripts, not verify.
+      - name: Check Font Wiring
+        run: npm run test:fonts
+
       - name: Audit Curriculum Counts
         run: npm run audit:check
 
