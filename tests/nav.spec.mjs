@@ -107,6 +107,29 @@ test.describe('the collapsed rail', () => {
     expect(r.spill, 'nothing hangs outside the 56px rail').toBe(0);
   });
 
+  /* The rail is one column of glyphs on a centre line, and the collapse control
+     lives in the header above them — so it has to be on that same line. The
+     header row is laid out for ring + text + button; at stage 2 the ring's
+     contents are hidden but its flex-1 wrapper is not, so an empty 11px spacer
+     plus a 12px gap sat in front of the button and pushed it to the right edge.
+     Nothing asserted this: the spill check above only walks .nav-group
+     descendants, and the header is not inside one. */
+  test('puts the collapse control on the same centre line as the icons', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      const mid = (el) => { const b = el.getBoundingClientRect(); return b.left + b.width / 2; };
+      const btn = document.getElementById('ltNavCollapse');
+      const icon = document.querySelector('#curriculumNav .nav-cat-btn');
+      const b = btn.getBoundingClientRect();
+      return {
+        offBy: Math.round((mid(btn) - mid(icon)) * 10) / 10,
+        rightGap: Math.round(document.getElementById('sidebar').getBoundingClientRect().right - b.right),
+        leftGap: Math.round(b.left - document.getElementById('sidebar').getBoundingClientRect().left),
+      };
+    });
+    expect(Math.abs(r.offBy), 'the button shares the icon column centre line').toBeLessThanOrEqual(1);
+    expect(Math.abs(r.leftGap - r.rightGap), 'and is not hugging either edge').toBeLessThanOrEqual(1);
+  });
+
   test('shows the guide number in number mode, and every one is unique', async ({ page }) => {
     const codes = await page.evaluate(() => {
       const nav = document.getElementById('curriculumNav');
@@ -421,9 +444,10 @@ test.describe('the drawer on a phone', () => {
   });
 });
 
-/* One glyph served three states. Its path was a left chevron at every stage, so
-   on the 56px rail — where the button's job is to widen — it pointed away from
-   the side the sidebar was on. Only the aria-label changed. */
+/* One glyph served three states, and then two served three: the glyph was tied
+   to the LABEL rather than to the move, so the label for stage 1 — 200px → 56px,
+   which narrows — said "Widen the navigation to a text rail" and pointed right.
+   Two of the three stages narrow, so two of the three point the same way. */
 test('the collapse control points the way it will move', async ({ page }) => {
   test.skip(page.viewportSize().width < 768, 'the control is md-only');
 
@@ -446,11 +470,12 @@ test('the collapse control points the way it will move', async ({ page }) => {
 
   expect(seen.map((s) => s.stage), 'the control cycles every stage and wraps')
     .toEqual(['0', '1', '2', '0']);
-  expect(seen[0].label, 'stage 0 collapses').toMatch(/collapse/i);
-  expect(seen[1].label, 'stage 1 widens').toMatch(/widen/i);
-  expect(seen[0].d, 'collapsing must not look like widening').not.toBe(seen[1].d);
-  expect(seen[1].d, 'both widening steps point the same way').toBe(seen[2].d);
-  expect(seen[3].d, 'and collapsing looks the same again on the way round').toBe(seen[0].d);
+  expect(seen[0].label, 'stage 0 narrows 320px to 200px').toMatch(/collapse/i);
+  expect(seen[1].label, 'stage 1 narrows 200px to 56px — it does not widen').toMatch(/collapse/i);
+  expect(seen[2].label, 'only stage 2 widens the rail back out').toMatch(/widen/i);
+  expect(seen[0].d, 'both narrowing stages point the same way').toBe(seen[1].d);
+  expect(seen[1].d, 'narrowing must not look like widening').not.toBe(seen[2].d);
+  expect(seen[3].d, 'and the cycle closes: stage 0 narrows again').toBe(seen[0].d);
 });
 
 /* The sidebar was roomier on a phone than on a desktop: 44px between groups
