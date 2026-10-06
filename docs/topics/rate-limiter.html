@@ -7,7 +7,7 @@
 <meta name="description" content="Rate limiter system design: 5 algorithms, distributed architecture, atomicity, 429 contract, failure modes, and 50 interview questions." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../assets/fonts/fonts.css" />
 <style>
   :root{
@@ -20,7 +20,7 @@
   *{box-sizing:border-box}
   html{background:var(--bg);scroll-behavior:smooth}
   body{
-    margin:0;color:#C6CDDB;font:300 15px/1.7 var(--font-body);
+    margin:0;color:#C6CDDB;font:400 15px/1.7 var(--font-body);
     background:
       radial-gradient(1100px 420px at 85% -10%, rgba(200,250,75,.055), transparent 60%),
       radial-gradient(900px 500px at -10% 110%, rgba(139,92,246,.06), transparent 60%),
@@ -29,7 +29,7 @@
   .wrap{max-width:1080px;margin:0 auto;padding:0 20px 120px}
   header.top{padding:56px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
   .kicker{font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-  h1{font-family:var(--font-display);font-size:clamp(28px,5vw,44px);font-weight:400;color:#fff;letter-spacing:-.02em;margin:14px 0 10px}
+  h1{font-family:var(--font-display);font-size:clamp(28px,5vw,44px);font-weight:700;color:#fff;letter-spacing:-.02em;margin:14px 0 10px}
   .sub{color:var(--muted);max-width:70ch;margin:0 0 18px}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{font:500 11px/1 var(--mono);border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted);background:var(--surface)}
@@ -40,7 +40,7 @@
   nav.toc li{margin:3px 0;font-size:13px}
   nav.toc a{color:#C6CDDB;text-decoration:none;border-bottom:1px solid transparent}
   nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
-  h2{font-family:var(--font-display);font-size:21px;color:#fff;font-weight:400;letter-spacing:-.01em;
+  h2{font-family:var(--font-display);font-size:21px;color:#fff;font-weight:600;letter-spacing:-.01em;
      margin:56px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
   h2 .num{color:var(--accent);font-family:var(--mono);font-size:13px;margin-right:10px}
   h3{font-size:15px;font-weight:600;color:var(--accent);margin:26px 0 8px}
