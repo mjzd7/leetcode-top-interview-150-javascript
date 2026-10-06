@@ -691,13 +691,14 @@
     var sources = nodes.map(function (n) { return n.textContent; });
 
     try {
-      // Re-asserted on every render, immediately before the run: the portal's
-      // openArticle() can (and does) reset this global to 'loose' at any time.
+      var isLight = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light';
       window.mermaid.initialize({
         startOnLoad: false,
-        theme: 'dark',
+        theme: isLight ? 'default' : 'dark',
         securityLevel: 'strict',
-        themeVariables: { primaryTextColor: '#E9EDF4', edgeLabelBackground: '#1A2130' },
+        themeVariables: isLight
+          ? { primaryTextColor: '#111827', edgeLabelBackground: '#F3F4F6' }
+          : { primaryTextColor: '#E9EDF4', edgeLabelBackground: '#1A2130' },
       });
       await window.mermaid.run({ nodes: nodes });
     } catch (e) { /* handled by the check below, which covers both cases */ }
@@ -1118,7 +1119,7 @@
 
     var chips = buildSuggestions()
       .map(function (q) {
-        return '<button type="button" class="ltc-chip" data-q="' + esc(q) + '">' + esc(q) + '</button>';
+        return '<button type="button" class="ltc-chip" data-cur="link" data-q="' + esc(q) + '">' + esc(q) + '</button>';
       })
       .join('');
 

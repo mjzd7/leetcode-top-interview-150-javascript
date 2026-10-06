@@ -16,6 +16,17 @@
   <link rel="stylesheet" href="assets/fonts/fonts.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    (function() {
+      const saved = localStorage.getItem('lt150-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -39,9 +50,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <link id="prismTheme" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <link rel="stylesheet" href="assets/cursor.css">
   <style>
     :root {
       --bg: #08090D;
@@ -52,7 +65,7 @@
       --muted: #8B94A7;
       --accent: #C8FA4B;
       --accent-ink: #101303;
-      --rail-bg: #0B0D12;
+      --rail-bg: var(--canvas-sub);
     }
     html { background: var(--bg); overflow-x: hidden; overflow-x: clip; }
     body { overflow-x: hidden; overflow-x: clip;
@@ -101,10 +114,9 @@
       font-size: 0.85em; font-family: var(--font-mono); white-space: normal;
       overflow-wrap: anywhere; word-break: break-word;
     }
-    .prose code.primer-path { background: rgba(139,148,167,.12); color: #AEB8CC; cursor: help; }
-    .prose code.primer-link { cursor: pointer; }
-    .prose code.primer-link:hover { background: rgba(200,250,75,.18); }
-    .prose a > code { text-decoration: underline; text-underline-offset: 3px; }
+    .prose code.primer-path { background: rgba(139,148,167,.12); color: #AEB8CC; cursor: default; }
+    .prose a > code { text-decoration: none !important; }
+    .prose a:hover > code { text-decoration: underline !important; text-underline-offset: 3px !important; }
     /* Long unbreakable runs (bare URLs in Sources lists, slash-joined codes
        like (200/201/…) in Q&A) must wrap — otherwise they force the flex
        article wider than the viewport and show blank space on mobile. */
@@ -503,7 +515,7 @@
     .ltc-empty-privacy {
       /* --muted (6.4:1 on the panel), NOT the hint's #5A6377, which is 3.2:1 and
          fails AA at this size. Subordinate via size and the rule above it. */
-      font-size: 0.68rem; color: var(--muted); opacity: .78; line-height: 1.65;
+      font-size: 0.68rem; color: var(--muted); line-height: 1.65;
       margin: 1.1rem 0 0; max-width: 42ch;
       border-top: 1px solid rgba(148, 163, 184, 0.12); padding-top: 0.85rem;
     }
@@ -1004,7 +1016,7 @@
     }
   </style>
 </head>
-<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh">
+<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh" style="color: var(--fg); background: var(--bg);">
 
   <!-- Reading progress hairline -->
   <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
@@ -1015,7 +1027,7 @@
        the header 57px tall while every column below it (sidebar, main, rail) is
        positioned at 3.5rem = 56px, pushing all three 1px off the bottom of the
        screen and clipping the assistant's composer hint. -->
-  <header class="sticky top-0 z-30 bg-[#08090D]/85 backdrop-blur-md" style="box-shadow: inset 0 -1px 0 rgba(148,163,184,0.13);">
+  <header class="sticky top-0 z-30 backdrop-blur-md glass" style="background-color: var(--header-bg); box-shadow: inset 0 -1px 0 var(--border-soft);">
     <div class="h-14 px-3 md:px-6 flex items-center gap-2 md:gap-4">
       <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -1027,6 +1039,9 @@
       <div class="flex-1"></div>
       <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0"></div>
       <div id="authArea" class="shrink-0"></div>
+      <button id="themeToggle" type="button" aria-label="Switch colour theme" class="inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] text-slate-300">
+        <span id="themeIcon">☀️</span>
+      </button>
       <button id="guidesBtn" title="Open the MAANG interview guides" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 h-10 text-sm font-semibold shrink-0 whitespace-nowrap" style="color:var(--accent);">Guides</button>
       <button id="paletteBtn" aria-label="Jump to a guide" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
@@ -1408,16 +1423,13 @@
           const active = item.id === currentItemId;
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'nav-item w-full text-left px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-2 border min-h-[44px] md:min-h-0';
-          btn.style.cssText = active
-            ? 'background:rgba(200,250,75,.1);color:#fff;border-color:rgba(200,250,75,.35);'
-            : 'color:#C2C9D8;border-color:transparent;';
-          if (active) btn.setAttribute('aria-current', 'page');
+          btn.className = 'nav-item w-full text-left px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-2 border min-h-[44px] md:min-h-0 border-transparent text-[#C2C9D8]';
+          if (active) {
+            btn.setAttribute('aria-current', 'page');
+            btn.dataset.active = 'true';
+          }
           btn.dataset.guideId = item.id;
           if (done) btn.dataset.done = 'true';
-          if (active) btn.dataset.active = 'true';
-          btn.onmouseenter = () => { if (!active) btn.style.background = 'rgba(255,255,255,.05)'; };
-          btn.onmouseleave = () => { if (!active) btn.style.background = 'transparent'; };
           const code = guideCode({ item, category: cat.category }, 0);
           btn.innerHTML =
             '<span class="nav-mark shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
@@ -1688,16 +1700,21 @@
         const t = c.textContent.trim();
         if (/^https?:\/\//.test(t)) {
           const a = document.createElement('a');
+          a.className = 'leetcode-link inline-link';
           a.href = t;
           a.target = '_blank';
           a.rel = 'noopener noreferrer';
           a.title = 'Open in new tab: ' + t;
+          c.classList.add('leetcode-code');
           c.replaceWith(a);
           a.appendChild(c);
           return;
         }
         if (/\.md$/.test(t)) {
-          const id = t.replace(/\.md$/, '').replace(/\//g, '_');
+          let id = t.replace(/\.md$/, '').replace(/\//g, '_');
+          if (id === '00-foundations_01-two-pointers') {
+            id = '00-foundations_03-core-algorithmic-patterns';
+          }
           if (byId.has(id)) {
             c.classList.add('primer-link');
             c.title = 'Open primer in portal: ' + t;
@@ -1717,19 +1734,107 @@
           return;
         }
         const pre = block.parentElement;
+
+        // Resolve contextual human-readable heading title for codebox toolbar
+        let isPseudocode = false;
+        let immediateH = null;
+        let parentH2 = null;
+        let prev = pre.previousElementSibling;
+
+        while (prev) {
+          if (/^H[1-6]$/i.test(prev.tagName)) {
+            const text = prev.textContent.trim();
+            if (!immediateH) {
+              immediateH = text;
+              if (/pseudocode/i.test(text)) isPseudocode = true;
+            }
+            if (/^H2$/i.test(prev.tagName) && !parentH2) {
+              parentH2 = text;
+              break;
+            }
+          }
+          prev = prev.previousElementSibling;
+        }
+
+        const langMatch = block.className.match(/language-(\w+)/);
+        if (!isPseudocode && langMatch && /^(pseudocode|pseudo)$/i.test(langMatch[1])) {
+          isPseudocode = true;
+        }
+        if (!isPseudocode && /^\s*FUNCTION\b/m.test(block.textContent)) {
+          isPseudocode = true;
+        }
+
+        const cleanH2 = (parentH2 || '').replace(/^\d+[\.\)]\s*/, '').trim();
+        const cleanImm = (immediateH || '').replace(/^\d+[\.\)]\s*/, '').replace(/:$/, '').trim();
+
+        // Check if Section H2 corresponds to Level 1, 2, or 3
+        const levelMatch = cleanH2.match(/^(Level\s+[123])\s*:\s*(.*?)(?:\s*\(.*?\))?$/i);
+
+        let codeTitle = '';
+        if (levelMatch) {
+          const levelStr = levelMatch[1];
+          let desc = levelMatch[2].trim();
+          if (/Canonical/i.test(desc) || /Most Optimal/i.test(desc)) {
+            desc = 'Canonical Solution';
+          }
+
+          if (isPseudocode) {
+            codeTitle = `${levelStr}: Pseudocode`;
+          } else {
+            const isGenericImm = !cleanImm || /^(Modern\s+)?(JavaScript|JS|TypeScript|TS|Python|Py)\s*(Implementation|Code|Solution)?$/i.test(cleanImm);
+            if (isGenericImm) {
+              codeTitle = `${levelStr}: ${desc}`;
+            } else {
+              codeTitle = cleanImm || `${levelStr}: ${desc}`;
+            }
+          }
+        } else if (/Discuss/i.test(cleanH2)) {
+          if (isPseudocode) {
+            if (/Optimal/i.test(cleanImm)) codeTitle = 'Discuss: Optimal Pseudocode';
+            else if (/Naive|Brute/i.test(cleanImm)) codeTitle = 'Discuss: Baseline Pseudocode';
+            else codeTitle = 'Discuss: Pseudocode';
+          } else {
+            codeTitle = cleanImm || 'Discuss Code';
+          }
+        } else if (isPseudocode) {
+          codeTitle = cleanImm || 'Pseudocode';
+        } else if (/^Follow-Up/i.test(cleanImm)) {
+          codeTitle = cleanImm.replace(/\s*\(.*?\)\s*$/, '').trim();
+        } else {
+          const isGenericImm = !cleanImm || /^(Modern\s+)?(JavaScript|JS|TypeScript|TS|Python|Py)\s*(Implementation|Code|Solution)?$/i.test(cleanImm);
+          if (isGenericImm) {
+            codeTitle = cleanH2.replace(/\s*\(.*?\)\s*$/, '').trim() || (langMatch ? langMatch[1] : 'Solution');
+          } else {
+            codeTitle = cleanImm || cleanH2 || (langMatch ? langMatch[1] : 'Code');
+          }
+        }
+
         const wrap = document.createElement('div');
-        wrap.className = 'code-wrap relative';
+        wrap.className = 'code code-wrap relative';
         pre.replaceWith(wrap);
-        wrap.appendChild(pre);
+
+        const bar = document.createElement('div');
+        bar.className = 'code-bar';
+        bar.innerHTML =
+          '<span class="dots">' +
+            '<i style="background:var(--badge-hard-fg, #FB7185)"></i>' +
+            '<i style="background:var(--badge-med-fg, #FBBF24)"></i>' +
+            '<i style="background:var(--badge-easy-fg, #34D399)"></i>' +
+          '</span>' +
+          '<span class="code-title">' + esc(codeTitle) + '</span>';
+
         const btn = document.createElement('button');
-        btn.className = 'copy-btn absolute top-2 right-2 text-[11px] font-mono px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300';
+        btn.type = 'button';
+        btn.className = 'copy-btn';
         btn.textContent = 'Copy';
         btn.onclick = async () => {
           const ok = await copyText(block.textContent);
           btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
           setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
         };
-        wrap.appendChild(btn);
+        bar.appendChild(btn);
+        wrap.appendChild(bar);
+        wrap.appendChild(pre);
         // Touch views: double-tap the code box to copy (no button there).
         let lastTap = 0, lastX = 0, lastY = 0, multiTouch = false;
         wrap.addEventListener('touchstart', (e) => {
@@ -2239,11 +2344,63 @@
       if (!id) { openHome(); return; }
       if (byId.has(id) && id !== currentItemId) openArticle(id);
     });
+
+    /* ---------- Theme Toggle & Sync ---------- */
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const prismThemeLink = document.getElementById('prismTheme');
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        if (themeIcon) themeIcon.textContent = '☀️';
+        if (themeToggleBtn) themeToggleBtn.setAttribute('aria-label', 'Switch to light mode');
+        if (prismThemeLink) prismThemeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css';
+      } else {
+        document.documentElement.classList.remove('dark');
+        if (themeIcon) themeIcon.textContent = '🌙';
+        if (themeToggleBtn) themeToggleBtn.setAttribute('aria-label', 'Switch to dark mode');
+        if (prismThemeLink) prismThemeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css';
+      }
+      window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
+    }
+
+    const initialActiveTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(initialActiveTheme);
+
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('lt150-theme', next);
+        applyTheme(next);
+      });
+    }
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('lt150-theme')) {
+        applyTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+
+    /* ---------- Spotlight Tracking ([data-spot]) ---------- */
+    document.addEventListener('pointermove', (e) => {
+      const spotCard = e.target.closest && e.target.closest('[data-spot]');
+      if (spotCard) {
+        const rect = spotCard.getBoundingClientRect();
+        const mx = ((e.clientX - rect.left) / rect.width) * 100;
+        const my = ((e.clientY - rect.top) / rect.height) * 100;
+        spotCard.style.setProperty('--mx', `${mx.toFixed(1)}%`);
+        spotCard.style.setProperty('--my', `${my.toFixed(1)}%`);
+      }
+    }, { passive: true });
   </script>
   <script src="chat-widget.js"></script>
   <!-- Row 22: the dry-run table player. A module, imported once, no global (plan G4);
        it attaches to the existing `lt150:article` event, so openArticle() is untouched.
        Deferred like every module, hence its own initial mount for the hash article. -->
   <script type="module" src="dryrun/index.js"></script>
+  <script src="assets/cursor.js"></script>
 </body>
 </html>
