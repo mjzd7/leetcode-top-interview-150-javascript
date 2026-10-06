@@ -30,17 +30,21 @@ if (!WRITE) {
   console.log('computed from page:   ', hashes.join(' '));
   process.exit(0);
 }
-const app = hashes[hashes.length - 1];
-const old = before[before.length - 1];
-if (old === app) {
+// Every inline block is pinned, in document order, so reconcile them positionally.
+// Refreshing only the last one left a stale hash behind whenever an earlier
+// block changed — the Tailwind config block is edited whenever the theme moves.
+if (before.length !== hashes.length) {
+  console.error(`vercel.json pins ${before.length} script hash(es) but the page has ${hashes.length} inline block(s) — fix by hand`);
+  process.exit(1);
+}
+const stale = before.map((h, i) => (h === hashes[i] ? null : `${h} -> ${hashes[i]}`)).filter(Boolean);
+if (!stale.length) {
   console.log('already current');
   process.exit(0);
 }
-if (!json.includes(old)) {
-  console.error(`vercel.json does not contain ${old} — refusing to guess`);
-  process.exit(1);
-}
-json = json.replace(old, app);
+let i = 0;
+json = json.replace(/sha256-[A-Za-z0-9+/=]+/g, () => hashes[i++]);
 writeFileSync(path, json);
-console.log(`vercel.json: ${old}\n         -> ${app}`);
-console.log('verify:', readFileSync(path, 'utf8').includes(app) ? 'written' : 'FAILED');
+const written = readFileSync(path, 'utf8');
+console.log(`vercel.json: ${stale.length} hash(es) refreshed\n  ${stale.join('\n  ')}`);
+console.log('verify:', hashes.every(h => written.includes(h)) ? 'written' : 'FAILED');

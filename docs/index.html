@@ -12,7 +12,8 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8FA4B'/%3E%3Cpath d='M10 11l-4 5 4 5M22 11l4 5-4 5' stroke='%2308090D' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -20,9 +21,9 @@
       theme: {
         extend: {
           fontFamily: {
-            display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            display: ['var(--font-display)'],
+            sans: ['var(--font-body)'],
+            mono: ['var(--font-mono)'],
           },
           colors: {
             ink: { DEFAULT: '#08090D', surface: '#0D1017', raised: '#121724' },
@@ -65,7 +66,7 @@
     ::-webkit-scrollbar-thumb { background: #232B3D; border-radius: 8px; }
     ::-webkit-scrollbar-thumb:hover { background: #2E3850; }
 
-    .font-display { font-family: "Space Grotesk", Inter, system-ui, sans-serif; }
+    .font-display { font-family: var(--font-display); }
     .prose { color: #C6CDDB; font-size: 0.95rem; line-height: 1.72; }
     .prose pre {
       background: #0A0D13 !important;
@@ -76,7 +77,7 @@
       font-size: 0.82rem;
       line-height: 1.6;
     }
-    .prose pre code { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+    .prose pre code { font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
     .prose .table-scroll { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--line); border-radius: 0.75rem; }
     /* Codeboxes carry their own rhythm (same 1.4rem as tables/diagrams) so gaps
        never depend on the neighbour; the inner pre margin from the Prism theme
@@ -87,8 +88,8 @@
     .prose table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.85rem; }
     .prose th, .prose td { border: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
     .prose th { background: rgba(200, 250, 75, 0.06); font-weight: 600; color: var(--accent); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
-    .prose h1 { font-family: "Space Grotesk", sans-serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem; }
-    .prose h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.8rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
+    .prose h1 { font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .prose h2 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.8rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
     .prose h3 { font-size: 1.02rem; font-weight: 600; color: var(--accent); margin-top: 1.4rem; margin-bottom: 0.5rem; }
     .prose p { margin-bottom: 0.95rem; }
     .prose ul, .prose ol { margin-left: 1.4rem; margin-bottom: 1rem; }
@@ -97,7 +98,7 @@
     .prose code:not(pre code) {
       background: rgba(200, 250, 75, 0.09); color: var(--accent);
       padding: 0.15rem 0.42rem; border-radius: 0.375rem;
-      font-size: 0.85em; font-family: "JetBrains Mono", monospace; white-space: normal;
+      font-size: 0.85em; font-family: var(--font-mono); white-space: normal;
       overflow-wrap: anywhere; word-break: break-word;
     }
     .prose code.primer-path { background: rgba(139,148,167,.12); color: #AEB8CC; cursor: help; }
@@ -168,7 +169,7 @@
     #prevNext[hidden] { display: none; }
     #prevNext [data-nav] { min-width: 0; }
     kbd.k {
-      font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
+      font-family: var(--font-mono); font-size: 0.68rem;
       background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
       border-radius: 0.375rem; padding: 0.1rem 0.4rem; color: #AEB8CC;
       line-height: 1.1;
@@ -276,7 +277,7 @@
       .nav-group-rule { display: none; }
       .nav-code { display: none; }
       #sidebar[data-stage="2"][data-rail-mode="num"] .nav-code {
-        display: block; font-family: "JetBrains Mono", monospace;
+        display: block; font-family: var(--font-mono);
         font-size: 11px; line-height: 1; letter-spacing: -0.03em;
         color: #AEB8CC; font-variant-numeric: tabular-nums;
       }
@@ -377,11 +378,11 @@
     .ltc-head-mark svg { width: 17px; height: 17px; }
     .ltc-head-txt { min-width: 0; }
     .ltc-head-title {
-      font-family: "Space Grotesk", sans-serif; font-size: 0.82rem; font-weight: 700;
+      font-family: var(--font-display); font-size: 0.82rem; font-weight: 700;
       letter-spacing: -0.01em; color: #fff; line-height: 1.2;
     }
     .ltc-head-sub {
-      font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--muted);
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       line-height: 1.35; margin-top: 1px;
     }
@@ -393,7 +394,7 @@
       padding: 0.2rem 0.5rem; border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.16);
       background: rgba(255, 255, 255, 0.03);
-      font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+      font-family: var(--font-mono); font-size: 9.5px;
       color: var(--muted); white-space: nowrap;
       transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
     }
@@ -483,11 +484,11 @@
     }
     .ltc-empty-mark svg { width: 22px; height: 22px; }
     .ltc-empty-title {
-      font-family: "Space Grotesk", sans-serif; font-weight: 700; color: #fff;
+      font-family: var(--font-display); font-weight: 700; color: #fff;
       font-size: 1.05rem; letter-spacing: -0.02em; margin: 0 0 0.3rem;
     }
     .ltc-empty-page {
-      font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--accent);
+      font-family: var(--font-mono); font-size: 11px; color: var(--accent);
       margin: 0 0 0.5rem; line-height: 1.5;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
@@ -495,7 +496,7 @@
       display: inline-block; margin-bottom: 0.7rem;
       padding: 0.15rem 0.5rem; border-radius: 999px;
       border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03);
-      font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+      font-family: var(--font-mono); font-size: 9.5px;
       color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
     }
     .ltc-empty-sub { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; max-width: 34ch; }
@@ -513,7 +514,7 @@
     .ltc-chip {
       border: 1px solid rgba(148, 163, 184, 0.18); background: rgba(255, 255, 255, 0.03);
       color: #C6CDDB; border-radius: 999px; padding: 0.45rem 0.8rem;
-      font-size: 11.5px; font-family: "Inter", system-ui, sans-serif;
+      font-size: 11.5px; font-family: var(--font-body);
       text-align: left; line-height: 1.4; min-height: 44px; cursor: pointer;
       transition: background-color 0.16s ease, border-color 0.16s ease,
                   color 0.16s ease, transform 0.16s ease;
@@ -568,7 +569,7 @@
       min-width: 28px; height: 28px; padding: 0 0.45rem; border-radius: 8px;
       border: 1px solid transparent; background: transparent; color: #5A6377;
       cursor: pointer;
-      font-family: "JetBrains Mono", monospace; font-size: 10px;
+      font-family: var(--font-mono); font-size: 10px;
       transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
     }
     .ltc-msg-copy svg { width: 14px; height: 14px; }
@@ -599,7 +600,7 @@
     .ltc-msg-body code:not(pre code) {
       background: rgba(200, 250, 75, 0.1); color: var(--accent);
       padding: 0.1rem 0.35rem; border-radius: 0.3rem; font-size: 0.9em;
-      font-family: "JetBrains Mono", monospace;
+      font-family: var(--font-mono);
     }
     /* Dry-run traces are naturally wide. The wrapper confines the overflow to
        the table so the message bubble and the rail keep their width. */
@@ -615,7 +616,7 @@
     .ltc-msg-body table {
       width: max-content; min-width: 100%; border-collapse: collapse; margin: 0;
       font-size: 0.78rem; line-height: 1.5;
-      font-family: "JetBrains Mono", monospace;
+      font-family: var(--font-mono);
     }
     .ltc-msg-body th, .ltc-msg-body td {
       border-bottom: 1px solid var(--line);
@@ -653,7 +654,7 @@
        and smaller than the source it introduces, so the seam between the two is
        visible instead of the block reading as one undifferentiated dump. */
     .ltc-mermaid-error-note {
-      display: block; font-family: "Inter", system-ui, sans-serif; font-size: 0.68rem;
+      display: block; font-family: var(--font-body); font-size: 0.68rem;
       line-height: 1.45; color: #FB7185; white-space: normal;
       margin: 0 0 0.45rem; padding-bottom: 0.4rem;
       border-bottom: 1px solid rgba(251, 113, 133, 0.22);
@@ -667,7 +668,7 @@
       padding: 0.7rem; margin: 0.6rem 0; overflow-x: auto;
     }
     .viz-title {
-      font-family: "JetBrains Mono", monospace; font-size: 0.7rem; color: var(--muted);
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
       margin-bottom: 0.5rem; white-space: nowrap;
     }
     .viz-grid {
@@ -677,7 +678,7 @@
     }
     .viz-cell {
       border: 1px solid var(--line); border-radius: 0.4rem; background: var(--raised);
-      color: #E9EDF4; font-family: "JetBrains Mono", monospace; font-size: 0.78rem;
+      color: #E9EDF4; font-family: var(--font-mono); font-size: 0.78rem;
       text-align: center; padding: 0.4rem 0.3rem; min-width: 34px;
     }
     .viz-cell.is-active {
@@ -688,13 +689,13 @@
     .viz-cell.is-swapped { border-color: #8B5CF6; color: #C4B5FD; }
     .viz-cell.is-error { border-color: #FB7185; color: #FB7185; }
     .viz-pointer {
-      display: block; text-align: center; font-family: "JetBrains Mono", monospace;
+      display: block; text-align: center; font-family: var(--font-mono);
       font-size: 0.62rem; color: var(--accent); letter-spacing: 0.04em;
     }
     .viz-pointer::before { content: "▲ "; font-size: 0.55rem; }
     .viz-row {
       display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem;
-      margin-top: 0.55rem; font-family: "JetBrains Mono", monospace; font-size: 0.7rem;
+      margin-top: 0.55rem; font-family: var(--font-mono); font-size: 0.7rem;
     }
     .viz-row-label {
       color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
@@ -707,7 +708,7 @@
     .viz-k { color: var(--accent); }
     .viz-arrow { color: var(--muted); margin: 0 0.2rem; }
     .ltc-msg-body h1, .ltc-msg-body h2, .ltc-msg-body h3 {
-      font-family: "Space Grotesk", sans-serif; color: #fff; margin: 0.8rem 0 0.4rem; line-height: 1.3;
+      font-family: var(--font-display); color: #fff; margin: 0.8rem 0 0.4rem; line-height: 1.3;
     }
     .ltc-msg-body h1 { font-size: 1rem; }
     .ltc-msg-body h2 { font-size: 0.92rem; }
@@ -723,14 +724,14 @@
       font-size: 0.76rem; line-height: 1.55;
     }
     .chat-code code {
-      font-family: "JetBrains Mono", monospace; font-variant-ligatures: none;
+      font-family: var(--font-mono); font-variant-ligatures: none;
       white-space: pre;
     }
     .chat-code-copy {
       position: absolute; top: 6px; right: 6px; z-index: 1;
       border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.06);
       color: #AEB8CC; border-radius: 0.4rem; padding: 0.2rem 0.5rem;
-      font-family: "JetBrains Mono", monospace; font-size: 10px; min-height: 26px;
+      font-family: var(--font-mono); font-size: 10px; min-height: 26px;
     }
     .chat-code-copy:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
     .ltc-msg-error {
@@ -758,7 +759,7 @@
       align-self: flex-start; margin-top: 0.3rem;
       border: 1px solid rgba(200, 250, 75, 0.35); background: rgba(200, 250, 75, 0.07);
       color: var(--accent); border-radius: 0.5rem; padding: 0.3rem 0.65rem;
-      font-family: "JetBrains Mono", monospace; font-size: 11px; min-height: 32px;
+      font-family: var(--font-mono); font-size: 11px; min-height: 32px;
     }
     /* An answer that hit the output cap. A subordinate line, not a dialog and
        not the error treatment: the answer above it is real and copyable, only
@@ -766,7 +767,7 @@
     .ltc-truncated {
       align-self: flex-start; margin-top: 0.15rem; padding-left: 0.5rem;
       border-left: 2px solid rgba(200, 250, 75, 0.35);
-      font-family: "JetBrains Mono", monospace; font-size: 11px; line-height: 1.5;
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
       color: var(--muted);
     }
     /* The thinking indicator, and why the dots are gone: Gemini runs a short
@@ -841,7 +842,7 @@
     #ltcInput {
       flex: 1 1 auto; min-width: 0; resize: none; border: 0; background: transparent;
       padding: 0.4rem 0; font-size: 13.5px; line-height: 1.55; color: #E9EDF4;
-      font-family: "Inter", system-ui, sans-serif; min-height: 30px; max-height: 168px;
+      font-family: var(--font-body); min-height: 30px; max-height: 168px;
     }
     #ltcInput:focus { outline: none; }
     #ltcInput::placeholder { color: #5A6377; }
@@ -874,7 +875,7 @@
     .ltc-stop:hover { background: rgba(251, 113, 133, 0.2); }
     .ltc-hint {
       margin: 0; padding: 0 0.25rem;
-      font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: #5A6377;
+      font-family: var(--font-mono); font-size: 9.5px; color: #5A6377;
       line-height: 1.6;
     }
     .ltc-hint .k { font-size: 0.6rem; padding: 0.05rem 0.25rem; }
@@ -924,11 +925,11 @@
        chrome the chat has no equivalent for: a caption, a transport, a scrubber, and
        the highlight on the table row the current step came from. Everything is the
        manual's existing vocabulary: --line borders, --raised fills, --accent for the
-       live value, JetBrains Mono for anything numeric. */
+       live value, the mono role for anything numeric. */
     .dr-player { margin: 0 0 1.6rem; }
     .dr-head {
       display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
-      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.7rem;
+      font-family: var(--font-mono); font-size: 0.7rem;
       color: var(--muted);
     }
     .dr-title {
@@ -990,7 +991,7 @@
     }
     .dr-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .dr-count {
-      flex-shrink: 0; font-family: "JetBrains Mono", ui-monospace, monospace;
+      flex-shrink: 0; font-family: var(--font-mono);
       font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
@@ -1968,7 +1969,7 @@
       sec.innerHTML =
         '<h2 id="sec-try-live">Try it live <span class="text-[11px] font-mono font-normal text-slate-500 align-middle">pilot · runs on the server sandbox</span></h2>' +
         '<p>Write <code>' + esc(pilot.fn) + '</code> below and run it against the pilot test set. A full pass marks this guide complete' + (judgeUser ? ' (synced to your account)' : ' (login to sync it to your account)') + '.</p>' +
-        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[#0A0D13] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[#C8FA4B]/60" style="font-family:\'JetBrains Mono\',monospace;"></textarea>' +
+        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[#0A0D13] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[#C8FA4B]/60" style="font-family:var(--font-mono);"></textarea>' +
         '<div class="flex flex-wrap items-center gap-3 mt-3">' +
         '<button id="judgeRun" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Run tests</button>' +
         '<span id="judgeStatus" class="text-[13px] font-mono text-slate-500"></span></div>' +

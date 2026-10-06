@@ -53,3 +53,6 @@ playwright-report/
 
 # Downloaded headless browser binaries (@mermaid-js/mermaid-cli pulls puppeteer)
 .puppeteer_cache/
+
+# Licensed font masters — docs/assets/fonts/*.woff2 is what ships (scripts/build-fonts.mjs)
+docs/assets/fonts/src/

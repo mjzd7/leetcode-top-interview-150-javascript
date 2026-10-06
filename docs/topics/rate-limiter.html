@@ -7,19 +7,20 @@
 <meta name="description" content="Rate limiter system design: 5 algorithms, distributed architecture, atomicity, 429 contract, failure modes, and 50 interview questions." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../assets/fonts/fonts.css" />
 <style>
   :root{
     --bg:#08090D; --surface:#0D1017; --raised:#121724;
     --line:rgba(148,163,184,.13); --ink:#E9EDF4; --muted:#8B94A7;
     --accent:#C8FA4B; --accent-ink:#101303;
     --warn:#F5A524; --bad:#F4557A; --good:#4ADE80; --info:#7DD3FC;
-    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --mono:var(--font-mono);
   }
   *{box-sizing:border-box}
   html{background:var(--bg);scroll-behavior:smooth}
   body{
-    margin:0;color:#C6CDDB;font:400 15px/1.7 Inter,system-ui,sans-serif;
+    margin:0;color:#C6CDDB;font:400 15px/1.7 var(--font-body);
     background:
       radial-gradient(1100px 420px at 85% -10%, rgba(200,250,75,.055), transparent 60%),
       radial-gradient(900px 500px at -10% 110%, rgba(139,92,246,.06), transparent 60%),
@@ -28,7 +29,7 @@
   .wrap{max-width:1080px;margin:0 auto;padding:0 20px 120px}
   header.top{padding:56px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
   .kicker{font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-  h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(28px,5vw,44px);font-weight:700;color:#fff;letter-spacing:-.02em;margin:14px 0 10px}
+  h1{font-family:var(--font-display);font-size:clamp(28px,5vw,44px);font-weight:700;color:#fff;letter-spacing:-.02em;margin:14px 0 10px}
   .sub{color:var(--muted);max-width:70ch;margin:0 0 18px}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{font:500 11px/1 var(--mono);border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted);background:var(--surface)}
@@ -39,7 +40,7 @@
   nav.toc li{margin:3px 0;font-size:13px}
   nav.toc a{color:#C6CDDB;text-decoration:none;border-bottom:1px solid transparent}
   nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
-  h2{font-family:"Space Grotesk",sans-serif;font-size:21px;color:#fff;font-weight:600;letter-spacing:-.01em;
+  h2{font-family:var(--font-display);font-size:21px;color:#fff;font-weight:600;letter-spacing:-.01em;
      margin:56px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
   h2 .num{color:var(--accent);font-family:var(--mono);font-size:13px;margin-right:10px}
   h3{font-size:15px;font-weight:600;color:var(--accent);margin:26px 0 8px}
@@ -188,7 +189,7 @@ plumbing. Interviewers score the first three, then hunt the plumbing.
 <svg viewBox="0 0 900 290" role="img" aria-label="Three placement options for a rate limiter">
   <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
     <path d="M0 0 L7 3 L0 6 z" fill="#8B94A7"/></marker></defs>
-  <g font-family="JetBrains Mono,monospace" font-size="12">
+  <g font-family="Geist Mono,monospace" font-size="12">
     <text x="20" y="28" fill="#8B94A7">OPTION A · CLIENT-SIDE</text>
     <rect x="20" y="40" width="150" height="44" rx="8" fill="#121724" stroke="#8B94A7"/>
     <text x="60" y="67" fill="#C6CDDB">Client</text>
@@ -245,7 +246,7 @@ name the specific failure it fixes and the specific cost it introduces</b>. That
 <figure>
 <svg viewBox="0 0 860 240" role="img" aria-label="Token bucket: refill at fixed rate, spend one per request, capacity caps the burst">
   <defs><marker id="b" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 z" fill="#8B94A7"/></marker></defs>
-  <g font-family="JetBrains Mono,monospace" font-size="12">
+  <g font-family="Geist Mono,monospace" font-size="12">
     <path d="M150 60 L170 78 L170 168 L150 186 L130 168 L130 78 Z" fill="#0A0D13" stroke="#C8FA4B" stroke-width="1.5"/>
     <path d="M132 120 L168 120 L168 166 L132 166 Z" fill="rgba(200,250,75,.22)" stroke="none"/>
     <text x="100" y="200" fill="#8B94A7">bucket</text>
@@ -296,7 +297,7 @@ hold the queue head plus a timer.
 <h3>4.3 Fixed window counter</h3>
 <figure>
 <svg viewBox="0 0 860 220" role="img" aria-label="Fixed window counter boundary burst problem: two windows each allow the full quota">
-  <g font-family="JetBrains Mono,monospace" font-size="11">
+  <g font-family="Geist Mono,monospace" font-size="11">
     <text x="24" y="26" fill="#8B94A7">quota = 100 / minute</text>
     <rect x="24" y="40" width="380" height="70" fill="rgba(125,211,252,.10)" stroke="#7DD3FC"/>
     <text x="40" y="80" fill="#7DD3FC">window 1  [12:00:00 – 12:01:00)</text>
@@ -373,7 +374,7 @@ burst collapses to ~1.5× worst case in the pathological case, tunable by keepin
 <figure>
 <svg viewBox="0 0 900 300" role="img" aria-label="Distributed rate limiter pipeline: client to edge load balancer to limiter to Redis cluster, then allow to services or reject with 429">
   <defs><marker id="c" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 z" fill="#8B94A7"/></marker></defs>
-  <g font-family="JetBrains Mono,monospace" font-size="11.5">
+  <g font-family="Geist Mono,monospace" font-size="11.5">
     <rect x="16" y="110" width="118" height="56" rx="8" fill="#121724" stroke="#8B94A7"/>
     <text x="34" y="134" fill="#C6CDDB">Client</text><text x="26" y="152" fill="#8B94A7">ip / key / jwt</text>
     <line x1="134" y1="138" x2="164" y2="138" stroke="#8B94A7" marker-end="url(#c)"/>
