@@ -178,10 +178,12 @@ export const TABLE_TRACE = 'tableTrace';
  */
 export function readTableTraceVerdicts(heads, { root = ROOT } = {}) {
   const verdicts = {};
+  let l3 = 0;
   for (const { name, head } of heads) {
     // test-trace.mjs:1161 filters to `.L3.json`, so V9 makes no claim about L1/L2 — publishing a
     // per-level verdict here would put a value on 300 rows that nothing ever checked.
     if (head.level !== 3) continue;
+    l3++;
     let guideText;
     try { guideText = fs.readFileSync(path.join(root, head.path), 'utf8'); } catch { continue; }
     // test-trace.mjs:1164 `continue`s on an unreadable guide rather than counting it, so this
@@ -192,6 +194,27 @@ export function readTableTraceVerdicts(heads, { root = ROOT } = {}) {
     } catch { continue; }
     if (!Array.isArray(steps)) continue;
     verdicts[head.path] = { [TABLE_TRACE]: v9Verdict(guideText, steps, parseGuide) };
+  }
+  // Skipping ONE unreadable guide is defensible — it is out of scope, not uncomparable. Skipping
+  // ALL of them is not a measurement, it is a missing prerequisite being reported as one. The loop
+  // above reads the FULL golden (`*.json`), and `.gitignore` keeps those out of the repo because
+  // E32 ships only the `*.head.json` summaries. A fresh clone therefore has 450 heads and NO
+  // goldens, every `catch` above fires, and the index publishes `guides: {}` — which the portal
+  // reads as "no verdict for this guide" and so renders no badge on ANY page.
+  //
+  // Measured on the live deploy: `counts.guides: 0` and `guides: {}`, from the same commit whose
+  // local build published 150. Reproduced here by hiding judge/traces/*.json: 450 heads read,
+  // 0 verdicts.
+  //
+  // So the wholesale case throws. Publishing an empty map is the failure this repo treats as its
+  // worst — a green artefact describing a corpus it never looked at.
+  if (l3 > 0 && Object.keys(verdicts).length === 0) {
+    throw new Error(
+      `no guide verdict could be computed for any of the ${l3} L3 heads: the full goldens are `
+      + 'absent. judge/traces/*.json is gitignored (E32 ships the .head.json summaries only), so a '
+      + 'fresh clone has nothing to read V9 against. Run `npm run gen:traces` first - otherwise the '
+      + 'portal publishes an empty verdict index and silently renders no verdict badge anywhere.',
+    );
   }
   return verdicts;
 }
