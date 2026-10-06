@@ -207,20 +207,50 @@ async function main() {
   //
   // So the suite produces it on demand instead of inheriting the caller's step order. That
   // covers every caller at once: CI, `npm run verify` (which also reaches test:chat before
-  // build), and a bare clone where someone runs this file directly. One pass takes under a
-  // second and writes only gitignored artefacts, so it is cheap to do only when needed.
+  // build), and a bare clone where someone runs this file directly.
   //
   // A build that fails to produce the index is a hard error, not a skip: silently skipping
   // would report a green suite for a corpus this file cannot see, which is the exact shape of
   // lie this repo treats as its worst failure.
+  //
+  // `build-site.mjs` publishes the trace tree too, and THAT reads the full goldens — which
+  // `.gitignore` keeps out of the repo (E32 ships the `.head.json` summaries only). So the
+  // goldens are a prerequisite of the build, not an optional extra, and the self-heal that
+  // did not generate them turned this suite red on CI: it runs at step 4 while `gen:traces`
+  // does not run until step 6, so `build-site.mjs` threw "the full goldens are absent" and
+  // this file reported the guide index missing — naming the wrong artifact for the real cause.
+  //
+  // Generating them here is what "every caller at once" actually requires: CI is only the
+  // caller that happened to catch it. This is the same chain the Vercel build runs
+  // (`npm run build:deploy`), reached the same way — as node invocations, not through npm, so
+  // the suite stays runnable as a bare file. `gen:blocks` is not optional: `loadBlocks()`
+  // throws ManifestMissingError on a missing build/blocks.json and has no fallback, because a
+  // step with no region is a step silently suppressed.
+  //
+  // Cost: ~11 s for gen:traces, and only when the guide index is absent. Once ANY earlier step
+  // has built it, this whole block is skipped and the suite costs what it always did. (The
+  // earlier note here claimed the on-demand pass takes "under a second"; that was true while
+  // the build tolerated missing goldens, and it stopped being true when it stopped tolerating
+  // them.)
   const guideIndexPath = fileURLToPath(new URL('../api/_lib/guide-index.json', import.meta.url));
   if (!fs.existsSync(guideIndexPath)) {
+    const genBlocks = fileURLToPath(new URL('./gen-blocks.mjs', import.meta.url));
+    const genTraces = fileURLToPath(new URL('./gen-traces.mjs', import.meta.url));
     const buildScript = fileURLToPath(new URL('./build-site.mjs', import.meta.url));
-    const built = spawnSync(process.execPath, [buildScript], { stdio: 'inherit' });
-    if (built.status !== 0 || !fs.existsSync(guideIndexPath)) {
+    for (const [label, script] of [['gen:blocks', genBlocks], ['gen:traces', genTraces], ['build', buildScript]]) {
+      const step = spawnSync(process.execPath, [script], { stdio: 'inherit' });
+      if (step.status !== 0) {
+        throw new Error(
+          `the guide index is missing and \`${label}\` exited `
+          + `${step.status} — the search_guides assertions would be asserting against nothing. `
+          + `Generate the prerequisites in order: npm run gen:blocks && npm run gen:traces && npm run build.`,
+        );
+      }
+    }
+    if (!fs.existsSync(guideIndexPath)) {
       throw new Error(
-        `the guide index is missing and \`node scripts/build-site.mjs\` did not produce it `
-        + `(exit ${built.status}) — the search_guides assertions would be asserting against nothing`,
+        'the guide index is missing and `node scripts/build-site.mjs` exited 0 without producing '
+        + 'api/_lib/guide-index.json — the search_guides assertions would be asserting against nothing',
       );
     }
   }
