@@ -221,6 +221,10 @@
       /* 16px of padding plus the 12px flex gap pushed the 32px collapse button
          to x=28..60 inside a 56px rail, so it hung 4px over the content edge. */
       #sidebar[data-stage="2"] > div:first-child { padding-left: 0; padding-right: 0; gap: 0; }
+      /* And the row inside it, which the rule above cannot reach: with the ring
+         block gone the button is the row's only child, so it centres on the
+         icon column's line instead of starting at the rail's left edge. */
+      #sidebar[data-stage="2"] > div:first-child > div { justify-content: center; }
       #ltNavCollapse { display: flex; }
 
       /* ---- the 56px rail has two modes, toggled with the option key ----
@@ -934,7 +938,7 @@
             <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
             <circle id="ringFg" cx="32" cy="32" r="26" fill="none" stroke="#C8FA4B" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="163.36"/>
           </svg>
-          <div class="min-w-0 flex-1">
+          <div id="ringBlock" class="min-w-0 flex-1">
             <div id="ringPct" class="font-display font-bold text-xl leading-none">0%</div>
             <div id="ringSub" class="text-xs text-slate-400 mt-1 font-mono">0 / 150 done</div>
           </div>
@@ -1311,7 +1315,10 @@
         const chev = $('ltNavChevron');
         if (chev) chev.setAttribute('d', STAGE_CHEVRONS[stage]);
       }
-      ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
+      /* ringBlock is the wrapper, not just its contents: at stage 2 hiding the
+         ring's children left an empty flex-1 box in the header row, and with it
+         the button was pushed off the icon column's centre line. */
+      ['ringPct', 'ringSub', 'ringSvg', 'ringBlock'].forEach((id) => {
         const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
       });
       if (persist) { try { localStorage.setItem('lt150-nav-stage', String(stage)); } catch (e) {} }
