@@ -1296,12 +1296,13 @@
       const el = $('sidebar'), btn = $('ltNavCollapse');
       if (!el) return;
       const STAGE_LABELS = ['Collapse the navigation',
-                            'Widen the navigation to a text rail',
+                            'Collapse the navigation to icons',
                             'Widen the navigation fully'];
-      /* The glyph follows the label. It used to be a left chevron at all three
-         stages, so on the 56px rail — where the button widens — it pointed away
-         from the edge the sidebar is on. Only the accessible name changed. */
-      const STAGE_CHEVRONS = ['M15 6l-6 6 6 6', 'M9 6l6 6-6 6', 'M9 6l6 6-6 6'];
+      /* The glyph follows the move, not the label. Only stage 2 widens the rail,
+         so only stage 2 points right; tying the two paths to the two directions
+         the sidebar can travel rather than to three stage indexes — stage 1 goes
+         200px → 56px, which narrows, so it points left like stage 0 does. */
+      const STAGE_CHEVRONS = ['M15 6l-6 6 6 6', 'M15 6l-6 6 6 6', 'M9 6l6 6-6 6'];
       const stage = ((s % 3) + 3) % 3;
       el.dataset.stage = String(stage);
       if (btn) {
