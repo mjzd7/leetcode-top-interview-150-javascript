@@ -81,8 +81,7 @@ html[data-cursor-mode="text"] #cur-ring {
   border: none !important;
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #C8FA4B) 60%, transparent) !important;
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transition: width 0.12s var(--ease-snappy), height 0.12s var(--ease-snappy), margin 0.12s var(--ease-snappy), border-radius 0.12s var(--ease-snappy), background-color 0.15s ease !important;
+  transition: background-color 0.15s ease !important;
 }
 
 /* Hide SVG circle while in text mode so only reformed I-beam geometry renders */

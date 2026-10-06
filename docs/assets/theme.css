@@ -63,6 +63,14 @@ html[data-theme="dark"] {
   --cur-ring-bg: rgba(150, 150, 150, 0.1);
   --cur-ring-border: rgba(150, 150, 150, 0.3);
 
+  /* Physical Shadows, Rim, and Sheen (from fx-showcase) */
+  --shadow-rest: 0 1px 1px rgba(0,0,0,.4), 0 3px 6px rgba(0,0,0,.5);
+  --shadow-lift: 0 2px 6px rgba(0,0,0,.45), 0 12px 28px rgba(0,0,0,.6);
+  --shadow-float: 0 0 0 1px var(--border), 0 8px 16px -4px rgba(0,0,0,.4),
+                  0 28px 56px -12px rgba(0,0,0,.5);
+  --rim: rgba(255,255,255,.09);
+  --sheen: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 42%);
+
   /* Legacy Aliases for Seamless Backwards Compatibility */
   --bg: var(--canvas);
   --surface: var(--canvas-sub);
@@ -121,6 +129,14 @@ html[data-theme="light"] {
   --cur-ring-bg: rgba(50, 50, 50, 0.08);
   --cur-ring-border: rgba(50, 50, 50, 0.35);
 
+  /* Physical Shadows, Rim, and Sheen (from fx-showcase) */
+  --shadow-rest: 0 1px 0 rgba(14,17,22,.05), 0 1px 3px rgba(14,17,22,.09);
+  --shadow-lift: 0 2px 4px rgba(14,17,22,.07), 0 12px 28px rgba(14,17,22,.13);
+  --shadow-float: 0 0 0 1px var(--border), 0 8px 16px -4px rgba(14,17,22,.10),
+                  0 28px 56px -12px rgba(14,17,22,.20);
+  --rim: rgba(14,17,22,.09);
+  --sheen: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,0) 46%);
+
   /* Legacy Aliases for Seamless Backwards Compatibility */
   --bg: var(--canvas);
   --surface: var(--canvas-sub);
@@ -138,13 +154,12 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(1100px 420px at 85% -10%, var(--glow-1), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, var(--glow-2), transparent 60%),
-    var(--canvas);
+  background: var(--canvas);
   color: var(--fg-prose);
 }
 
+/* Two wide, very low-alpha ambient radiance washes (fx-showcase parity).
+   Glass only reads if there is something worth seeing through it. */
 body::before {
   content: '';
   position: fixed;
@@ -153,7 +168,7 @@ body::before {
   pointer-events: none;
   background:
     radial-gradient(1100px 460px at 82% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
-    radial-gradient(900px 520px at -8% 108%, color-mix(in srgb, var(--badge-hard-fg, #FB7185) 6%, transparent), transparent 62%);
+    radial-gradient(900px 520px at -8% 108%, color-mix(in srgb, var(--done) 8%, transparent), transparent 62%);
   transition: opacity 0.3s var(--ease-smooth);
 }
 
@@ -240,12 +255,37 @@ html[data-theme="light"] .nav-cat-btn:hover {
   background: rgba(17, 24, 39, 0.08);
   color: var(--accent);
 }
-/* Translucent Glass Header */
+/* Frosted Glass: Subpixel-preserving pseudo-element architecture (fx-showcase parity) */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass::before,
+  header.glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--canvas-sub) 70%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass::before,
+  header.glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--canvas-sub);
+  }
+}
+.glass,
 header.glass {
-  background: color-mix(in srgb, var(--canvas-sub) 75%, transparent) !important;
-  backdrop-filter: blur(12px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-  box-shadow: inset 0 -1px 0 var(--border-soft) !important;
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+  box-shadow: 0 1px 0 var(--rim), var(--shadow-rest) !important;
 }
 
 /* Sidebar Navigation Item Styling */
@@ -714,8 +754,36 @@ html[data-theme="light"] .ltc-hint {
 }
 
 /* --------------------------------------------------------------------------
-   9. Visual Style Effects (Modern Code Boxes, Spotlight Tracking & Underline Sweep)
+   9. Visual Style Effects (Cards, Modern Code Boxes, Button Sweeps & Spotlight)
    -------------------------------------------------------------------------- */
+
+/* Cards & Containers with Specular Sheen (fx-showcase parity) */
+.card {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: var(--canvas-sub);
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.22s var(--ease-snappy),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.22s var(--ease-smooth),
+              background-color 0.15s var(--ease-smooth);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.card.hoverable:hover,
+.card.hoverable:focus-within {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
 
 /* Modern Code Boxes */
 .code {
@@ -725,11 +793,21 @@ html[data-theme="light"] .ltc-hint {
   background: var(--canvas-sub);
   margin: 1.25rem 0;
   overflow: hidden;
+  box-shadow: var(--shadow-rest);
   transition: border-color 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
+}
+.code::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
 }
 .code:hover {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-lift);
 }
 .code-bar {
   display: flex;
@@ -791,22 +869,82 @@ html[data-theme="light"] .ltc-hint {
   background: transparent !important;
 }
 
-/* Spotlight Tracking & Underline Sweep */
-[data-spot] {
+/* Button Physical Hover & Specular Sweeps (fx-showcase parity) */
+.btn,
+a.btn,
+button[data-guide],
+#homeStart,
+#guidesBtn {
   position: relative;
   overflow: hidden;
+  text-decoration: none !important;
+  transition: transform 0.15s var(--ease-snappy),
+              background-color 0.12s var(--ease-smooth),
+              border-color 0.12s var(--ease-smooth),
+              box-shadow 0.15s var(--ease-smooth),
+              color 0.12s var(--ease-smooth);
 }
-[data-spot]::after {
+.btn:hover:not(:disabled),
+button[data-guide]:hover:not(:disabled),
+#homeStart:hover:not(:disabled),
+#guidesBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.btn:active:not(:disabled),
+button[data-guide]:active:not(:disabled),
+#homeStart:active:not(:disabled),
+#guidesBtn:active:not(:disabled) {
+  transform: translateY(0) scale(0.975);
+}
+.btn::after,
+button[data-guide]::after,
+#homeStart::after,
+#guidesBtn::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(350px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,.26) 48%, transparent 64%);
+  transform: translateX(-120%);
+  transition: transform 0.3s var(--ease-smooth);
 }
-[data-spot]:hover::after {
+.btn:hover:not(:disabled)::after,
+button[data-guide]:hover:not(:disabled)::after,
+#homeStart:hover:not(:disabled)::after,
+#guidesBtn:hover:not(:disabled)::after {
+  transform: translateX(120%);
+}
+html[data-theme="light"] .btn::after,
+html[data-theme="light"] button[data-guide]::after,
+html[data-theme="light"] #homeStart::after,
+html[data-theme="light"] #guidesBtn::after {
+  background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,.7) 48%, transparent 64%);
+}
+
+/* Spotlight Tracking & Underline Sweep */
+[data-spot],
+.spot {
+  position: relative;
+  overflow: hidden;
+}
+[data-spot]::after,
+.spot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 13%, transparent), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-smooth);
+}
+[data-spot]:hover::after,
+.spot:hover::after {
   opacity: 1;
+}
+[data-spot] > *,
+.spot > * {
+  position: relative;
 }
 
 .ulink {
