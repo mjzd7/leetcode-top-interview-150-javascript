@@ -7,6 +7,7 @@
     "validate": "node scripts/validate-guide.mjs",
     "audit": "node scripts/audit-curriculum.mjs",
     "build": "node scripts/build-site.mjs",
+    "build:deploy": "npm run gen:blocks && npm run gen:traces && npm run build",
     "test": "node scripts/test-runner.mjs",
     "test:judge": "node scripts/test-judge.mjs",
     "test:serialize": "node scripts/test-serialize.mjs",
