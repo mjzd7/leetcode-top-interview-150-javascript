@@ -48,3 +48,4 @@ writeFileSync(path, json);
 const written = readFileSync(path, 'utf8');
 console.log(`vercel.json: ${stale.length} hash(es) refreshed\n  ${stale.join('\n  ')}`);
 console.log('verify:', hashes.every(h => written.includes(h)) ? 'written' : 'FAILED');
+

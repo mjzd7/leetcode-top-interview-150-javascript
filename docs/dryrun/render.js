@@ -1666,7 +1666,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  * than adding a stylesheet, and `docs/index.html` is not this row's to edit — so the SVG stages
  * paint themselves from the same values the stylesheet declares.
  */
-const INK = {
+const INK_DARK = {
   line: 'rgba(148, 163, 184, 0.13)',
   lineStrong: 'rgba(148, 163, 184, 0.42)',
   surface: '#121724',
@@ -1677,6 +1677,27 @@ const INK = {
   rose: '#FB7185',
   mono: 'var(--font-mono)',
 };
+
+const INK_LIGHT = {
+  line: 'rgba(0, 0, 0, 0.12)',
+  lineStrong: 'rgba(0, 0, 0, 0.35)',
+  surface: '#E5E7EB',
+  ink: '#111827',
+  muted: '#4B5563',
+  accent: '#111827',
+  violet: '#6D28D9',
+  rose: '#D03B50',
+  mono: '"JetBrains Mono", ui-monospace, monospace',
+};
+
+const INK = new Proxy(INK_DARK, {
+  get(target, prop) {
+    if (typeof document !== 'undefined' && document.documentElement && document.documentElement.getAttribute('data-theme') === 'light') {
+      return INK_LIGHT[prop] !== undefined ? INK_LIGHT[prop] : target[prop];
+    }
+    return target[prop];
+  }
+});
 
 /** A flex row that wraps, matching `.viz-row`'s box metrics without the class. */
 const FLEX_ROW = 'display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;';

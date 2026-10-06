@@ -1,0 +1,141 @@
+/* =========================================================================
+   Custom Cursor & Magnetic Lens Physics
+   ========================================================================= */
+
+#cur-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  mix-blend-mode: difference;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+#cur-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9998;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border-radius: 50%;
+  background: var(--cur-ring-bg, rgba(150, 150, 150, 0.1));
+  color: var(--cur-ring-border, rgba(150, 150, 150, 0.3));
+  -webkit-backdrop-filter: blur(0.5px);
+  backdrop-filter: blur(0.5px);
+  will-change: transform, color;
+  transform-origin: center center;
+  transition: color 0.15s ease;
+}
+
+/* Fallback styles if SVG is not yet mounted */
+#cur-ring:not(:has(svg)) {
+  border: 1px solid var(--cur-ring-border, rgba(150, 150, 150, 0.3));
+}
+#cur-dot:not(:has(svg)) {
+  background: #fff;
+}
+
+/* Hover mode */
+html[data-cursor-mode="link"] #cur-ring {
+  color: var(--accent-rim, rgba(200, 250, 75, 0.55));
+}
+html[data-cursor-mode="link"] #cur-ring:not(:has(svg)) {
+  border-color: var(--accent-rim, rgba(200, 250, 75, 0.55));
+}
+
+/* Inline links & tags mode: remove the circle ring completely */
+html[data-cursor-mode="inline-link"] #cur-ring {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="inline-link"] #cur-dot svg {
+  transform: scale(1.6);
+  transition: transform 0.18s var(--ease-snappy);
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+html[data-cursor-mode="inline-link"] #cur-dot svg circle {
+  fill: var(--accent) !important;
+}
+
+/* Text mode: reform circle into custom I-beam straight-line caret */
+html[data-cursor-mode="text"] #cur-dot {
+  opacity: 0 !important;
+}
+
+html[data-cursor-mode="text"] #cur-ring {
+  opacity: 1 !important;
+  width: 2px !important;
+  height: 22px !important;
+  margin: -11px 0 0 -1px !important;
+  border-radius: 1px !important;
+  background: var(--accent, #C8FA4B) !important;
+  color: var(--accent, #C8FA4B) !important;
+  border: none !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #C8FA4B) 60%, transparent) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: width 0.12s var(--ease-snappy), height 0.12s var(--ease-snappy), margin 0.12s var(--ease-snappy), border-radius 0.12s var(--ease-snappy), background-color 0.15s ease !important;
+}
+
+/* Hide SVG circle while in text mode so only reformed I-beam geometry renders */
+html[data-cursor-mode="text"] #cur-ring svg {
+  display: none !important;
+}
+
+/* Horizontal bars (top & bottom serifs) forming the classic "I" shape */
+html[data-cursor-mode="text"] #cur-ring::before,
+html[data-cursor-mode="text"] #cur-ring::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 2px;
+  margin-left: -4px;
+  background: var(--accent, #C8FA4B);
+  border-radius: 1px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent, #C8FA4B) 50%, transparent);
+}
+
+html[data-cursor-mode="text"] #cur-ring::before {
+  top: 0;
+}
+
+html[data-cursor-mode="text"] #cur-ring::after {
+  bottom: 0;
+}
+
+/* High-contrast light mode styling for custom I-beam */
+html[data-theme="light"][data-cursor-mode="text"] #cur-ring,
+html[data-theme="light"][data-cursor-mode="text"] #cur-ring::before,
+html[data-theme="light"][data-cursor-mode="text"] #cur-ring::after {
+  background: #0A0D13 !important;
+  color: #0A0D13 !important;
+  box-shadow: 0 0 4px rgba(10, 13, 19, 0.35) !important;
+}
+
+/* Universal native cursor suppression: native cursor stays hidden everywhere when custom cursor is active */
+@media (hover: hover) and (pointer: fine) {
+  html[data-cursor="on"],
+  html[data-cursor="on"] * {
+    cursor: none !important;
+  }
+}
+
+/* Accessibility gating */
+@media (hover: none) or (pointer: coarse), (prefers-reduced-motion: reduce), (forced-colors: active) {
+  #cur-dot,
+  #cur-ring {
+    display: none !important;
+  }
+  * {
+    cursor: auto !important;
+  }
+}

@@ -1,0 +1,928 @@
+/* ==========================================================================
+   Design Tokens & Theme System — Top Interview 150 JS Mastery
+   docs/assets/theme.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Motion Curves
+   -------------------------------------------------------------------------- */
+:root {
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* --------------------------------------------------------------------------
+   1. Dark Mode Tokens (Lime Accent & Deep Obsidian Canvas)
+   Default / fallback theme on :root, explicitly active under html[data-theme="dark"]
+   -------------------------------------------------------------------------- */
+:root,
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces & Structural Layers */
+  --canvas: #08090D;
+  --canvas-sub: #0D1017;
+  --canvas-ins: #0A0D13;
+  --raised: #121724;
+  --rail-bg: #0B0D12;
+
+  /* Borders */
+  --border: #2A3448;
+  --border-soft: rgba(148, 163, 184, 0.13);
+
+  /* Typography / Inks */
+  --fg: #E9EDF4;
+  --fg-prose: #C6CDDB;
+  --fg-muted: #8B94A7;
+  --fg-subtle: #768390;
+
+  /* Brand / Accent (Original Lime) */
+  --accent: #C8FA4B;
+  --accent-ink: #08090D;
+  --accent-soft: rgba(200, 250, 75, 0.11);
+  --accent-rim: rgba(200, 250, 75, 0.55);
+
+  /* Semantic Badges */
+  --easy: #34D399;
+  --med: #FBBF24;
+  --hard: #FB7185;
+  --done: #C4B5FD;
+  --badge-easy-fg: #34D399;
+  --badge-easy-bg: rgba(52, 211, 153, 0.12);
+  --badge-med-fg: #FBBF24;
+  --badge-med-bg: rgba(251, 191, 36, 0.12);
+  --badge-hard-fg: #FB7185;
+  --badge-hard-bg: rgba(251, 113, 133, 0.12);
+
+  /* Background Glows */
+  --glow-1: rgba(200, 250, 75, 0.055);
+  --glow-2: rgba(139, 92, 246, 0.06);
+  --header-bg: rgba(8, 9, 13, 0.85);
+
+  /* Cursor Tokens */
+  --cur-ring-bg: rgba(150, 150, 150, 0.1);
+  --cur-ring-border: rgba(150, 150, 150, 0.3);
+
+  /* Legacy Aliases for Seamless Backwards Compatibility */
+  --bg: var(--canvas);
+  --surface: var(--canvas-sub);
+  --line: var(--border-soft);
+  --ink: var(--fg);
+  --muted: var(--fg-muted);
+}
+
+/* --------------------------------------------------------------------------
+   2. Light Mode Tokens (Monochrome Brutalist with High Contrast)
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces & Structural Layers */
+  --canvas: #FFFFFF;
+  --canvas-sub: #F3F4F6;
+  --canvas-ins: #E5E7EB;
+  --raised: #E5E7EB;
+  --rail-bg: #FFFFFF;
+
+  /* Borders */
+  --border: #9CA3AF;
+  --border-soft: rgba(0, 0, 0, 0.12);
+
+  /* Typography / Inks (Passes WCAG AA >= 4.5:1) */
+  --fg: #111827;
+  --fg-prose: #1F2937;
+  --fg-muted: #4B5563;
+  --fg-subtle: #5B6472;
+
+  /* Brand / Accent (Monochrome Brutalist) */
+  --accent: #111827;
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(17, 24, 39, 0.10);
+  --accent-rim: rgba(17, 24, 39, 0.55);
+
+  /* Semantic Badges (Passes WCAG AA >= 4.5:1 on #F3F4F6) */
+  --easy: #157F4B;
+  --med: #8A5A00;
+  --hard: #C0342F;
+  --done: #6B3FBF;
+  --badge-easy-fg: #157F4B;
+  --badge-easy-bg: rgba(21, 127, 75, 0.10);
+  --badge-med-fg: #8A5A00;
+  --badge-med-bg: rgba(138, 90, 0, 0.10);
+  --badge-hard-fg: #D03B50;
+  --badge-hard-bg: rgba(208, 59, 80, 0.10);
+
+  /* Background Glows (Subtle Warm Tint) */
+  --glow-1: rgba(17, 24, 39, 0.02);
+  --glow-2: rgba(100, 116, 139, 0.03);
+  --header-bg: rgba(255, 255, 255, 0.85);
+
+  /* Cursor Tokens */
+  --cur-ring-bg: rgba(50, 50, 50, 0.08);
+  --cur-ring-border: rgba(50, 50, 50, 0.35);
+
+  /* Legacy Aliases for Seamless Backwards Compatibility */
+  --bg: var(--canvas);
+  --surface: var(--canvas-sub);
+  --line: var(--border-soft);
+  --ink: var(--fg);
+  --muted: var(--fg-muted);
+}
+
+/* --------------------------------------------------------------------------
+   3. Root & Body Application
+   -------------------------------------------------------------------------- */
+html {
+  background-color: var(--canvas);
+  color: var(--fg);
+}
+
+body {
+  background:
+    radial-gradient(1100px 420px at 85% -10%, var(--glow-1), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, var(--glow-2), transparent 60%),
+    var(--canvas);
+  color: var(--fg-prose);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 460px at 82% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    radial-gradient(900px 520px at -8% 108%, color-mix(in srgb, var(--badge-hard-fg, #FB7185) 6%, transparent), transparent 62%);
+  transition: opacity 0.3s var(--ease-smooth);
+}
+
+/* Light Mode Link Affordance: clean resting state, dynamic underline on hover */
+html[data-theme="light"] .prose a,
+html[data-theme="light"] a.prose-link {
+  text-decoration: none !important;
+}
+html[data-theme="light"] .prose a:hover,
+html[data-theme="light"] a.prose-link:hover {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  text-decoration-color: var(--accent) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. Rate Limiter SVG Architecture Overrides
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] #token-bucket-svg rect[fill="#121724"],
+html[data-theme="light"] #leaky-bucket-svg rect[fill="#121724"],
+html[data-theme="light"] #sliding-log-svg rect[fill="#121724"],
+html[data-theme="light"] #fixed-window-svg rect[fill="#121724"],
+html[data-theme="light"] figure svg rect[fill="#121724"],
+html[data-theme="light"] figure svg rect[fill="#0D1017"],
+html[data-theme="light"] figure svg rect[fill="#0A0D13"] {
+  fill: var(--canvas-sub);
+  stroke: var(--border);
+}
+html[data-theme="light"] figure svg text[fill="#fff"],
+html[data-theme="light"] figure svg text[fill="#ffffff"] {
+  fill: var(--fg);
+}
+html[data-theme="light"] figure svg path[fill="#0A0D13"] {
+  fill: var(--canvas-sub);
+}
+
+/* --------------------------------------------------------------------------
+   5. Surface Adaptations & Controls
+   -------------------------------------------------------------------------- */
+#themeToggle {
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s var(--ease-smooth);
+}
+#themeToggle:hover {
+  transform: translateY(-1px);
+}
+#themeToggle:active {
+  transform: scale(0.96);
+}
+html[data-theme="light"] #themeToggle {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.04);
+  color: #111827;
+}
+html[data-theme="light"] #themeToggle:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="light"] #sidebar {
+  background-color: var(--canvas);
+  border-color: var(--border-soft);
+}
+html[data-theme="light"] #ringSvg circle:first-child {
+  stroke: var(--canvas-ins);
+}
+html[data-theme="light"] #ringFg {
+  stroke: var(--accent);
+}
+html[data-theme="light"] #searchInput {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--border-soft);
+  color: var(--fg);
+}
+html[data-theme="light"] #searchInput::placeholder {
+  color: var(--fg-muted);
+}
+html[data-theme="light"] #paletteCard {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--fg);
+}
+html[data-theme="light"] .nav-cat-btn:hover {
+  background: rgba(17, 24, 39, 0.08);
+  color: var(--accent);
+}
+/* Translucent Glass Header */
+header.glass {
+  background: color-mix(in srgb, var(--canvas-sub) 75%, transparent) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: inset 0 -1px 0 var(--border-soft) !important;
+}
+
+/* Sidebar Navigation Item Styling */
+.nav-item {
+  position: relative;
+  transition: padding-left 0.18s var(--ease-snappy), background-color 0.18s var(--ease-snappy), color 0.18s var(--ease-snappy), border-color 0.18s var(--ease-snappy) !important;
+  overflow: hidden;
+}
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+  transform: scaleY(0);
+  transform-origin: 50% 50%;
+  transition: transform 0.18s var(--ease-snappy);
+}
+.nav-item:hover {
+  background: var(--canvas-ins) !important;
+  padding-left: 20px !important;
+}
+.nav-item:hover::before {
+  transform: scaleY(1);
+}
+.nav-item[data-active="true"],
+.nav-item[aria-current="page"] {
+  background: var(--accent-soft) !important;
+  border-color: var(--accent-rim) !important;
+  color: var(--fg) !important;
+}
+.nav-item[data-active="true"]::before,
+.nav-item[aria-current="page"]::before {
+  transform: scaleY(1);
+}
+#sidebar[data-stage="2"][data-rail-mode="num"] .nav-item:hover {
+  padding-left: 0 !important;
+}
+html[data-theme="light"] .nav-item:hover {
+  background: rgba(17, 24, 39, 0.05);
+}
+html[data-theme="light"] #sidebar[data-stage="2"] .nav-item[aria-current="page"] {
+  background: rgba(17, 24, 39, 0.12) !important;
+  color: var(--accent) !important;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   6. Modernized Chat Box UI (Section 10 of Blueprint)
+   -------------------------------------------------------------------------- */
+.ltc-panel {
+  background: var(--rail-bg);
+  border-color: var(--border-soft);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.ltc-head {
+  background: linear-gradient(180deg, var(--accent-soft), transparent);
+  border-bottom: 1px solid var(--border-soft);
+}
+html[data-theme="light"] .ltc-head-title {
+  color: var(--fg);
+}
+html[data-theme="light"] .ltc-head-mark {
+  background: linear-gradient(140deg, #1F2937, #111827);
+  color: #FFFFFF;
+  box-shadow: 0 3px 12px rgba(17, 24, 39, 0.2);
+}
+
+.ltc-status {
+  border-color: var(--border-soft);
+  background: rgba(125, 125, 125, 0.05);
+  color: var(--fg-muted);
+}
+html[data-theme="light"] .ltc-status-dot {
+  background: #157F4B;
+}
+
+/* Modern Suggestion Chips with Physical Lift */
+.ltc-chip {
+  min-height: 44px;
+  background: var(--canvas-sub);
+  border: 1px solid var(--border-soft);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 11.5px;
+  transition: transform 0.16s var(--ease-smooth),
+              background-color 0.16s ease,
+              border-color 0.16s ease,
+              box-shadow 0.16s ease,
+              color 0.16s ease;
+  cursor: pointer;
+}
+.ltc-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-rim);
+  background: var(--accent-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--fg);
+}
+.ltc-chip:active {
+  transform: scale(0.98);
+}
+.ltc-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Tactile Send Button */
+.ltc-send {
+  background: var(--accent);
+  color: var(--accent-ink);
+  transition: transform 0.15s var(--ease-smooth),
+              background-color 0.15s ease,
+              box-shadow 0.15s ease;
+}
+.ltc-send:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px var(--accent-soft);
+}
+.ltc-send:active:not(:disabled) {
+  transform: scale(0.96);
+}
+html[data-theme="light"] .ltc-send:hover:not(:disabled) {
+  background: #1F2937;
+  color: #FFFFFF;
+}
+html[data-theme="light"] .ltc-send:disabled {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--fg-muted);
+  border-color: var(--border-soft);
+}
+
+/* Modern Composer Capsule */
+.ltc-composer {
+  background: var(--canvas-ins);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.ltc-composer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+html[data-theme="light"] .ltc-form {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), var(--canvas) 40%);
+}
+html[data-theme="light"] .ltc-composer {
+  background: var(--canvas);
+  border-color: var(--border-soft);
+}
+html[data-theme="light"] .ltc-composer:focus-within {
+  border-color: var(--accent);
+  background: var(--canvas);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+html[data-theme="light"] #ltcInput {
+  color: var(--fg);
+}
+html[data-theme="light"] #ltcInput::placeholder {
+  color: var(--fg-muted);
+}
+
+/* User Message Pill */
+.ltc-msg--user .ltc-msg-body {
+  background: var(--raised);
+  border: 1px solid var(--border-soft);
+  color: var(--fg);
+  border-radius: 16px 16px 4px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Assistant Message Typography */
+.ltc-msg--assistant .ltc-msg-body {
+  color: var(--fg-prose);
+}
+
+/* Mac-Style Traffic Light Strip in Code Blocks */
+.chat-code {
+  position: relative;
+  margin: 0.6rem 0;
+}
+.chat-code::before {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--badge-hard-fg);
+  box-shadow: 12px 0 0 var(--badge-med-fg), 24px 0 0 var(--badge-easy-fg);
+  z-index: 1;
+}
+html[data-theme="light"] .chat-code pre {
+  background: var(--canvas-ins);
+  border-color: var(--border-soft);
+  color: var(--fg);
+}
+html[data-theme="light"] .chat-code-copy {
+  border-color: var(--border-soft);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--fg-muted);
+}
+html[data-theme="light"] .chat-code-copy:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--fg);
+}
+
+/* Floating Scroll-Down Chevron */
+.ltc-scroll-down {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s var(--ease-smooth), opacity 0.2s ease, background-color 0.15s ease;
+}
+.ltc-scroll-down:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+html[data-theme="light"] .ltc-scroll-down {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border);
+  color: var(--fg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* Keyboard Keycap Badges */
+kbd.k {
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 0.65rem;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 4px;
+  background: var(--canvas-ins);
+  color: var(--fg-muted);
+}
+
+/* --------------------------------------------------------------------------
+   7. Tactile Physical Motion & Surface Physics (Inspired by fx-showcase.html)
+   -------------------------------------------------------------------------- */
+button[data-guide],
+#homeStart,
+#homeSearch,
+#guidesBtn,
+#paletteBtn,
+#themeToggle,
+.ltc-send,
+.ltc-chip {
+  transition: transform 0.18s var(--ease-snappy, cubic-bezier(0.2, 0.9, 0.2, 1)),
+              box-shadow 0.18s var(--ease-snappy, cubic-bezier(0.2, 0.9, 0.2, 1)),
+              background-color 0.18s ease,
+              border-color 0.18s ease,
+              color 0.18s ease;
+}
+
+button[data-guide]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  border-color: var(--accent-rim) !important;
+}
+button[data-guide]:active {
+  transform: translateY(0) scale(0.985);
+}
+
+#homeStart {
+  background: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  box-shadow: 0 2px 8px var(--accent-soft);
+}
+#homeStart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-soft);
+}
+#homeStart:active {
+  transform: translateY(0) scale(0.97);
+}
+
+#homeSearch {
+  background: var(--canvas-sub);
+  border-color: var(--border-soft) !important;
+  color: var(--fg-muted) !important;
+}
+#homeSearch:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-rim) !important;
+  color: var(--fg) !important;
+}
+#homeSearch:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* --------------------------------------------------------------------------
+   8. Complete Light Mode Typography, Cards & Structural Adaptations
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] .text-slate-100,
+html[data-theme="light"] .text-slate-200,
+html[data-theme="light"] .text-white,
+html[data-theme="light"] strong.text-slate-100,
+html[data-theme="light"] span.text-slate-100 {
+  color: var(--fg) !important;
+}
+
+html[data-theme="light"] .text-slate-400 { color: #4B5563 !important; }
+html[data-theme="light"] .text-slate-500 { color: #374151 !important; }
+html[data-theme="light"] .text-slate-600 { color: #1F2937 !important; }
+html[data-theme="light"] .text-slate-300 { color: #374151 !important; }
+html[data-theme="light"] .nav-group-label { color: #374151 !important; }
+html[data-theme="light"] .nav-group-count { color: #4B5563 !important; }
+
+/* Cards & Surfaces */
+html[data-theme="light"] .bg-white\/\[0\.02\],
+html[data-theme="light"] .bg-white\/\[0\.03\],
+html[data-theme="light"] .bg-white\/\[0\.04\],
+html[data-theme="light"] .bg-white\/5 {
+  background-color: var(--canvas-sub) !important;
+}
+
+html[data-theme="light"] .bg-white\/\[0\.07\],
+html[data-theme="light"] .bg-white\/10 {
+  background-color: var(--raised) !important;
+}
+
+html[data-theme="light"] .border-\[rgba\(148\,163\,184\,0\.15\)\],
+html[data-theme="light"] .border-\[rgba\(148\,163\,184\,0\.13\)\],
+html[data-theme="light"] .border-\[rgba\(148\,163\,184\,0\.2\)\] {
+  border-color: var(--border-soft) !important;
+}
+
+html[data-theme="light"] .border-\[rgba\(200\,250\,75\,\.25\)\],
+html[data-theme="light"] .border-\[rgba\(200\,250\,75\,\.3\)\],
+html[data-theme="light"] .border-\[rgba\(200\,250\,75\,\.35\)\] {
+  border-color: rgba(17, 24, 39, 0.16) !important;
+}
+
+html[data-theme="light"] .bg-\[rgba\(200\,250\,75\,\.04\)\],
+html[data-theme="light"] .bg-\[rgba\(200\,250\,75\,\.06\)\],
+html[data-theme="light"] .bg-\[rgba\(200\,250\,75\,\.07\)\] {
+  background-color: var(--canvas-sub) !important;
+}
+
+html[data-theme="light"] .hover\:bg-\[rgba\(200\,250\,75\,\.1\)\]:hover,
+html[data-theme="light"] .hover\:bg-\[rgba\(200\,250\,75\,\.14\)\]:hover {
+  background-color: var(--raised) !important;
+}
+
+html[data-theme="light"] button[data-guide]:hover {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+  border-color: var(--border) !important;
+}
+
+/* Header Buttons */
+html[data-theme="light"] #guidesBtn {
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+  background: var(--canvas-sub) !important;
+}
+html[data-theme="light"] #guidesBtn:hover {
+  background: var(--raised) !important;
+}
+
+html[data-theme="light"] #paletteBtn {
+  border-color: var(--border-soft) !important;
+  color: var(--fg-muted) !important;
+  background: var(--canvas-sub) !important;
+}
+html[data-theme="light"] #paletteBtn:hover {
+  background: var(--raised) !important;
+  color: var(--fg) !important;
+}
+
+html[data-theme="light"] #menuBtn {
+  color: var(--fg) !important;
+}
+
+/* Prose Typography in Light Mode */
+html[data-theme="light"] .prose {
+  color: var(--fg-prose) !important;
+}
+html[data-theme="light"] .prose h1,
+html[data-theme="light"] .prose h2 {
+  color: var(--fg) !important;
+  border-color: var(--border-soft) !important;
+}
+html[data-theme="light"] .prose h3 {
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .prose p {
+  color: var(--fg-prose);
+}
+html[data-theme="light"] .prose strong {
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .prose th {
+  background: var(--canvas-sub) !important;
+  color: var(--fg) !important;
+  border-color: var(--border-soft) !important;
+}
+html[data-theme="light"] .prose td {
+  border-color: var(--border-soft) !important;
+  color: var(--fg-prose);
+}
+html[data-theme="light"] .prose table {
+  border-color: var(--border-soft) !important;
+}
+html[data-theme="light"] .prose pre {
+  background: var(--canvas-sub) !important;
+  border-color: var(--border-soft) !important;
+}
+html[data-theme="light"] .prose code:not(pre code) {
+  background: rgba(17, 24, 39, 0.06) !important;
+  color: var(--fg) !important;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+}
+html[data-theme="light"] .prose blockquote {
+  border-left-color: var(--fg) !important;
+  color: var(--fg-muted) !important;
+}
+html[data-theme="light"] .mermaid {
+  background: var(--canvas-sub) !important;
+  border-color: var(--border-soft) !important;
+}
+
+/* Chat Widget in Light Mode */
+html[data-theme="light"] .ltc-empty-title {
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .ltc-empty-mark {
+  background: rgba(17, 24, 39, 0.06) !important;
+  border-color: rgba(17, 24, 39, 0.15) !important;
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .ltc-empty-page {
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .ltc-empty-sub,
+html[data-theme="light"] .ltc-empty-privacy {
+  color: var(--fg-muted) !important;
+  border-color: var(--border-soft) !important;
+}
+html[data-theme="light"] .ltc-msg--user .ltc-msg-body {
+  background: var(--canvas-sub) !important;
+  color: var(--fg) !important;
+  border-color: var(--border-soft) !important;
+}
+html[data-theme="light"] .ltc-msg--assistant .ltc-msg-body {
+  color: var(--fg-prose) !important;
+}
+html[data-theme="light"] .ltc-msg-body h1,
+html[data-theme="light"] .ltc-msg-body h2,
+html[data-theme="light"] .ltc-msg-body h3 {
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .ltc-msg-copy {
+  color: var(--fg-muted) !important;
+}
+html[data-theme="light"] .ltc-msg-copy:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: var(--fg) !important;
+}
+html[data-theme="light"] .ltc-hint {
+  color: var(--fg-muted) !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. Visual Style Effects (Modern Code Boxes, Spotlight Tracking & Underline Sweep)
+   -------------------------------------------------------------------------- */
+
+/* Modern Code Boxes */
+.code {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--canvas-sub);
+  margin: 1.25rem 0;
+  overflow: hidden;
+  transition: border-color 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
+}
+.code:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.25);
+}
+.code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--fg-muted);
+  user-select: none;
+}
+.code-bar .dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.code-bar .dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.code-bar .dots i:nth-child(1) { background: var(--hard, #FB7185); }
+.code-bar .dots i:nth-child(2) { background: var(--med, #FBBF24); }
+.code-bar .dots i:nth-child(3) { background: var(--easy, #34D399); }
+.code-bar .code-title {
+  font-weight: 500;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.code-bar .copy-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.code-bar .copy-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-rim);
+}
+.code pre {
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+/* Spotlight Tracking & Underline Sweep */
+[data-spot] {
+  position: relative;
+  overflow: hidden;
+}
+[data-spot]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(350px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+[data-spot]:hover::after {
+  opacity: 1;
+}
+
+.ulink {
+  position: relative;
+  text-decoration: none !important;
+}
+.ulink::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: 100% 50%;
+  transition: transform 0.22s var(--ease-snappy);
+}
+.ulink:hover::after {
+  transform: scaleX(1);
+  transform-origin: 0% 50%;
+}
+
+/* ==========================================================================
+   Inline Links, Tags & LeetCode Pills
+   No static underline at rest; dynamic underline, glow, and lift on hover
+   ========================================================================== */
+a:not(.btn):not(.nav-item):not(#brandHome):not(#paletteBtn):not(#guidesBtn):not(#themeToggle):not(.ltc-chip):not(.nav-cat-btn):not([role="button"]):not([class*="btn"]):not([class*="h-11"]):not([class*="h-10"]),
+.prose a,
+.prose a > code,
+.leetcode-link,
+.leetcode-code,
+a.prose-link,
+a.inline-link,
+a.ulink,
+article a:not(.btn):not(.nav-item),
+footer a {
+  text-decoration: none !important;
+  transition: text-decoration-color 0.18s var(--ease-snappy), color 0.18s var(--ease-snappy), border-color 0.18s var(--ease-snappy), background-color 0.18s var(--ease-snappy), transform 0.18s var(--ease-snappy) !important;
+}
+
+/* Hover state: underline dynamically to highlight for the user */
+a:not(.btn):not(.nav-item):not(#brandHome):not(#paletteBtn):not(#guidesBtn):not(#themeToggle):not(.ltc-chip):not(.nav-cat-btn):not([role="button"]):not([class*="btn"]):not([class*="h-11"]):not([class*="h-10"]):hover,
+.prose a:hover,
+.prose a:hover > code,
+.leetcode-link:hover,
+.leetcode-link:hover > code,
+.leetcode-link:hover .leetcode-code,
+a.prose-link:hover,
+a.inline-link:hover,
+a.ulink:hover,
+article a:not(.btn):not(.nav-item):hover,
+footer a:hover {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  text-decoration-thickness: 1.5px !important;
+  text-decoration-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+/* LeetCode link pill enhancement */
+.leetcode-link {
+  text-decoration: none !important;
+  display: inline-flex;
+}
+.leetcode-link > code,
+.leetcode-code {
+  text-decoration: none !important;
+  transition: background-color 0.18s var(--ease-snappy), border-color 0.18s var(--ease-snappy), color 0.18s var(--ease-snappy), box-shadow 0.18s var(--ease-snappy), transform 0.18s var(--ease-snappy) !important;
+}
+.leetcode-link:hover > code,
+.leetcode-link:hover .leetcode-code {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  text-decoration-thickness: 1.5px !important;
+  text-decoration-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Primer Links (Markdown Prerequisite Badges)
+   No static underline at rest; dynamic underline, glow, and lift on hover
+   ========================================================================== */
+.primer-link,
+.prose code.primer-link {
+  text-decoration: none !important;
+  cursor: pointer !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--canvas-sub)) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft)) !important;
+  color: var(--fg) !important;
+  padding: 0.15rem 0.45rem !important;
+  border-radius: 0.375rem !important;
+  font-family: "JetBrains Mono", monospace !important;
+  font-size: 0.85em !important;
+  font-weight: 500;
+  transition: all 0.18s var(--ease-snappy) !important;
+}
+
+.primer-link:hover,
+.prose code.primer-link:hover {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  text-decoration-thickness: 1.5px !important;
+  text-decoration-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 18%, var(--canvas-sub)) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--accent) 25%, transparent) !important;
+}
+
+
+
+
