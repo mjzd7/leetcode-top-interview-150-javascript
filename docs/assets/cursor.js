@@ -348,6 +348,21 @@
 
     mouseX = e.clientX;
     mouseY = e.clientY;
+
+    // Delegated spotlight tracking: compute --mx and --my on closest [data-spot], .spot
+    if (e.target instanceof Element) {
+      const spotEl = e.target.closest('[data-spot], .spot');
+      if (spotEl) {
+        const rect = spotEl.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const mx = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1) + '%';
+          const my = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1) + '%';
+          spotEl.style.setProperty('--mx', mx);
+          spotEl.style.setProperty('--my', my);
+        }
+      }
+    }
+
     updateTarget(e.target);
     wakeUp();
   }
