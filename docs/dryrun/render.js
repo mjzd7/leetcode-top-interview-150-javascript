@@ -1675,7 +1675,7 @@ const INK = {
   accent: '#C8FA4B',
   violet: '#8B5CF6',
   rose: '#FB7185',
-  mono: '"JetBrains Mono", ui-monospace, monospace',
+  mono: 'var(--font-mono)',
 };
 
 /** A flex row that wraps, matching `.viz-row`'s box metrics without the class. */
