@@ -67,13 +67,8 @@
       --accent-ink: #101303;
       --rail-bg: var(--canvas-sub);
     }
-    html { background: var(--bg); overflow-x: hidden; overflow-x: clip; }
-    body { overflow-x: hidden; overflow-x: clip;
-      background:
-      radial-gradient(1100px 420px at 85% -10%, rgba(200, 250, 75, 0.055), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, rgba(139, 92, 246, 0.06), transparent 60%),
-      var(--bg);
-    }
+    html { overflow-x: hidden; overflow-x: clip; }
+    body { overflow-x: hidden; overflow-x: clip; }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #232B3D; border-radius: 8px; }
@@ -82,8 +77,8 @@
     .font-display { font-family: var(--font-display); }
     .prose { color: #C6CDDB; font-size: 0.95rem; line-height: 1.72; }
     .prose pre {
-      background: #0A0D13 !important;
-      border: 1px solid var(--line);
+      background: var(--canvas-ins);
+      border: 1px solid var(--border-soft);
       border-radius: 0.75rem;
       padding: 1rem 1.1rem;
       overflow-x: auto;
@@ -125,7 +120,7 @@
     .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
     .prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
     .mermaid {
-      background: #0A0D13; border: 1px solid var(--line); border-radius: 0.75rem;
+      background: var(--canvas-ins); border: 1px solid var(--border-soft); border-radius: 0.75rem;
       padding: 1.25rem; margin: 1.4rem 0; display: flex; justify-content: center; overflow-x: auto;
       align-items: flex-start;
     }
@@ -145,7 +140,7 @@
       position: fixed; z-index: 70; left: 0; top: 0;
       padding: 0.3rem 0.55rem; border-radius: 8px;
       width: max-content; max-width: 260px;
-      background: #1A2130; border: 1px solid #2A3448;
+      background: var(--raised); border: 1px solid var(--border);
       color: #E9EDF4; font-size: 12px; line-height: 1.35;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
       opacity: 0; visibility: hidden; pointer-events: none;
@@ -182,7 +177,7 @@
     #prevNext [data-nav] { min-width: 0; }
     kbd.k {
       font-family: var(--font-mono); font-size: 0.68rem;
-      background: #1A2130; border: 1px solid #2A3448; border-bottom-width: 2px;
+      background: var(--canvas-ins); border: 1px solid var(--border); border-bottom-width: 2px;
       border-radius: 0.375rem; padding: 0.1rem 0.4rem; color: #AEB8CC;
       line-height: 1.1;
     }
@@ -1016,7 +1011,7 @@
     }
   </style>
 </head>
-<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh" style="color: var(--fg); background: var(--bg);">
+<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh" style="color: var(--fg);">
 
   <!-- Reading progress hairline -->
   <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
@@ -1027,7 +1022,7 @@
        the header 57px tall while every column below it (sidebar, main, rail) is
        positioned at 3.5rem = 56px, pushing all three 1px off the bottom of the
        screen and clipping the assistant's composer hint. -->
-  <header class="sticky top-0 z-30 backdrop-blur-md glass" style="background-color: var(--header-bg); box-shadow: inset 0 -1px 0 var(--border-soft);">
+  <header class="sticky top-0 z-30 glass">
     <div class="h-14 px-3 md:px-6 flex items-center gap-2 md:gap-4">
       <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -1056,7 +1051,7 @@
     <div id="sideOverlay" class="hidden fixed inset-0 z-30 bg-black/60 md:hidden"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[#0B0D12] md:bg-transparent flex flex-col overflow-hidden">
+    <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[var(--canvas-sub)] md:bg-transparent flex flex-col overflow-hidden">
       <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
         <div class="flex items-center gap-3">
           <svg id="ringSvg" width="52" height="52" viewBox="0 0 64 64" class="shrink-0 -rotate-90" aria-hidden="true">
@@ -1174,7 +1169,7 @@
   <!-- Command palette -->
   <div id="palette" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm opacity-0" role="dialog" aria-modal="true" aria-label="Jump to problem">
     <div class="flex items-start justify-center pt-[12dvh] px-4">
-      <div id="paletteCard" class="w-full md:max-w-xl rounded-2xl border border-[rgba(148,163,184,0.2)] bg-[#0D1017] shadow-2xl shadow-black/60 overflow-hidden opacity-0 scale-[0.98]">
+      <div id="paletteCard" class="card spot w-full md:max-w-xl rounded-2xl border border-[rgba(148,163,184,0.2)] bg-[var(--canvas-sub)] shadow-2xl shadow-black/60 overflow-hidden opacity-0 scale-[0.98]" data-spot>
         <div class="flex items-center gap-2 px-4 border-b border-[rgba(148,163,184,0.13)]">
           <svg class="h-4 w-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
           <input id="paletteInput" type="text" placeholder="Type a problem, pattern, or topic…" autocomplete="off"
@@ -1614,7 +1609,7 @@
            already wired and its dataset has to survive the re-render. */
         '<div id="headRow" class="flex flex-wrap items-center gap-2">' +
         (item.leetcodeLink
-          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Solve on LeetCode' +
+          ? '<a href="' + esc(item.leetcodeLink) + '" target="_blank" rel="noopener noreferrer" class="btn inline-flex items-center gap-2 px-4 h-11 rounded-xl font-semibold text-sm min-h-[44px]" style="background:var(--accent);color:var(--accent-ink);text-decoration:none;">Solve on LeetCode' +
             '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>'
           : '') +
         '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
@@ -1811,6 +1806,7 @@
 
         const wrap = document.createElement('div');
         wrap.className = 'code code-wrap relative';
+        wrap.setAttribute('data-spot', '');
         pre.replaceWith(wrap);
 
         const bar = document.createElement('div');
@@ -1959,20 +1955,20 @@
       const guideCat = DATA.find(c => c.category === 'MAANG GUIDES');
       const guideCount = guideCat ? guideCat.items.length : 0;
       const problemCount = totalGuides - guideCount;
-      const guideCard = (id, n, t, d) => '<button data-guide="' + id + '" class="text-left rounded-xl border border-[rgba(200,250,75,.25)] bg-[rgba(200,250,75,.04)] hover:bg-[rgba(200,250,75,.1)] active:bg-[rgba(200,250,75,.15)] px-4 py-3.5 min-h-[56px] transition-colors">' +
+      const guideCard = (id, n, t, d) => '<button data-guide="' + id + '" data-spot class="card hoverable text-left rounded-xl border border-[rgba(200,250,75,.25)] bg-[rgba(200,250,75,.04)] hover:bg-[rgba(200,250,75,.1)] active:bg-[rgba(200,250,75,.15)] px-4 py-3.5 min-h-[56px] transition-colors">' +
         '<span class="block text-[10px] font-mono uppercase tracking-widest" style="color:var(--accent)">' + n + '</span>' +
         '<span class="block text-sm font-semibold text-slate-100 mt-1">' + t + '</span>' +
         '<span class="block text-[13px] text-slate-400 mt-0.5 leading-relaxed">' + d + '</span></button>';
-      const feat = (t, d) => '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-4 py-3.5"><div class="text-sm font-semibold text-slate-100">' + t + '</div><div class="text-[13px] text-slate-400 mt-1 leading-relaxed">' + d + '</div></div>';
+      const feat = (t, d) => '<div data-spot class="card hoverable rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-4 py-3.5"><div class="text-sm font-semibold text-slate-100">' + t + '</div><div class="text-[13px] text-slate-400 mt-1 leading-relaxed">' + d + '</div></div>';
       contentArea.innerHTML =
         '<p class="text-xs font-mono uppercase tracking-widest mb-2" style="color:var(--accent)">Top Interview 150 · JavaScript</p>' +
         '<h1>What is this manual?</h1>' +
         '<p>A visual, interview-first study manual for the <strong class="text-slate-100">LeetCode Top Interview 150</strong>, written entirely in modern JavaScript. Every problem is a self-contained study session — intuition, diagrams, dry runs, runnable code, and the follow-up questions MAANG interviewers actually ask.</p>' +
         '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-5">' +
-          '<div class="rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + problemCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">problem guides</div></div>' +
-          '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + trackCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">topic tracks</div></div>' +
-          '<div class="rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + guideCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">MAANG guides</div></div>' +
-          '<div class="rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + primerCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">primers</div></div>' +
+          '<div data-spot class="card hoverable rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + problemCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">problem guides</div></div>' +
+          '<div data-spot class="card hoverable rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + trackCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">topic tracks</div></div>' +
+          '<div data-spot class="card hoverable rounded-xl border border-[rgba(200,250,75,.3)] bg-[rgba(200,250,75,.06)] px-3 py-3 text-center"><div class="font-display font-bold text-2xl" style="color:var(--accent)">' + guideCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">MAANG guides</div></div>' +
+          '<div data-spot class="card hoverable rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-3 py-3 text-center"><div class="font-display font-bold text-2xl text-slate-100">' + primerCount + '</div><div class="text-[11px] font-mono text-slate-400 mt-0.5">primers</div></div>' +
         '</div>' +
         '<h2 id="sec-maang">MAANG interview guides</h2>' +
         '<p>Roadmap first, then depth — research-backed guides with definitions, top-50 question banks, and prep plans. Also in the sidebar under <strong class="text-slate-100">MAANG GUIDES</strong>.</p>' +
@@ -2074,7 +2070,7 @@
       sec.innerHTML =
         '<h2 id="sec-try-live">Try it live <span class="text-[11px] font-mono font-normal text-slate-500 align-middle">pilot · runs on the server sandbox</span></h2>' +
         '<p>Write <code>' + esc(pilot.fn) + '</code> below and run it against the pilot test set. A full pass marks this guide complete' + (judgeUser ? ' (synced to your account)' : ' (login to sync it to your account)') + '.</p>' +
-        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[#0A0D13] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[#C8FA4B]/60" style="font-family:var(--font-mono);"></textarea>' +
+        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[var(--canvas-ins)] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[#C8FA4B]/60" style="font-family:var(--font-mono);"></textarea>' +
         '<div class="flex flex-wrap items-center gap-3 mt-3">' +
         '<button id="judgeRun" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Run tests</button>' +
         '<span id="judgeStatus" class="text-[13px] font-mono text-slate-500"></span></div>' +
