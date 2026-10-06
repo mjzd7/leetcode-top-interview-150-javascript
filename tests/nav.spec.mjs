@@ -107,6 +107,29 @@ test.describe('the collapsed rail', () => {
     expect(r.spill, 'nothing hangs outside the 56px rail').toBe(0);
   });
 
+  /* The rail is one column of glyphs on a centre line, and the collapse control
+     lives in the header above them — so it has to be on that same line. The
+     header row is laid out for ring + text + button; at stage 2 the ring's
+     contents are hidden but its flex-1 wrapper is not, so an empty 11px spacer
+     plus a 12px gap sat in front of the button and pushed it to the right edge.
+     Nothing asserted this: the spill check above only walks .nav-group
+     descendants, and the header is not inside one. */
+  test('puts the collapse control on the same centre line as the icons', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      const mid = (el) => { const b = el.getBoundingClientRect(); return b.left + b.width / 2; };
+      const btn = document.getElementById('ltNavCollapse');
+      const icon = document.querySelector('#curriculumNav .nav-cat-btn');
+      const b = btn.getBoundingClientRect();
+      return {
+        offBy: Math.round((mid(btn) - mid(icon)) * 10) / 10,
+        rightGap: Math.round(document.getElementById('sidebar').getBoundingClientRect().right - b.right),
+        leftGap: Math.round(b.left - document.getElementById('sidebar').getBoundingClientRect().left),
+      };
+    });
+    expect(Math.abs(r.offBy), 'the button shares the icon column centre line').toBeLessThanOrEqual(1);
+    expect(Math.abs(r.leftGap - r.rightGap), 'and is not hugging either edge').toBeLessThanOrEqual(1);
+  });
+
   test('shows the guide number in number mode, and every one is unique', async ({ page }) => {
     const codes = await page.evaluate(() => {
       const nav = document.getElementById('curriculumNav');
