@@ -221,6 +221,10 @@
       /* 16px of padding plus the 12px flex gap pushed the 32px collapse button
          to x=28..60 inside a 56px rail, so it hung 4px over the content edge. */
       #sidebar[data-stage="2"] > div:first-child { padding-left: 0; padding-right: 0; gap: 0; }
+      /* And the row inside it, which the rule above cannot reach: with the ring
+         block gone the button is the row's only child, so it centres on the
+         icon column's line instead of starting at the rail's left edge. */
+      #sidebar[data-stage="2"] > div:first-child > div { justify-content: center; }
       #ltNavCollapse { display: flex; }
 
       /* ---- the 56px rail has two modes, toggled with the option key ----
@@ -1043,7 +1047,7 @@
             <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
             <circle id="ringFg" cx="32" cy="32" r="26" fill="none" stroke="#C8FA4B" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="163.36"/>
           </svg>
-          <div class="min-w-0 flex-1">
+          <div id="ringBlock" class="min-w-0 flex-1">
             <div id="ringPct" class="font-display font-bold text-xl leading-none">0%</div>
             <div id="ringSub" class="text-xs text-slate-400 mt-1 font-mono">0 / 150 done</div>
           </div>
@@ -1449,12 +1453,13 @@
       const el = $('sidebar'), btn = $('ltNavCollapse');
       if (!el) return;
       const STAGE_LABELS = ['Collapse the navigation',
-                            'Widen the navigation to a text rail',
+                            'Collapse the navigation to icons',
                             'Widen the navigation fully'];
-      /* The glyph follows the label. It used to be a left chevron at all three
-         stages, so on the 56px rail — where the button widens — it pointed away
-         from the edge the sidebar is on. Only the accessible name changed. */
-      const STAGE_CHEVRONS = ['M15 6l-6 6 6 6', 'M9 6l6 6-6 6', 'M9 6l6 6-6 6'];
+      /* The glyph follows the move, not the label. Only stage 2 widens the rail,
+         so only stage 2 points right; tying the two paths to the two directions
+         the sidebar can travel rather than to three stage indexes — stage 1 goes
+         200px → 56px, which narrows, so it points left like stage 0 does. */
+      const STAGE_CHEVRONS = ['M15 6l-6 6 6 6', 'M15 6l-6 6 6 6', 'M9 6l6 6-6 6'];
       const stage = ((s % 3) + 3) % 3;
       el.dataset.stage = String(stage);
       if (btn) {
@@ -1463,7 +1468,10 @@
         const chev = $('ltNavChevron');
         if (chev) chev.setAttribute('d', STAGE_CHEVRONS[stage]);
       }
-      ['ringPct', 'ringSub', 'ringSvg'].forEach((id) => {
+      /* ringBlock is the wrapper, not just its contents: at stage 2 hiding the
+         ring's children left an empty flex-1 box in the header row, and with it
+         the button was pushed off the icon column's centre line. */
+      ['ringPct', 'ringSub', 'ringSvg', 'ringBlock'].forEach((id) => {
         const n = $(id); if (n) n.classList.toggle('hidden', stage === 2);
       });
       if (persist) { try { localStorage.setItem('lt150-nav-stage', String(stage)); } catch (e) {} }
