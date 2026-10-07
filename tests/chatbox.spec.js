@@ -439,7 +439,7 @@ test('renders a dry-run table inside a scroll wrapper without blowing out the ra
   });
   expect(m.wrapperOverflowX, 'wrapper scrolls horizontally').toBe('auto');
   expect(m.bubbleScroll, 'the bubble itself must not overflow the rail').toBeLessThanOrEqual(m.bubbleClient + 1);
-  expect(m.borderCollapse, 'table collapses borders for a clean grid').toBe('collapse');
+  expect(m.borderCollapse, 'table borders separate with zero spacing so scrolled cell backgrounds do not bleed').toBe('separate');
   // Guards the case where the table fits: the wrapper still exists but need not scroll.
   if (m.tableWiderThanBubble) expect(m.wrapperScrollable, 'overflowing table is scrollable').toBe(true);
 });
