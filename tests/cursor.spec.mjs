@@ -69,7 +69,7 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     expect(await page.evaluate(() => window.__cursorSpringSleeping)).toBe(true);
   });
 
-  test('magnetic snap triggers link mode and expanded targetScale over interactive targets', async ({ page, isMobile }) => {
+  test('magnetic snap triggers link mode and compact targetScale over interactive targets', async ({ page, isMobile }) => {
     test.skip(isMobile, 'Magnetic snap applies to fine pointer devices');
 
     await page.goto('/index.html');
@@ -94,14 +94,14 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     const mode = await page.evaluate(() => document.documentElement.getAttribute('data-cursor-mode'));
     expect(mode).toBe('link');
 
-    // Check transform on the ring contains settled expanded scale (~1.4)
+    // Check transform on the ring contains settled compact scale between 0.45 and 0.75
     const ringTransform = await page.locator('#cur-ring').evaluate((el) => el.style.transform);
     expect(ringTransform).toContain('scale(');
     const scaleMatch = ringTransform.match(/scale\(([\d.]+)\)/);
     expect(scaleMatch).toBeTruthy();
     const scaleVal = parseFloat(scaleMatch[1]);
-    expect(scaleVal).toBeGreaterThanOrEqual(1.2);
-    expect(scaleVal).toBeLessThanOrEqual(1.6);
+    expect(scaleVal).toBeLessThanOrEqual(0.85);
+    expect(scaleVal).toBeGreaterThanOrEqual(0.45);
 
     // Move mouse to empty area away from interactive targets
     await page.mouse.move(10, 10);
