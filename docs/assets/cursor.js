@@ -349,9 +349,9 @@
     mouseX = e.clientX;
     mouseY = e.clientY;
 
-    // Delegated spotlight tracking: compute --mx and --my on closest [data-spot], .spot
+    // Delegated spotlight tracking: compute --mx and --my on closest [data-spot], .spot, tables, and chat cards
     if (e.target instanceof Element) {
-      const spotEl = e.target.closest('[data-spot], .spot');
+      const spotEl = e.target.closest('[data-spot], .spot, .table-scroll, .ltc-table-scroll, .tbl, .chat-code, .ltc-msg--user .ltc-msg-body');
       if (spotEl) {
         const rect = spotEl.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {

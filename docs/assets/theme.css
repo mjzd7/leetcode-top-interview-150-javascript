@@ -1061,6 +1061,512 @@ footer a:hover {
   box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--accent) 25%, transparent) !important;
 }
 
+/* ==========================================================================
+   10. Tables: Physical Texture, Sheen, Row Hover & Spotlight (fx-showcase parity)
+   ========================================================================== */
+
+/* Table Containers (.table-scroll, .ltc-table-scroll, .tbl) */
+.table-scroll,
+.ltc-table-scroll,
+.tbl {
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  margin: 1.25rem 0;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft) !important;
+  background: var(--canvas-sub) !important;
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.22s var(--ease-snappy),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.22s var(--ease-smooth),
+              background-color 0.15s var(--ease-smooth);
+}
+
+/* Specular Sheen on Table Containers */
+.table-scroll::before,
+.ltc-table-scroll::before,
+.tbl::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Table Container Hover Lift */
+.table-scroll:hover,
+.ltc-table-scroll:hover,
+.tbl:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border)) !important;
+  box-shadow: var(--shadow-lift);
+}
+
+/* Spotlight Tracking for Table Containers */
+.table-scroll::after,
+.ltc-table-scroll::after,
+.tbl::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 13%, transparent), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-smooth);
+  z-index: 1;
+}
+
+.table-scroll:hover::after,
+.ltc-table-scroll:hover::after,
+.tbl:hover::after {
+  opacity: 1;
+}
+
+/* Table Elements (Prose, Chat, and Topics) */
+.table-scroll table,
+.ltc-table-scroll table,
+.tbl table,
+.prose table,
+table.tbl {
+  position: relative;
+  z-index: 2;
+  border-collapse: collapse !important;
+  width: 100%;
+}
+
+.ltc-msg-body table {
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Table Headers (fx-showcase parity) */
+.table-scroll th,
+.ltc-table-scroll th,
+.tbl th,
+.prose th,
+table.tbl th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  padding: 10px 14px;
+  font-weight: 600;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  white-space: nowrap;
+}
+
+/* Table Cells (fx-showcase parity) */
+.table-scroll td,
+.ltc-table-scroll td,
+.tbl td,
+.prose td,
+table.tbl td {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-soft) !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  border-left: none !important;
+  border-right: none !important;
+  color: var(--fg-prose);
+  background: transparent;
+}
+
+/* First Column Mono Transition (fx-showcase parity) */
+.table-scroll td:first-child,
+.ltc-table-scroll td:first-child,
+.tbl td:first-child,
+.prose td:first-child,
+table.tbl td:first-child {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  transition: color 0.15s var(--ease-smooth);
+}
+
+/* Row Hover Highlight & Accent Transition (fx-showcase parity) */
+.table-scroll tbody tr,
+.ltc-table-scroll tbody tr,
+.tbl tbody tr,
+.prose tbody tr,
+table.tbl tbody tr {
+  transition: background-color 0.15s var(--ease-smooth);
+}
+
+.table-scroll tbody tr:hover,
+.table-scroll tbody tr:hover td,
+.ltc-table-scroll tbody tr:hover,
+.ltc-table-scroll tbody tr:hover td,
+.tbl tbody tr:hover,
+.tbl tbody tr:hover td,
+.prose tbody tr:hover,
+.prose tbody tr:hover td,
+table.tbl tbody tr:hover,
+table.tbl tbody tr:hover td {
+  background: var(--accent-soft) !important;
+}
+
+.table-scroll tbody tr:hover td:first-child,
+.ltc-table-scroll tbody tr:hover td:first-child,
+.tbl tbody tr:hover td:first-child,
+.prose tbody tr:hover td:first-child,
+table.tbl tbody tr:hover td:first-child {
+  color: var(--accent) !important;
+  font-weight: 600;
+}
+
+/* Light mode overrides for high contrast tables */
+html[data-theme="light"] .table-scroll th,
+html[data-theme="light"] .ltc-table-scroll th,
+html[data-theme="light"] .tbl th,
+html[data-theme="light"] .prose th,
+html[data-theme="light"] table.tbl th {
+  background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub)) !important;
+  color: var(--fg) !important;
+  border-bottom-color: var(--border-soft) !important;
+}
+
+html[data-theme="light"] .table-scroll tbody tr:hover,
+html[data-theme="light"] .table-scroll tbody tr:hover td,
+html[data-theme="light"] .ltc-table-scroll tbody tr:hover,
+html[data-theme="light"] .ltc-table-scroll tbody tr:hover td,
+html[data-theme="light"] .tbl tbody tr:hover,
+html[data-theme="light"] .tbl tbody tr:hover td,
+html[data-theme="light"] .prose tbody tr:hover,
+html[data-theme="light"] .prose tbody tr:hover td,
+html[data-theme="light"] table.tbl tbody tr:hover,
+html[data-theme="light"] table.tbl tbody tr:hover td {
+  background: var(--raised) !important;
+}
+
+html[data-theme="light"] .table-scroll tbody tr:hover td:first-child,
+html[data-theme="light"] .ltc-table-scroll tbody tr:hover td:first-child,
+html[data-theme="light"] .tbl tbody tr:hover td:first-child,
+html[data-theme="light"] .prose tbody tr:hover td:first-child,
+html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
+  color: var(--fg) !important;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   11. Chatbox: Physical Textures, Sheen, Hover Lift & Spotlights (fx-showcase parity)
+   ========================================================================== */
+
+/* User Message Bubble: Physical Card Texture, Sheen, Hover Lift & Spotlight */
+.ltc-msg--user .ltc-msg-body {
+  position: relative;
+  overflow: hidden;
+  background: var(--canvas-sub) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-rest);
+  border-radius: 14px 14px 4px 14px !important;
+  padding: 0.65rem 0.95rem !important;
+  color: var(--fg) !important;
+  transition: transform 0.2s var(--ease-snappy),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.2s var(--ease-smooth),
+              background-color 0.15s var(--ease-smooth) !important;
+}
+
+.ltc-msg--user .ltc-msg-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ltc-msg--user .ltc-msg-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 13%, transparent), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-smooth);
+  z-index: 1;
+}
+
+.ltc-msg--user .ltc-msg-body:hover::after {
+  opacity: 1;
+}
+
+.ltc-msg--user .ltc-msg-body:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border)) !important;
+  box-shadow: var(--shadow-lift);
+}
+
+.ltc-msg--user .ltc-msg-body > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Chat Code Blocks: Physical Texture, Sheen & Hover Lift */
+.chat-code {
+  position: relative;
+  overflow: hidden;
+  margin: 0.75rem 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: var(--canvas-sub);
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.22s var(--ease-snappy),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.22s var(--ease-smooth);
+}
+
+.chat-code::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.chat-code::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 13%, transparent), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-smooth);
+  z-index: 1;
+}
+
+.chat-code:hover::after {
+  opacity: 1;
+}
+
+.chat-code:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+
+.chat-code pre {
+  position: relative;
+  z-index: 2;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow-x: auto;
+  padding: 1.85rem 0.85rem 0.75rem;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.chat-code pre code {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  white-space: pre;
+}
+
+/* Chat Code Copy Button Physical Style */
+.chat-code-copy {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10 !important;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+  color: var(--fg-muted);
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  min-height: 26px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.chat-code-copy:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent-rim) !important;
+  transform: translateY(-1px);
+}
+
+/* Visualizations & Diagrams in Chat (.viz-array, .ltc-msg-body .mermaid) */
+.viz-array,
+.ltc-msg-body .mermaid {
+  position: relative;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: var(--canvas-sub) !important;
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.22s var(--ease-snappy),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.22s var(--ease-smooth);
+}
+
+.viz-array::before,
+.ltc-msg-body .mermaid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.viz-array:hover,
+.ltc-msg-body .mermaid:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+
+.viz-cell {
+  background: var(--raised) !important;
+  border-color: var(--border-soft) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.viz-pair,
+.viz-item {
+  background: var(--raised) !important;
+  border-color: var(--border-soft) !important;
+  position: relative;
+  z-index: 2;
+}
+
+/* Chat Suggestion Chips (.ltc-chip) Physical Surface & Specular Sheen */
+.ltc-chip {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-soft) !important;
+  background: var(--canvas-sub) !important;
+  color: var(--fg-muted) !important;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 11.5px;
+  font-family: var(--font-body);
+  text-align: left;
+  line-height: 1.4;
+  min-height: 44px;
+  cursor: pointer;
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.18s var(--ease-snappy),
+              background-color 0.15s var(--ease-smooth),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.18s var(--ease-smooth),
+              color 0.15s var(--ease-smooth) !important;
+}
+
+.ltc-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.ltc-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.22) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.35s var(--ease-smooth);
+}
+
+.ltc-chip:hover::after {
+  transform: translateX(120%);
+}
+
+.ltc-chip:hover {
+  background: var(--accent-soft) !important;
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border)) !important;
+  color: var(--fg) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.ltc-chip:active {
+  transform: translateY(0) scale(0.975);
+}
+
+/* Chat Composer Container Physical Texture & Sheen */
+.ltc-composer {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 18px;
+  background: var(--canvas-sub) !important;
+  padding: 0.35rem 0.35rem 0.35rem 0.8rem;
+  box-shadow: var(--shadow-rest);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.ltc-composer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.ltc-composer:hover {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border)) !important;
+}
+
+.ltc-composer:focus-within {
+  border-color: var(--accent) !important;
+  background: var(--canvas-sub) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.ltc-composer > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Assistant Message Actions & Copy Button */
+.ltc-msg-copy {
+  border: 1px solid transparent !important;
+  border-radius: 8px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.ltc-msg-copy:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent-rim) !important;
+  transform: translateY(-1px);
+}
+
+
 
 
 
