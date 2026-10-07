@@ -178,7 +178,7 @@
     kbd.k {
       font-family: var(--font-mono); font-size: 0.68rem;
       background: var(--canvas-ins); border: 1px solid var(--border); border-bottom-width: 2px;
-      border-radius: 0.375rem; padding: 0.1rem 0.4rem; color: #AEB8CC;
+      border-radius: 0.375rem; padding: 0.1rem 0.4rem; color: var(--fg-muted);
       line-height: 1.1;
     }
     /* Chips sitting inside a 40px header button: the default keycap is 26px,
@@ -2374,13 +2374,65 @@
       else if (e.key === 'Escape') { if (!palette.classList.contains('hidden')) closePalette(); else closeSidebar(); }
     });
 
-    /* ---------- reading progress ---------- */
+    /* ---------- reading progress & mobile auto-hiding header ---------- */
+    const siteHeader = document.querySelector('header');
+    let lastHeaderScrollTop = 0;
+    let headerDeltaAccumulator = 0;
+    const HEADER_SWEET_SPOT_TOP = 56;
+    const HIDE_DELTA_DOWN = 10;
+    const SHOW_DELTA_UP = -8;
+
+    function updateMobileHeaderVisibility() {
+      if (window.innerWidth >= 768) {
+        if (siteHeader) siteHeader.classList.remove('header-hidden');
+        return;
+      }
+      if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+        if (siteHeader) siteHeader.classList.remove('header-hidden');
+        return;
+      }
+      if (palette && !palette.classList.contains('hidden')) {
+        if (siteHeader) siteHeader.classList.remove('header-hidden');
+        return;
+      }
+
+      const currentY = scroller ? scroller.scrollTop : (window.scrollY || 0);
+      const diff = currentY - lastHeaderScrollTop;
+
+      if (currentY <= HEADER_SWEET_SPOT_TOP) {
+        if (siteHeader) siteHeader.classList.remove('header-hidden');
+        headerDeltaAccumulator = 0;
+        lastHeaderScrollTop = Math.max(0, currentY);
+        return;
+      }
+
+      if (diff > 0) {
+        if (headerDeltaAccumulator < 0) headerDeltaAccumulator = 0;
+        headerDeltaAccumulator += diff;
+        if (headerDeltaAccumulator >= HIDE_DELTA_DOWN) {
+          if (siteHeader) siteHeader.classList.add('header-hidden');
+        }
+      } else if (diff < 0) {
+        if (headerDeltaAccumulator > 0) headerDeltaAccumulator = 0;
+        headerDeltaAccumulator += diff;
+        if (headerDeltaAccumulator <= SHOW_DELTA_UP) {
+          if (siteHeader) siteHeader.classList.remove('header-hidden');
+        }
+      }
+
+      lastHeaderScrollTop = Math.max(0, currentY);
+    }
+
     function updateProgressBar() {
       const max = scroller.scrollHeight - scroller.clientHeight;
       const pct = max > 0 ? (scroller.scrollTop / max) * 100 : 0;
       progressBar.style.width = pct + '%';
     }
-    scroller.addEventListener('scroll', updateProgressBar, { passive: true });
+    scroller.addEventListener('scroll', () => {
+      updateProgressBar();
+      updateMobileHeaderVisibility();
+    }, { passive: true });
+    window.addEventListener('scroll', updateMobileHeaderVisibility, { passive: true });
 
     /* ---------- in-article cross-links (#<article-id>) ---------- */
     // Guide pages link to each other via #bundle-id anchors. Open those as
