@@ -92,9 +92,9 @@
        is neutralised so it can't leak through the wrap. */
     .prose .code-wrap { margin: 1.4rem 0; }
     .prose .code-wrap > pre { margin-top: 0; margin-bottom: 0; }
-    .prose .table-scroll table { margin: 0; min-width: 640px; }
-    .prose table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.85rem; }
-    .prose th, .prose td { border: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+    .prose .table-scroll table { margin: 0; }
+    .prose table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 1.4rem 0; font-size: 0.85rem; }
+    .prose th, .prose td { border: none; border-bottom: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
     .prose th { background: rgba(200, 250, 75, 0.06); font-weight: 600; color: var(--accent); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
     .prose h1 { font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem; }
     .prose h2 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.8rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
@@ -125,7 +125,7 @@
       align-items: flex-start;
     }
     .mermaid svg { max-width: 620px !important; width: 100%; height: auto; }
-    .mermaid .edgeLabel { background-color: #1A2130 !important; color: #E9EDF4 !important; }
+    .mermaid .edgeLabel { background-color: var(--canvas-sub) !important; color: var(--fg) !important; }
     .nav-item { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
 /* The name a collapsed destination belongs to. Two separate jobs: the
        sr-only span is what assistive tech always reads, and this tooltip is the
@@ -141,7 +141,7 @@
       padding: 0.3rem 0.55rem; border-radius: 8px;
       width: max-content; max-width: 260px;
       background: var(--raised); border: 1px solid var(--border);
-      color: #E9EDF4; font-size: 12px; line-height: 1.35;
+      color: var(--fg); font-size: 12px; line-height: 1.35;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
       opacity: 0; visibility: hidden; pointer-events: none;
       transition: opacity 0.12s ease, visibility 0.12s ease;
@@ -286,7 +286,7 @@
       #sidebar[data-stage="2"][data-rail-mode="num"] .nav-code {
         display: block; font-family: var(--font-mono);
         font-size: 11px; line-height: 1; letter-spacing: -0.03em;
-        color: #AEB8CC; font-variant-numeric: tabular-nums;
+        color: var(--fg-muted); font-variant-numeric: tabular-nums;
       }
       #sidebar[data-stage="2"][data-rail-mode="num"] .nav-item[data-done="true"] .nav-code { color: var(--accent); }
 
@@ -432,8 +432,8 @@
     }
     .ltc-icon-btn svg { width: 15px; height: 15px; }
     .ltc-icon-btn:hover {
-      color: #E9EDF4; background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(148, 163, 184, 0.18);
+      color: var(--fg); background: var(--canvas-ins);
+      border-color: var(--border-soft);
     }
     .ltc-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     @media (min-width: 1280px) { .ltc-close { display: none; } }
@@ -621,7 +621,7 @@
        columns under their nowrap content, which is what let a sticky cell spill
        over its neighbour. */
     .ltc-msg-body table {
-      width: max-content; min-width: 100%; border-collapse: collapse; margin: 0;
+      width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; margin: 0;
       font-size: 0.78rem; line-height: 1.5;
       font-family: var(--font-mono);
     }
@@ -646,12 +646,12 @@
        far narrower than the article column, so the size caps are overridden. */
     .ltc-msg-body .mermaid {
       padding: 0.7rem; margin: 0.6rem 0; border-radius: 0.6rem;
-      background: #0A0D13; border: 1px solid var(--line);
+      background: var(--canvas-sub); border: 1px solid var(--line);
       overflow-x: auto; align-items: flex-start; justify-content: flex-start;
     }
     .ltc-msg-body .mermaid svg { max-width: 100% !important; width: auto; height: auto; min-width: 0; }
     .ltc-mermaid-error {
-      background: #0A0D13; border: 1px dashed rgba(251, 113, 133, 0.35); color: var(--muted);
+      background: var(--canvas-sub); border: 1px dashed rgba(251, 113, 133, 0.35); color: var(--muted);
       border-radius: 0.6rem; padding: 0.6rem 0.7rem; margin: 0.6rem 0;
       font-size: 0.74rem; line-height: 1.5; white-space: pre; overflow-x: auto;
     }
@@ -671,7 +671,7 @@
        never drift off the cell it names — the column count comes from --viz-cols
        so the template does not have to be repeated per element. */
     .viz-array {
-      background: #0A0D13; border: 1px solid var(--line); border-radius: 0.6rem;
+      background: var(--canvas-ins); border: 1px solid var(--line); border-radius: 0.6rem;
       padding: 0.7rem; margin: 0.6rem 0; overflow-x: auto;
     }
     .viz-title {
@@ -685,16 +685,16 @@
     }
     .viz-cell {
       border: 1px solid var(--line); border-radius: 0.4rem; background: var(--raised);
-      color: #E9EDF4; font-family: var(--font-mono); font-size: 0.78rem;
+      color: var(--fg); font-family: var(--font-mono); font-size: 0.78rem;
       text-align: center; padding: 0.4rem 0.3rem; min-width: 34px;
     }
     .viz-cell.is-active {
       border-color: var(--accent); color: var(--accent);
-      background: rgba(200, 250, 75, 0.1); font-weight: 600;
+      background: var(--accent-soft); font-weight: 600;
     }
     .viz-cell.is-done { opacity: 0.55; }
-    .viz-cell.is-swapped { border-color: #8B5CF6; color: #C4B5FD; }
-    .viz-cell.is-error { border-color: #FB7185; color: #FB7185; }
+    .viz-cell.is-swapped { border-color: var(--done); color: var(--done); }
+    .viz-cell.is-error { border-color: var(--hard); color: var(--hard); }
     .viz-pointer {
       display: block; text-align: center; font-family: var(--font-mono);
       font-size: 0.62rem; color: var(--accent); letter-spacing: 0.04em;
@@ -710,7 +710,7 @@
     }
     .viz-pair, .viz-item {
       border: 1px solid var(--line); border-radius: 0.35rem; background: var(--raised);
-      padding: 0.15rem 0.4rem; color: #C6CDDB; white-space: nowrap;
+      padding: 0.15rem 0.4rem; color: var(--fg-prose); white-space: nowrap;
     }
     .viz-k { color: var(--accent); }
     .viz-arrow { color: var(--muted); margin: 0 0.2rem; }
@@ -753,7 +753,7 @@
        composer. Chat is not gated on login (D-10) — this only offers a higher
        limit to a reader who has already been rate-limited three times running. */
     .ltc-gate {
-      font-size: 12px; line-height: 1.55; color: #E9EDF4;
+      font-size: 12px; line-height: 1.55; color: var(--fg);
       border: 1px solid rgba(251, 113, 133, 0.35); background: rgba(251, 113, 133, 0.07);
       border-radius: 0.5rem; padding: 0.45rem 0.6rem; margin-top: 0.3rem;
     }
@@ -943,7 +943,7 @@
       color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em;
       font-size: 0.62rem;
     }
-    .dr-col { color: #7C8699; }
+    .dr-col { color: var(--fg-subtle); }
     .dr-player .dr-array { margin: 0.5rem 0 0; width: fit-content; max-width: 100%; }
     /* In the chat rail a 1fr cell is 40px; in the article it is 165px and the array
        reads as a table row. Same --viz-cols token, capped track, and the cap falls back
@@ -968,16 +968,16 @@
     .dr-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 30px; height: 30px; flex-shrink: 0; padding: 0; border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.18); background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-soft); background: var(--canvas-sub);
       color: var(--muted); cursor: pointer;
       transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
     }
     .dr-btn svg { width: 15px; height: 15px; }
-    .dr-btn:hover:not(:disabled) { color: #E9EDF4; background: rgba(255, 255, 255, 0.07); }
+    .dr-btn:hover:not(:disabled) { color: var(--fg); background: var(--canvas-ins); }
     .dr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     /* Disabled, not hidden: a transport whose ends vanish cannot say why it stopped. */
     .dr-btn:disabled { opacity: 0.32; cursor: default; }
-    .dr-btn[aria-pressed="true"] { color: var(--accent); border-color: rgba(200, 250, 75, 0.4); background: rgba(200, 250, 75, 0.1); }
+    .dr-btn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-rim); background: var(--accent-soft); }
     .dr-range {
       flex: 1 1 auto; min-width: 60px; height: 20px; margin: 0;
       background: transparent; cursor: pointer;
@@ -988,13 +988,13 @@
        the manual's own .mod-bar colour and only the thumb carries the accent. */
     .dr-range { -webkit-appearance: none; appearance: none; accent-color: var(--accent); }
     .dr-range::-webkit-slider-runnable-track {
-      height: 3px; border-radius: 999px; background: #1C2333;
+      height: 3px; border-radius: 999px; background: var(--border);
     }
     .dr-range::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
       width: 13px; height: 13px; margin-top: -5px; border-radius: 999px;
       background: var(--accent); border: none;
-      box-shadow: 0 0 0 3px rgba(200, 250, 75, 0.15);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
     .dr-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .dr-count {
@@ -1004,14 +1004,14 @@
     }
     /* The row of the table the current step came from, so the picture and the numbers
        above it are visibly the same step. */
-    .prose tr[data-dryrun-current] > td { background: rgba(200, 250, 75, 0.07); }
+    .prose tr[data-dryrun-current] > td { background: var(--accent-soft); }
     .prose tr[data-dryrun-current] > td:first-child { color: var(--accent); }
     @media (prefers-reduced-motion: reduce) {
       .dr-player .viz-cell.dr-pop { animation: none; }
     }
   </style>
 </head>
-<body class="text-slate-100 font-sans antialiased selection:bg-[#C8FA4B] selection:text-black min-h-dvh" style="color: var(--fg);">
+<body class="text-slate-100 font-sans antialiased min-h-dvh" style="color: var(--fg);">
 
   <!-- Reading progress hairline -->
   <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
@@ -1075,7 +1075,7 @@
           </button>
         </div>
         <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
-               class="mt-3 w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[#C8FA4B]/60 min-h-[44px]">
+               class="mt-3 w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
         <div class="flex gap-1.5 mt-2.5" id="difficultyFilters" role="group" aria-label="Difficulty filter">
           <button data-diff="ALL" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">All</button>
           <button data-diff="Easy" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Easy</button>
@@ -1087,7 +1087,7 @@
     </aside>
 
     <!-- Reader -->
-    <main id="contentContainer" class="flex-1 min-w-0 overflow-y-auto h-[calc(100dvh-3.5rem)] scroll-smooth">
+    <main id="contentContainer" class="flex-1 min-w-0 overflow-y-auto h-dvh -mt-14 pt-14 scroll-smooth">
       <div class="flex items-start justify-center gap-8 px-4 md:px-10 py-6 md:py-10 max-w-6xl mx-auto w-full">
         <article class="flex-1 min-w-0 max-w-3xl">
           <div id="prevNext" hidden data-count="0"></div>
@@ -1288,10 +1288,10 @@
       paletteList = $('paletteList'), scroller = $('contentContainer'), progressBar = $('progressBar');
 
     const DIFF_STYLE = {
-      Easy: 'background:rgba(52,211,153,.12);color:#34D399;border:1px solid rgba(52,211,153,.3)',
-      Medium: 'background:rgba(251,191,36,.12);color:#FBBF24;border:1px solid rgba(251,191,36,.3)',
-      Hard: 'background:rgba(251,113,133,.12);color:#FB7185;border:1px solid rgba(251,113,133,.3)',
-      Primer: 'background:rgba(200,250,75,.1);color:#C8FA4B;border:1px solid rgba(200,250,75,.3)',
+      Easy: 'background:var(--badge-easy-bg);color:var(--badge-easy-fg);border:1px solid color-mix(in srgb, var(--badge-easy-fg) 30%, transparent)',
+      Medium: 'background:var(--badge-med-bg);color:var(--badge-med-fg);border:1px solid color-mix(in srgb, var(--badge-med-fg) 30%, transparent)',
+      Hard: 'background:var(--badge-hard-bg);color:var(--badge-hard-fg);border:1px solid color-mix(in srgb, var(--badge-hard-fg) 30%, transparent)',
+      Primer: 'background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-rim)',
     };
     const badge = (d) => `<span class="nav-badge text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 font-mono" style="${DIFF_STYLE[d] || DIFF_STYLE.Primer}">${d}</span>`;
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1344,8 +1344,8 @@
       document.querySelectorAll('.filter-btn').forEach(b => {
         const on = b.dataset.diff === activeFilter;
         b.style.cssText = on
-          ? 'background:#C8FA4B;color:#101303;'
-          : 'background:rgba(255,255,255,.04);color:#8B94A7;';
+          ? 'background:var(--accent);color:var(--accent-ink);'
+          : 'background:var(--canvas-sub);color:var(--fg-muted);';
       });
     }
 
@@ -1356,7 +1356,7 @@
       $('ringFg').style.strokeDashoffset = String(163.36 * (1 - done / total));
       $('ringPct').textContent = pct + '%';
       $('ringSub').textContent = done + ' / ' + flatOrder.length + ' done';
-      $('overallChip').innerHTML = '<span class="inline-block h-1.5 w-1.5 rounded-full" style="background:#C8FA4B"></span>' + pct + '% complete';
+      $('overallChip').innerHTML = '<span class="inline-block h-1.5 w-1.5 rounded-full" style="background:var(--accent)"></span>' + pct + '% complete';
     }
 
     function renderNav() {
@@ -1418,7 +1418,7 @@
           const active = item.id === currentItemId;
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'nav-item w-full text-left px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-2 border min-h-[44px] md:min-h-0 border-transparent text-[#C2C9D8]';
+          btn.className = 'nav-item w-full text-left px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-2 border min-h-[44px] md:min-h-0 border-transparent text-[var(--fg-prose)]';
           if (active) {
             btn.setAttribute('aria-current', 'page');
             btn.dataset.active = 'true';
@@ -1427,7 +1427,7 @@
           if (done) btn.dataset.done = 'true';
           const code = guideCode({ item, category: cat.category }, 0);
           btn.innerHTML =
-            '<span class="nav-mark shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+            '<span class="nav-mark shrink-0 w-4 text-center font-mono text-[11px]" style="color:' + (done ? 'var(--accent)' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
             '<span class="nav-code" aria-hidden="true">' + esc(code) + '</span>' +
             '<span class="nav-title truncate flex-1 ' + (done && !active ? 'line-through opacity-60' : '') + '">' + esc(item.title) + '</span>' +
             '<span class="ltc-sr-only">' + esc(item.title) + '</span>' +
@@ -1613,7 +1613,7 @@
             '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>'
           : '') +
         '<button id="doneToggle" class="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="' +
-            (done ? 'border-color:rgba(200,250,75,.4);color:#C8FA4B;background:rgba(200,250,75,.07);' : 'border-color:rgba(148,163,184,.25);color:#8B94A7;') + '">' +
+            (done ? 'border-color:var(--accent-rim);color:var(--accent);background:var(--accent-soft);' : 'border-color:rgba(148,163,184,.25);color:var(--fg-muted);') + '">' +
           '<span>' + (done ? '✓ Completed' : '○ Mark complete') + '</span></button>' +
         '</div>';
       $('doneToggle').onclick = () => {
@@ -1725,6 +1725,7 @@
           const div = document.createElement('div');
           div.className = 'mermaid';
           div.textContent = block.textContent;
+          div.dataset.src = block.textContent;
           block.parentElement.replaceWith(div);
           return;
         }
@@ -1885,6 +1886,88 @@
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    function mermaidThemeVars(isLight) {
+      return isLight ? {
+        primaryColor: '#EAECF0', primaryTextColor: '#101828', primaryBorderColor: '#4338CA',
+        lineColor: '#475467', secondaryColor: '#F4F5F7', tertiaryColor: '#FFFFFF',
+        background: '#FFFFFF', mainBkg: '#EAECF0', nodeBorder: '#4338CA',
+        clusterBkg: '#F4F5F7', clusterBorder: '#9AA1AD', edgeLabelBackground: '#F4F5F7',
+        actorBkg: '#EAECF0', actorBorder: '#4338CA', actorTextColor: '#101828',
+        signalColor: '#1D2939', labelBoxBkgColor: '#F4F5F7',
+      } : {
+        primaryColor: '#121724', primaryTextColor: '#E9EDF4', primaryBorderColor: '#C8FA4B',
+        lineColor: '#8B94A7', secondaryColor: '#0D1017', tertiaryColor: '#08090D',
+        background: '#0A0D13', mainBkg: '#121724', nodeBorder: '#C8FA4B',
+        clusterBkg: '#0D1017', clusterBorder: '#2A3448', edgeLabelBackground: '#1A2130',
+        actorBkg: '#121724', actorBorder: '#C8FA4B', actorTextColor: '#E9EDF4',
+        signalColor: '#C6CDDB', labelBoxBkgColor: '#1A2130',
+      };
+    }
+
+    async function renderArticleMermaid() {
+      if (!window.mermaid) return;
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      try {
+        window.mermaid.initialize({
+          startOnLoad: false,
+          theme: isLight ? 'default' : 'dark',
+          securityLevel: 'loose',
+          flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 40, rankSpacing: 50 },
+          themeVariables: mermaidThemeVars(isLight)
+        });
+      } catch (e) {}
+
+      const nodes = Array.from(contentArea.querySelectorAll('.mermaid'));
+      if (!nodes.length) return;
+
+      window.ltcMermaidQueue = (window.ltcMermaidQueue || Promise.resolve()).then(async () => {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        try {
+          window.mermaid.initialize({
+            startOnLoad: false,
+            theme: isLight ? 'default' : 'dark',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 40, rankSpacing: 50 },
+            themeVariables: mermaidThemeVars(isLight)
+          });
+        } catch (e) {}
+
+        const sources = nodes.map(n => {
+          if (!n.dataset.src) n.dataset.src = n.textContent;
+          n.removeAttribute('data-processed');
+          n.textContent = n.dataset.src;
+          return n.dataset.src;
+        });
+
+        try {
+          await window.mermaid.run({ nodes });
+        } catch (e) {
+          for (const n of nodes) {
+            try {
+              n.removeAttribute('data-processed');
+              n.textContent = n.dataset.src;
+              await window.mermaid.run({ nodes: [n] });
+            } catch (err) {}
+          }
+        }
+
+        nodes.forEach((n, i) => {
+          if (!n.parentNode) return;
+          const failed = n.querySelector('[aria-roledescription="error"]') || !n.querySelector('svg');
+          if (!failed) return;
+          const pre = document.createElement('pre');
+          pre.className = 'ltc-mermaid-error';
+          const note = document.createElement('span');
+          note.className = 'ltc-mermaid-error-note';
+          note.textContent = 'This diagram could not be parsed, so its source is shown instead.';
+          pre.appendChild(note);
+          pre.appendChild(document.createTextNode(sources[i] || ''));
+          n.replaceWith(pre);
+        });
+      });
+      await window.ltcMermaidQueue;
+    }
+
     async function openArticle(id) {
       const entry = byId.get(id);
       if (!entry) return;
@@ -1906,18 +1989,7 @@
       if (window.Prism && Prism.highlightAllUnder) {
         try { Prism.highlightAllUnder(contentArea); } catch (e) {}
       }
-      if (window.mermaid) {
-        try {
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: 'dark',
-            securityLevel: 'loose',
-            flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 40, rankSpacing: 50 },
-            themeVariables: { edgeLabelBackground: '#1A2130', primaryTextColor: '#E9EDF4' }
-          });
-          await mermaid.run();
-        } catch (e) {}
-      }
+      await renderArticleMermaid();
       // Global math fix: render $...$ / $$...$$ outside pre/code (skips JS template literals)
       if (window.renderMathInElement) {
         try {
@@ -1986,7 +2058,7 @@
           guideCard('docs_mid-level-roadmap_index', 'Roadmap · Mid-level', 'Scale, distribute, RAG, secure', '4 domains: system design, Redis/Kafka/K8s, RAG agents, AI security.') +
         '</div>' +
         '<div class="flex flex-wrap gap-3 my-5">' +
-          '<button id="homeStart" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Start studying →</button>' +
+          '<button id="homeStart" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:var(--accent);color:var(--accent-ink);">Start studying →</button>' +
           '<button id="homeSearch" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Jump to a problem (⌘K)</button>' +
         '</div>' +
         '<h2 id="sec-guide">What each guide gives you</h2>' +
@@ -2033,7 +2105,7 @@
       const area = $('authArea');
       const paintLoggedOut = () => {
         judgeUser = null;
-        area.innerHTML = '<a href="/api/auth/login" class="inline-flex items-center justify-center gap-2 px-3.5 h-10 rounded-lg text-[13px] font-semibold border transition-colors whitespace-nowrap" style="border-color:rgba(148,163,184,.25);color:#8B94A7;"><span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span></a>';
+        area.innerHTML = '<a href="/api/auth/login" class="inline-flex items-center justify-center gap-2 px-3.5 h-10 rounded-lg text-[13px] font-semibold border transition-colors whitespace-nowrap" style="border-color:rgba(148,163,184,.25);color:var(--fg-muted);"><span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span></a>';
       };
       let me = null;
       try {
@@ -2052,7 +2124,7 @@
       area.innerHTML =
         '<div class="flex items-center gap-2">' +
         '<span class="hidden sm:inline text-xs font-mono text-slate-400 max-w-[120px] truncate" title="' + esc(me.login || '') + '">' + esc(me.login || 'github') + '</span>' +
-        '<button id="logoutBtn" class="inline-flex items-center justify-center px-3 h-10 rounded-lg text-[13px] font-semibold border" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Logout</button></div>';
+        '<button id="logoutBtn" class="inline-flex items-center justify-center px-3 h-10 rounded-lg text-[13px] font-semibold border" style="border-color:rgba(148,163,184,.25);color:var(--fg-muted);">Logout</button></div>';
       $('logoutBtn').onclick = async () => {
         try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
         paintLoggedOut();
@@ -2070,9 +2142,9 @@
       sec.innerHTML =
         '<h2 id="sec-try-live">Try it live <span class="text-[11px] font-mono font-normal text-slate-500 align-middle">pilot · runs on the server sandbox</span></h2>' +
         '<p>Write <code>' + esc(pilot.fn) + '</code> below and run it against the pilot test set. A full pass marks this guide complete' + (judgeUser ? ' (synced to your account)' : ' (login to sync it to your account)') + '.</p>' +
-        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[var(--canvas-ins)] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[#C8FA4B]/60" style="font-family:var(--font-mono);"></textarea>' +
+        '<textarea id="judgeCode" spellcheck="false" rows="8" class="w-full rounded-xl border border-[rgba(148,163,184,0.2)] bg-[var(--canvas-ins)] p-3.5 font-mono text-[13px] leading-relaxed text-slate-200 focus:outline-none focus:border-[var(--accent-rim)]" style="font-family:var(--font-mono);"></textarea>' +
         '<div class="flex flex-wrap items-center gap-3 mt-3">' +
-        '<button id="judgeRun" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:#C8FA4B;color:#101303;">Run tests</button>' +
+        '<button id="judgeRun" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:var(--accent);color:var(--accent-ink);">Run tests</button>' +
         '<span id="judgeStatus" class="text-[13px] font-mono text-slate-500"></span></div>' +
         '<div id="judgeVerdict" class="mt-3"></div>';
       contentArea.appendChild(sec);
@@ -2092,7 +2164,7 @@
           '<td class="font-mono text-xs">' + esc(t.got !== undefined ? JSON.stringify(t.got) : '') + '</td></tr>').join('');
         box.innerHTML =
           '<div class="table-scroll"><table><thead><tr><th>Test</th><th>Result</th><th>Expected</th><th>Got</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-          '<p class="mt-2 text-sm font-semibold ' + (v.failed === 0 && !v.error ? '' : 'text-slate-400') + '" ' + (v.failed === 0 && !v.error ? 'style="color:#C8FA4B"' : '') + '>' +
+          '<p class="mt-2 text-sm font-semibold ' + (v.failed === 0 && !v.error ? '' : 'text-slate-400') + '" ' + (v.failed === 0 && !v.error ? 'style="color:var(--accent)"' : '') + '>' +
           esc(v.failed === 0 && !v.error ? 'All ' + v.passed + ' tests passed ✓' : v.passed + ' passed · ' + v.failed + ' failed') +
           (v.error ? ' · ' + esc(String(v.error)) : '') + (v.truncated ? ' · output truncated' : '') + '</p>';
       };
@@ -2137,7 +2209,7 @@
         history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
         const bar = document.createElement('div');
         bar.className = 'mx-auto max-w-3xl mt-3 px-4 py-2.5 rounded-xl text-sm border';
-        bar.style.cssText = 'border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.07);color:#E9EDF4;';
+        bar.style.cssText = 'border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.07);color:var(--hard);';
         bar.textContent = 'GitHub login failed (' + err + '). Please try again.';
         contentArea.prepend(bar);
       } catch (e) {}
@@ -2275,7 +2347,7 @@
         div.setAttribute('role', 'option');
         div.setAttribute('aria-selected', i === palIndex ? 'true' : 'false');
         div.innerHTML =
-          '<span class="font-mono text-[11px] w-4 text-center shrink-0" style="color:' + (done ? '#C8FA4B' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+          '<span class="font-mono text-[11px] w-4 text-center shrink-0" style="color:' + (done ? 'var(--accent)' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
           '<span class="flex-1 min-w-0"><span class="block text-sm text-slate-200 truncate">' + esc(e.item.title) + '</span>' +
           '<span class="block text-[11px] text-slate-500 font-mono truncate">' + esc(e.category) + '</span></span>' +
           badge(e.item.difficulty);
@@ -2320,27 +2392,6 @@
       if (id && byId.has(id)) { e.preventDefault(); openArticle(id); }
     });
 
-    /* ---------- init ---------- */
-    paintFilterPills();
-    renderNav();
-    // Row 32: warm the per-guide verdict index so the first guide a reader opens already has it.
-    loadTableTrace();
-    refreshAuth();
-    const startId = location.hash ? location.hash.slice(1) : null;
-    if (startId && byId.has(startId)) openArticle(startId);
-    else openHome();
-    checkLoginError();
-    updateProgressBar();
-
-    /* A pasted #guide URL, or the browser's own Back/Forward, changes the hash
-       without reloading — and nothing listened, so the page silently stayed on
-       the old guide while the address bar claimed otherwise. */
-    window.addEventListener('hashchange', () => {
-      const id = location.hash.slice(1);
-      if (!id) { openHome(); return; }
-      if (byId.has(id) && id !== currentItemId) openArticle(id);
-    });
-
     /* ---------- Theme Toggle & Sync ---------- */
     const themeToggleBtn = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
@@ -2362,6 +2413,16 @@
       window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
     }
 
+    let mermaidDebounceTimer = null;
+    window.addEventListener('themechange', () => {
+      clearTimeout(mermaidDebounceTimer);
+      mermaidDebounceTimer = setTimeout(() => {
+        if (contentArea && contentArea.querySelector('.mermaid')) {
+          renderArticleMermaid();
+        }
+      }, 100);
+    });
+
     const initialActiveTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(initialActiveTheme);
 
@@ -2378,6 +2439,27 @@
       if (!localStorage.getItem('lt150-theme')) {
         applyTheme(e.matches ? 'dark' : 'light');
       }
+    });
+
+    /* ---------- init ---------- */
+    paintFilterPills();
+    renderNav();
+    // Row 32: warm the per-guide verdict index so the first guide a reader opens already has it.
+    loadTableTrace();
+    refreshAuth();
+    const startId = location.hash ? location.hash.slice(1) : null;
+    if (startId && byId.has(startId)) openArticle(startId);
+    else openHome();
+    checkLoginError();
+    updateProgressBar();
+
+    /* A pasted #guide URL, or the browser's own Back/Forward, changes the hash
+       without reloading — and nothing listened, so the page silently stayed on
+       the old guide while the address bar claimed otherwise. */
+    window.addEventListener('hashchange', () => {
+      const id = location.hash.slice(1);
+      if (!id) { openHome(); return; }
+      if (byId.has(id) && id !== currentItemId) openArticle(id);
     });
 
     /* ---------- Spotlight Tracking ([data-spot]) ---------- */

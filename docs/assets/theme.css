@@ -80,48 +80,48 @@ html[data-theme="dark"] {
 }
 
 /* --------------------------------------------------------------------------
-   2. Light Mode Tokens (Monochrome Brutalist with High Contrast)
+   2. Light Mode Tokens (Ink & Indigo — cool greys, indigo accent)
    -------------------------------------------------------------------------- */
 html[data-theme="light"] {
   color-scheme: light;
 
   /* Surfaces & Structural Layers */
   --canvas: #FFFFFF;
-  --canvas-sub: #F3F4F6;
-  --canvas-ins: #E5E7EB;
-  --raised: #E5E7EB;
+  --canvas-sub: #F4F5F7;
+  --canvas-ins: #EAECF0;
+  --raised: #EAECF0;
   --rail-bg: #FFFFFF;
 
   /* Borders */
-  --border: #9CA3AF;
-  --border-soft: rgba(0, 0, 0, 0.12);
+  --border: #9AA1AD;
+  --border-soft: rgba(16, 24, 40, 0.12);
 
   /* Typography / Inks (Passes WCAG AA >= 4.5:1) */
-  --fg: #111827;
-  --fg-prose: #1F2937;
-  --fg-muted: #4B5563;
-  --fg-subtle: #5B6472;
+  --fg: #101828;
+  --fg-prose: #1D2939;
+  --fg-muted: #475467;
+  --fg-subtle: #667085;
 
-  /* Brand / Accent (Monochrome Brutalist) */
-  --accent: #111827;
+  /* Brand / Accent (Indigo, 7.9:1 on white) */
+  --accent: #4338CA;
   --accent-ink: #FFFFFF;
-  --accent-soft: rgba(17, 24, 39, 0.10);
-  --accent-rim: rgba(17, 24, 39, 0.55);
+  --accent-soft: rgba(67, 56, 202, 0.08);
+  --accent-rim: rgba(67, 56, 202, 0.55);
 
-  /* Semantic Badges (Passes WCAG AA >= 4.5:1 on #F3F4F6) */
-  --easy: #157F4B;
-  --med: #8A5A00;
-  --hard: #C0342F;
-  --done: #6B3FBF;
-  --badge-easy-fg: #157F4B;
-  --badge-easy-bg: rgba(21, 127, 75, 0.10);
-  --badge-med-fg: #8A5A00;
-  --badge-med-bg: rgba(138, 90, 0, 0.10);
-  --badge-hard-fg: #D03B50;
-  --badge-hard-bg: rgba(208, 59, 80, 0.10);
+  /* Semantic Badges (Passes WCAG AA >= 4.5:1 on #F4F5F7) */
+  --easy: #067647;
+  --med: #B54708;
+  --hard: #B42318;
+  --done: #6941C6;
+  --badge-easy-fg: #067647;
+  --badge-easy-bg: rgba(6, 118, 71, 0.10);
+  --badge-med-fg: #B54708;
+  --badge-med-bg: rgba(181, 71, 8, 0.10);
+  --badge-hard-fg: #B42318;
+  --badge-hard-bg: rgba(180, 35, 24, 0.10);
 
   /* Background Glows (Subtle Warm Tint) */
-  --glow-1: rgba(17, 24, 39, 0.02);
+  --glow-1: rgba(67, 56, 202, 0.02);
   --glow-2: rgba(100, 116, 139, 0.03);
   --header-bg: rgba(255, 255, 255, 0.85);
 
@@ -156,6 +156,15 @@ html {
 body {
   background: var(--canvas);
   color: var(--fg-prose);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Text selection follows the accent in both themes (lime-on-obsidian in dark,
+   indigo-on-white in light). */
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* Two wide, very low-alpha ambient radiance washes (fx-showcase parity).
@@ -280,12 +289,27 @@ html[data-theme="light"] .nav-cat-btn:hover {
     background: var(--canvas-sub);
   }
 }
-.glass,
-header.glass {
+.glass {
   position: relative;
   isolation: isolate;
   background: transparent !important;
   box-shadow: 0 1px 0 var(--rim), var(--shadow-rest) !important;
+}
+
+header.glass {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  isolation: isolate;
+  background: transparent !important;
+  box-shadow: inset 0 -1px 0 var(--border-soft), 0 1px 0 var(--rim), var(--shadow-rest) !important;
+}
+
+/* Allow reader content to scroll seamlessly behind the translucent frosted glass header (fx-showcase parity) */
+#contentContainer {
+  margin-top: -3.5rem;
+  padding-top: 3.5rem;
+  height: 100dvh;
 }
 
 /* Sidebar Navigation Item Styling */
@@ -331,7 +355,7 @@ html[data-theme="light"] .nav-item:hover {
   background: rgba(17, 24, 39, 0.05);
 }
 html[data-theme="light"] #sidebar[data-stage="2"] .nav-item[aria-current="page"] {
-  background: rgba(17, 24, 39, 0.12) !important;
+  background: var(--accent-soft) !important;
   color: var(--accent) !important;
   box-shadow: inset 3px 0 0 var(--accent);
 }
@@ -364,7 +388,7 @@ html[data-theme="light"] .ltc-head-mark {
   color: var(--fg-muted);
 }
 html[data-theme="light"] .ltc-status-dot {
-  background: #157F4B;
+  background: var(--easy);
 }
 
 /* Modern Suggestion Chips with Physical Lift */
@@ -414,7 +438,7 @@ html[data-theme="light"] .ltc-status-dot {
   transform: scale(0.96);
 }
 html[data-theme="light"] .ltc-send:hover:not(:disabled) {
-  background: #1F2937;
+  background: #3730A3;
   color: #FFFFFF;
 }
 html[data-theme="light"] .ltc-send:disabled {
@@ -695,9 +719,17 @@ html[data-theme="light"] .prose table {
   border-color: var(--border-soft) !important;
 }
 html[data-theme="light"] .prose pre {
-  background: var(--canvas-sub) !important;
+  background: var(--canvas-ins) !important;
   border-color: var(--border-soft) !important;
 }
+/* Light-mode syntax hues: fx-showcase parity — the manual's semantic tokens
+   rather than Prism's default blue/red/magenta set. */
+html[data-theme="light"] .token.keyword { color: var(--done); }
+html[data-theme="light"] .token.function { color: var(--accent); }
+html[data-theme="light"] .token.string { color: var(--easy); }
+html[data-theme="light"] .token.number,
+html[data-theme="light"] .token.boolean { color: var(--med); }
+html[data-theme="light"] .token.comment { color: var(--fg-subtle); }
 html[data-theme="light"] .prose code:not(pre code) {
   background: rgba(17, 24, 39, 0.06) !important;
   color: var(--fg) !important;
@@ -790,7 +822,7 @@ html[data-theme="light"] .ltc-hint {
   position: relative;
   border-radius: 8px;
   border: 1px solid var(--border-soft);
-  background: var(--canvas-sub);
+  background: var(--canvas-ins);
   margin: 1.25rem 0;
   overflow: hidden;
   box-shadow: var(--shadow-rest);
@@ -1135,7 +1167,8 @@ footer a:hover {
 table.tbl {
   position: relative;
   z-index: 2;
-  border-collapse: collapse !important;
+  border-collapse: separate !important;
+  border-spacing: 0;
   width: 100%;
 }
 
@@ -1172,7 +1205,7 @@ table.tbl th {
 .prose td,
 table.tbl td {
   padding: 10px 14px;
-  border-top: 1px solid var(--border-soft) !important;
+  border-top: none !important;
   border-bottom: 1px solid var(--border-soft) !important;
   border-left: none !important;
   border-right: none !important;
@@ -1428,6 +1461,11 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
   background: var(--sheen);
   opacity: 0.8;
   pointer-events: none;
+  z-index: 0;
+}
+
+.ltc-msg-body .mermaid svg {
+  position: relative;
   z-index: 1;
 }
 
@@ -1436,6 +1474,54 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
   box-shadow: var(--shadow-lift);
+}
+
+/* Article Mermaid Diagram FX Parity */
+.mermaid,
+.prose .mermaid {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.22s var(--ease-snappy),
+              border-color 0.15s var(--ease-smooth),
+              box-shadow 0.22s var(--ease-smooth);
+}
+
+.mermaid::before,
+.prose .mermaid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mermaid:hover,
+.prose .mermaid:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-soft));
+  box-shadow: var(--shadow-lift);
+}
+
+.mermaid svg,
+.prose .mermaid svg {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mermaid,
+  .prose .mermaid,
+  .ltc-msg-body .mermaid,
+  .viz-array {
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 .viz-cell {
