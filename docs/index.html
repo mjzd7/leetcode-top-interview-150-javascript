@@ -903,6 +903,10 @@
     }
     .ltc-fab:hover { transform: scale(1.06); }
     .ltc-fab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    /* Center the glyph optically: the bubble's ink sits slightly high (the arrow
+       nub lives in the top-right corner of the viewBox), and explicit sizing
+       beats relying on Tailwind's h-6/w-6 surviving a CDN hiccup. */
+    .ltc-fab svg { width: 23px; height: 23px; transform: translateY(0.75px); }
     /* The FAB sits exactly where the sheet's Send button is, so it must tuck
        away while the sheet is up or it swallows the tap. */
     .ltc-fab.is-tucked { opacity: 0; pointer-events: none; transform: scale(0.7); }
