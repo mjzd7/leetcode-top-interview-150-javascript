@@ -176,7 +176,8 @@
     if (navItem) {
       const rect = navItem.getBoundingClientRect();
       if (rect.width > 0 || rect.height > 0) {
-        targetScale = 1.35;
+        const compactScale = Math.min(0.75, Math.max(0.45, (rect.height * 0.55) / 32));
+        targetScale = compactScale;
 
         // Center point of circle rests on the right border middle of the vertical height of the element
         targetX = rect.right;
@@ -202,14 +203,15 @@
 
     // 3. Rest of all things (buttons, controls, toggles, chips, cards):
     // Centre of circle at the exact top right of the element without offset,
-    // 1/4 of the circle inside the element and 3/4 outside, with outward expanded scale factor.
+    // 1/4 of the circle inside the element and 3/4 outside, with proportional scale factor.
     const interactiveEl =
       targetEl instanceof Element ? targetEl.closest(INTERACTIVE_SELECTOR) : null;
 
     if (interactiveEl) {
       const rect = interactiveEl.getBoundingClientRect();
       if (rect.width > 0 || rect.height > 0) {
-        targetScale = 1.4;
+        const compactScale = Math.min(0.85, Math.max(0.45, (Math.min(rect.height, 64) * 0.55) / 32));
+        targetScale = compactScale;
 
         // Centre of circle at exact top right of element (1/4 inside element, 3/4 outside element)
         targetX = rect.right;
