@@ -14,7 +14,7 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
 
     // Verify SVG vector circles inside dot and ring
     const dotSvg = dot.locator('svg circle');
-    const ringSvg = ring.locator('svg circle');
+    const ringSvg = ring.locator('.cur-ring-circle circle');
 
     await expect(dotSvg).toBeAttached();
     await expect(ringSvg).toBeAttached();
@@ -165,7 +165,7 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     await page.waitForSelector('#cur-ring', { state: 'attached' });
 
     // Simulate 200% zoom level via page scale / deviceScaleFactor emulation
-    const ringSvgCircle = page.locator('#cur-ring svg circle');
+    const ringSvgCircle = page.locator('#cur-ring .cur-ring-circle circle');
     const strokeWidth = await ringSvgCircle.getAttribute('stroke-width');
     expect(strokeWidth).toBe('1');
   });
@@ -261,7 +261,7 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     expect(ringHeight).toBe('22px');
 
     // SVG circle inside ring is hidden
-    const svgDisplay = await page.locator('#cur-ring svg').evaluate((el) => getComputedStyle(el).display);
+    const svgDisplay = await page.locator('#cur-ring .cur-ring-circle').evaluate((el) => getComputedStyle(el).display);
     expect(svgDisplay).toBe('none');
 
     // Native OS text cursor is suppressed (none)
@@ -500,4 +500,149 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     await page.waitForFunction(() => window.location.hash.includes('00-foundations_03-core-algorithmic-patterns'));
     expect(page.url()).toContain('00-foundations_03-core-algorithmic-patterns');
   });
+
+  test('chatbox floating edge resize handles trigger custom vector morphing cursor (not system cursor)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop fine pointer only');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/index.html');
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+
+    // Detach panel to floating mode
+    const header = page.locator('#ltcPanel .ltc-head');
+    const headerBox = await header.boundingBox();
+    await page.mouse.move(headerBox.x + 80, headerBox.y + headerBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(headerBox.x - 120, headerBox.y + 40, { steps: 4 });
+    await page.mouse.up();
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+
+    // Test East resize handle (resize-ew mode)
+    const handleE = page.locator('#ltcPanel .ltc-handle-e');
+    const boxE = await handleE.boundingBox();
+    expect(boxE).toBeTruthy();
+    await page.mouse.move(boxE.x + boxE.width / 2, boxE.y + boxE.height / 2);
+
+    await page.waitForFunction(
+      () => document.documentElement.getAttribute('data-cursor-mode') === 'resize-ew',
+      null,
+      { timeout: 5000 }
+    );
+
+    // Native OS cursor MUST remain 'none' everywhere
+    const cursorE = await handleE.evaluate((el) => getComputedStyle(el).cursor);
+    expect(cursorE).toBe('none');
+
+    // Custom ring morphs into horizontal pill capsule and shows vector resize icon
+    const ringOpacityE = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).opacity);
+    expect(ringOpacityE).toBe('1');
+    const ringWidthE = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).width);
+    const ringHeightE = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).height);
+    expect(ringWidthE).toBe('44px');
+    expect(ringHeightE).toBe('24px');
+
+    const iconE = page.locator('#cur-ring .cur-icon-ew');
+    await expect(iconE).toBeVisible();
+
+    // Dot is tucked away during resize
+    const dotOpacityE = await page.locator('#cur-dot').evaluate((el) => getComputedStyle(el).opacity);
+    expect(dotOpacityE).toBe('0');
+
+    // Test South-East corner resize handle (resize-nwse mode)
+    const handleSE = page.locator('#ltcPanel .ltc-handle-se');
+    const boxSE = await handleSE.boundingBox();
+    expect(boxSE).toBeTruthy();
+    await page.mouse.move(boxSE.x + boxSE.width / 2, boxSE.y + boxSE.height / 2);
+
+    await page.waitForFunction(
+      () => document.documentElement.getAttribute('data-cursor-mode') === 'resize-nwse',
+      null,
+      { timeout: 5000 }
+    );
+
+    const iconSE = page.locator('#cur-ring .cur-icon-nwse');
+    await expect(iconSE).toBeVisible();
+  });
+
+  test('chatbox titlebar and drag grip trigger custom vector grab cursor (not system cursor)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop fine pointer only');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/index.html');
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+
+    // Hover over drag grip in header
+    const grip = page.locator('#ltcPanel .ltc-drag-grip');
+    const gripBox = await grip.boundingBox();
+    expect(gripBox).toBeTruthy();
+    await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
+
+    await page.waitForFunction(
+      () => document.documentElement.getAttribute('data-cursor-mode') === 'grab',
+      null,
+      { timeout: 5000 }
+    );
+
+    // Native OS cursor must be 'none'
+    const gripCursor = await grip.evaluate((el) => getComputedStyle(el).cursor);
+    expect(gripCursor).toBe('none');
+
+    // Custom ring morphs into grab lens with visible vector grab icon
+    const ringOpacity = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).opacity);
+    expect(ringOpacity).toBe('1');
+    const ringWidth = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).width);
+    const ringHeight = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).height);
+    expect(ringWidth).toBe('36px');
+    expect(ringHeight).toBe('36px');
+
+    const iconGrab = page.locator('#cur-ring .cur-icon-grab');
+    await expect(iconGrab).toBeVisible();
+
+    // cur-dot is hidden in grab mode
+    const dotOpacity = await page.locator('#cur-dot').evaluate((el) => getComputedStyle(el).opacity);
+    expect(dotOpacity).toBe('0');
+  });
+
+  test('fullscreen mode keeps custom cursor visible with zero-lag isolated GPU rendering', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop fine pointer only');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/index.html');
+    await page.waitForSelector('#ltcPin', { state: 'attached' });
+
+    // Click toggle to enter fullscreen
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
+
+    // Move mouse inside fullscreen panel
+    await page.mouse.move(500, 500);
+
+    // Custom cursor elements MUST remain visible inside fullscreen chatbox (never hidden)
+    const dotOpacity = await page.locator('#cur-dot').evaluate((el) => getComputedStyle(el).opacity);
+    const ringOpacity = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).opacity);
+    expect(dotOpacity).toBe('1');
+    expect(ringOpacity).toBe('1');
+
+    // Zero-lag optimization: mix-blend-mode is decoupled to 'normal' to prevent framebuffer blur readbacks
+    const dotBlendMode = await page.locator('#cur-dot').evaluate((el) => getComputedStyle(el).mixBlendMode);
+    const ringBlendMode = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).mixBlendMode);
+    expect(dotBlendMode).toBe('normal');
+    expect(ringBlendMode).toBe('normal');
+
+    // Native OS cursor is suppressed across all panel elements
+    const panelCursor = await page.locator('#ltcPanel').evaluate((el) => getComputedStyle(el).cursor);
+    expect(panelCursor).toBe('none');
+
+    const sendBtnCursor = await page.locator('#ltcSend').evaluate((el) => getComputedStyle(el).cursor);
+    expect(sendBtnCursor).toBe('none');
+
+    // Hovering over interactive button inside fullscreen triggers magnetic link mode
+    const sendBox = await page.locator('#ltcSend').boundingBox();
+    expect(sendBox).toBeTruthy();
+    await page.mouse.move(sendBox.x + sendBox.width / 2, sendBox.y + sendBox.height / 2);
+
+    await page.waitForFunction(
+      () => document.documentElement.getAttribute('data-cursor-mode') === 'link',
+      null,
+      { timeout: 5000 }
+    );
+  });
 });
+

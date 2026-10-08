@@ -79,16 +79,23 @@
     }
 
     ring = document.getElementById('cur-ring');
+    const ringMarkup =
+      '<svg class="cur-ring-circle" viewBox="0 0 32 32" width="32" height="32" style="position:absolute;inset:0;pointer-events:none;overflow:visible;"><circle cx="16" cy="16" r="15.5" fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" shape-rendering="geometricPrecision"/></svg>' +
+      '<div class="cur-icons" aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">' +
+      '<svg class="cur-icon cur-icon-ew" viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l3-3m-3 3l3 3m-3-3h12m0 0l-3-3m3 3l-3 3"/></svg>' +
+      '<svg class="cur-icon cur-icon-ns" viewBox="0 0 12 20" width="12" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l-3 3m3-3l3 3m-3-3v12m0 0l-3-3m3 3l3-3"/></svg>' +
+      '<svg class="cur-icon cur-icon-nwse" viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7M4 4v7M4 4l10 10m0 0v-7m0 7h-7"/></svg>' +
+      '<svg class="cur-icon cur-icon-nesw" viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4H7M14 4v7M14 4L4 14m0 0v-7m0 7h7"/></svg>' +
+      '<svg class="cur-icon cur-icon-grab" viewBox="0 0 12 16" width="12" height="16" fill="currentColor"><circle cx="3" cy="3" r="1.3"/><circle cx="9" cy="3" r="1.3"/><circle cx="3" cy="8" r="1.3"/><circle cx="9" cy="8" r="1.3"/><circle cx="3" cy="13" r="1.3"/><circle cx="9" cy="13" r="1.3"/></svg>' +
+      '</div>';
     if (!ring) {
       ring = document.createElement('div');
       ring.id = 'cur-ring';
       ring.setAttribute('aria-hidden', 'true');
-      ring.innerHTML =
-        '<svg viewBox="0 0 32 32" width="32" height="32" style="position:absolute;inset:0;pointer-events:none;overflow:visible;"><circle cx="16" cy="16" r="15.5" fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" shape-rendering="geometricPrecision"/></svg>';
+      ring.innerHTML = ringMarkup;
       document.body.appendChild(ring);
-    } else if (!ring.querySelector('svg')) {
-      ring.innerHTML =
-        '<svg viewBox="0 0 32 32" width="32" height="32" style="position:absolute;inset:0;pointer-events:none;overflow:visible;"><circle cx="16" cy="16" r="15.5" fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" shape-rendering="geometricPrecision"/></svg>';
+    } else if (!ring.querySelector('.cur-icons')) {
+      ring.innerHTML = ringMarkup;
     }
 
     isMounted = true;
@@ -154,7 +161,94 @@
   }
 
   function updateTarget(targetEl) {
-    // 0. Form inputs and text fields always use native text cursor
+    // 0. Active drag/resize or native cursor zones:
+    // When dragging the panel, resizing via handles/resizers, hovering over handles, grips,
+    // draggable titlebar, or when panel is in fullscreen mode, suppress custom cursor and let native cursor show.
+    // 0. Active dragging mode
+    if (document.body.classList.contains('is-chat-dragging')) {
+      document.documentElement.setAttribute('data-cursor-mode', 'grabbing');
+      if (dot) dot.style.opacity = '0';
+      if (ring) ring.style.opacity = '1';
+      targetX = mouseX;
+      targetY = mouseY;
+      targetScale = 0.9;
+      window.__cursorTargetX = targetX;
+      window.__cursorTargetY = targetY;
+      return;
+    }
+
+    // 0b. Active resizing mode
+    const resizingEdge = document.body.getAttribute('data-resizing');
+    if (resizingEdge) {
+      let mode = 'resize-ew';
+      if (resizingEdge === 'e' || resizingEdge === 'w') {
+        mode = 'resize-ew';
+      } else if (resizingEdge === 'n' || resizingEdge === 's') {
+        mode = 'resize-ns';
+      } else if (resizingEdge === 'nw' || resizingEdge === 'se') {
+        mode = 'resize-nwse';
+      } else if (resizingEdge === 'ne' || resizingEdge === 'sw') {
+        mode = 'resize-nesw';
+      }
+      document.documentElement.setAttribute('data-cursor-mode', mode);
+      if (dot) dot.style.opacity = '0';
+      if (ring) ring.style.opacity = '1';
+      targetX = mouseX;
+      targetY = mouseY;
+      targetScale = 1.0;
+      window.__cursorTargetX = targetX;
+      window.__cursorTargetY = targetY;
+      return;
+    }
+
+    // 0c. Hovering over handles or resizers
+    if (targetEl instanceof Element) {
+      const handle = targetEl.closest('.ltc-handle, .ltc-panel-resizer, #ltRailResizer');
+      if (handle) {
+        let mode = 'resize-ew';
+        if (handle.classList.contains('ltc-handle-n') || handle.classList.contains('ltc-handle-s') || handle.classList.contains('ltc-panel-resizer')) {
+          mode = 'resize-ns';
+        } else if (handle.classList.contains('ltc-handle-nw') || handle.classList.contains('ltc-handle-se')) {
+          mode = 'resize-nwse';
+        } else if (handle.classList.contains('ltc-handle-ne') || handle.classList.contains('ltc-handle-sw')) {
+          mode = 'resize-nesw';
+        } else {
+          mode = 'resize-ew';
+        }
+        document.documentElement.setAttribute('data-cursor-mode', mode);
+        if (dot) dot.style.opacity = '0';
+        if (ring) ring.style.opacity = '1';
+        targetX = mouseX;
+        targetY = mouseY;
+        targetScale = 1.0;
+        window.__cursorTargetX = targetX;
+        window.__cursorTargetY = targetY;
+        return;
+      }
+
+      // Titlebar drag grip or draggable header (excluding buttons inside header)
+      const isGrip = targetEl.closest('.ltc-drag-grip');
+      const isHeader = targetEl.closest('.ltc-head') && !targetEl.closest('button, .ltc-icon-btn, input, textarea, a');
+      if (isGrip || isHeader) {
+        document.documentElement.setAttribute('data-cursor-mode', 'grab');
+        if (dot) dot.style.opacity = '0';
+        if (ring) ring.style.opacity = '1';
+        targetX = mouseX;
+        targetY = mouseY;
+        targetScale = 1.0;
+        window.__cursorTargetX = targetX;
+        window.__cursorTargetY = targetY;
+        return;
+      }
+    }
+
+    // Restore dot and ring opacity when exiting handle/grab mode
+    if (dot && ring) {
+      dot.style.opacity = '1';
+      ring.style.opacity = '1';
+    }
+
+    // 1. Form inputs and text fields always use native text cursor
     if (
       targetEl instanceof Element &&
       targetEl.closest(
@@ -257,9 +351,11 @@
     lastTime = now;
     const n = Math.max(1, Math.ceil(dt / H));
 
-    const isTextMode = document.documentElement.getAttribute('data-cursor-mode') === 'text';
-    const curRingK = isTextMode ? 1400 : RING_K;
-    const curRingC = isTextMode ? 60 : RING_C;
+    const curMode = document.documentElement.getAttribute('data-cursor-mode') || '';
+    const isTextMode = curMode === 'text';
+    const isResizeOrGrab = /^(resize|grab)/.test(curMode);
+    const curRingK = isTextMode || isResizeOrGrab ? 1400 : RING_K;
+    const curRingC = isTextMode || isResizeOrGrab ? 60 : RING_C;
 
     for (let i = 0; i < n; i++) {
       // Semi-implicit Euler integration:
@@ -342,7 +438,10 @@
 
     // Restore visibility when mouse or stylus is active
     if (dot && ring && dot.style.opacity === '0') {
-      dot.style.opacity = '1';
+      const activeMode = document.documentElement.getAttribute('data-cursor-mode') || '';
+      if (!activeMode.startsWith('resize') && activeMode !== 'grab' && activeMode !== 'grabbing' && activeMode !== 'text') {
+        dot.style.opacity = '1';
+      }
       ring.style.opacity = '1';
     }
 
