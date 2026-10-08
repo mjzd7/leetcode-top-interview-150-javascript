@@ -13,6 +13,7 @@
   margin: -3px 0 0 -3px;
   border-radius: 50%;
   mix-blend-mode: difference;
+  contain: layout style paint;
   will-change: transform;
   transform-origin: center center;
 }
@@ -29,9 +30,8 @@
   border-radius: 50%;
   background: var(--cur-ring-bg, rgba(150, 150, 150, 0.1));
   color: var(--cur-ring-border, rgba(150, 150, 150, 0.3));
-  -webkit-backdrop-filter: blur(0.5px);
-  backdrop-filter: blur(0.5px);
-  will-change: transform, color;
+  contain: layout style paint;
+  will-change: transform, color, width, height, border-radius;
   transform-origin: center center;
   transition: color 0.15s ease;
 }
@@ -120,6 +120,203 @@ html[data-theme="light"][data-cursor-mode="text"] #cur-ring::after {
   box-shadow: 0 0 4px rgba(10, 13, 19, 0.35) !important;
 }
 
+/* =========================================================================
+   Zero-lag Performance Over Backdrop-Filter Elements
+   Decouple mix-blend-mode: difference to normal over translucent/blur panels
+   to completely eliminate GPU framebuffer readbacks and compositor lag.
+   ========================================================================= */
+body:has(.ltc-panel.is-open) #cur-dot,
+body:has(.ltc-panel.is-open) #cur-ring,
+.ltc-panel #cur-dot,
+.ltc-panel #cur-ring,
+html[data-cursor-mode^="resize"] #cur-dot,
+html[data-cursor-mode^="resize"] #cur-ring,
+html[data-cursor-mode^="grab"] #cur-dot,
+html[data-cursor-mode^="grab"] #cur-ring {
+  mix-blend-mode: normal !important;
+}
+
+body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-dot {
+  background: var(--accent, #C8FA4B) !important;
+  box-shadow: 0 0 8px var(--accent, #C8FA4B), 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+}
+body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-ring {
+  color: var(--accent, #C8FA4B) !important;
+  border-color: color-mix(in srgb, var(--accent, #C8FA4B) 65%, transparent) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #C8FA4B) 30%, transparent) !important;
+}
+
+/* =========================================================================
+   Custom Morphing Cursor Modes (Resize & Grab)
+   ========================================================================= */
+
+/* Cur-icons base state inside cur-ring */
+.cur-icon {
+  display: none;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+/* Horizontal resize (EW) */
+html[data-cursor-mode="resize-ew"] #cur-dot {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="resize-ew"] #cur-ring {
+  opacity: 1 !important;
+  width: 44px !important;
+  height: 24px !important;
+  margin: -12px 0 0 -22px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 20, 30, 0.9) !important;
+  border: 1.5px solid var(--accent, #C8FA4B) !important;
+  color: var(--accent, #C8FA4B) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--accent, #C8FA4B) 40%, transparent) !important;
+}
+html[data-cursor-mode="resize-ew"] #cur-ring .cur-ring-circle {
+  display: none !important;
+}
+html[data-cursor-mode="resize-ew"] .cur-icon-ew {
+  display: block !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Vertical resize (NS) */
+html[data-cursor-mode="resize-ns"] #cur-dot {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="resize-ns"] #cur-ring {
+  opacity: 1 !important;
+  width: 24px !important;
+  height: 44px !important;
+  margin: -22px 0 0 -12px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 20, 30, 0.9) !important;
+  border: 1.5px solid var(--accent, #C8FA4B) !important;
+  color: var(--accent, #C8FA4B) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--accent, #C8FA4B) 40%, transparent) !important;
+}
+html[data-cursor-mode="resize-ns"] #cur-ring .cur-ring-circle {
+  display: none !important;
+}
+html[data-cursor-mode="resize-ns"] .cur-icon-ns {
+  display: block !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Diagonal NWSE resize */
+html[data-cursor-mode="resize-nwse"] #cur-dot {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="resize-nwse"] #cur-ring {
+  opacity: 1 !important;
+  width: 36px !important;
+  height: 36px !important;
+  margin: -18px 0 0 -18px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 20, 30, 0.9) !important;
+  border: 1.5px solid var(--accent, #C8FA4B) !important;
+  color: var(--accent, #C8FA4B) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--accent, #C8FA4B) 40%, transparent) !important;
+}
+html[data-cursor-mode="resize-nwse"] #cur-ring .cur-ring-circle {
+  display: none !important;
+}
+html[data-cursor-mode="resize-nwse"] .cur-icon-nwse {
+  display: block !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Diagonal NESW resize */
+html[data-cursor-mode="resize-nesw"] #cur-dot {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="resize-nesw"] #cur-ring {
+  opacity: 1 !important;
+  width: 36px !important;
+  height: 36px !important;
+  margin: -18px 0 0 -18px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 20, 30, 0.9) !important;
+  border: 1.5px solid var(--accent, #C8FA4B) !important;
+  color: var(--accent, #C8FA4B) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--accent, #C8FA4B) 40%, transparent) !important;
+}
+html[data-cursor-mode="resize-nesw"] #cur-ring .cur-ring-circle {
+  display: none !important;
+}
+html[data-cursor-mode="resize-nesw"] .cur-icon-nesw {
+  display: block !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Grab mode */
+html[data-cursor-mode="grab"] #cur-dot {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="grab"] #cur-ring {
+  opacity: 1 !important;
+  width: 36px !important;
+  height: 36px !important;
+  margin: -18px 0 0 -18px !important;
+  border-radius: 50% !important;
+  background: rgba(15, 20, 30, 0.88) !important;
+  border: 1.5px solid var(--accent, #C8FA4B) !important;
+  color: var(--accent, #C8FA4B) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--accent, #C8FA4B) 40%, transparent) !important;
+}
+html[data-cursor-mode="grab"] #cur-ring .cur-ring-circle {
+  display: none !important;
+}
+html[data-cursor-mode="grab"] .cur-icon-grab {
+  display: block !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Grabbing mode */
+html[data-cursor-mode="grabbing"] #cur-dot {
+  opacity: 0 !important;
+}
+html[data-cursor-mode="grabbing"] #cur-ring {
+  opacity: 1 !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: -16px 0 0 -16px !important;
+  border-radius: 50% !important;
+  background: var(--accent, #C8FA4B) !important;
+  border: 1.5px solid #ffffff !important;
+  color: #0A0D13 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px var(--accent, #C8FA4B) !important;
+}
+html[data-cursor-mode="grabbing"] #cur-ring .cur-ring-circle {
+  display: none !important;
+}
+html[data-cursor-mode="grabbing"] .cur-icon-grab {
+  display: block !important;
+  opacity: 1 !important;
+  transform: scale(0.9) !important;
+}
+
+/* Light theme overrides for morphing cursor */
+html[data-theme="light"][data-cursor-mode^="resize"] #cur-ring,
+html[data-theme="light"][data-cursor-mode="grab"] #cur-ring {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: #0A0D13 !important;
+  color: #0A0D13 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+html[data-theme="light"][data-cursor-mode="grabbing"] #cur-ring {
+  background: #0A0D13 !important;
+  border-color: #0A0D13 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Universal native cursor suppression: native cursor stays hidden everywhere when custom cursor is active */
 @media (hover: hover) and (pointer: fine) {
   html[data-cursor="on"],
@@ -138,3 +335,4 @@ html[data-theme="light"][data-cursor-mode="text"] #cur-ring::after {
     cursor: auto !important;
   }
 }
+

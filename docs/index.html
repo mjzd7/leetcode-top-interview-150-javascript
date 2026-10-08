@@ -66,6 +66,18 @@
       --accent: #C8FA4B;
       --accent-ink: #101303;
       --rail-bg: var(--canvas-sub);
+      --dur-tap: .12s;  --dur-ui: .18s;  --dur-move: .28s;  --dur-enter: .34s;
+      --ease-smooth: cubic-bezier(.4, 0, .2, 1);
+      --ease-snappy: cubic-bezier(.2, .9, .2, 1);
+      --ease-out:    cubic-bezier(.32, .72, 0, 1);
+      --ease-in:     cubic-bezier(.4, 0, 1, 1);
+      --ease-bouncy: cubic-bezier(.34, 1.56, .64, 1);
+    }
+    @supports (transition-timing-function: linear(0, 1)) {
+      :root {
+        --ease-snappy: linear(0, 0.43 14%, 0.8 28%, 0.96 40%, 1.02 52%, 1 70%, 1);
+        --ease-bouncy: linear(0, 1.28 22%, 1.06 38%, 0.98 54%, 1.01 74%, 1);
+      }
     }
     html { overflow-x: hidden; overflow-x: clip; }
     body { overflow-x: hidden; overflow-x: clip; }
@@ -353,27 +365,297 @@
          gives up goes above it rather than leaving a void below. */
       .ltc-panel[data-resized] { flex: 0 0 var(--ltc-panel-h); margin-top: auto; }
     }
-    /* Height divider on the panel's top edge, mirroring #ltRailResizer. It
-       straddles the edge (top: -5px) so the grab strip is not half hidden under
-       the border, and the panel is position:relative/fixed to anchor it. */
+
+/* --- Overlay Container --- */
+.ltc-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 44;
+}
+
+/* --- Base Panel Defaults --- */
+.ltc-panel {
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* --- Mode 1: Docked (Desktop &ge;1280px) --- */
+@media (min-width: 1280px) {
+  .ltc-panel[data-mode="docked"] {
+    position: relative !important; top: auto !important; left: auto !important;
+    right: auto !important; bottom: auto !important; width: 100% !important;
+    height: auto; flex: 1 1 auto; border-radius: 0; border: none;
+    box-shadow: none;
+  }
+  .ltc-panel[data-mode="docked"][data-resized] {
+    flex: 0 0 var(--ltc-panel-h) !important;
+    height: var(--ltc-panel-h) !important;
+    margin-top: auto !important;
+  }
+  .lt-rail[data-collapsed="true"] {
+    display: none !important; width: 0 !important; flex: 0 0 0 !important;
+  }
+}
+@media (max-width: 1279px) {
+  .ltc-panel[data-mode="docked"] {
+    position: fixed !important; inset: auto 0 0 0 !important; display: none !important;
+  }
+}
+
+/* --- Mode 2: Floating Window --- */
+.ltc-panel[data-mode="floating"] {
+  position: fixed !important;
+  left: var(--ltc-x, 800px);
+  top: var(--ltc-y, 80px);
+  width: var(--ltc-w, 420px);
+  height: var(--ltc-h, 560px);
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 72px);
+  background: rgba(13, 16, 23, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 32px 64px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 44;
+  overflow: visible !important;
+}
+.ltc-panel[data-mode="floating"] .ltc-head {
+  border-top-left-radius: 13px;
+  border-top-right-radius: 13px;
+}
+.ltc-panel[data-mode="floating"] .ltc-form {
+  border-bottom-left-radius: 13px;
+  border-bottom-right-radius: 13px;
+}
+.ltc-panel[data-mode="floating"].is-dragging {
+  background: rgba(13, 16, 23, 0.72);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+}
+.ltc-panel[data-mode="floating"] .ltc-form {
+  background: linear-gradient(180deg, rgba(8, 9, 13, 0.4), rgba(8, 9, 13, 0.8) 40%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.ltc-panel[data-mode="floating"] .ltc-composer {
+  background: rgba(15, 19, 28, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.ltc-panel[data-mode="floating"] .ltc-log-wrap::after {
+  background: linear-gradient(to top, rgba(13, 16, 23, 0.9), transparent);
+}
+.ltc-panel[data-mode="floating"]:not(.is-open) {
+  display: none !important;
+}
+.ltc-panel[data-mode="floating"] .ltc-head {
+  cursor: grab; user-select: none; -webkit-user-select: none;
+}
+.ltc-panel[data-mode="floating"].is-dragging .ltc-head {
+  cursor: grabbing;
+}
+
+/* --- Mode 3: Pinned Right --- */
+.ltc-panel[data-mode="pinned-right"] {
+  position: fixed !important;
+  right: 12px !important; left: auto !important;
+  top: 64px !important;
+  bottom: 12px !important;
+  width: var(--ltc-w, 380px) !important;
+  height: calc(100dvh - 76px) !important;
+  max-width: calc(100vw - 24px);
+  background: var(--rail-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  z-index: 44;
+}
+.ltc-panel[data-mode="pinned-right"]:not(.is-open) {
+  display: none !important;
+}
+
+/* --- Mode 4: Snap Bottom (Mobile/Tablet Portrait) --- */
+.ltc-panel[data-mode="snap-bottom"] {
+  position: fixed !important;
+  left: 0 !important; right: 0 !important; bottom: 0 !important; top: auto !important;
+  width: 100% !important;
+  background: var(--rail-bg);
+  border-bottom: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+  z-index: 44;
+  height: var(--ltc-snap-h, 40dvh);
+  transform: translateY(101%);
+  visibility: hidden;
+  transition: transform var(--dur-move) var(--ease-out);
+}
+.ltc-panel[data-mode="snap-bottom"].is-open {
+  transform: translateY(0);
+  visibility: visible;
+}
+.ltc-panel[data-mode="snap-bottom"][data-snap-step="90dvh"] {
+  height: calc(90dvh - env(safe-area-inset-top, 0px));
+}
+
+/* --- Mode 5: Fullscreen --- */
+.ltc-panel[data-mode="fullscreen"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  z-index: 44 !important;
+  background: var(--rail-bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-head {
+  background: var(--rail-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-form {
+  background: var(--rail-bg);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-composer {
+  background: var(--canvas-ins, rgba(15, 19, 28, 0.75));
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-log-wrap::after {
+  background: linear-gradient(to top, var(--rail-bg), transparent);
+}
+.ltc-panel[data-mode="fullscreen"]:not(.is-open) {
+  display: none !important;
+}
+#ltcFullscreen { display: none !important; }
+.ltc-panel[data-mode="docked"] #ltcPin .ltc-icon-maximize { display: block !important; }
+.ltc-panel[data-mode="docked"] #ltcPin .ltc-icon-dock { display: none !important; }
+.ltc-panel:not([data-mode="docked"]) #ltcPin .ltc-icon-maximize { display: none !important; }
+.ltc-panel:not([data-mode="docked"]) #ltcPin .ltc-icon-dock { display: block !important; }
+
+/* Drag and Resize Global Cursor Locks & Feedback */
+body.is-chat-dragging,
+body.is-chat-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+body[data-resizing="n"] *, body[data-resizing="s"] * { cursor: ns-resize !important; user-select: none !important; }
+body[data-resizing="e"] *, body[data-resizing="w"] * { cursor: ew-resize !important; user-select: none !important; }
+body[data-resizing="ne"] *, body[data-resizing="sw"] * { cursor: nesw-resize !important; user-select: none !important; }
+body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !important; user-select: none !important; }
+
+.ltc-panel.is-dragging {
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 1.5px rgba(200, 250, 75, 0.45) !important;
+  opacity: 0.98;
+}
+
+.ltc-panel.is-resizing {
+  box-shadow: 0 0 0 2px rgba(200, 250, 75, 0.5), 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+  transition: none !important;
+}
+
+/* --- Mobile Landscape Short Height (h <= 500px) --- */
+@media (max-height: 500px) {
+  .ltc-panel[data-mode="snap-bottom"],
+  .ltc-panel[data-mode="pinned-right"] {
+    /* Hard rule: force right side-card on short viewports */
+    left: auto !important; right: 8px !important; bottom: 8px !important; top: 8px !important;
+    width: 360px !important; height: auto !important; border-radius: 12px !important;
+    transform: none !important;
+  }
+  .ltc-panel[data-mode="snap-bottom"]:not(.is-open),
+  .ltc-panel[data-mode="pinned-right"]:not(.is-open) {
+    display: none !important;
+  }
+}
+
+/* --- 8 Resize Handles --- */
+/* --- 8 Resize Handles --- */
+.ltc-resize-handles { position: absolute; inset: 0; pointer-events: none; }
+.ltc-handle { position: absolute; pointer-events: auto; z-index: 10; background: transparent; }
+.ltc-panel[data-mode="docked"] .ltc-handle,
+.ltc-panel[data-mode="pinned-right"] .ltc-handle,
+.ltc-panel[data-mode="snap-bottom"] .ltc-handle,
+.ltc-panel[data-mode="fullscreen"] .ltc-handle { display: none !important; }
+
+.ltc-panel[data-mode="floating"] .ltc-handle-n,
+.ltc-panel[data-mode="floating"] .ltc-handle-s,
+.ltc-panel[data-mode="floating"] .ltc-handle-e,
+.ltc-panel[data-mode="floating"] .ltc-handle-w,
+.ltc-panel[data-mode="floating"] .ltc-handle-ne,
+.ltc-panel[data-mode="floating"] .ltc-handle-nw,
+.ltc-panel[data-mode="floating"] .ltc-handle-se,
+.ltc-panel[data-mode="floating"] .ltc-handle-sw { display: block; }
+
+.ltc-handle-n  { top: -6px; left: 14px; right: 14px; cursor: ns-resize; height: 14px; }
+.ltc-handle-s  { bottom: -6px; left: 14px; right: 14px; cursor: ns-resize; height: 14px; }
+.ltc-handle-e  { right: -6px; top: 14px; bottom: 14px; cursor: ew-resize; width: 14px; }
+.ltc-handle-w  { left: -6px; top: 14px; bottom: 14px; cursor: ew-resize; width: 14px; }
+.ltc-handle-ne { top: -8px; right: -8px; cursor: nesw-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle-nw { top: -8px; left: -8px; cursor: nwse-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle-se { bottom: -8px; right: -8px; cursor: nwse-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle-sw { bottom: -8px; left: -8px; cursor: nesw-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle::after { display: none !important; }
+
+/* In floating and fullscreen modes, hide panel top height resizer */
+.ltc-panel[data-mode="floating"] .ltc-panel-resizer,
+.ltc-panel[data-mode="fullscreen"] .ltc-panel-resizer {
+  display: none !important;
+}
+
+/* Height divider on the panel's top edge, mirroring #ltRailResizer. */
     .ltc-panel-resizer {
       position: absolute; left: 0; right: 0; top: -5px; height: 10px; z-index: 3;
       cursor: row-resize; touch-action: none; background: none;
       user-select: none; -webkit-user-select: none;
     }
     .ltc-panel-resizer::after {
-      content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 3px;
+      content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 2px;
       background: transparent; transition: background 0.15s ease;
     }
     .ltc-panel-resizer:hover::after,
     .ltc-panel-resizer:focus-visible::after,
-    .ltc-panel-resizer.is-dragging::after { background: var(--accent); }
+    .ltc-panel-resizer.is-dragging::after { background: rgba(200, 250, 75, 0.4); }
     .ltc-panel-resizer:focus-visible { outline: none; }
+
+/* --- Snap to Edge Ghost Zone --- */
+.ltc-snap-ghost {
+  position: fixed; right: 0; top: 3.5rem; bottom: 0;
+  width: var(--lt-rail-w, 380px);
+  background: linear-gradient(90deg, rgba(200, 250, 75, 0.01), rgba(200, 250, 75, 0.07));
+  border-left: 2px dashed rgba(200, 250, 75, 0.45);
+  box-shadow: inset 16px 0 32px -12px rgba(200, 250, 75, 0.15);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity var(--dur-ui) var(--ease-smooth), transform var(--dur-ui) var(--ease-snappy);
+  z-index: 43;
+}
+.ltc-snap-ghost.is-active {
+  opacity: 1;
+  transform: translateX(0);
+}
     .ltc-head {
       display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;
       padding: 0.7rem 0.75rem 0.7rem 0.85rem;
       border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(200, 250, 75, 0.035), transparent);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 45%), linear-gradient(180deg, rgba(200, 250, 75, 0.035), transparent);
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .ltc-head:active,
+    .ltc-panel.is-dragging .ltc-head {
+      cursor: grabbing;
     }
     .ltc-head-mark {
       display: inline-flex; align-items: center; justify-content: center;
@@ -381,21 +663,41 @@
       color: var(--accent-ink);
       background: linear-gradient(140deg, #D8FF6B, #A8DE2C);
       box-shadow: 0 3px 12px rgba(200, 250, 75, 0.22);
+      transition: transform var(--dur-ui) var(--ease-bouncy), box-shadow var(--dur-ui) var(--ease-smooth);
+    }
+    .ltc-head:hover .ltc-head-mark {
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: 0 4px 16px rgba(200, 250, 75, 0.35);
     }
     .ltc-head-mark svg { width: 17px; height: 17px; }
-    .ltc-head-txt { min-width: 0; }
+    .ltc-drag-grip {
+      display: inline-flex; align-items: center; justify-content: center;
+      color: rgba(148, 163, 184, 0.4);
+      flex-shrink: 0;
+      margin-right: -2px;
+      cursor: grab;
+      transition: color 0.15s ease;
+    }
+    .ltc-head:hover .ltc-drag-grip {
+      color: var(--accent);
+    }
+    .ltc-head-txt {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
     .ltc-head-title {
       font-family: var(--font-display); font-size: 0.82rem; font-weight: 700;
       letter-spacing: -0.01em; color: #fff; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .ltc-head-sub {
       font-family: var(--font-mono); font-size: 10px; color: var(--muted);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       line-height: 1.35; margin-top: 1px;
     }
-    .ltc-head-actions { margin-left: auto; display: flex; align-items: center; gap: 0.3rem; }
-    /* Live context state. The premise of this widget is that it can see the
-       page, and until now nothing on screen said so. */
+    .ltc-head-actions { margin-left: auto; display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+    /* Live context state. Compact dot badge in non-fullscreen modes to leave ample space for title & context */
     .ltc-status {
       display: inline-flex; align-items: center; gap: 0.35rem;
       padding: 0.2rem 0.5rem; border-radius: 999px;
@@ -422,21 +724,25 @@
       70% { box-shadow: 0 0 0 7px rgba(200, 250, 75, 0); }
       100% { box-shadow: 0 0 0 0 rgba(200, 250, 75, 0); }
     }
-    @media (max-width: 1180px) { .ltc-status-txt { display: none; } .ltc-status { padding: 0.35rem; } }
+    .ltc-panel:not([data-mode="fullscreen"]) .ltc-status-txt { display: none !important; }
+    .ltc-panel:not([data-mode="fullscreen"]) .ltc-status { padding: 0.25rem 0.35rem; }
     .ltc-icon-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 44px; height: 44px; flex-shrink: 0; padding: 0; border-radius: 9px;
       border: 1px solid transparent; background: transparent;
       color: var(--muted); cursor: pointer;
-      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.12s cubic-bezier(.2, .9, .2, 1);
     }
     .ltc-icon-btn svg { width: 15px; height: 15px; }
     .ltc-icon-btn:hover {
       color: var(--fg); background: var(--canvas-ins);
       border-color: var(--border-soft);
+      transform: translateY(-1px);
     }
-    .ltc-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    @media (min-width: 1280px) { .ltc-close { display: none; } }
+    .ltc-icon-btn:active {
+      transform: translateY(0) scale(0.96);
+    }
+    .ltc-close { display: inline-flex !important; }
     .ltc-log-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
     /* The scroll-down chevron floats over the last message, so that message has
        to fade out under it rather than sit raw behind a circle. The gradient
@@ -531,7 +837,7 @@
       color: #E9EDF4; transform: translateY(-1px);
     }
     .ltc-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .ltc-chip:active { transform: translateY(0); }
+    .ltc-chip:active { transform: translateY(0) scale(0.975); }
     /* Messages: the assistant speaks in full-width prose with a small mark, the
        reader gets a right-aligned pill. No ASSISTANT/YOU caption rows — those
        read like a debug log and told the reader nothing they could not see. */
@@ -867,6 +1173,7 @@
     .ltc-send svg, .ltc-stop svg { width: 16px; height: 16px; }
     .ltc-send { background: var(--accent); color: var(--accent-ink); }
     .ltc-send:hover:not(:disabled) { background: #D6FF63; transform: translateY(-1px); }
+    .ltc-send:active:not(:disabled) { transform: translateY(0) scale(0.96); }
     .ltc-send:disabled {
       background: rgba(148, 163, 184, 0.1); color: #4A5265;
       cursor: not-allowed; border-color: var(--line);
@@ -879,7 +1186,8 @@
       background: rgba(251, 113, 133, 0.12); color: #FB7185;
       border-color: rgba(251, 113, 133, 0.32);
     }
-    .ltc-stop:hover { background: rgba(251, 113, 133, 0.2); }
+    .ltc-stop:hover { background: rgba(251, 113, 133, 0.2); transform: translateY(-1px); }
+    .ltc-stop:active { transform: translateY(0) scale(0.96); }
     .ltc-hint {
       margin: 0; padding: 0 0.25rem;
       font-family: var(--font-mono); font-size: 9.5px; color: #5A6377;
@@ -895,9 +1203,10 @@
       width: 56px; height: 56px; border-radius: 999px;
       background: var(--accent); color: var(--accent-ink);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-      transition: transform 0.15s ease;
+      transition: transform 0.18s cubic-bezier(.2, .9, .2, 1), opacity 0.18s ease, visibility 0.18s;
     }
-    .ltc-fab:hover { transform: scale(1.06); }
+    .ltc-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55); }
+    .ltc-fab:active { transform: translateY(0) scale(0.96); }
     .ltc-fab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
     /* Center the glyph optically: the bubble's ink sits slightly high (the arrow
        nub lives in the top-right corner of the viewBox), and explicit sizing
@@ -905,8 +1214,10 @@
     .ltc-fab svg { width: 23px; height: 23px; transform: translateY(0.75px); }
     /* The FAB sits exactly where the sheet's Send button is, so it must tuck
        away while the sheet is up or it swallows the tap. */
-    .ltc-fab.is-tucked { opacity: 0; pointer-events: none; transform: scale(0.7); }
-    @media (min-width: 1280px) { .ltc-fab { display: none; } }
+    .ltc-fab.is-tucked { opacity: 0; pointer-events: none; transform: scale(0.7); visibility: hidden; }
+    @media (min-width: 1280px) {
+      body:has(#ltRail:not([data-collapsed="true"])) .ltc-fab { display: none; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .ltc-panel { transition: none; }
       /* Reduced motion drops the travel, not the signal. A chip crossing the
@@ -1110,6 +1421,9 @@
       <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
       <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
       <div class="ltc-head">
+        <span class="ltc-drag-grip" aria-hidden="true" title="Drag to undock or move">
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor"><circle cx="2" cy="2" r="1.25"/><circle cx="6" cy="2" r="1.25"/><circle cx="2" cy="7" r="1.25"/><circle cx="6" cy="7" r="1.25"/><circle cx="2" cy="12" r="1.25"/><circle cx="6" cy="12" r="1.25"/></svg>
+        </span>
         <span class="ltc-head-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
         </span>
@@ -1118,7 +1432,7 @@
           <div id="ltcPanelTitle" class="ltc-head-sub"></div>
         </div>
         <div class="ltc-head-actions">
-          <span class="ltc-status" data-state="idle">
+          <span class="ltc-status" data-state="idle" title="Ready">
             <span class="ltc-status-dot" aria-hidden="true"></span>
             <span class="ltc-status-txt" id="ltcStatusTxt">Ready</span>
           </span>
@@ -1131,10 +1445,29 @@
           <button id="ltcClearAll" class="ltc-icon-btn" type="button" title="Clear every chat on this device" aria-label="Clear all chats on this device">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l-1-12M10 11v6M14 11v6"/><path d="M3.5 3.5l17 17"/></svg>
           </button>
-          <button id="ltcClose" class="ltc-icon-btn ltc-close" type="button" aria-label="Close the assistant">
+          <!-- Single window state button: Dock to Side / Fullscreen -->
+          <button id="ltcPin" class="ltc-icon-btn" type="button" title="Expand to fullscreen" aria-label="Expand assistant to fullscreen">
+            <svg class="ltc-icon-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            <svg class="ltc-icon-dock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/><path d="M10 12l-3-3m0 0l3-3m-3 3h7"/></svg>
+          </button>
+          <button id="ltcFullscreen" class="ltc-icon-btn" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" style="display:none !important;" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </button>
+          <button id="ltcClose" class="ltc-icon-btn ltc-close" type="button" title="Minimize assistant" aria-label="Close or minimize the assistant">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
+      </div>
+      <!-- 8 Resize Handles for Floating Mode -->
+      <div class="ltc-resize-handles" aria-hidden="true">
+        <div class="ltc-handle ltc-handle-n" data-handle="n"></div>
+        <div class="ltc-handle ltc-handle-e" data-handle="e"></div>
+        <div class="ltc-handle ltc-handle-s" data-handle="s"></div>
+        <div class="ltc-handle ltc-handle-w" data-handle="w"></div>
+        <div class="ltc-handle ltc-handle-ne" data-handle="ne"></div>
+        <div class="ltc-handle ltc-handle-se" data-handle="se"></div>
+        <div class="ltc-handle ltc-handle-sw" data-handle="sw"></div>
+        <div class="ltc-handle ltc-handle-nw" data-handle="nw"></div>
       </div>
       <div class="ltc-log-wrap">
         <div id="ltcLog" class="ltc-log" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="false" aria-label="Conversation"></div>
@@ -1159,6 +1492,14 @@
       </form>
     </aside>
     </aside>
+  </div>
+
+  <!-- Floating & Fullscreen Portal Container for Assistant
+       Holds the panel when undocked (floating / fullscreen): a z-44 portal so the
+       rail can collapse and the panel never fights the article for stacking.
+       pointer-events: none so a stray click passes straight through to the page. -->
+  <div id="ltcOverlay" class="ltc-overlay" aria-live="polite">
+    <div id="ltcSnapGhost" class="ltc-snap-ghost" aria-hidden="true"></div>
   </div>
 
   <!-- Mobile trigger for the assistant bottom sheet -->

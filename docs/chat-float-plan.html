@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat Float / Pin / Fullscreen — Deterministic Execution Plan &amp; Test Specification</title>
+<style>
+:root {
+  --bg: #0B0F17;
+  --panel: #111827;
+  --card: #151E2E;
+  --card-subtle: #0F1726;
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(148, 163, 184, 0.3);
+  --fg: #E5E7EB;
+  --fg-bright: #FFFFFF;
+  --mut: #94A3B8;
+  --acc: #C8FA4B;
+  --acc-dim: rgba(200, 250, 75, 0.15);
+  --acc-ink: #1A2405;
+  --cyan: #38BDF8;
+  --cyan-dim: rgba(56, 189, 248, 0.12);
+  --amber: #FBBF24;
+  --rose: #FB7185;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --disp: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--disp); line-height: 1.6; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 36px 20px 120px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11.5px; padding: 4px 12px; border: 1px solid rgba(200, 250, 75, 0.45); border-radius: 999px; color: var(--acc); background: rgba(200, 250, 75, 0.08); margin-bottom: 14px; }
+.badge-blue { border-color: rgba(56, 189, 248, 0.45); color: var(--cyan); background: var(--cyan-dim); }
+h1 { font-size: 32px; letter-spacing: -0.025em; margin: 0 0 10px; color: var(--fg-bright); font-weight: 800; }
+h2 { font-size: 21px; letter-spacing: -0.015em; margin: 44px 0 14px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--fg-bright); display: flex; align-items: center; justify-content: space-between; }
+h3 { font-size: 16px; margin: 26px 0 10px; color: var(--acc); letter-spacing: -0.01em; }
+h4 { font-size: 14px; margin: 18px 0 8px; color: var(--cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+p, li { font-size: 14px; color: #CBD5E1; }
+ul, ol { padding-left: 22px; margin: 8px 0 16px; }
+code { font-family: var(--mono); font-size: 12px; background: rgba(255, 255, 255, 0.08); padding: 2px 6px; border-radius: 5px; color: #F1F5F9; }
+pre { background: #070B11; border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.55; color: #A7F3D0; margin: 12px 0 18px; }
+pre code { background: none; padding: 0; color: inherit; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 24px; }
+th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+th { background: rgba(200, 250, 75, 0.09); color: var(--acc); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+tr:nth-child(even) td { background: rgba(255, 255, 255, 0.015); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin: 14px 0 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); }
+.card-alert { border-left: 4px solid var(--acc); background: linear-gradient(90deg, rgba(200, 250, 75, 0.05), var(--card)); }
+.card-info { border-left: 4px solid var(--cyan); background: linear-gradient(90deg, rgba(56, 189, 248, 0.05), var(--card)); }
+.card-warn { border-left: 4px solid var(--amber); background: linear-gradient(90deg, rgba(251, 191, 36, 0.05), var(--card)); }
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.vp { background: #080C14; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.vp .bar { font-family: var(--mono); font-size: 11px; color: var(--mut); padding: 8px 12px; border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; }
+.stage { position: relative; height: 210px; background: linear-gradient(180deg, #0D1422, #080C14); overflow: hidden; }
+.mock { position: absolute; background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; font-family: var(--mono); font-size: 10px; color: var(--mut); display: flex; align-items: center; justify-content: center; padding: 4px; text-align: center; }
+.chat { position: absolute; background: rgba(200, 250, 75, 0.12); border: 1px solid rgba(200, 250, 75, 0.6); border-radius: 8px; font-family: var(--mono); font-size: 10.5px; color: var(--acc); display: flex; align-items: center; justify-content: center; padding: 4px; font-weight: 600; text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+.fabdot { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: var(--acc); color: var(--acc-ink); font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(200, 250, 75, 0.4); }
+.kv { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+.kv span { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; color: var(--mut); background: rgba(255, 255, 255, 0.02); }
+.kv span.active { border-color: rgba(200, 250, 75, 0.4); color: var(--acc); }
+.small { font-size: 12.5px; }
+.mut { color: var(--mut); }
+.tag { font-family: var(--mono); font-size: 10.5px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.tag-req { background: rgba(251, 113, 133, 0.2); color: #FDA4AF; border: 1px solid rgba(251, 113, 133, 0.35); }
+.tag-done { background: rgba(52, 211, 153, 0.2); color: #6EE7B7; border: 1px solid rgba(52, 211, 153, 0.35); }
+.tag-par { background: rgba(56, 189, 248, 0.2); color: #7DD3FC; border: 1px solid rgba(56, 189, 248, 0.35); }
+.check li { margin: 8px 0; }
+.wave-step { border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin: 10px 0; background: rgba(255, 255, 255, 0.015); }
+.wave-step-title { font-weight: 700; color: var(--fg-bright); font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+@media (max-width: 640px) { h1 { font-size: 25px; } .stage { height: 180px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="badge">DETERMINISTIC BLUEPRINT — ZERO AMBIGUITY EXECUTION SPEC</div>
+<div class="badge badge-blue">TARGET MODELS: GPT-4o-mini / Haiku 3.5 / Gemini Flash / Llama-3-8B</div>
+
+<h1>Chatbot Float, Pin &amp; Fullscreen: Complete Execution Plan</h1>
+<p class="mut">Goal: Free the chat assistant from its static right-rail lock-in. Transform it into a floating, pinnable, draggable, resizable, and fullscreen study companion across all viewport classes, while preserving 100% of the existing SSE transport, storage schema, markdown/Mermaid rendering passes, and zero backend touch.</p>
+
+<div class="kv">
+  <span class="active">docs/index.html (Overlay DOM &amp; Layout CSS)</span>
+  <span class="active">docs/chat-widget.js (IIFE window.LtChat Geometry Engine)</span>
+  <span class="active">tests/chatbox.spec.js (Playwright Invariant Suite)</span>
+  <span>api/chat.mjs (STRICT ZERO TOUCH)</span>
+  <span>storage key: lt150-chat-v1</span>
+  <span>rect key: lt150-chat-rect</span>
+  <span>mode key: lt150-chat-mode</span>
+</div>
+
+<!-- SECTION 0: RESOLVED DECISIONS -->
+<h2>0. Hard Architectural Decisions (Resolved Upfront — No Decisions Left For Later)</h2>
+<div class="card card-alert">
+  <p>To eliminate model hesitation or divergent implementations, every open design decision has been finalized with an authoritative specification:</p>
+  <table>
+    <tr><th>Decision Point</th><th>Authoritative Resolution</th><th>Exact Technical Mechanism</th></tr>
+    <tr>
+      <td><strong>1. Rect Persistence</strong></td>
+      <td><strong>Dedicated Float Rect + Clamped Restoration</strong></td>
+      <td>Persist under <code>localStorage['lt150-chat-rect']</code> as JSON: <code>{"x":number,"y":number,"w":number,"h":number}</code>. Restored only when entering <code>floating</code> mode on screens &ge;1024px. Clamped immediately to <code>[8, innerWidth - w - 8]</code> and <code>[64, innerHeight - h - 8]</code>. Mobile portrait always uses deterministic snap-steps (40dvh / 90dvh).</td>
+    </tr>
+    <tr>
+      <td><strong>2. Fullscreen vs Sidebar</strong></td>
+      <td><strong>CSS Overlay Occlusion (No DOM mutation of sidebar)</strong></td>
+      <td>Fullscreen mode applies <code>position: fixed; inset: 0; z-index: 44; width: 100dvw; height: 100dvh; border-radius: 0;</code> to <code>#ltcPanel</code>. Sidebar state is untouched, remaining intact underneath. Exiting fullscreen restores the previous rect and mode.</td>
+    </tr>
+    <tr>
+      <td><strong>3. Float Size Limits</strong></td>
+      <td><strong>Width: 320px–900px · Height: 200px–(vh - 72px)</strong></td>
+      <td>Desktop float min width is <code>320px</code>, default is <code>420px</code>, max is <code>Math.min(900, window.innerWidth - 32)</code>. Min height is <code>200px</code>, default is <code>560px</code>, max ceiling is <code>window.innerHeight - 72</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>4. Header Control Icons &amp; Pin Behavior</strong></td>
+      <td><strong>Binary Pin Toggle (Pinned Right &harr; Free Float)</strong></td>
+      <td><code>#ltcPin</code> acts as a binary toggle: switches between pinned (docked rail on &ge;1280px / pinned right side-card) and free floating window. Order inside <code>.ltc-head-actions</code>: Status Dot &rarr; Clear &rarr; Clear-All &rarr; <code>#ltcPin</code> (📌 / ⇄) &rarr; <code>#ltcFullscreen</code> (⤢) &rarr; <code>#ltcClose</code> (&times;).</td>
+    </tr>
+    <tr>
+      <td><strong>5. Breakpoint &amp; Laptop Default</strong></td>
+      <td><strong>Single 1280px Breakpoint · Laptop (1024–1279px) Defaults to Pinned-Right + Stage 2 Sidebar</strong></td>
+      <td>On laptop screens (1024–1279px), the assistant defaults to <strong>pinned-right side-card (380px)</strong> and the left sidebar automatically collapses to <strong>Stage 2 (56px icon rail)</strong>. This guarantees the center reading column retains &ge;500px prose width without horizontal overflow.</td>
+    </tr>
+    <tr>
+      <td><strong>6. Escape Key Contract</strong></td>
+      <td><strong>Esc Closes / Minimizes Chat in Floating Mode</strong></td>
+      <td>Pressing <kbd>Esc</kbd> when chat is floating immediately minimizes it to the FAB button (preserving thread in memory/storage) and returns focus to the last active document element.</td>
+    </tr>
+    <tr>
+      <td><strong>7. Article Full-Bleed on Float</strong></td>
+      <td><strong>Auto-collapse <code>#ltRail</code> when undocked</strong></td>
+      <td>When chat is in <code>floating</code>, <code>fullscreen</code>, or <code>minimized</code> mode, <code>#ltRail</code> receives attribute <code>data-collapsed="true"</code> with CSS <code>flex: 0 0 0px !important; width: 0 !important; display: none;</code>. <code>main#contentContainer</code> automatically expands full-bleed.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECTION 1: PARALLEL EXECUTION MATRIX -->
+<h2>1. Parallel Execution Breakdown (Multi-Worker / Multi-Model Dispatch)</h2>
+<div class="card card-info">
+  <p>The implementation is separated into 4 isolated, orthogonal tracks with zero merge conflicts. Free and lower-tier models can work on these tracks concurrently:</p>
+  <div class="grid g2">
+    <div class="wave-step">
+      <div class="wave-step-title"><span>Track A: CSS Architecture &amp; Styles</span><span class="tag tag-par">PARALLEL</span></div>
+      <p class="small mut">File: <code>docs/index.html</code> (lines 190–460)</p>
+      <ul>
+        <li>Add <code>#ltcOverlay</code> styling (fixed, pointer-events: none, z-index: 44).</li>
+        <li>Mode selectors: <code>.ltc-panel[data-mode="docked|floating|pinned-right|snap-bottom|fullscreen"]</code>.</li>
+        <li>8-handle CSS (<code>.ltc-handle-nw</code> through <code>.ltc-handle-se</code>, cursor mappings, hitboxes).</li>
+        <li>Safe-area padding: <code>env(safe-area-inset-bottom)</code>, <code>env(safe-area-inset-top)</code>.</li>
+        <li>Mobile landscape side-card CSS (<code>@media (max-height: 500px)</code>).</li>
+      </ul>
+    </div>
+    <div class="wave-step">
+      <div class="wave-step-title"><span>Track B: Pure Geometry &amp; Math Engine</span><span class="tag tag-par">PARALLEL</span></div>
+      <p class="small mut">File: <code>docs/chat-widget.js</code> (helper submodule)</p>
+      <ul>
+        <li>Pure clamping function: <code>clampRect(rect, viewport, limits)</code>.</li>
+        <li>Viewport detection: <code>isLandscapeShort()</code> (height &le; 500), <code>isDesktop()</code> (&ge; 1280).</li>
+        <li>Storage serialization: safe JSON parsing with fallback defaults.</li>
+        <li>Handle delta calculations: mapping drag offset <code>(dx, dy)</code> to new rect for all 8 handles.</li>
+      </ul>
+    </div>
+    <div class="wave-step">
+      <div class="wave-step-title"><span>Track C: DOM Reparenting &amp; Event Wiring</span><span class="tag tag-par">PARALLEL</span></div>
+      <p class="small mut">File: <code>docs/chat-widget.js</code> (DOM controller)</p>
+      <ul>
+        <li>Container mount helper: <code>mountPanel(mode)</code> using <code>appendChild</code>.</li>
+        <li>Pointer capture drag engine for <code>.ltc-head</code> and 8 handles.</li>
+        <li>Mode switch transitions (<code>setMode(newMode)</code>) updating ARIA and styles.</li>
+        <li>VisualViewport API listener for mobile keyboard pop-up.</li>
+      </ul>
+    </div>
+    <div class="wave-step">
+      <div class="wave-step-title"><span>Track D: Playwright Invariant Test Suite</span><span class="tag tag-par">PARALLEL</span></div>
+      <p class="small mut">File: <code>tests/chatbox.spec.js</code> &amp; <code>tests/layout.spec.mjs</code></p>
+      <ul>
+        <li>Mode transition assertions: docked &rarr; floating &rarr; pinned-right &rarr; fullscreen &rarr; docked.</li>
+        <li>Viewport matrix tests: 1440px desktop, 1024px laptop, 768px tablet, 375px mobile, 800x360 landscape.</li>
+        <li>Collision test: FAB vs Send button (L-7 check) across all modes.</li>
+        <li>Persistence verification: page reload preserves float coordinates and mode.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: VIEWPORT & DEVICE MATRIX -->
+<h2>2. Complete Viewport, Device &amp; Browser Matrix</h2>
+<div class="card">
+  <p>The assistant must behave deterministically on all device categories and form factors:</p>
+  <table>
+    <tr><th>Device Type</th><th>Resolution / Aspect</th><th>Default Mode</th><th>Allowed Modes</th><th>Special Behavior &amp; Constraints</th></tr>
+    <tr>
+      <td><strong>Desktop Ultrawide / 4K</strong></td>
+      <td>1920&times;1080, 2560&times;1440, 3840&times;2160</td>
+      <td><code>docked</code> (rail 380px)</td>
+      <td>docked, floating, pinned-right, fullscreen</td>
+      <td>Undocking collapses <code>#ltRail</code>; article expands. Float max width 900px. Header double-click toggles fullscreen.</td>
+    </tr>
+    <tr>
+      <td><strong>Standard Desktop</strong></td>
+      <td>1440&times;900, 1280&times;800 (&ge;1280px)</td>
+      <td><code>docked</code></td>
+      <td>docked, floating, pinned-right, fullscreen</td>
+      <td>When sidebar is closed, rail can pin right. Resize bounds clamped within window.</td>
+    </tr>
+    <tr>
+      <td><strong>Laptop / Small Screen</strong></td>
+      <td>1024&times;768 &ndash; 1279&times;800</td>
+      <td><code>pinned-right</code> (380px) + Stage 2 sidebar</td>
+      <td>pinned-right, floating, fullscreen</td>
+      <td>Defaults to pinned-right side-card (380px). Sidebar auto-collapses to Stage 2 (56px) so article preserves &ge;500px width. Unpinning allows free float anywhere.</td>
+    </tr>
+    <tr>
+      <td><strong>Tablet Portrait</strong></td>
+      <td>iPad Mini/Air/Pro 768&times;1024, 820&times;1180</td>
+      <td><code>snap-bottom</code> (40dvh)</td>
+      <td>snap-bottom (40/90dvh), fullscreen</td>
+      <td>Backdrop inactive during 40dvh so upper article is readable and scrollable. 90dvh modal activates backdrop.</td>
+    </tr>
+    <tr>
+      <td><strong>Tablet Landscape</strong></td>
+      <td>iPad 1024&times;768, 1180&times;820</td>
+      <td><code>pinned-right</code> side-card</td>
+      <td>pinned-right, floating, fullscreen</td>
+      <td>Side-card snapped right (w: 360–420px), article beside it. Bottom-sheet forbidden.</td>
+    </tr>
+    <tr>
+      <td><strong>Mobile Portrait (Tall)</strong></td>
+      <td>iPhone 14/15/16 (390&times;844), Pixel 7/8 (412&times;915)</td>
+      <td>FAB closed (article first)</td>
+      <td>snap-bottom, fullscreen</td>
+      <td>Tapping FAB opens 40dvh mini-card. Dragging top handle snaps to 90dvh or fullscreen. Safe-area padding applied.</td>
+    </tr>
+    <tr>
+      <td><strong>Mobile Landscape (Short)</strong></td>
+      <td>Any device where <code>height &le; 500px</code> (e.g. 844&times;390, 800&times;360)</td>
+      <td><code>pinned-right</code> side-card (340px)</td>
+      <td>pinned-right, fullscreen</td>
+      <td><strong>HARD RULE:</strong> Bottom sheet forbidden. Panel snaps right, height = <code>calc(100dvh - 16px)</code>. Article left usable.</td>
+    </tr>
+  </table>
+
+  <h4>Browser Compatibility Matrix</h4>
+  <table>
+    <tr><th>Browser</th><th>Key Quirks Handled</th><th>Implementation Guard</th></tr>
+    <tr>
+      <td><strong>Apple Safari (macOS &amp; iOS)</strong></td>
+      <td>1. Dynamic address bar shifting 100vh.<br>2. Virtual keyboard pushing body instead of resizing viewport.<br>3. Rubber-banding on overscroll.</td>
+      <td>Use <code>100dvh</code> everywhere with fallback to <code>100vh</code>. Bind to <code>window.visualViewport</code> resize event to adjust composer bottom margin. Apply <code>overscroll-behavior: contain</code> to log.</td>
+    </tr>
+    <tr>
+      <td><strong>Google Chrome / Chromium / Edge</strong></td>
+      <td>1. Pointer capture drop on window blur.<br>2. Sub-pixel text rendering during CSS transforms.</td>
+      <td>Listen to <code>pointercancel</code> and <code>lostpointercapture</code>. Use discrete pixel positioning (<code>left</code>, <code>top</code>) instead of <code>transform: translate</code> for settled floating rect.</td>
+    </tr>
+    <tr>
+      <td><strong>Mozilla Firefox</strong></td>
+      <td>1. Flexbox min-height bug pushing composer.<br>2. Custom scrollbar styling (scrollbar-width).</td>
+      <td>Ensure <code>.ltc-log-wrap</code> has <code>min-height: 0; flex: 1 1 auto;</code>. Use standard <code>scrollbar-width: thin</code> alongside webkit scrollbar pseudo-elements.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECTION 3: COMPREHENSIVE EDGE CASES -->
+<h2>3. Comprehensive Edge Cases &amp; Failure Modes</h2>
+<div class="card card-warn">
+  <p>The following 12 edge cases must be explicitly coded and verified in the automated suite:</p>
+  <ol>
+    <li>
+      <strong>Virtual Keyboard on Mobile (VisualViewport Push):</strong>
+      When focusing <code>#ltcInput</code> on iOS/Android, the virtual keyboard takes 40–50% of the screen.
+      <em>Solution:</em> In mobile modes, subscribe to <code>window.visualViewport.addEventListener('resize', ...)</code>. When <code>visualViewport.height &lt; window.innerHeight</code>, clamp panel height to <code>visualViewport.height</code> and scroll composer into view.
+    </li>
+    <li>
+      <strong>Orientation Change (Portrait &harr; Landscape):</strong>
+      User rotates phone from 390&times;844 to 844&times;390 while chat is open.
+      <em>Solution:</em> <code>window.addEventListener('resize')</code> detects <code>innerHeight &le; 500</code>. If previously in <code>snap-bottom</code>, automatically switch to <code>pinned-right</code> side-card mode. If rotating back to portrait, restore previous portrait height.
+    </li>
+    <li>
+      <strong>Window Resized Smaller Than Float Rect:</strong>
+      User floats chat to (x: 1000, y: 300) on a 1920px screen, then resizes window to 1100px.
+      <em>Solution:</em> Window resize hook runs <code>clampFloatPosition()</code>: if <code>x + width &gt; innerWidth - 8</code>, set <code>x = Math.max(8, innerWidth - width - 8)</code>.
+    </li>
+    <li>
+      <strong>Streaming Response In-Flight During Mode Switch:</strong>
+      SSE tokens arriving while user drags, pins, or fullscreens the panel.
+      <em>Solution:</em> Reparenting is performed via <code>container.appendChild(el.panel)</code>. In the DOM specification, moving an attached node via <code>appendChild</code> retains all in-memory event listeners, timers, closures, and SSE stream connections. No stream reconnection needed.
+    </li>
+    <li>
+      <strong>Wide Markdown Tables &amp; Mermaid Diagrams:</strong>
+      AI emits a 6-column markdown table or wide Mermaid graph that exceeds the 380px panel width.
+      <em>Solution:</em> All table and mermaid containers are wrapped in <code>.ltc-table-scroll</code> with <code>overflow-x: auto; max-width: 100%;</code>. Panel width must NEVER stretch horizontally due to child content.
+    </li>
+    <li>
+      <strong>Escape Key Hierarchy:</strong>
+      Pressing <kbd>Esc</kbd> when multiple overlays coexist.
+      <em>Solution:</em>
+      1. If Command Palette (<code>#paletteOverlay</code>, z-50) is open &rarr; Palette handles Esc.
+      2. If Chat is Fullscreen (z-44) &rarr; Chat exits fullscreen, restores float/dock rect.
+      3. If Chat is Modal Sheet (<1280px with backdrop open) &rarr; Chat closes to FAB.
+      4. If Chat is Floating (non-modal) &rarr; <kbd>Esc</kbd> minimizes chat to FAB, preserving thread in memory, and returns focus to last active document element.
+    </li>
+    <li>
+      <strong>Focus Trap Containment:</strong>
+      Only trap focus with <kbd>Tab</kbd> navigation when in modal sheet mode with backdrop. NEVER trap focus in <code>floating</code> or <code>docked</code> mode, allowing the user to seamlessly click code blocks in the article while keeping the chat open.
+    </li>
+    <li>
+      <strong>Off-Screen / Multi-Monitor Drag Clamping:</strong>
+      During pointer dragging, clamp the cursor math so the panel header cannot be moved above <code>y = 56px</code> (below top navigation bar) or dragged off the bottom/sides. Minimum visible area guaranteed: 100% of header visible.
+    </li>
+    <li>
+      <strong>Rapid Toggling / Double-Click Debouncing:</strong>
+      Rapid clicking of pin/fullscreen/dock buttons.
+      <em>Solution:</em> All mode switches execute synchronously with CSS transitions disabled during instant layout calculations to prevent transition stack-up.
+    </li>
+    <li>
+      <strong>FAB vs Send Button Collision (The L-7 Rule):</strong>
+      Under NO circumstances may the FAB dot float above or overlap the composer Send/Stop button.
+      <em>Solution:</em> Whenever <code>#ltcPanel</code> is visible (in docked, floating, pinned, or sheet mode), <code>#ltcFab</code> has class <code>is-tucked</code> (opacity: 0, pointer-events: none). FAB only appears when chat is minimized.
+    </li>
+    <li>
+      <strong>Double-Click Header to Maximize / Restore:</strong>
+      Double-clicking <code>.ltc-head</code> in floating mode toggles between current float rect and fullscreen mode.
+    </li>
+    <li>
+      <strong>Accessibility &amp; ARIA Attributes:</strong>
+      Update <code>aria-expanded</code> on FAB, <code>aria-hidden</code> on panel when closed, <code>role="complementary"</code>, and <code>aria-modal="true"</code> ONLY when backdrop is active.
+    </li>
+  </ol>
+</div>
+
+<!-- SECTION 4: EXACT CODE SPECIFICATIONS (FOR LOW-POWERED MODELS) -->
+<h2>4. Concrete Implementation Specifications (Exact Code Blocks)</h2>
+
+<h3>4.1. DOM Markup Changes (<code>docs/index.html</code>)</h3>
+<div class="card">
+  <p>1. Inject <code>#ltcOverlay</code> as a direct child of <code>&lt;body&gt;</code> right before <code>#paletteOverlay</code>:</p>
+  <pre><code>&lt;!-- Floating &amp; Fullscreen Portal Container for Assistant --&gt;
+&lt;div id="ltcOverlay" class="ltc-overlay" aria-live="polite"&gt;&lt;/div&gt;</code></pre>
+
+  <p>2. Update <code>.ltc-head-actions</code> inside <code>#ltcPanel</code> with the 3 new control buttons:</p>
+  <pre><code>&lt;div class="ltc-head-actions"&gt;
+  &lt;span class="ltc-status" data-state="idle"&gt;
+    &lt;span class="ltc-status-dot" aria-hidden="true"&gt;&lt;/span&gt;
+    &lt;span class="ltc-status-txt" id="ltcStatusTxt"&gt;Ready&lt;/span&gt;
+  &lt;/span&gt;
+  &lt;button id="ltcClear" class="ltc-icon-btn" type="button" title="Clear this conversation" aria-label="Clear this conversation"&gt;
+    &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"&gt;&lt;path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l-1-12M10 11v6M14 11v6"/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+  &lt;button id="ltcClearAll" class="ltc-icon-btn" type="button" title="Clear every chat on this device" aria-label="Clear all chats on this device"&gt;
+    &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"&gt;&lt;path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l-1-12M10 11v6M14 11v6"/&gt;&lt;path d="M3.5 3.5l17 17"/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+  &lt;!-- NEW: Pin / Float Toggle Button --&gt;
+  &lt;button id="ltcPin" class="ltc-icon-btn" type="button" title="Pin / Unpin assistant" aria-label="Pin assistant to side"&gt;
+    &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"&gt;&lt;path d="M16 3l1 1-3 3 4 4-1 1-4-4-3 3 1 1-1 1-3.5-3.5 1-1 1 1 3-3-4-4 1-1 4 4 3-3z"/&gt;&lt;path d="M4 20l4-4"/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+  &lt;!-- NEW: Fullscreen Toggle Button --&gt;
+  &lt;button id="ltcFullscreen" class="ltc-icon-btn" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen"&gt;
+    &lt;svg class="ltc-icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"&gt;&lt;path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/&gt;&lt;/svg&gt;
+    &lt;svg class="ltc-icon-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"&gt;&lt;path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+  &lt;button id="ltcClose" class="ltc-icon-btn ltc-close" type="button" title="Minimize assistant" aria-label="Close or minimize the assistant"&gt;
+    &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"&gt;&lt;path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+  <p>3. Inject 8 resize handles inside <code>#ltcPanel</code> (around line 1112):</p>
+  <pre><code>&lt;div class="ltc-resize-handles" aria-hidden="true"&gt;
+  &lt;div class="ltc-handle ltc-handle-n" data-handle="n"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-e" data-handle="e"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-s" data-handle="s"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-w" data-handle="w"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-ne" data-handle="ne"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-se" data-handle="se"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-sw" data-handle="sw"&gt;&lt;/div&gt;
+  &lt;div class="ltc-handle ltc-handle-nw" data-handle="nw"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h3>4.2. CSS Architecture &amp; Mode Styles (<code>docs/index.html</code>)</h3>
+<div class="card">
+  <pre><code>/* --- Overlay Container --- */
+.ltc-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 44;
+}
+
+/* --- Base Panel Defaults --- */
+.ltc-panel {
+  pointer-events: auto;
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+/* --- Mode 1: Docked (Desktop &ge;1280px) --- */
+.ltc-panel[data-mode="docked"] {
+  position: relative !important; top: auto !important; left: auto !important;
+  right: auto !important; bottom: auto !important; width: 100% !important;
+  height: auto !important; flex: 1 1 auto; border-radius: 0; border: none;
+  border-left: 1px solid var(--line); box-shadow: none;
+}
+.lt-rail[data-collapsed="true"] {
+  display: none !important; width: 0 !important; flex: 0 0 0 !important;
+}
+
+/* --- Mode 2: Floating Window --- */
+.ltc-panel[data-mode="floating"] {
+  position: fixed !important;
+  left: var(--ltc-x, 800px);
+  top: var(--ltc-y, 80px);
+  width: var(--ltc-w, 420px);
+  height: var(--ltc-h, 560px);
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 72px);
+  z-index: 44;
+}
+.ltc-panel[data-mode="floating"] .ltc-head {
+  cursor: grab; user-select: none; -webkit-user-select: none;
+}
+.ltc-panel[data-mode="floating"].is-dragging .ltc-head {
+  cursor: grabbing;
+}
+
+/* --- Mode 3: Pinned Right --- */
+.ltc-panel[data-mode="pinned-right"] {
+  position: fixed !important;
+  right: 12px !important; left: auto !important;
+  top: 64px !important;
+  bottom: 12px !important;
+  width: var(--ltc-w, 380px) !important;
+  height: calc(100dvh - 76px) !important;
+  max-width: calc(100vw - 24px);
+  z-index: 44;
+}
+
+/* --- Mode 4: Snap Bottom (Mobile/Tablet Portrait) --- */
+.ltc-panel[data-mode="snap-bottom"] {
+  position: fixed !important;
+  left: 0 !important; right: 0 !important; bottom: 0 !important; top: auto !important;
+  width: 100% !important;
+  border-radius: 16px 16px 0 0;
+  border-bottom: none;
+  z-index: 44;
+  height: var(--ltc-snap-h, 40dvh);
+}
+.ltc-panel[data-mode="snap-bottom"][data-snap-step="90dvh"] {
+  height: calc(90dvh - env(safe-area-inset-top, 0px));
+}
+
+/* --- Mode 5: Fullscreen Dry-Run --- */
+.ltc-panel[data-mode="fullscreen"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  z-index: 44 !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-icon-expand { display: none !important; }
+.ltc-panel[data-mode="fullscreen"] .ltc-icon-compress { display: block !important; }
+
+/* --- Mobile Landscape Short Height (h &le; 500px) --- */
+@media (max-height: 500px) {
+  .ltc-panel[data-mode="snap-bottom"] {
+    /* Hard rule: force right side-card on short viewports */
+    left: auto !important; right: 8px !important; bottom: 8px !important; top: 8px !important;
+    width: 360px !important; height: auto !important; border-radius: 12px !important;
+  }
+}
+
+/* --- 8 Resize Handles --- */
+.ltc-resize-handles { position: absolute; inset: 0; pointer-events: none; }
+.ltc-handle { position: absolute; pointer-events: auto; z-index: 10; }
+.ltc-panel[data-mode="docked"] .ltc-handle,
+.ltc-panel[data-mode="fullscreen"] .ltc-handle { display: none !important; }
+
+.ltc-handle-n { top: -4px; left: 6px; right: 6px; height: 8px; cursor: ns-resize; }
+.ltc-handle-s { bottom: -4px; left: 6px; right: 6px; height: 8px; cursor: ns-resize; }
+.ltc-handle-e { right: -4px; top: 6px; bottom: 6px; width: 8px; cursor: ew-resize; }
+.ltc-handle-w { left: -4px; top: 6px; bottom: 6px; width: 8px; cursor: ew-resize; }
+.ltc-handle-ne { top: -5px; right: -5px; width: 12px; height: 12px; cursor: nesw-resize; }
+.ltc-handle-nw { top: -5px; left: -5px; width: 12px; height: 12px; cursor: nwse-resize; }
+.ltc-handle-se { bottom: -5px; right: -5px; width: 12px; height: 12px; cursor: nwse-resize; }
+.ltc-handle-sw { bottom: -5px; left: -5px; width: 12px; height: 12px; cursor: nesw-resize; }</code></pre>
+</div>
+
+<h3>4.3. JavaScript Geometry Engine &amp; Controller (<code>docs/chat-widget.js</code>)</h3>
+<div class="card">
+  <pre><code>/* --- Configuration &amp; Storage Constants --- */
+var RECT_KEY = 'lt150-chat-rect';
+var MODE_KEY = 'lt150-chat-mode';
+var MIN_W = 320;
+var MAX_W = 900;
+var MIN_H = 200;
+var TOP_NAV_H = 56;
+
+// State extensions
+state.mode = 'docked'; // 'docked' | 'floating' | 'pinned-right' | 'snap-bottom' | 'fullscreen'
+state.floatRect = { x: 800, y: 80, w: 420, h: 560 };
+state.snapStep = '40dvh'; // '40dvh' | '90dvh'
+
+/** Deterministic breakpoint detection */
+function isDesktop() {
+  return window.matchMedia('(min-width: 1280px)').matches;
+}
+function isLandscapeShort() {
+  return window.innerHeight &lt;= 500;
+}
+
+/** Pure clamping math function */
+function clampFloatRect(rect) {
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var w = Math.min(Math.max(rect.w, MIN_W), Math.min(MAX_W, vw - 16));
+  var h = Math.min(Math.max(rect.h, MIN_H), vh - TOP_NAV_H - 16);
+  var x = Math.min(Math.max(rect.x, 8), Math.max(8, vw - w - 8));
+  var y = Math.min(Math.max(rect.y, TOP_NAV_H + 8), Math.max(TOP_NAV_H + 8, vh - h - 8));
+  return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
+}
+
+/** Mount panel to appropriate container node without destroying DOM state */
+function mountPanel(mode) {
+  var overlay = $('ltcOverlay');
+  var rail = $('ltRail');
+  if (mode === 'docked') {
+    if (el.panel.parentElement !== rail) {
+      rail.appendChild(el.panel);
+    }
+    rail.removeAttribute('data-collapsed');
+  } else {
+    if (el.panel.parentElement !== overlay) {
+      overlay.appendChild(el.panel);
+    }
+    if (isDesktop()) {
+      rail.setAttribute('data-collapsed', 'true');
+    }
+  }
+}
+
+/** Set and apply a layout mode */
+function setMode(newMode, persist) {
+  state.mode = newMode;
+  el.panel.setAttribute('data-mode', newMode);
+  mountPanel(newMode);
+
+  if (newMode === 'floating') {
+    state.floatRect = clampFloatRect(state.floatRect);
+    el.panel.style.setProperty('--ltc-x', state.floatRect.x + 'px');
+    el.panel.style.setProperty('--ltc-y', state.floatRect.y + 'px');
+    el.panel.style.setProperty('--ltc-w', state.floatRect.w + 'px');
+    el.panel.style.setProperty('--ltc-h', state.floatRect.h + 'px');
+  } else if (newMode === 'pinned-right') {
+    el.panel.style.setProperty('--ltc-w', Math.min(480, Math.max(320, state.floatRect.w)) + 'px');
+  } else if (newMode === 'snap-bottom') {
+    el.panel.setAttribute('data-snap-step', state.snapStep);
+  }
+
+  // Update backdrop: active ONLY for modal sheet (<1280px snap-bottom 90dvh)
+  if (el.backdrop) {
+    if (newMode === 'snap-bottom' &amp;&amp; state.snapStep === '90dvh') {
+      el.backdrop.classList.add('is-open');
+    } else {
+      el.backdrop.classList.remove('is-open');
+    }
+  }
+
+  if (persist) {
+    try {
+      localStorage.setItem(MODE_KEY, newMode);
+      localStorage.setItem(RECT_KEY, JSON.stringify(state.floatRect));
+    } catch (e) {}
+  }
+}</code></pre>
+</div>
+
+<!-- SECTION 5: BUILD WAVES -->
+<h2>5. Step-by-Step Build Waves (Sequential Verification Gates)</h2>
+<div class="card">
+  <div class="wave-step">
+    <div class="wave-step-title"><span>Wave 0: Scaffolding, CSS Shell &amp; Header Controls</span><span class="tag tag-req">GATE 0</span></div>
+    <p class="small">Add <code>#ltcOverlay</code> to <code>docs/index.html</code>. Add the 3 new buttons (<code>#ltcPin</code>, <code>#ltcFullscreen</code>, <code>#ltcClose</code>) and the 8 resize handles. Add the complete CSS mode rules and handle hitboxes. Verify that <code>setMode('docked')</code> looks 100% byte-identical to the existing portal.</p>
+  </div>
+  <div class="wave-step">
+    <div class="wave-step-title"><span>Wave 1: Floating Drag &amp; 8-Handle Resize Engine</span><span class="tag tag-req">GATE 1</span></div>
+    <p class="small">Implement pointer drag on <code>.ltc-head</code> and resize calculations for all 8 handles. Implement <code>clampFloatRect()</code> with viewport bounds. Save rect on pointerup to <code>localStorage['lt150-chat-rect']</code>. Double-click header toggles fullscreen.</p>
+  </div>
+  <div class="wave-step">
+    <div class="wave-step-title"><span>Wave 2: Pinning, Fullscreen Toggle &amp; Article Full-Bleed</span><span class="tag tag-req">GATE 2</span></div>
+    <p class="small">Wire <code>#ltcPin</code> and <code>#ltcFullscreen</code>. Collapse <code>#ltRail</code> when undocked so <code>main#contentContainer</code> flexes full-bleed. Ensure wide markdown tables and Mermaid diagrams wrap with horizontal scroll without distorting panel width.</p>
+  </div>
+  <div class="wave-step">
+    <div class="wave-step-title"><span>Wave 3: Mobile Snap Steps &amp; Landscape Short-Height Hard Rule</span><span class="tag tag-req">GATE 3</span></div>
+    <p class="small">Implement bottom-snap steps (40dvh mini-card &rarr; 90dvh expanded &rarr; fullscreen). Connect <code>window.visualViewport</code> so virtual keyboard pushes composer. Enforce <code>innerHeight &le; 500px</code> rule &rarr; side-card mode.</p>
+  </div>
+  <div class="wave-step">
+    <div class="wave-step-title"><span>Wave 4: Accessibility, ARIA &amp; Focus Guards</span><span class="tag tag-req">GATE 4</span></div>
+    <p class="small">Restrict focus trapping strictly to modal sheet mode. Update <code>aria-expanded</code> and <code>aria-hidden</code>. Verify touch target sizes &ge; 44&times;44px. Run L-7 collision check (FAB never overlaps composer).</p>
+  </div>
+  <div class="wave-step">
+    <div class="wave-step-title"><span>Wave 5: Automated Regression &amp; Invariant Test Suite</span><span class="tag tag-req">GATE 5</span></div>
+    <p class="small">Run full Playwright e2e suite covering all viewports, mode switches, stream persistence, and layout stability. All tests must be 100% green.</p>
+  </div>
+</div>
+
+<!-- SECTION 6: PLAYWRIGHT TEST SUITE SPECIFICATION -->
+<h2>6. Playwright E2E Invariant Test Specifications</h2>
+<div class="card">
+  <p>The following tests must be added to <code>tests/chatbox.spec.js</code>:</p>
+  <pre><code>test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
+  test('mode transitions: docked -> float -> pinned-right -> fullscreen -> docked', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/#05-hashmap_06-two-sum');
+
+    // 1. Initial desktop docked state
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+
+    // 2. Toggle Float
+    await page.click('#ltcPin'); // Unpins to float
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+
+    // 3. Toggle Fullscreen
+    await page.click('#ltcFullscreen');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
+    const panelBox = await page.locator('#ltcPanel').boundingBox();
+    expect(panelBox.width).toBe(1440);
+    expect(panelBox.height).toBe(900);
+
+    // 4. Exit Fullscreen back to float
+    await page.click('#ltcFullscreen');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+
+    // 5. Pin Right
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'pinned-right');
+  });
+
+  test('L-7 check: FAB never overlaps Send button in any mode', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#05-hashmap_06-two-sum');
+
+    // Open chat
+    await page.click('#ltcFab');
+    await expect(page.locator('#ltcPanel')).toBeVisible();
+
+    // FAB must be tucked / invisible
+    await expect(page.locator('#ltcFab')).toHaveClass(/is-tucked/);
+    const fabVisible = await page.locator('#ltcFab').isVisible();
+    expect(fabVisible).toBe(false);
+
+    // Send button must be clickable at its point
+    const sendBtn = page.locator('#ltcSend');
+    await expect(sendBtn).toBeVisible();
+  });
+
+  test('mobile landscape (h <= 500) forces side-card mode', async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 360 });
+    await page.goto('/#05-hashmap_06-two-sum');
+
+    await page.click('#ltcFab');
+    const panel = page.locator('#ltcPanel');
+    await expect(panel).toBeVisible();
+
+    // Verify side-card layout (not bottom-sheet)
+    const box = await panel.boundingBox();
+    expect(box.x).toBeGreaterThan(400); // Snapped right
+    expect(box.height).toBeGreaterThan(320); // Spans vertical height
+  });
+});</code></pre>
+</div>
+
+</div>
+</body>
+</html>

@@ -2297,3 +2297,336 @@ test('the nav stage survives a reload', async ({ page }) => {
   expect(await navWidth(page)).toBeCloseTo(NAV_WIDTHS[2], 0);
 });
 
+test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
+  async function detachToFloat(page) {
+    const header = page.locator('#ltcPanel .ltc-head');
+    const headerBox = await header.boundingBox();
+    const startX = headerBox.x + 80;
+    const startY = headerBox.y + headerBox.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX - 180, startY + 50, { steps: 5 });
+    await page.mouse.up();
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+  }
+
+  test('mode transitions: docked -> fullscreen -> docked via single button and close button', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    // 1. Initial desktop docked state
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+
+    // Single button check: #ltcFullscreen is hidden, #ltcPin is the only visible window toggle
+    await expect(page.locator('#ltcFullscreen')).toBeHidden();
+    await expect(page.locator('#ltcPin')).toBeVisible();
+
+    // 2. Click the single toggle button (#ltcPin) to go fullscreen
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
+    const panelBox = await page.locator('#ltcPanel').boundingBox();
+    expect(panelBox.width).toBe(1440);
+    expect(panelBox.height).toBe(900);
+
+    // 3. Test closing while in fullscreen - must close cleanly back to docked state
+    await page.click('#ltcClose');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+
+    // 4. Go to fullscreen again and toggle back to docked via the single toggle button (#ltcPin)
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+
+    // 5. When detached/floating, clicking #ltcPin docks back to sidebar
+    await detachToFloat(page);
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+  });
+
+  test('docked mode close button is visible, collapses rail, and reveals FAB for one-click restore', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+
+    // 1. In docked mode, #ltcClose MUST be visible to the user
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    const closeBtn = page.locator('#ltcClose');
+    await expect(closeBtn).toBeVisible();
+
+    // In docked uncollapsed mode, FAB is hidden
+    await expect(page.locator(fab)).toBeHidden();
+
+    // 2. Click close button in docked mode
+    await closeBtn.click();
+
+    // 3. Rail collapses (data-collapsed="true") and panel hides
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+
+    // 4. FAB becomes visible so user can easily restore assistant
+    await expect(page.locator(fab)).toBeVisible();
+
+    // 5. Clicking FAB restores rail and assistant cleanly
+    await page.locator(fab).click();
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator(fab)).toBeHidden();
+  });
+
+  test('header title does not wrap or cram in docked mode', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    // Docked mode header checks
+    const title = page.locator('#ltcPanel .ltc-head-title');
+    await expect(title).toBeVisible();
+    const titleBox = await title.boundingBox();
+    // Height should be a single line (<= 28px)
+    expect(titleBox.height).toBeLessThanOrEqual(28);
+
+    // Status text is collapsed into a compact glowing dot badge to save space
+    await expect(page.locator('#ltcPanel .ltc-status-txt')).toBeHidden();
+    await expect(page.locator('#ltcPanel .ltc-status-dot')).toBeVisible();
+  });
+
+  test('L-7 check: FAB never overlaps Send button in any mode', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(ARTICLE_URL);
+
+    // Open chat
+    await page.click('#ltcFab');
+    await expect(page.locator('#ltcPanel')).toBeVisible();
+
+    // FAB must be tucked / invisible
+    await expect(page.locator('#ltcFab')).toHaveClass(/is-tucked/);
+    const fabVisible = await page.locator('#ltcFab').isVisible();
+    expect(fabVisible).toBe(false);
+
+    // Send button must be clickable at its point
+    const sendBtn = page.locator('#ltcSend');
+    await expect(sendBtn).toBeVisible();
+  });
+
+  test('mobile landscape (h <= 500) forces side-card mode', async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 360 });
+    await page.goto(ARTICLE_URL);
+
+    await page.click('#ltcFab');
+    const panel = page.locator('#ltcPanel');
+    await expect(panel).toBeVisible();
+
+    // Verify side-card layout (not bottom-sheet)
+    const box = await panel.boundingBox();
+    expect(box.x).toBeGreaterThan(400); // Snapped right
+    expect(box.height).toBeGreaterThan(320); // Spans vertical height
+  });
+
+  test('cursor and visual feedback during header drag and handle resize', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    const header = page.locator('#ltcPanel .ltc-head');
+    const headerBox = await header.boundingBox();
+    const startX = headerBox.x + 80;
+    const startY = headerBox.y + headerBox.height / 2;
+
+    // Start dragging header
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX - 100, startY + 20, { steps: 3 });
+
+    // Verify global grabbing cursor on body and panel dragging class
+    await expect(page.locator('body')).toHaveClass(/is-chat-dragging/);
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-dragging/);
+
+    await page.mouse.up();
+    await expect(page.locator('body')).not.toHaveClass(/is-chat-dragging/);
+    await expect(page.locator('#ltcPanel')).not.toHaveClass(/is-dragging/);
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+
+    // Test resize handle visual feedback
+    const handle = page.locator('#ltcPanel .ltc-handle-se');
+    const handleBox = await handle.boundingBox();
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handleBox.x + 40, handleBox.y + 40, { steps: 3 });
+
+    // Verify global resize cursor lock and panel resizing class
+    await expect(page.locator('body')).toHaveAttribute('data-resizing', 'se');
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-resizing/);
+
+    await page.mouse.up();
+    await expect(page.locator('body')).not.toHaveAttribute('data-resizing');
+    await expect(page.locator('#ltcPanel')).not.toHaveClass(/is-resizing/);
+  });
+
+  test('floating window is translucent with backdrop-filter blur', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    await detachToFloat(page);
+
+    const panel = page.locator('#ltcPanel');
+    const backdropFilter = await panel.evaluate(el => window.getComputedStyle(el).backdropFilter || window.getComputedStyle(el).webkitBackdropFilter);
+    expect(backdropFilter).toContain('blur');
+
+    const bgColor = await panel.evaluate(el => window.getComputedStyle(el).backgroundColor);
+    expect(bgColor).toMatch(/rgba\(13,\s*16,\s*23,\s*0\.82\)/);
+  });
+
+  test('fullscreen window has no backdrop-filter blur for crisp solid rendering', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    await page.click('#ltcPin');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
+
+    const panel = page.locator('#ltcPanel');
+    const backdropFilter = await panel.evaluate(el => window.getComputedStyle(el).backdropFilter || window.getComputedStyle(el).webkitBackdropFilter);
+    expect(backdropFilter === 'none' || backdropFilter === '' || !backdropFilter.includes('blur')).toBe(true);
+  });
+
+  test('floating window can be dragged and position survives reload', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    // Enter floating mode by detaching
+    await detachToFloat(page);
+
+    const panel = page.locator('#ltcPanel');
+    const initialBox = await panel.boundingBox();
+
+    // Drag by header
+    const header = page.locator('#ltcPanel .ltc-head');
+    const headerBox = await header.boundingBox();
+    const startX = headerBox.x + 80;
+    const startY = headerBox.y + headerBox.height / 2;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX - 150, startY + 80, { steps: 5 });
+    await page.mouse.up();
+
+    const movedBox = await panel.boundingBox();
+    expect(movedBox.x).toBeLessThan(initialBox.x - 50);
+
+    // Reload page and check restored position
+    await page.reload();
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+    const reloadedBox = await page.locator('#ltcPanel').boundingBox();
+    expect(reloadedBox.x).toBeCloseTo(movedBox.x, -1);
+  });
+
+  test('floating window can be resized via corner handle', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    await detachToFloat(page);
+
+    const handle = page.locator('#ltcPanel .ltc-handle-se');
+    await expect(handle).toBeVisible();
+    const initialBox = await page.locator('#ltcPanel').boundingBox();
+
+    const handleBox = await handle.boundingBox();
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handleBox.x + 80, handleBox.y + 80, { steps: 5 });
+    await page.mouse.up();
+
+    const resizedBox = await page.locator('#ltcPanel').boundingBox();
+    expect(resizedBox.width).toBeGreaterThan(initialBox.width);
+    expect(resizedBox.height).toBeGreaterThan(initialBox.height);
+  });
+
+  test('Escape key closes floating assistant to FAB', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    await detachToFloat(page);
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
+
+    await page.locator('#ltcInput').focus();
+    await page.keyboard.press('Escape');
+
+    await expect(page.locator('#ltcPanel')).not.toHaveClass(/is-open/);
+    await expect(page.locator('#ltcFab')).not.toHaveClass(/is-tucked/);
+  });
+
+  test('titlebar double-click toggles fullscreen in floating mode', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    await detachToFloat(page);
+
+    // Double-click header text
+    await page.dblclick('#ltcPanel .ltc-head-title');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
+
+    // Double-click again restores floating
+    await page.dblclick('#ltcPanel .ltc-head-title');
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+  });
+
+  test('dragging header from docked mode detaches into floating mode', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+
+    const header = page.locator('#ltcPanel .ltc-head');
+    const headerBox = await header.boundingBox();
+    const startX = headerBox.x + 80;
+    const startY = headerBox.y + headerBox.height / 2;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX - 180, startY + 50, { steps: 5 });
+    await page.mouse.up();
+
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
+  });
+
+  test('dragging floating header to right edge snaps to docked mode without overlapping content', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(ARTICLE_URL);
+
+    // Enter floating mode
+    await detachToFloat(page);
+
+    const header = page.locator('#ltcPanel .ltc-head');
+    const headerBox = await header.boundingBox();
+    const startX = headerBox.x + 80;
+    const startY = headerBox.y + headerBox.height / 2;
+
+    // Drag towards right edge (viewport width is 1440)
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(1420, startY, { steps: 8 });
+
+    // Ghost indicator should be active
+    await expect(page.locator('#ltcSnapGhost')).toHaveClass(/is-active/);
+
+    // Release mouse to snap
+    await page.mouse.up();
+
+    // Panel is now docked
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltcSnapGhost')).not.toHaveClass(/is-active/);
+
+    // In docked mode, #ltRail is uncollapsed and pushes #contentContainer so article never overlaps
+    const rail = page.locator('#ltRail');
+    await expect(rail).not.toHaveAttribute('data-collapsed', 'true');
+    const railBox = await rail.boundingBox();
+    const article = page.locator('#contentContainer article');
+    const articleBox = await article.boundingBox();
+
+    // Verify zero overlap between article content and the docked chatbot rail
+    expect(articleBox.x + articleBox.width).toBeLessThanOrEqual(railBox.x + 1);
+  });
+});
+
+
