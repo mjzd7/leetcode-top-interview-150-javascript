@@ -91,6 +91,10 @@
     articleTitle: '',
     messages: [], // { role, content, ts, status }
     open: false,
+    mode: 'docked',
+    prevMode: 'docked',
+    floatRect: { x: 800, y: 80, w: 420, h: 560 },
+    snapStep: '40dvh',
     streaming: false,
     controller: null,
     firstTokenTimer: null,
@@ -1709,12 +1713,39 @@
     el.fab.setAttribute('aria-expanded', 'true');
     el.fab.classList.add('is-tucked');
     el.fab.setAttribute('aria-hidden', 'true');
-    if (el.backdrop) el.backdrop.classList.add('is-open');
+    var rail = $('ltRail');
+    if (rail && (state.mode === 'docked' || !state.mode)) {
+      rail.removeAttribute('data-collapsed');
+    }
+    if (el.backdrop) {
+      if (state.mode === 'snap-bottom' && (state.snapStep === '90dvh' || isSheet())) {
+        el.backdrop.classList.add('is-open');
+      } else {
+        el.backdrop.classList.remove('is-open');
+      }
+    }
     renderLog();
     el.input.focus();
   }
 
   function close() {
+    if (state.mode === 'fullscreen') {
+      if (isDesktop()) {
+        setMode('docked', true);
+        return;
+      } else {
+        setMode('snap-bottom', true);
+        state.open = false;
+        el.panel.classList.remove('is-open');
+        el.panel.setAttribute('aria-hidden', 'true');
+        el.fab.setAttribute('aria-expanded', 'false');
+        el.fab.classList.remove('is-tucked');
+        el.fab.removeAttribute('aria-hidden');
+        if (el.backdrop) el.backdrop.classList.remove('is-open');
+        if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
+        return;
+      }
+    }
     if (!state.open) return;
     state.open = false;
     el.panel.classList.remove('is-open');
@@ -1723,6 +1754,12 @@
     el.fab.classList.remove('is-tucked');
     el.fab.removeAttribute('aria-hidden');
     if (el.backdrop) el.backdrop.classList.remove('is-open');
+    if (state.mode === 'docked' && isDesktop()) {
+      var r = $('ltRail');
+      if (r) {
+        r.setAttribute('data-collapsed', 'true');
+      }
+    }
     if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
   }
 
@@ -1742,9 +1779,10 @@
     var wasStreaming = state.streaming;
     if (wasStreaming) stop();
     state.articleId = id;
-    state.articleTitle = currentTitle();
-    if (el.panelTitle) el.panelTitle.textContent = state.articleTitle;
-    if (el.panel) el.panel.setAttribute('data-context', id);
+    if (el.panelTitle) {
+      el.panelTitle.textContent = state.articleTitle;
+      el.panelTitle.title = state.articleTitle;
+    }
     loadForArticle(id);
     // Unconditional: on desktop the panel is permanently visible and `open()`
     // never runs, so gating this on state.open would leave the previous
@@ -1839,7 +1877,7 @@
     return pinned || Math.round(el.panel.getBoundingClientRect().height);
   }
 
-  function initPanelResize() {
+function initPanelResize() {
     if (!el.panelResizer) return;
     var saved = 0;
     try { saved = parseInt(localStorage.getItem(PANEL_H_KEY), 10) || 0; } catch (e) {}
@@ -1849,45 +1887,472 @@
     var handle = el.panelResizer;
     var dragging = false, moved = false, startY = 0, lastY = 0, bottom = 0;
     var onMove = function (e) {
-      if (!dragging) return;
-      lastY = e.clientY;
-      if (Math.abs(lastY - startY) < 3) return;
-      moved = true;
-      applyPanelH(bottom - lastY, true);
+        if (!dragging) return;
+        lastY = e.clientY;
+        if (Math.abs(lastY - startY) < 3) return;
+        moved = true;
+        applyPanelH(bottom - lastY, true);
     };
     var onUp = function () {
-      dragging = false;
-      handle.classList.remove('is-dragging');
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      document.removeEventListener('pointercancel', onUp);
-      if (moved) applyPanelH(bottom - lastY, true);
+        dragging = false;
+        handle.classList.remove('is-dragging');
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        if (moved) applyPanelH(bottom - lastY, true);
     };
     // Document-level listeners, not setPointerCapture, which suppresses the
     // dblclick this needs to reset — same reasoning as #ltRailResizer. The
     // height only changes after real movement: a plain click must not nudge the
     // panel, or the handle slides out from under the second click.
     handle.addEventListener('pointerdown', function (e) {
-      dragging = true; moved = false; startY = e.clientY; lastY = e.clientY;
-      bottom = el.panel.getBoundingClientRect().bottom;
-      handle.classList.add('is-dragging');
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
-      document.addEventListener('pointercancel', onUp);
+        dragging = true; moved = false; startY = e.clientY; lastY = e.clientY;
+        bottom = el.panel.getBoundingClientRect().bottom;
+        handle.classList.add('is-dragging');
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
     });
     handle.addEventListener('dblclick', resetPanelH);
     handle.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowUp') { applyPanelH(panelHeight() + 32, true); e.preventDefault(); }
-      else if (e.key === 'ArrowDown') { applyPanelH(panelHeight() - 32, true); e.preventDefault(); }
-      else if (e.key === 'Home' || e.key === 'End') { resetPanelH(); e.preventDefault(); }
+        if (e.key === 'ArrowUp') { applyPanelH(panelHeight() + 32, true); e.preventDefault(); }
+        else if (e.key === 'ArrowDown') { applyPanelH(panelHeight() - 32, true); e.preventDefault(); }
+        else if (e.key === 'Home' || e.key === 'End') { resetPanelH(); e.preventDefault(); }
     });
+}
+
+/* ------------------------------------------------------------------ *
+ * Geometry Engine & Mode Switching
+ * ------------------------------------------------------------------ */
+
+var MODE_KEY = 'lt150-chat-mode';
+var RECT_KEY = 'lt150-chat-rect';
+var MIN_W = 320;
+var MAX_W = 900;
+var MIN_H = 200;
+var TOP_NAV_H = 56;
+
+function isDesktop() {
+  return window.matchMedia('(min-width: 1280px)').matches;
+}
+
+function isLaptop() {
+  return window.matchMedia('(min-width: 1024px) and (max-width: 1279px)').matches;
+}
+
+function isLandscapeShort() {
+  return window.innerHeight <= 500 && window.innerWidth > window.innerHeight;
+}
+
+function clampFloatRect(rect) {
+  rect = rect || {};
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var w = Math.min(Math.max(rect.w != null ? rect.w : 420, MIN_W), Math.min(MAX_W, vw - 16));
+  var h = Math.min(Math.max(rect.h != null ? rect.h : 560, MIN_H), Math.max(MIN_H, vh - TOP_NAV_H - 16));
+  var x = Math.min(Math.max(rect.x != null ? rect.x : (vw - w - 24), 8), Math.max(8, vw - w - 8));
+  var y = Math.min(Math.max(rect.y != null ? rect.y : 80, TOP_NAV_H + 8), Math.max(TOP_NAV_H + 8, vh - h - 8));
+  return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
+}
+
+function mountPanel(mode) {
+  var overlay = $('ltcOverlay');
+  var rail = $('ltRail');
+  if (mode === 'docked' || mode === 'snap-bottom') {
+    if (rail && el.panel && el.panel.parentElement !== rail) {
+      rail.appendChild(el.panel);
+    }
+    if (rail && mode === 'docked') rail.removeAttribute('data-collapsed');
+  } else {
+    if (overlay && el.panel && el.panel.parentElement !== overlay) {
+      overlay.appendChild(el.panel);
+    }
+    if (rail && isDesktop()) {
+      rail.setAttribute('data-collapsed', 'true');
+    }
+  }
+}
+
+function setMode(newMode, persist) {
+  if (state.mode && state.mode !== newMode && state.mode !== 'fullscreen') {
+    state.prevMode = state.mode;
+  }
+  state.mode = newMode;
+  if (!el.panel) return;
+  el.panel.setAttribute('data-mode', newMode);
+  mountPanel(newMode);
+
+  var modeLabels = {
+    docked: 'Docked in sidebar',
+    floating: 'Floating window',
+    'pinned-right': 'Pinned to right side',
+    'snap-bottom': 'Snapped to bottom',
+    fullscreen: 'Fullscreen'
+  };
+  el.panel.setAttribute('aria-label', (modeLabels[newMode] || 'Assistant') + ' AI study assistant');
+
+  if (newMode === 'floating') {
+    state.floatRect = clampFloatRect(state.floatRect);
+    el.panel.style.setProperty('--ltc-x', state.floatRect.x + 'px');
+    el.panel.style.setProperty('--ltc-y', state.floatRect.y + 'px');
+    el.panel.style.setProperty('--ltc-w', state.floatRect.w + 'px');
+    el.panel.style.setProperty('--ltc-h', state.floatRect.h + 'px');
+    el.panel.style.left = '';
+    el.panel.style.top = '';
+    el.panel.style.width = '';
+    el.panel.style.height = '';
+  } else if (newMode === 'pinned-right') {
+    el.panel.style.setProperty('--ltc-w', Math.min(480, Math.max(320, state.floatRect ? state.floatRect.w : 380)) + 'px');
+    el.panel.style.left = '';
+    el.panel.style.top = '';
+    el.panel.style.width = '';
+    el.panel.style.height = '';
+  } else if (newMode === 'snap-bottom') {
+    el.panel.setAttribute('data-snap-step', state.snapStep || '40dvh');
+    el.panel.style.left = '';
+    el.panel.style.top = '';
+    el.panel.style.width = '';
+    el.panel.style.height = '';
+  } else {
+    el.panel.style.left = '';
+    el.panel.style.top = '';
+    el.panel.style.width = '';
+    el.panel.style.height = '';
   }
 
-  /* ------------------------------------------------------------------ *
-   * Wiring
-   * ------------------------------------------------------------------ */
+  if (newMode === 'fullscreen') {
+    state.open = true;
+    el.panel.classList.add('is-open');
+    el.panel.removeAttribute('aria-hidden');
+  }
 
-  function init() {
+  var pinBtn = $('ltcPin');
+  if (pinBtn) {
+    if (newMode === 'docked') {
+      pinBtn.title = 'Expand to full screen';
+      pinBtn.setAttribute('aria-label', 'Expand assistant to full screen');
+    } else {
+      pinBtn.title = 'Attach to side';
+      pinBtn.setAttribute('aria-label', 'Attach assistant to side');
+    }
+  }
+
+  if (el.backdrop) {
+    if (newMode === 'snap-bottom' && state.snapStep === '90dvh' && state.open) {
+      el.backdrop.classList.add('is-open');
+    } else if (isSheet() && state.open && newMode === 'snap-bottom') {
+      el.backdrop.classList.add('is-open');
+    } else {
+      el.backdrop.classList.remove('is-open');
+    }
+  }
+
+  if (el.fab) {
+    var isTucked = state.open || (newMode === 'docked' && isDesktop());
+    el.fab.classList.toggle('is-tucked', isTucked);
+  }
+
+  if (persist) {
+    try {
+      localStorage.setItem(MODE_KEY, newMode);
+      localStorage.setItem(RECT_KEY, JSON.stringify(state.floatRect));
+    } catch (e) {}
+  }
+}
+
+function getCurrentMode() {
+  if (isLandscapeShort()) return 'pinned-right';
+  var stored = null;
+  try { stored = localStorage.getItem(MODE_KEY); } catch (e) {}
+  if (stored) {
+    if (isDesktop()) return stored;
+    if (stored === 'docked') return 'snap-bottom';
+    return stored;
+  }
+  if (isDesktop()) return 'docked';
+  return 'snap-bottom';
+}
+
+function initMode() {
+  var storedRect = null;
+  try {
+    var r = localStorage.getItem(RECT_KEY);
+    if (r) storedRect = JSON.parse(r);
+  } catch (e) {}
+  if (storedRect && typeof storedRect.x === 'number') {
+    state.floatRect = clampFloatRect(storedRect);
+  } else {
+    state.floatRect = clampFloatRect(state.floatRect);
+  }
+
+  var mode = getCurrentMode();
+
+  if (isDesktop()) {
+    state.open = true;
+    el.panel.classList.add('is-open');
+    el.panel.removeAttribute('aria-hidden');
+  } else {
+    state.open = false;
+    el.panel.classList.remove('is-open');
+    el.panel.setAttribute('aria-hidden', 'true');
+  }
+
+  setMode(mode, false);
+}
+
+function initResizeEngine() {
+  if (!el.panel) return;
+  var handles = {
+    n: el.panel.querySelector('.ltc-handle-n'),
+    e: el.panel.querySelector('.ltc-handle-e'),
+    s: el.panel.querySelector('.ltc-handle-s'),
+    w: el.panel.querySelector('.ltc-handle-w'),
+    ne: el.panel.querySelector('.ltc-handle-ne'),
+    se: el.panel.querySelector('.ltc-handle-se'),
+    sw: el.panel.querySelector('.ltc-handle-sw'),
+    nw: el.panel.querySelector('.ltc-handle-nw')
+  };
+
+  var resizeState = {
+    active: false,
+    handle: null,
+    startX: 0,
+    startY: 0,
+    startRect: null,
+    targetHandle: null
+  };
+
+  Object.keys(handles).forEach(function (edge) {
+    var handle = handles[edge];
+    if (!handle) return;
+    handle.addEventListener('pointerdown', function (e) {
+      if (el.panel.getAttribute('data-mode') !== 'floating') return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      resizeState.active = true;
+      resizeState.handle = edge;
+      resizeState.targetHandle = handle;
+      resizeState.startX = e.clientX;
+      resizeState.startY = e.clientY;
+
+      var box = el.panel.getBoundingClientRect();
+      resizeState.startRect = {
+        x: box.left,
+        y: box.top,
+        w: box.width,
+        h: box.height
+      };
+
+      el.panel.classList.add('is-resizing');
+      document.body.setAttribute('data-resizing', edge);
+      if (handle.setPointerCapture) {
+        try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+    });
+  });
+
+  function calculateNewRect(start, edge, dx, dy) {
+    var r = { x: start.x, y: start.y, w: start.w, h: start.h };
+    if (edge.indexOf('n') !== -1) { r.y += dy; r.h -= dy; }
+    if (edge.indexOf('s') !== -1) { r.h += dy; }
+    if (edge.indexOf('w') !== -1) { r.x += dx; r.w -= dx; }
+    if (edge.indexOf('e') !== -1) { r.w += dx; }
+    return r;
+  }
+
+  function onPointerMove(e) {
+    if (!resizeState.active) return;
+    var dx = e.clientX - resizeState.startX;
+    var dy = e.clientY - resizeState.startY;
+    var r = calculateNewRect(resizeState.startRect, resizeState.handle, dx, dy);
+    var clamped = clampFloatRect(r);
+    state.floatRect = clamped;
+    el.panel.style.setProperty('--ltc-x', clamped.x + 'px');
+    el.panel.style.setProperty('--ltc-y', clamped.y + 'px');
+    el.panel.style.setProperty('--ltc-w', clamped.w + 'px');
+    el.panel.style.setProperty('--ltc-h', clamped.h + 'px');
+  }
+
+  function onPointerEnd(e) {
+    if (!resizeState.active) return;
+    resizeState.active = false;
+    el.panel.classList.remove('is-resizing');
+    document.body.removeAttribute('data-resizing');
+    if (resizeState.targetHandle && resizeState.targetHandle.hasPointerCapture && resizeState.targetHandle.hasPointerCapture(e.pointerId)) {
+      try { resizeState.targetHandle.releasePointerCapture(e.pointerId); } catch (err) {}
+    }
+    try { localStorage.setItem(RECT_KEY, JSON.stringify(state.floatRect)); } catch (err) {}
+  }
+
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerEnd);
+  document.addEventListener('pointercancel', onPointerEnd);
+}
+
+function initTitleDrag() {
+  if (!el.panel) return;
+  var titleBar = el.panel.querySelector('.ltc-head');
+  if (!titleBar) return;
+
+  var drag = {
+    active: false,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    startLeft: 0,
+    startTop: 0,
+    startW: 0,
+    startH: 0,
+    hasDetached: false,
+    initialMode: 'docked',
+    canSnapRight: false
+  };
+
+  titleBar.addEventListener('pointerdown', function (e) {
+    var mode = el.panel.getAttribute('data-mode') || 'docked';
+    if (mode === 'fullscreen' || mode === 'snap-bottom') return;
+    if (e.target.closest('button, .ltc-icon-btn, input, textarea, .ltc-handle, a')) return;
+
+    var box = el.panel.getBoundingClientRect();
+    drag.active = true;
+    drag.pointerId = e.pointerId;
+    drag.initialMode = mode;
+    drag.hasDetached = (mode === 'floating');
+    drag.canSnapRight = false;
+    drag.startX = e.clientX;
+    drag.startY = e.clientY;
+    drag.startLeft = box.left;
+    drag.startTop = box.top;
+    drag.startW = box.width;
+    drag.startH = box.height;
+
+    if (mode === 'floating') {
+      e.preventDefault();
+      el.panel.classList.add('is-dragging');
+      document.body.classList.add('is-chat-dragging');
+      if (titleBar.setPointerCapture) {
+        try { titleBar.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+    }
+  });
+
+  function onPointerMove(e) {
+    if (!drag.active) return;
+    var dx = e.clientX - drag.startX;
+    var dy = e.clientY - drag.startY;
+
+    if (!drag.hasDetached) {
+      if (Math.hypot(dx, dy) < 6) return;
+      // Detach into floating mode
+      drag.hasDetached = true;
+      var curW = Math.min(window.innerWidth - 40, Math.max(340, state.floatRect ? state.floatRect.w : drag.startW));
+      var curH = Math.min(window.innerHeight - 80, Math.max(360, state.floatRect ? state.floatRect.h : drag.startH));
+      var grabRelX = (drag.startX - drag.startLeft) / Math.max(1, drag.startW);
+      var newLeft = e.clientX - (curW * grabRelX);
+      var newTop = e.clientY - 24;
+
+      var initClamped = clampFloatRect({
+        x: newLeft,
+        y: newTop,
+        w: curW,
+        h: curH
+      });
+      state.floatRect = initClamped;
+      setMode('floating', false);
+
+      drag.startLeft = initClamped.x;
+      drag.startTop = initClamped.y;
+      drag.startW = initClamped.w;
+      drag.startH = initClamped.h;
+      drag.startX = e.clientX;
+      drag.startY = e.clientY;
+      dx = 0;
+      dy = 0;
+      el.panel.classList.add('is-dragging');
+      document.body.classList.add('is-chat-dragging');
+      if (titleBar.setPointerCapture) {
+        try { titleBar.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+    }
+
+    var targetX = drag.startLeft + dx;
+    var targetY = drag.startTop + dy;
+    var clamped = clampFloatRect({
+      x: targetX,
+      y: targetY,
+      w: drag.startW,
+      h: drag.startH
+    });
+    state.floatRect = clamped;
+    el.panel.style.setProperty('--ltc-x', clamped.x + 'px');
+    el.panel.style.setProperty('--ltc-y', clamped.y + 'px');
+
+    // Right-edge snap detection:
+    // If the cursor is within 80px of the right window edge,
+    // or the panel's right side reaches within 35px of the right window edge
+    var vw = window.innerWidth;
+    var isNearRight = (e.clientX >= vw - 80) || ((targetX + drag.startW) >= vw - 35);
+    drag.canSnapRight = isNearRight;
+    var ghost = $('ltcSnapGhost');
+    if (ghost) {
+      ghost.classList.toggle('is-active', isNearRight);
+    }
+  }
+
+  function onPointerEnd(e) {
+    if (!drag.active) return;
+    drag.active = false;
+    el.panel.classList.remove('is-dragging');
+    document.body.classList.remove('is-chat-dragging');
+    var ghost = $('ltcSnapGhost');
+    if (ghost) ghost.classList.remove('is-active');
+
+    if (titleBar.hasPointerCapture && titleBar.hasPointerCapture(e.pointerId)) {
+      try { titleBar.releasePointerCapture(e.pointerId); } catch (err) {}
+    }
+
+    if (drag.canSnapRight) {
+      drag.canSnapRight = false;
+      // Automatically snap to edge:
+      // Docked mode on desktop uncollapses #ltRail, shifting page content so it never overlaps
+      if (isDesktop()) {
+        setMode('docked', true);
+      } else {
+        setMode('pinned-right', true);
+      }
+      return;
+    }
+
+    if (drag.hasDetached || drag.initialMode === 'floating') {
+      try {
+        localStorage.setItem(RECT_KEY, JSON.stringify(state.floatRect));
+        localStorage.setItem(MODE_KEY, 'floating');
+      } catch (err) {}
+    }
+  }
+
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerEnd);
+  document.addEventListener('pointercancel', onPointerEnd);
+
+  titleBar.addEventListener('dblclick', function (e) {
+    if (e.target.closest('button, .ltc-icon-btn, input, textarea')) return;
+    var cur = el.panel.getAttribute('data-mode');
+    if (cur === 'fullscreen') {
+      setMode(state.prevMode || (isDesktop() ? 'docked' : 'floating'), true);
+    } else if (cur === 'floating') {
+      state.prevMode = 'floating';
+      setMode('fullscreen', true);
+    }
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * Wiring
+ * ------------------------------------------------------------------ */
+
+function init() {
     el.panel = $('ltcPanel');
     el.fab = $('ltcFab');
     el.backdrop = $('ltcBackdrop');
@@ -1901,6 +2366,7 @@
     el.scrollDown = $('ltcScrollDown');
     el.clearAll = $('ltcClearAll');
     el.panelResizer = $('ltcPanelResizer');
+    el.ltRail = $('.lt-rail'); // Sidebar rail for collapse detection
     if (!el.panel || !el.fab || !el.log || !el.form || !el.input || !el.send) return;
 
     // On desktop the panel is always visible, so `open()` never runs there. The
@@ -1909,6 +2375,7 @@
     state.articleId = currentArticleId();
     state.articleTitle = currentTitle();
     el.panelTitle.textContent = state.articleTitle;
+    el.panelTitle.title = state.articleTitle;
     el.panel.setAttribute('data-context', state.articleId);
     loadForArticle(state.articleId);
     renderLog();
@@ -1924,6 +2391,32 @@
         state.pinScroll = true;
         el.log.scrollTo({ top: el.log.scrollHeight, behavior: reducedMotion() ? 'auto' : 'smooth' });
         updateScrollDown();
+      });
+    }
+    // Single window state button: Attach to side (docked) <-> Fullscreen
+    if ($('ltcPin')) {
+      $('ltcPin').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var current = el.panel.getAttribute('data-mode');
+        if (current === 'docked') {
+          state.prevMode = 'docked';
+          setMode('fullscreen', true);
+        } else {
+          setMode(isDesktop() ? 'docked' : 'snap-bottom', true);
+        }
+      });
+    }
+    // Fullscreen toggle button
+    if ($('ltcFullscreen')) {
+      $('ltcFullscreen').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var current = el.panel.getAttribute('data-mode');
+        if (current === 'fullscreen') {
+          setMode(state.prevMode || (isDesktop() ? 'docked' : 'floating'), true);
+        } else {
+          state.prevMode = current;
+          setMode('fullscreen', true);
+        }
       });
     }
 
@@ -1948,7 +2441,21 @@
     // portal's own palette/sidebar Escape handler on the same document.
     el.panel.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
-        if (!isSheet()) return;
+        var mode = el.panel.getAttribute('data-mode');
+        if (mode === 'fullscreen') {
+          e.stopPropagation();
+          setMode(state.prevMode || (isDesktop() ? 'docked' : 'snap-bottom'), true);
+          return;
+        }
+        if (mode === 'floating' || mode === 'pinned-right') {
+          e.stopPropagation();
+          if (state.streaming) stop();
+          close();
+          return;
+        }
+        if (!isSheet()) {
+          return;
+        }
         e.stopPropagation();
         if (state.streaming) stop();
         close();
@@ -2002,19 +2509,66 @@
     // true the moment the portal does catch up.
     window.addEventListener('hashchange', function () { syncArticle(false); });
 
-    // Shrinking from desktop panel to mobile sheet: drop the trap, not the state.
+    // Window resize handler: clamps float rect, handles landscape short height, and adjusts height
     window.addEventListener('resize', function () {
+      if (isLandscapeShort() && state.mode === 'snap-bottom') {
+        setMode('pinned-right', false);
+      }
+      if (!isDesktop() && state.mode === 'docked') {
+        setMode('snap-bottom', false);
+        state.open = false;
+        el.panel.classList.remove('is-open');
+        el.panel.setAttribute('aria-hidden', 'true');
+        if (el.fab) {
+          el.fab.classList.remove('is-tucked');
+          el.fab.setAttribute('aria-expanded', 'false');
+          el.fab.removeAttribute('aria-hidden');
+        }
+      } else if (isDesktop() && state.mode === 'snap-bottom') {
+        setMode('docked', false);
+        state.open = true;
+        el.panel.classList.add('is-open');
+        el.panel.removeAttribute('aria-hidden');
+        if (el.fab) {
+          el.fab.classList.add('is-tucked');
+          el.fab.setAttribute('aria-expanded', 'true');
+          el.fab.setAttribute('aria-hidden', 'true');
+        }
+      }
+      if (state.mode === 'floating') {
+        state.floatRect = clampFloatRect(state.floatRect);
+        el.panel.style.setProperty('--ltc-x', state.floatRect.x + 'px');
+        el.panel.style.setProperty('--ltc-y', state.floatRect.y + 'px');
+        el.panel.style.setProperty('--ltc-w', state.floatRect.w + 'px');
+        el.panel.style.setProperty('--ltc-h', state.floatRect.h + 'px');
+      }
       if (!isSheet()) el.input.blur();
       // A pinned height is a px count, so a shorter window (or the rail losing
       // the TOC) can leave it past the ceiling. Re-clamp rather than overflow.
       if (el.panel.hasAttribute('data-resized')) applyPanelH(panelHeight(), true);
     });
 
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function () {
+        if (state.mode === 'snap-bottom' && state.open) {
+          var vvH = window.visualViewport.height;
+          if (vvH < window.innerHeight) {
+            el.panel.style.setProperty('--ltc-snap-h', vvH + 'px');
+            if (el.input) el.input.scrollIntoView({ block: 'nearest' });
+          } else {
+            el.panel.style.removeProperty('--ltc-snap-h');
+          }
+        }
+      });
+    }
+
     initPanelResize();
+    initMode();
+    initResizeEngine();
+    initTitleDrag();
 
     el.send.disabled = true;
     autoGrow();
-    el.panel.setAttribute('aria-hidden', 'true');
   }
 
   /** Swap an icon button to a text confirmation, then back. */
