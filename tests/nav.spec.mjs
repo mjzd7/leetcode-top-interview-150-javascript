@@ -607,3 +607,170 @@ test.describe('revealing a category from the collapsed rail', () => {
     expect(r.headerH, 'the header block is its full height, not collapsed').toBe(191);
   });
 });
+
+test.describe('keyboard navigation & combobox contract', () => {
+  test('sidebar: ArrowDown twice then Enter opens the 2nd filtered guide', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.focus('#searchInput');
+    await page.fill('#searchInput', 'reverse');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    const activeId = await page.getAttribute('#searchInput', 'aria-activedescendant');
+    expect(activeId).toBeTruthy();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(400);
+    expect(page.url()).toContain('#' + activeId.replace(/^nav-item-/, ''));
+  });
+
+  test('sidebar: arrowing through a long list keeps the highlight in view', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.focus('#searchInput');
+    for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowDown');
+    const box = await page.evaluate(() => {
+      const id = document.getElementById('searchInput').getAttribute('aria-activedescendant');
+      const el = id && document.getElementById(id);
+      const nav = document.getElementById('curriculumNav');
+      if (!el || !nav) return null;
+      const r = el.getBoundingClientRect(), n = nav.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, navTop: n.top, navBottom: n.bottom };
+    });
+    expect(box).not.toBeNull();
+    expect(box.top).toBeGreaterThanOrEqual(box.navTop - 1);
+    expect(box.bottom).toBeLessThanOrEqual(box.navBottom + 1);
+  });
+
+  test('sidebar: Escape clears the query first, closes the drawer second', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.focus('#searchInput');
+    await page.fill('#searchInput', 'two sum');
+    await page.keyboard.press('Escape');
+    expect(await page.inputValue('#searchInput')).toBe('');
+    const count = await page.locator('#curriculumNav .nav-item').count();
+    expect(count).toBeGreaterThan(100);
+    const isMobile = await page.evaluate(() => window.innerWidth < 768);
+    if (isMobile) {
+      // drawer must be open for the close assertion to mean anything
+      await page.click('#menuBtn');
+      await expect(page.locator('#sidebar')).not.toHaveClass(/-translate-x-full/);
+      await page.focus('#searchInput');
+      await page.fill('#searchInput', 'two sum');
+      await page.keyboard.press('Escape'); // clears query, drawer stays open
+      expect(await page.inputValue('#searchInput')).toBe('');
+      await expect(page.locator('#sidebar')).not.toHaveClass(/-translate-x-full/);
+      await page.keyboard.press('Escape'); // empty query → drawer closes
+      await expect(page.locator('#sidebar')).toHaveClass(/-translate-x-full/);
+    }
+  });
+
+  test('sidebar: stage 2 hides the search input so arrows never hit invisible rows', async ({ page }) => {
+    await open(page, PRIMER_03);
+    const isMobile = await page.evaluate(() => window.innerWidth < 768);
+    // The stage-2 rail (and its input-hiding rule) only exists at md+ —
+    // `#searchInput` hiding is scoped to `@media (min-width: 768px)`.
+    test.skip(isMobile, 'stage-2 rail styles are md-only');
+    await collapseToRail(page);
+    await expect(page.locator('#sidebar')).toHaveAttribute('data-stage', '2');
+    await expect(page.locator('#searchInput')).toBeHidden();
+  });
+
+  test('palette: ArrowDown past the fold scrolls the selection into view', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowDown');
+    const box = await page.evaluate(() => {
+      const id = document.getElementById('paletteInput').getAttribute('aria-activedescendant');
+      const el = id && document.getElementById(id);
+      const list = document.getElementById('paletteList');
+      if (!el || !list) return null;
+      const r = el.getBoundingClientRect(), l = list.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, listTop: l.top, listBottom: l.bottom };
+    });
+    expect(box).not.toBeNull();
+    expect(box.top).toBeGreaterThanOrEqual(box.listTop - 1);
+    expect(box.bottom).toBeLessThanOrEqual(box.listBottom + 1);
+  });
+
+  test('palette: Home and End jump to the ends of the result list', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    await page.keyboard.press('End');
+    let id = await page.getAttribute('#paletteInput', 'aria-activedescendant');
+    let count = await page.locator('#paletteList .pal-item').count();
+    expect(id).toBe('pal-opt-' + (count - 1));
+    await page.keyboard.press('Home');
+    id = await page.getAttribute('#paletteInput', 'aria-activedescendant');
+    expect(id).toBe('pal-opt-0');
+  });
+
+  test('palette: a resting mouse does not stomp arrow-key selection', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    const target = page.locator('#paletteList .pal-item').nth(3);
+    const bb = await target.boundingBox();
+    await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
+    expect(await page.getAttribute('#paletteInput', 'aria-activedescendant')).toBe('pal-opt-3');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    expect(await page.getAttribute('#paletteInput', 'aria-activedescendant')).toBe('pal-opt-5');
+    // Browser re-fires mousemove under a stationary cursor after the list
+    // scrolls — the guard must ignore it since the coordinate did not change.
+    await page.evaluate(([x, y]) => {
+      document.querySelector('#paletteList .pal-item')
+        .dispatchEvent(new MouseEvent('mousemove', { clientX: x, clientY: y, bubbles: true }));
+    }, [bb.x + bb.width / 2, bb.y + bb.height / 2]);
+    expect(await page.getAttribute('#paletteInput', 'aria-activedescendant')).toBe('pal-opt-5');
+    // A REAL mouse move still wins over the keyboard highlight.
+    const t2 = page.locator('#paletteList .pal-item').nth(1);
+    const bb2 = await t2.boundingBox();
+    await page.mouse.move(bb2.x + bb2.width / 2, bb2.y + bb2.height / 2);
+    expect(await page.getAttribute('#paletteInput', 'aria-activedescendant')).toBe('pal-opt-1');
+  });
+
+  test('combobox markup passes axe aria rules', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    await page.addScriptTag({ path: 'node_modules/axe-core/axe.min.js' });
+    const scopes = ['#curriculumNav', '#paletteCard'];
+    const violations = [];
+    for (const scope of scopes) {
+      const run = await page.locator(scope).evaluate(async (el) => globalThis.axe.run(el, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] },
+      }));
+      for (const v of run.violations) {
+        if (['aria-activedescendant', 'aria-required-children', 'aria-valid-attr-value'].some(x => v.id.includes(x))) {
+          violations.push({ id: v.id, target: v.nodes[0]?.target?.join(' ') });
+        }
+      }
+    }
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('palette Escape closes once and leaves the sidebar alone', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    const before = await page.locator('#sidebar').getAttribute('class');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#palette')).toHaveClass(/hidden/);
+    const after = await page.locator('#sidebar').getAttribute('class');
+    expect(after).toBe(before);
+  });
+
+  test('palette close restores focus to the opener', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#palette')).toHaveClass(/hidden/);
+    await expect(page.locator('#paletteBtn')).toBeFocused();
+  });
+
+  test('palette traps Tab inside the dialog', async ({ page }) => {
+    await open(page, PRIMER_03);
+    await page.click('#paletteBtn');
+    for (let i = 0; i < 5; i++) await page.keyboard.press('Tab');
+    const inside = await page.evaluate(() => {
+      const card = document.getElementById('paletteCard');
+      return card.contains(document.activeElement);
+    });
+    expect(inside).toBe(true);
+  });
+});

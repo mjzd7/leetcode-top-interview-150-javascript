@@ -377,6 +377,22 @@ html[data-theme="light"] #sidebar[data-stage="2"] .nav-item[aria-current="page"]
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+.nav-item[aria-selected="true"] {
+  background: var(--canvas-ins) !important;
+  border-color: var(--accent-rim) !important;
+  color: var(--fg) !important;
+  padding-left: 20px !important;
+}
+.nav-item[aria-selected="true"]::before {
+  transform: scaleY(1) !important;
+}
+html[data-theme="light"] .nav-item[aria-selected="true"] {
+  background: rgba(17, 24, 39, 0.08) !important;
+}
+.nav-item, .pal-item {
+  scroll-margin: 8px 0;
+}
+
 /* --------------------------------------------------------------------------
    6. Modernized Chat Box UI (Section 10 of Blueprint)
    -------------------------------------------------------------------------- */

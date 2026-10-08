@@ -166,6 +166,10 @@
     #palette { transition: opacity 0.15s ease; }
     #paletteCard { transition: transform 0.15s ease, opacity 0.15s ease; }
     .pal-item[aria-selected="true"] { background: rgba(200, 250, 75, 0.1); }
+    .nav-item[aria-selected="true"] { background: var(--canvas-ins) !important; border-color: var(--accent-rim) !important; color: var(--fg) !important; padding-left: 20px !important; }
+    .nav-item[aria-selected="true"]::before { transform: scaleY(1) !important; }
+    html[data-theme="light"] .nav-item[aria-selected="true"] { background: rgba(17, 24, 39, 0.08) !important; }
+    .nav-item, .pal-item { scroll-margin: 8px 0; }
     .copy-btn { opacity: 0; transition: opacity 0.15s ease, background-color 0.15s ease; }
     .code-wrap:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
     /* Touch views: no dedicated button (it overlaps code) — double-tap the box to copy instead. */
@@ -1386,6 +1390,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           </button>
         </div>
         <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
+               role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="curriculumNav"
                class="mt-3 w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
         <div class="flex gap-1.5 mt-2.5" id="difficultyFilters" role="group" aria-label="Difficulty filter">
           <button data-diff="ALL" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">All</button>
@@ -1394,7 +1399,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           <button data-diff="Hard" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Hard</button>
         </div>
       </div>
-      <nav id="curriculumNav" class="p-3 space-y-5 flex-1 overflow-y-auto" aria-label="Curriculum"></nav>
+      <nav id="curriculumNav" class="p-3 space-y-5 flex-1 overflow-y-auto" aria-label="Curriculum" role="listbox"></nav>
     </aside>
 
     <!-- Reader -->
@@ -1514,10 +1519,11 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         <div class="flex items-center gap-2 px-4 border-b border-[rgba(148,163,184,0.13)]">
           <svg class="h-4 w-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
           <input id="paletteInput" type="text" placeholder="Type a problem, pattern, or topic…" autocomplete="off"
+                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-haspopup="listbox" aria-controls="paletteList"
                  class="w-full bg-transparent py-4 text-[15px] placeholder-slate-500 focus:outline-none min-h-[52px]">
           <kbd class="k shrink-0">esc</kbd>
         </div>
-        <div id="paletteList" class="max-h-[50dvh] overflow-y-auto p-2" role="listbox"></div>
+        <div id="paletteList" class="max-h-[50dvh] overflow-y-auto p-2" role="listbox" aria-label="Search results"></div>
         <div class="px-4 py-2.5 border-t border-[rgba(148,163,184,0.13)] flex items-center gap-4 text-[11px] text-slate-500 font-mono">
           <span><kbd class="k">↑↓</kbd> navigate</span><span><kbd class="k">↵</kbd> open</span><span><kbd class="k">esc</kbd> close</span>
         </div>
@@ -1721,6 +1727,8 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         const doneCount = isFound ? 0 : items.filter(i => doneSet.has(i.id)).length;
         const wrap = document.createElement('div');
         wrap.className = 'nav-group';
+        wrap.setAttribute('role', 'group');
+        wrap.setAttribute('aria-label', cat.category);
         const catDone = all.filter(i => doneSet.has(i.id)).length;
         const catCurrent = all.some(i => i.id === currentItemId);
         /* Category mode's destination: the glyph opens the rail and scrolls to
@@ -1741,6 +1749,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
 
         const head = document.createElement('div');
         head.className = 'px-2 pt-1 nav-group-text';
+        head.setAttribute('role', 'presentation');
         head.innerHTML = '<div class="flex items-baseline justify-between gap-2">' +
           '<span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">' + esc(cat.category) + '</span>' +
           (isFound
@@ -1751,9 +1760,11 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         wrap.appendChild(head);
         const rule = document.createElement('div');
         rule.className = 'nav-group-rule';
+        rule.setAttribute('role', 'presentation');
         wrap.appendChild(rule);
         const list = document.createElement('div');
         list.className = 'space-y-0.5 mt-1';
+        list.setAttribute('role', 'presentation');
         items.forEach(item => {
           const done = doneSet.has(item.id);
           const active = item.id === currentItemId;
@@ -1765,6 +1776,9 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
             btn.dataset.active = 'true';
           }
           btn.dataset.guideId = item.id;
+          btn.id = 'nav-item-' + item.id;
+          btn.setAttribute('role', 'option');
+          btn.setAttribute('aria-selected', 'false');
           if (done) btn.dataset.done = 'true';
           const code = guideCode({ item, category: cat.category }, 0);
           btn.innerHTML =
@@ -1792,6 +1806,9 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
             : 'No guide has difficulty ' + esc(activeFilter) + '.')
           + '</p>';
       }
+      navHighlightIndex = shown ? 0 : -1;
+      navListEngaged = false;
+      paintNavSelection();
       renderProgress();
     }
 
@@ -1890,11 +1907,14 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     /* Opened from a category glyph: widen the rail and scroll the group into
        view, so the click lands somewhere legible instead of just toggling. */
     function revealCategory(category) {
+      navHighlightIndex = 0;
+      navListEngaged = false;
       if ($('sidebar').dataset.stage === '2') setNavStage(0, true);
       requestAnimationFrame(() => {
         const group = [...nav.querySelectorAll('.nav-group')]
           .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === category);
         if (!group) return;
+        paintNavSelection();
         /* nav.scrollTop, not scrollIntoView. That walks up every scrollable
            ancestor, and #sidebar is one: overflow:hidden still makes a box
            programmatically scrollable. So it scrolled the sidebar as well,
@@ -2643,7 +2663,45 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.onclick = () => { activeFilter = btn.dataset.diff; paintFilterPills(); renderNav(); };
     });
-    searchInput.oninput = (e) => { searchQuery = e.target.value; renderNav(); };
+    searchInput.oninput = (e) => { searchQuery = e.target.value; navListEngaged = false; renderNav(); };
+
+    /* ---------- sidebar combobox controller ---------- */
+    let navHighlightIndex = -1;
+    let navListEngaged = false;
+    function visibleNavItems() {
+      return [...nav.querySelectorAll('.nav-item')].filter(el => el.offsetParent !== null);
+    }
+    function paintNavSelection() {
+      const items = visibleNavItems();
+      items.forEach((el, i) => el.setAttribute('aria-selected', i === navHighlightIndex ? 'true' : 'false'));
+      const sel = navHighlightIndex >= 0 && navHighlightIndex < items.length ? items[navHighlightIndex] : null;
+      searchInput.setAttribute('aria-activedescendant', sel ? sel.id : '');
+      if (sel) sel.scrollIntoView({ block: 'nearest' });
+    }
+    searchInput.addEventListener('keydown', (e) => {
+      const items = visibleNavItems();
+      if (e.key === 'ArrowDown') {
+        e.preventDefault(); navListEngaged = true;
+        if (items.length) { navHighlightIndex = Math.min(navHighlightIndex + 1, items.length - 1); paintNavSelection(); }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault(); navListEngaged = true;
+        if (items.length) { navHighlightIndex = Math.max(navHighlightIndex - 1, 0); paintNavSelection(); }
+      } else if (e.key === 'Home' && navListEngaged) {
+        e.preventDefault();
+        if (items.length) { navHighlightIndex = 0; paintNavSelection(); }
+      } else if (e.key === 'End' && navListEngaged) {
+        e.preventDefault();
+        if (items.length) { navHighlightIndex = items.length - 1; paintNavSelection(); }
+      } else if (e.key === 'Enter') {
+        const target = navHighlightIndex >= 0 && navHighlightIndex < items.length ? items[navHighlightIndex] : null;
+        if (target) { e.preventDefault(); openArticle(target.dataset.guideId); }
+      } else if (e.key === 'Escape') {
+        e.preventDefault(); e.stopPropagation();
+        if (searchInput.value !== '') { searchInput.value = ''; searchQuery = ''; renderNav(); }
+        else if (window.innerWidth < 768) closeSidebar();
+        else searchInput.blur();
+      }
+    });
 
     /* ---------- command palette ---------- */
     function fuzzyMatch(hay, needle) {
@@ -2657,7 +2715,12 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       }
       return true;
     }
+    let paletteReturnFocus = null;
+    let palLastMouse = { x: -1, y: -1 };
     function openPalette() {
+      paletteReturnFocus = document.activeElement;
+      palLastMouse = { x: -1, y: -1 };
+      paletteInput.setAttribute('aria-expanded', 'true');
       palette.classList.remove('hidden');
       requestAnimationFrame(() => {
         palette.classList.remove('opacity-0');
@@ -2671,7 +2734,13 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       palette.classList.add('opacity-0');
       paletteCard.classList.add('opacity-0', 'scale-[0.98]');
       setTimeout(() => palette.classList.add('hidden'), 150);
+      paletteInput.setAttribute('aria-expanded', 'false');
+      paletteInput.setAttribute('aria-activedescendant', '');
       paletteInput.blur();
+      const ret = paletteReturnFocus;
+      paletteReturnFocus = null;
+      if (ret && document.contains(ret) && ret !== document.body) ret.focus();
+      else $('paletteBtn').focus();
     }
     function updatePalette(q) {
       const query = q.trim();
@@ -2685,6 +2754,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         const done = doneSet.has(e.item.id);
         const div = document.createElement('div');
         div.className = 'pal-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer';
+        div.id = 'pal-opt-' + i;
         div.setAttribute('role', 'option');
         div.setAttribute('aria-selected', i === palIndex ? 'true' : 'false');
         div.innerHTML =
@@ -2693,12 +2763,21 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           '<span class="block text-[11px] text-slate-500 font-mono truncate">' + esc(e.category) + '</span></span>' +
           badge(e.item.difficulty);
         div.onclick = () => { closePalette(); openArticle(e.item.id); };
-        div.onmousemove = () => { palIndex = i; paintPalSelection(); };
+        div.onmousemove = (ev) => {
+          if (ev.clientX === palLastMouse.x && ev.clientY === palLastMouse.y) return;
+          palLastMouse = { x: ev.clientX, y: ev.clientY };
+          palIndex = i; paintPalSelection();
+        };
         paletteList.appendChild(div);
       });
+      paintPalSelection();
     }
     function paintPalSelection() {
-      paletteList.querySelectorAll('.pal-item').forEach((el, i) => el.setAttribute('aria-selected', i === palIndex ? 'true' : 'false'));
+      const items = paletteList.querySelectorAll('.pal-item');
+      items.forEach((el, i) => el.setAttribute('aria-selected', i === palIndex ? 'true' : 'false'));
+      paletteInput.setAttribute('aria-activedescendant', palResults.length ? 'pal-opt-' + palIndex : '');
+      const sel = items[palIndex];
+      if (sel) sel.scrollIntoView({ block: 'nearest' });
     }
     $('paletteBtn').onclick = openPalette;
     $('guidesBtn').onclick = () => openArticle('24-maang-guides_01-maang-sde-roadmap');
@@ -2706,8 +2785,21 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     paletteInput.onkeydown = (e) => {
       if (e.key === 'ArrowDown') { e.preventDefault(); palIndex = Math.min(palIndex + 1, palResults.length - 1); paintPalSelection(); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); palIndex = Math.max(palIndex - 1, 0); paintPalSelection(); }
+      else if (e.key === 'Home') { e.preventDefault(); palIndex = 0; paintPalSelection(); }
+      else if (e.key === 'End') { e.preventDefault(); palIndex = Math.max(palResults.length - 1, 0); paintPalSelection(); }
       else if (e.key === 'Enter' && palResults[palIndex]) { closePalette(); openArticle(palResults[palIndex].item.id); }
-      else if (e.key === 'Escape') closePalette();
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePalette(); }
+      else if (e.key === 'Tab') {
+        /* aria-modal dialog: Tab must cycle inside #paletteCard. Only the input
+           is focusable today, so a trap here is one wrap. */
+        e.preventDefault();
+        const focusables = paletteCard.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        const list = [...focusables];
+        const idx = list.indexOf(document.activeElement);
+        const next = e.shiftKey ? (idx <= 0 ? list[list.length - 1] : list[idx - 1]) : (idx === list.length - 1 ? list[0] : list[idx + 1]);
+        next.focus();
+      }
     };
     palette.addEventListener('click', (e) => { if (e.target === palette.firstElementChild || e.target === palette) closePalette(); });
     document.addEventListener('keydown', (e) => {
