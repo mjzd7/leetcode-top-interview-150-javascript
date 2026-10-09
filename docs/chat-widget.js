@@ -832,10 +832,14 @@
         if (viz) return viz;
       }
 
+      var langLabel = lang ? esc(lang) : 'code';
       var cls = lang ? ' class="language-' + esc(lang) + '"' : '';
       return (
         '<div class="chat-code">' +
+        '<div class="chat-code-head">' +
+        '<span class="chat-code-lang">' + langLabel + '</span>' +
         '<button class="chat-code-copy" type="button" data-copy aria-label="Copy code to clipboard">Copy</button>' +
+        '</div>' +
         '<pre><code' + cls + '>' + esc(code) + '</code></pre>' +
         '</div>'
       );
@@ -2429,6 +2433,20 @@ function init() {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         send();
+      } else if (e.key === 'PageUp') {
+        e.preventDefault();
+        el.log.scrollBy({ top: -200, behavior: 'smooth' });
+      } else if (e.key === 'PageDown') {
+        e.preventDefault();
+        el.log.scrollBy({ top: 200, behavior: 'smooth' });
+      } else if (e.key === 'ArrowUp') {
+        if (el.input.selectionStart === 0 && el.input.selectionEnd === 0 && !el.input.value.includes('\n')) {
+          el.log.scrollBy({ top: -60, behavior: 'smooth' });
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (el.input.selectionStart === el.input.value.length && el.input.selectionEnd === el.input.value.length && !el.input.value.includes('\n')) {
+          el.log.scrollBy({ top: 60, behavior: 'smooth' });
+        }
       }
     });
 
@@ -2442,23 +2460,32 @@ function init() {
     el.panel.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         var mode = el.panel.getAttribute('data-mode');
+        var scroller = $('contentContainer');
         if (mode === 'fullscreen') {
           e.stopPropagation();
           setMode(state.prevMode || (isDesktop() ? 'docked' : 'snap-bottom'), true);
+          el.input.blur();
+          if (scroller) scroller.focus();
           return;
         }
         if (mode === 'floating' || mode === 'pinned-right') {
           e.stopPropagation();
           if (state.streaming) stop();
           close();
+          el.input.blur();
+          if (scroller) scroller.focus();
           return;
         }
-        if (!isSheet()) {
+        if (isSheet()) {
+          e.stopPropagation();
+          if (state.streaming) stop();
+          close();
+          el.input.blur();
+          if (scroller) scroller.focus();
           return;
         }
-        e.stopPropagation();
-        if (state.streaming) stop();
-        close();
+        el.input.blur();
+        if (scroller) scroller.focus();
         return;
       }
       trapFocus(e);
@@ -2475,9 +2502,9 @@ function init() {
       }
       var copy = e.target.closest('[data-copy]');
       if (copy) {
-        var pre = copy.parentElement && copy.parentElement.querySelector('code');
-        if (!pre) return;
-        var ok = await copyText(pre.textContent);
+        var code = copy.closest('.chat-code') && copy.closest('.chat-code').querySelector('code');
+        if (!code) return;
+        var ok = await copyText(code.textContent);
         flash(copy, ok ? 'Copied' : 'Failed');
         return;
       }

@@ -109,34 +109,53 @@ export function toolSignature(name, args) {
   }
 }
 
-let clientPromise;
+let keyPool = null; // resolved once per instance; array of keys, or null if unconfigured
+let keyIndex = 0;   // round-robin index into the pool
 
-function providerClient() {
-  if (clientPromise === undefined) {
-    clientPromise = (async () => {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) return null;
-      const { default: OpenAI } = await import('openai');
-      return new OpenAI({
-        apiKey,
-        baseURL: process.env.AI_BASE_URL || DEFAULT_BASE_URL,
-        maxRetries: 1,
-        timeout: 30_000,
-      });
-    })().catch(() => null);
-  }
-  return clientPromise;
+/**
+ * Resolve the LLM key pool from the environment.
+ *
+ * Prefer OPENAI_API_KEYS (a comma-separated pool) over the legacy single
+ * OPENAI_API_KEY for backwards compatibility. This is resolved once and
+ * memoised because env is immutable per instance, but resetProviderClient() lets
+ * tests re-read a modified value.
+ */
+function resolveKeyPool() {
+  const raw = process.env.OPENAI_API_KEYS ?? process.env.OPENAI_API_KEY;
+  if (!raw) return null;
+  return raw
+    .split(',')
+    .map((key) => key.trim())
+    .filter((key) => key.length > 0);
+}
+
+async function providerClient() {
+  const pool = keyPool ?? (keyPool = resolveKeyPool());
+  if (!pool) return null;
+
+  const apiKey = pool[keyIndex % pool.length];
+  keyIndex = (keyIndex + 1) % pool.length;
+
+  const { default: OpenAI } = await import('openai');
+  return new OpenAI({
+    apiKey,
+    baseURL: process.env.AI_BASE_URL || DEFAULT_BASE_URL,
+    maxRetries: 1,
+    timeout: 30_000,
+  });
 }
 
 /**
- * Test seam: drop the memoised provider client.
+ * Test seam: drop the resolved key pool and rotation state so the next request
+ * re-reads the current env vars.
  *
- * The memo is correct in production (env is immutable per instance) but it would
+ * keyPool is memoised because env is immutable per instance, but it would
  * otherwise let one request's client outlive a change to OPENAI_API_KEY, which
  * makes the 503-unconfigured path untestable.
  */
 export function resetProviderClient() {
-  clientPromise = undefined;
+  keyPool = null;
+  keyIndex = 0;
 }
 
 function readBody(req) {
@@ -267,8 +286,7 @@ export default async function handler(req, res) {
   }
 
   const model = process.env.AI_MODEL || DEFAULT_MODEL;
-  const client = await providerClient();
-  if (!client) {
+  if (!resolveKeyPool()) {
     log('chat.unconfigured', { ip });
     return res.status(503).json({ error: 'Chat is not configured' });
   }
@@ -369,37 +387,67 @@ export default async function handler(req, res) {
     /** Set by the first upstream payload of any kind; arms the first-token clock off. */
     let sawPayload = false;
     let upstream;
-    try {
-      upstream = await client.chat.completions.create(
-        {
-          model,
-          ...completionParams(model),
-          stream: true,
-          messages: conversation,
-          ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
-        },
-        { signal: attemptAbort.signal },
-      );
-    } catch (e) {
-      const aborted = upstreamAbort.signal.aborted || e?.name === 'AbortError';
-      // The client is gone: nothing to write to.
-      if (aborted) return { gone: true };
-      const timedOut = e?.code === 'ETIMEDOUT' || /timeout/i.test(String(e?.message || ''));
-      // A 400 here is almost always a parameter the chosen model does not accept,
-      // not a transient fault. The reason goes to the log — never to the reader —
-      // because "unsupported parameter: max_tokens" names the env var to change;
-      // the reader only needs to be told to retry.
-      log('chat.upstream_failed', {
-        ip,
-        round: stats.rounds + 1,
-        error: String(e?.message || e),
-        timedOut,
-        ...(e?.status === 400 ? { hint: unknownModelHint(model) } : {}),
-      });
-      sse(res, { error: timedOut ? 'The assistant took too long to respond. Please retry.' : 'The assistant is unavailable right now. Please retry.' });
-      res.write('data: [DONE]\n\n');
-      res.end();
-      return { gone: true };
+    const pool = keyPool ?? (keyPool = resolveKeyPool());
+    const maxAttempts = pool.length > 1 ? 2 : 1;
+    let attempt = 0;
+    while (attempt < maxAttempts) {
+      attempt++;
+      try {
+        const client = await providerClient();
+        if (!client) {
+          log('chat.unconfigured', { ip });
+          sse(res, { error: 'Chat is not configured' });
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return { gone: true };
+        }
+        upstream = await client.chat.completions.create(
+          {
+            model,
+            ...completionParams(model),
+            stream: true,
+            messages: conversation,
+            ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
+          },
+          { signal: attemptAbort.signal },
+        );
+        break;
+      } catch (e) {
+        const aborted = upstreamAbort.signal.aborted || e?.name === 'AbortError';
+        // The client is gone: nothing to write to.
+        if (aborted) return { gone: true };
+
+        // Retry the request with the next key in the pool once for key-specific
+        // errors (rejected key) or rate limits. A 400 is model-parameter related
+        // and rotating the key would not help, so it is reported directly.
+        const keyError = e?.status === 401 || e?.status === 403 || e?.status === 429;
+        if (keyError && attempt < maxAttempts) {
+          log('chat.key_retry', {
+            ip,
+            round: stats.rounds + 1,
+            status: e?.status,
+            attempt,
+          });
+          continue;
+        }
+
+        const timedOut = e?.code === 'ETIMEDOUT' || /timeout/i.test(String(e?.message || ''));
+        // A 400 here is almost always a parameter the chosen model does not accept,
+        // not a transient fault. The reason goes to the log — never to the reader —
+        // because "unsupported parameter: max_tokens" names the env var to change;
+        // the reader only needs to be told to retry.
+        log('chat.upstream_failed', {
+          ip,
+          round: stats.rounds + 1,
+          error: String(e?.message || e),
+          timedOut,
+          ...(e?.status === 400 ? { hint: unknownModelHint(model) } : {}),
+        });
+        sse(res, { error: timedOut ? 'The assistant took too long to respond. Please retry.' : 'The assistant is unavailable right now. Please retry.' });
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return { gone: true };
+      }
     }
 
     /** index -> { id, name, args } accumulated across deltas. */

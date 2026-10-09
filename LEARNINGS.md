@@ -347,5 +347,131 @@ Blanket styling on `a:not(...)` and `.prose a:not(...)` with `text-decoration: u
    ```
 4. Cursor mode transition: Engages `data-cursor-mode="inline-link"`, hiding `#cur-ring` and scaling `#cur-dot` with accent drop-shadow glow.
 
+---
+
+## 14. WAI-ARIA 1.2 Combobox Implementation & Assistive Technology Coordination
+
+### 14.1 The Virtual Focus Challenge
+In complex web applications with rich interactive search inputs (such as code manual curriculum filters and command palettes), moving real DOM focus (`element.focus()`) on every arrow keystroke creates severe UX and technical complications:
+1. Focus is ripped out of the `<input>` element, preventing users from continuing to type or editing their query with backspace/delete.
+2. In mobile drawers and modal dialogs, rapid focus transitions trigger virtual keyboard dismissals or layout reflows.
+
+### 14.2 The Activedescendant Pattern
+By implementing the WAI-ARIA 1.2 Combobox pattern:
+* The `<input>` retains physical DOM focus (`document.activeElement`) at all times.
+* The input announces the active option to assistive technologies via `aria-activedescendant="<optionId>"`.
+* The list container (`role="listbox"`) and its children (`role="option"`, `aria-selected="true|false"`) reflect the state visually and semantically without requiring DOM focus transfers.
+
+---
+
+## 15. Viewport Jitter Prevention via Container-Bounded Delta Arithmetic
+
+### 15.1 The Defect of Native `scrollIntoView()`
+Standard `element.scrollIntoView({ block: 'nearest' })` is an ancestor-walking algorithm. When an element is nested inside multiple scrollable contexts (e.g., `#curriculumNav` -> `#sidebar` -> `<main>` / `window`), the browser engine attempts to minimize scroll deltas across *every* ancestor. In split-pane layouts where the main content pane is independently scrolled, this causes jarring vertical jumps in the article view while navigating sidebar search results.
+
+### 15.2 Container-Bounded Bounding Rect Math
+To guarantee complete isolation:
+```javascript
+const navBox = nav.getBoundingClientRect();
+const box = active.getBoundingClientRect();
+if (box.top < navBox.top) nav.scrollTop -= navBox.top - box.top + 8;
+else if (box.bottom > navBox.bottom) nav.scrollTop += box.bottom - navBox.bottom + 8;
+```
+By directly modifying `nav.scrollTop` using measured bounding client rect deltas:
+1. Only the target `#curriculumNav` container is scrolled.
+2. Ancestor viewport containers and sibling panes remain 100% stationary.
+3. An 8px buffer ensures the active element is never flush against the container edge.
+
+---
+
+## 16. Pointer Hover & Keyboard State Decoupling
+
+### 16.1 Race Conditions in Combined Navigation Paradigms
+When combining mouse hover and keyboard arrow navigation:
+* Binding `onmousemove` or `onmouseover` to update the canonical active selection index (`palIndex` or `navIndex`) causes accidental mouse twitches to override deliberate keyboard selections.
+* If a user uses `ArrowDown` to pick the 4th item and hits `Enter`, but their resting cursor happened to touch the 2nd item, the application would navigate to the 2nd item.
+
+### 16.2 Hover-Only Visual Feedback Isolation
+By isolating mouse interactions to transient CSS styling (`onmouseenter` / `onmouseleave`) without updating `palIndex`:
+* Keyboard navigation remains 100% deterministic.
+* Pointer users still receive immediate visual hover cues.
+* Pressing `Enter` always activates the exact item chosen by the keyboard navigation index.
+
+---
+
+## 17. Hierarchical Multi-Stage Escape Handling
+
+### 17.1 Intent Disambiguation for the Escape Key
+In a searchable modal drawer or sidebar:
+* When a search query is present, the user's primary intent when pressing `Escape` is to clear their filter and see the full list again.
+* When the search query is already empty, the user's intent is to dismiss the sidebar or dialog.
+
+### 17.2 Two-Stage State Machine
+```javascript
+if (e.key === 'Escape') {
+  e.preventDefault();
+  if (searchQuery) {
+    searchQuery = '';
+    searchInput.value = '';
+    renderNav();
+  } else {
+    closeSidebar();
+  }
+}
+```
+Guarding document-level escape listeners with `document.activeElement !== searchInput` ensures that Stage 1 executes cleanly without the global handler preemptively closing the drawer.
+
+---
+
+## 18. Table Scrollport Geometry & Horizontal Reflow Containment
+
+### 18.1 Root Causes of Table Layout Inconsistency
+When markdown tables are placed inside horizontal scroll containers (`.table-scroll` / `.ltc-table-scroll`):
+1. **Dynamic Intrinsic Widths**: Combining `width: max-content` with unconstrained `overflow-wrap: anywhere` causes column widths to reflow based on the longest unbroken token. When scrolling horizontally and back, varying column widths create visual shifts.
+2. **Disconnected Header Backgrounds**: When `th` elements have a tint while `td` elements are transparent, horizontal scrolling without zebra striping makes column relationships difficult to track visually once the first column scrolls offscreen.
+3. **Scroll Momentum & Edge Seams**: Sub-pixel scroll rounding against rounded container borders (`border-radius: 0.75rem`) can clip or misalign borders when scrolled all the way to the left (`scrollLeft === 0`).
+
+### 18.2 Architectural Invariants
+* Set explicit column min-widths (`min-width: 100px` on standard cells, `nowrap` on concise keys/step numbers).
+* Enforce zebra striping (`tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }`) to maintain row continuity across long horizontal scrolls.
+* Apply `overscroll-behavior-x: contain` to prevent horizontal table swipes from triggering browser back/forward history navigation.
+
+---
+
+## 19. Chat Codebox Visual Architecture & Elimination of Floating Voids
+
+### 19.1 The Flaw of Absolute Floating Action Overlays
+In naive chat implementations, positioning a `Copy` button absolutely in the top-right corner of a `<pre>` block requires adding a large top padding (e.g. `1.85rem`) to prevent the button from covering code text.
+* **Drawback 1 (Visual Void)**: Every code block displays an awkward empty dark gap above the first line of code.
+* **Drawback 2 (Overlap on Scroll)**: When long code lines scroll horizontally, the code slides directly beneath the transparent floating button.
+
+### 19.2 The Structured Header Strip Pattern
+By replacing the floating button with a dedicated code header bar:
+```html
+<div class="chat-code">
+  <div class="chat-code-head">
+    <span class="chat-code-lang">JavaScript</span>
+    <button class="chat-code-copy" type="button" aria-label="Copy code">Copy</button>
+  </div>
+  <pre><code>...</code></pre>
+</div>
+```
+* **Clean Baseline**: The top padding of `<pre>` is normalized (`0.75rem`), eliminating the empty void.
+* **Zero Scroll Overlap**: Code scrolls horizontally inside its own `<pre>` box beneath the fixed, opaque header strip.
+* **Semantic Context**: Users immediately see the programming language badge alongside the copy action.
+
+---
+
+## 20. Proportional Touch Targets & Scalable Controls in Compact Panels
+
+### 20.1 Touch Target Sizing vs. Responsive Real Estate
+WCAG 2.5.8 (Target Size - Minimum) requires at least 24×24 CSS pixels, while WCAG 2.1 AAA recommends 44×44 CSS pixels. However, forcing every desktop panel control (e.g. header close, dock, maximize, and composer submit) to 44×44px inside a compact 380px floating chat card consumes over 140px of header width, truncating article titles and context badges.
+
+### 20.2 Balanced Visual Scaling
+* Scale desktop header control buttons to **32×32px** with **16px touch padding** or margins, meeting accessibility standards while preserving horizontal space.
+* Harmonize the composer submit button (`.ltc-send`) to **34×34px**, keeping it aligned with single-line inputs without stretching the composer pill.
+* Normalize suggestion chips (`.ltc-chip`) to `min-height: 32px` to prevent multi-line prompt bloat.
+
+
 
 
