@@ -103,11 +103,40 @@ for (const g of GUIDE_DIRS) {
 const orderKey = (name) => name === 'FOUNDATIONS' ? 0 : name === 'MAANG GUIDES' ? 1 : (name === 'MODERN ENGINEER SKILLS' || name === 'FRESHER ROADMAP' || name === 'MID-LEVEL ROADMAP' ? 2 : 3);
 curriculum.sort((a, b) => orderKey(a.category) - orderKey(b.category));
 
+// Architecture & Decisions + Verification Matrix Ingestion
+const archSpecPath = path.join(DOCS_DIR, 'PROJECT_ARCHITECTURE_AND_DECISIONS.md');
+const edgeMatrixSrc = path.join(ROOT_DIR, 'EDGE_CASES_VERIFICATION_MATRIX.md');
+const edgeMatrixDest = path.join(DOCS_DIR, 'EDGE_CASES_VERIFICATION_MATRIX.md');
+if (fs.existsSync(edgeMatrixSrc)) {
+  fs.copyFileSync(edgeMatrixSrc, edgeMatrixDest);
+}
+
+const archData = {
+  spec: fs.existsSync(archSpecPath) ? {
+    id: 'architecture-spec',
+    title: 'LeetCode 150 System Architecture, Technical Decisions & Engineering Governance',
+    category: 'ARCHITECTURE',
+    difficulty: 'Primer',
+    pattern: 'System Architecture',
+    content: fs.readFileSync(archSpecPath, 'utf-8')
+  } : null,
+  matrix: fs.existsSync(edgeMatrixDest) ? {
+    id: 'edge-cases-matrix',
+    title: 'Comprehensive Algorithmic & UI Edge-Case Matrix',
+    category: 'VERIFICATION',
+    difficulty: 'Primer',
+    pattern: 'Edge Cases Matrix',
+    content: fs.readFileSync(edgeMatrixDest, 'utf-8')
+  } : null
+};
+
 // Write data bundle
-const bundleContent = `window.CURRICULUM_DATA = ${JSON.stringify(curriculum, null, 2)};`;
+const bundleContent = `window.CURRICULUM_DATA = ${JSON.stringify(curriculum, null, 2)};\nwindow.ARCHITECTURE_DATA = ${JSON.stringify(archData, null, 2)};`;
 fs.writeFileSync(path.join(DOCS_DIR, 'curriculum-data.js'), bundleContent, 'utf-8');
 
 console.log(`✅ Bundled ${curriculum.reduce((acc, c) => acc + c.items.length, 0)} modules into docs/curriculum-data.js`);
+if (archData.spec) console.log(`🏛️  Bundled System Architecture & Decisions spec`);
+if (archData.matrix) console.log(`🧪 Bundled Algorithmic Edge-Cases verification matrix`);
 
 /* ------------------------------------------------------------------ *
  * Guide index — the search_guides() retrieval corpus

@@ -1,0 +1,78 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Dry-Run AST Instrumentation & QuickJS Execution Pipeline",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "output": "docs/architecture/molly-dryrun-pipeline.html"
+  },
+  "lanes": [
+    { "id": "source", "label": "Markdown Corpus" },
+    { "id": "ast", "label": "AST & Region Mapping" },
+    { "id": "tracer", "label": "Instrumentation & Probes" },
+    { "id": "sandbox", "label": "QuickJS WASM Sandbox" },
+    { "id": "client", "label": "Interactive UI Player" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "Extraction", "fromCol": 0, "toCol": 1, "variant": "default" },
+    { "id": "probing", "label": "Region Probing", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "execution", "label": "Sandbox & Replay", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "ast_group", "label": "AST Region Parsing", "lane": "ast", "fromCol": 1, "toCol": 2, "variant": "default" },
+    { "id": "instrument_group", "label": "Probe Generation", "lane": "tracer", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "sandbox_group", "label": "Hermetic WASM Eval", "lane": "sandbox", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["guides", "gen_blocks", "region_table", "instrumenter", "wasm_engine", "trace_store", "player_ui"],
+  "nodes": [
+    { "id": "guides", "lane": "source", "col": 0, "type": "database", "label": "159 Markdown Guides", "sublabel": "450 Solution Blocks", "width": 140 },
+    { "id": "gen_blocks", "lane": "ast", "col": 1, "type": "backend", "label": "gen-blocks Parser", "sublabel": "Acorn Block Walk", "width": 140 },
+    { "id": "region_table", "lane": "ast", "col": 2, "type": "database", "label": "Region Map Table", "sublabel": "Depth 0 (Self-Recursive)", "tag": "No Depth Logic", "width": 140 },
+    { "id": "test_inputs", "lane": "source", "col": 3, "type": "database", "label": "Test Case Catalog", "sublabel": "Authored Inputs", "width": 140 },
+    { "id": "instrumenter", "lane": "tracer", "col": 3, "type": "backend", "label": "Acorn Instrumenter", "sublabel": "__T() Probes by Offset", "tag": "Exact Source Slice", "width": 140 },
+    { "id": "wasm_engine", "lane": "sandbox", "col": 4, "type": "backend", "label": "QuickJS WASM VM", "sublabel": "Hermetic Emscripten", "tag": "Zero Host Leaks", "width": 140 },
+    { "id": "trace_store", "lane": "sandbox", "col": 5, "type": "database", "label": "Envelope v1.1 Traces", "sublabel": "Deterministic Output", "width": 140 },
+    { "id": "player_ui", "lane": "client", "col": 5, "type": "frontend", "label": "Dry-Run Player UI", "sublabel": "Table Scrubber & Stepper", "tag": "docs/dryrun", "width": 140 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "guides", "to": "gen_blocks", "label": "extract blocks", "variant": "default" },
+    { "id": "e2", "from": "gen_blocks", "to": "region_table", "label": "build region map", "variant": "default" },
+    { "id": "e3", "from": "region_table", "to": "instrumenter", "label": "bake depth-0 tags", "variant": "emphasis" },
+    { "id": "e4", "from": "test_inputs", "to": "wasm_engine", "label": "feed test inputs", "variant": "dashed" },
+    { "id": "e5", "from": "instrumenter", "to": "wasm_engine", "label": "execute instrumented JS", "variant": "emphasis" },
+    { "id": "e6", "from": "wasm_engine", "to": "trace_store", "label": "validate envelope", "variant": "security" },
+    { "id": "e7", "from": "trace_store", "to": "player_ui", "label": "hydrate player", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The One Rule: Abolishing Depth Inference",
+      "items": [
+        "A runtime depth counter suppresses a recursive target's own body on every recursive call after the first",
+        "102 of the 450 solution blocks are self-recursive (e.g. tree traversals, backtrackers, quicksort)",
+        "Region membership is STATICALLY read from build/blocks.json, never computed at runtime",
+        "Depth 0 targets emit probes unconditionally on every recursive invocation without counter collapse"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Hermetic WASM Sandboxing",
+      "items": [
+        "Arbitrary solution blocks and user code run inside QuickJS compiled to WebAssembly via Emscripten",
+        "Isolated heap guarantees zero pollution of host global prototypes (Array, Object, Function)",
+        "Built-in cycle detection and serializer prevents infinite loops and memory blowups on cyclic data structures"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Envelope v1.1 Verification",
+      "items": [
+        "Every emitted trace is strictly validated against docs/trace-schema.json",
+        "Asserts non-vacuity (V11): traces must contain non-empty step collections and exact line offset alignments",
+        "CI asserts zero verdict shift (I2): executing under tracing never modifies the algorithmic return value"
+      ]
+    }
+  ]
+}

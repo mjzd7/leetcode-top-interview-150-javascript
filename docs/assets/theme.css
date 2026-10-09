@@ -454,14 +454,24 @@ html[data-theme="light"] .ltc-status-dot {
 .ltc-send:active:not(:disabled) {
   transform: scale(0.96);
 }
+html[data-theme="light"] .ltc-send:not(:disabled) {
+  background: var(--accent) !important;
+  color: var(--accent-ink) !important;
+}
 html[data-theme="light"] .ltc-send:hover:not(:disabled) {
-  background: #3730A3;
-  color: #FFFFFF;
+  background: #3730A3 !important;
+  color: #FFFFFF !important;
 }
 html[data-theme="light"] .ltc-send:disabled {
   background: rgba(0, 0, 0, 0.05);
   color: var(--fg-muted);
   border-color: var(--border-soft);
+}
+html[data-theme="light"] .ltc-status,
+html[data-theme="light"] .ltc-empty-badge {
+  background: var(--canvas-sub);
+  border-color: var(--border-soft);
+  color: var(--fg-muted);
 }
 
 /* Modern Composer Capsule */

@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Architecture, Decisions & Governance — Top Interview 150</title>
+  <meta name="description" content="Master architectural specification, technical decision records (ADRs), 240Hz Euler physics simulation, and engineering governance for Top Interview 150.">
+  <meta name="theme-color" content="#08090D">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8FA4B'/%3E%3Cpath d='M10 11l-4 5 4 5M22 11l4 5-4 5' stroke='%2308090D' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('lt150-theme') || localStorage.getItem('arch-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['var(--font-display)'],
+            sans: ['var(--font-body)'],
+            mono: ['var(--font-mono)'],
+          },
+          colors: {
+            ink: { DEFAULT: '#08090D', surface: '#0D1017', raised: '#121724' },
+            signal: { DEFAULT: '#C8FA4B', dim: '#9DC22E' },
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.16/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.8/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <link id="prismTheme" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <link rel="stylesheet" href="assets/cursor.css">
+  <link rel="stylesheet" href="assets/chat-widget.css">
+  <style>
+    :root {
+      --bg: #08090D;
+      --surface: #0D1017;
+      --raised: #121724;
+      --line: rgba(148, 163, 184, 0.13);
+      --ink: #E9EDF4;
+      --muted: #8B94A7;
+      --accent: #C8FA4B;
+      --accent-ink: #101303;
+      --rail-bg: var(--canvas-sub);
+    }
+    html { overflow-x: hidden; overflow-x: clip; }
+    body { overflow-x: hidden; overflow-x: clip; }
+
+    .font-display { font-family: var(--font-display); }
+    .prose { color: #C6CDDB; font-size: 0.95rem; line-height: 1.72; }
+    .prose code:not(pre code) {
+      background: rgba(200, 250, 75, 0.09); color: var(--accent);
+      padding: 0.15rem 0.42rem; border-radius: 0.375rem;
+      font-size: 0.85em; font-family: var(--font-mono);
+    }
+
+    /* Architecture Specific UI Styling */
+    .diagram-tab-btn {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      padding: 0.45rem 0.85rem; border-radius: 0.5rem;
+      font-size: 0.8125rem; font-weight: 500; font-family: var(--font-mono);
+      color: var(--muted); background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-soft);
+      cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+    }
+    .diagram-tab-btn:hover {
+      color: var(--fg); background: var(--canvas-sub); border-color: rgba(148, 163, 184, 0.3);
+    }
+    .diagram-tab-btn.active {
+      color: var(--accent); background: rgba(200, 250, 75, 0.12); border-color: rgba(200, 250, 75, 0.35);
+      font-weight: 600;
+    }
+    .diagram-tab-content { display: none; }
+    .diagram-tab-content.active { display: block; animation: ltc-rise 0.25s ease-out; }
+
+    .diagram-preview-card {
+      border: 1px solid var(--border-soft);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      background: var(--canvas-sub);
+      margin-top: 1rem;
+    }
+    .diagram-header-info { margin-bottom: 1rem; }
+    .diagram-title-text { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: #fff; }
+    html[data-theme="light"] .diagram-title-text { color: #0f172a; }
+    .diagram-desc-text { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+
+    .diagram-toolbar {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-soft);
+      border-radius: 0.5rem;
+      padding: 0.25rem 0.4rem;
+    }
+    html[data-theme="light"] .diagram-toolbar {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .diagram-tool-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      min-width: 28px;
+      padding: 0 0.5rem;
+      border-radius: 0.375rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .diagram-tool-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--fg);
+      border-color: var(--border-soft);
+    }
+    html[data-theme="light"] .diagram-tool-btn:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+    .diagram-tool-btn.archify-launch {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38BDF8;
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+    .diagram-tool-btn.archify-launch:hover {
+      background: rgba(56, 189, 248, 0.22);
+      color: #7dd3fc;
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+    .archify-viewer-wrapper {
+      position: relative;
+      width: 100%;
+      height: 640px;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-soft);
+      background: var(--canvas);
+      overflow: hidden;
+      margin-top: 0.75rem;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+    }
+    .archify-viewer-wrapper:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      border-radius: 0 !important;
+      border: none !important;
+      margin: 0 !important;
+      background: #0d1117;
+    }
+    .archify-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: transparent;
+    }
+
+    .decision-card {
+      border: 1px solid var(--border-soft);
+      background: var(--canvas-sub);
+      border-radius: 0.75rem;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .decision-card:hover {
+      border-color: rgba(200, 250, 75, 0.3);
+    }
+    .decision-card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.15rem; cursor: pointer; user-select: none;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .decision-card-head:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .decision-card-meta {
+      display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    }
+    .decision-id {
+      font-family: var(--font-mono); font-weight: 700; font-size: 0.78rem;
+      padding: 0.2rem 0.5rem; border-radius: 0.375rem;
+      background: rgba(200, 250, 75, 0.12); color: var(--accent);
+      border: 1px solid rgba(200, 250, 75, 0.25);
+    }
+    .decision-tag {
+      font-family: var(--font-mono); font-size: 0.72rem;
+      padding: 0.15rem 0.45rem; border-radius: 0.375rem;
+      background: rgba(56, 189, 248, 0.1); color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .decision-card-title {
+      font-size: 0.92rem; font-weight: 600; color: #fff;
+    }
+    html[data-theme="light"] .decision-card-title { color: #0f172a; }
+    .decision-toggle-icon {
+      font-size: 0.75rem; color: var(--muted); transition: transform 0.2s ease;
+    }
+    .decision-card.open .decision-toggle-icon {
+      transform: rotate(180deg); color: var(--accent);
+    }
+    .decision-card-body {
+      display: none; padding: 1.15rem; border-top: 1px solid var(--border-soft);
+      background: rgba(0, 0, 0, 0.15);
+    }
+    html[data-theme="light"] .decision-card-body {
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .decision-card.open .decision-card-body {
+      display: block;
+    }
+    .decision-section-block {
+      margin-bottom: 1rem;
+    }
+    .decision-section-block:last-child {
+      margin-bottom: 0;
+    }
+    .decision-block-label {
+      font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;
+    }
+    .decision-block-label.problem { color: #F87171; }
+    .decision-block-label.decision { color: var(--accent); }
+    .decision-block-label.rationale { color: #38BDF8; }
+    .decision-block-label.invariants { color: #FBBF24; }
+    .decision-block-text {
+      font-size: 0.88rem; line-height: 1.65; color: #C6CDDB;
+    }
+    html[data-theme="light"] .decision-block-text { color: #334155; }
+
+    /* Physics Lab */
+    .physics-canvas-container {
+      position: relative; border-radius: 0.75rem; overflow: hidden;
+      background: var(--canvas-ins); border: 1px solid var(--border-soft);
+      margin: 1.25rem 0;
+    }
+    #springCanvas {
+      display: block; width: 100%; height: 320px; background: transparent;
+    }
+    .physics-hud {
+      position: absolute; top: 12px; left: 12px;
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
+      padding: 0.5rem 0.75rem; border-radius: 0.5rem;
+      background: rgba(8, 9, 13, 0.85); backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.2); color: #38BDF8;
+      pointer-events: none;
+    }
+    .physics-ctrl-bar {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border-soft); background: var(--canvas-sub);
+      flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.8rem;
+      font-family: var(--font-mono); font-weight: 600; cursor: pointer;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-soft);
+      color: var(--muted); transition: all 0.15s ease;
+    }
+    .ctrl-btn:hover { color: var(--fg); border-color: rgba(148, 163, 184, 0.3); }
+    .ctrl-btn.active {
+      background: rgba(200, 250, 75, 0.12); border-color: rgba(200, 250, 75, 0.35);
+      color: var(--accent);
+    }
+
+    /* Tools Ecosystem */
+    .filter-pill {
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .filter-pill.active {
+      background: rgba(200, 250, 75, 0.12) !important;
+      border-color: rgba(200, 250, 75, 0.35) !important;
+      color: var(--accent) !important;
+    }
+
+    /* Rules Cards */
+    .rule-card {
+      border: 1px solid var(--border-soft); border-radius: 0.75rem;
+      padding: 1.25rem; background: var(--canvas-sub); margin-bottom: 0.75rem;
+    }
+    .rule-num {
+      font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem;
+      color: var(--accent); margin-bottom: 0.25rem;
+    }
+    .rule-title {
+      font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;
+    }
+    html[data-theme="light"] .rule-title { color: #0f172a; }
+    .rule-desc {
+      font-size: 0.88rem; color: #C6CDDB; line-height: 1.6;
+    }
+    html[data-theme="light"] .rule-desc { color: #334155; }
+
+    /* Tables */
+    .tools-table-container table, .scorecard-table table {
+      width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem;
+    }
+    .tools-table-container th, .tools-table-container td,
+    .scorecard-table th, .scorecard-table td {
+      padding: 0.65rem 0.95rem; border-bottom: 1px solid var(--border-soft); text-align: left;
+    }
+    .tools-table-container th, .scorecard-table th {
+      background: rgba(200, 250, 75, 0.06); font-family: var(--font-mono); font-size: 0.75rem;
+      text-transform: uppercase; color: var(--accent); font-weight: 600;
+    }
+
+    /* Assistant rail / chatbox styles (exact parity with index.html) */
+    .ltc-panel {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      height: var(--ltc-panel-h, 72dvh); display: flex; flex-direction: column; min-height: 0;
+      background: var(--surface); border-top: 1px solid var(--line);
+      box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
+      transform: translateY(101%);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+      visibility: hidden;
+    }
+    .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
+    .lt-rail { display: contents; }
+    #ltRailResizer { display: none; }
+    @media (min-width: 1280px) {
+      .ltc-backdrop { display: none; }
+      .lt-rail {
+        display: flex; flex-direction: column; min-height: 0;
+        position: sticky; top: 3.5rem; align-self: flex-start;
+        flex: 0 0 var(--lt-rail-w, 380px); width: var(--lt-rail-w, 380px);
+        height: calc(100dvh - 3.5rem);
+        border-left: 1px solid var(--line);
+      }
+      #ltRailResizer {
+        display: block; position: absolute; left: -9px; top: 0; bottom: 0;
+        width: 9px; cursor: col-resize; touch-action: none; background: none;
+      }
+      #ltRailResizer::after {
+        content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+        background: transparent; transition: background 0.15s ease;
+      }
+      #ltRailResizer:hover::after, #ltRailResizer.is-dragging::after { background: var(--accent); }
+      .ltc-panel {
+        position: relative; top: auto; left: auto; right: auto; bottom: auto;
+        flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
+        transform: none; visibility: visible; box-shadow: none; border-left: none;
+        background: var(--rail-bg);
+      }
+    }
+    .ltc-backdrop {
+      position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .ltc-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .ltc-head {
+      display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;
+      padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 45%);
+    }
+    .ltc-head-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 9px;
+      color: var(--accent-ink); background: linear-gradient(140deg, #D8FF6B, #A8DE2C);
+    }
+    .ltc-head-mark svg { width: 17px; height: 17px; }
+    .ltc-head-txt { min-width: 0; flex: 1 1 auto; }
+    .ltc-head-title { font-family: var(--font-display); font-size: 0.82rem; font-weight: 700; color: #fff; }
+    html[data-theme="light"] .ltc-head-title { color: #0f172a; }
+    .ltc-head-sub { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+    .ltc-head-actions { margin-left: auto; display: flex; align-items: center; gap: 0.3rem; }
+    .ltc-icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 8px; color: var(--muted);
+      background: transparent; border: 1px solid transparent; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .ltc-icon-btn:hover { color: var(--fg); background: var(--canvas-ins); border-color: var(--border-soft); }
+    .ltc-icon-btn svg { width: 15px; height: 15px; }
+    .ltc-log-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; overflow-y: auto; }
+    .ltc-log { flex: 1 1 auto; padding: 1rem; overflow-y: auto; }
+    .ltc-form { padding: 0.75rem; border-top: 1px solid var(--line); background: var(--canvas-sub); }
+    .ltc-composer {
+      display: flex; align-items: center; gap: 0.5rem;
+      border: 1px solid var(--border-soft); border-radius: 10px;
+      padding: 0.35rem 0.5rem 0.35rem 0.75rem; background: var(--canvas-ins);
+    }
+    .ltc-composer textarea {
+      flex: 1 1 auto; background: transparent; border: none; outline: none;
+      resize: none; font-size: 0.85rem; color: var(--fg);
+    }
+    .ltc-send {
+      width: 32px; height: 32px; border-radius: 7px; border: none;
+      background: var(--accent); color: var(--accent-ink); display: inline-flex;
+      align-items: center; justify-content: center; cursor: pointer;
+    }
+    .ltc-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ltc-send svg { width: 15px; height: 15px; }
+    .ltc-hint { font-size: 10.5px; color: var(--muted); margin-top: 0.35rem; font-family: var(--font-mono); }
+    .ltc-fab {
+      position: fixed; right: 16px; bottom: 16px; z-index: 38;
+      width: 48px; height: 48px; border-radius: 999px;
+      background: var(--accent); color: var(--accent-ink);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); border: none; cursor: pointer;
+    }
+    @media (min-width: 1280px) { .ltc-fab { display: none; } }
+  </style>
+</head>
+<body class="text-slate-100 font-sans antialiased min-h-dvh" style="color: var(--fg);">
+
+  <!-- Reading progress hairline -->
+  <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
+    <div id="progressBar" class="h-full w-0" style="background: var(--accent);"></div>
+  </div>
+
+  <!-- Header (56px glass) -->
+  <header class="sticky top-0 z-30 glass">
+    <div class="h-14 px-3 md:px-6 flex items-center gap-2 md:gap-4">
+      <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <a href="index.html" id="brandHome" class="flex items-center gap-2.5 shrink-0 min-w-0">
+        <span class="h-8 w-8 rounded-lg flex items-center justify-center font-mono font-bold text-sm shrink-0" style="background: var(--accent); color: var(--accent-ink);">&lt;/&gt;</span>
+        <span class="font-display font-bold tracking-tight text-[15px] md:text-base truncate">Top Interview <span style="color: var(--accent);">150</span></span>
+      </a>
+      <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[rgba(200,250,75,0.12)] text-[var(--accent)] border border-[rgba(200,250,75,0.3)]">
+        <span>🏛️</span>
+        <span>Architecture Suite</span>
+      </span>
+      <div class="flex-1"></div>
+      <div id="overallChip" class="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>15 ADRs Active · 100% Verified</span>
+      </div>
+      <div id="authArea" class="shrink-0"></div>
+      <button id="themeToggleBtn" type="button" aria-label="Switch colour theme" class="inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] text-slate-300">
+        <span id="themeBtnIcon">☀️</span>
+      </button>
+      <a href="index.html" id="guidesBtn" title="Return to LeetCode Solutions Manual" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 h-10 text-sm font-semibold shrink-0 whitespace-nowrap" style="color:var(--accent);">Manual</a>
+      <button id="paletteBtn" aria-label="Jump to a section" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
+        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+        <span class="hidden md:inline">Jump to…</span>
+        <span class="hidden md:flex items-center gap-1"><kbd class="k">⌘</kbd><kbd class="k">K</kbd></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex items-start">
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sideOverlay" class="hidden fixed inset-0 z-30 bg-black/60 md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[var(--canvas-sub)] md:bg-transparent flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
+        <div class="flex items-center gap-3">
+          <svg id="ringSvg" width="52" height="52" viewBox="0 0 64 64" class="shrink-0 -rotate-90" aria-hidden="true">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
+            <circle id="ringFg" cx="32" cy="32" r="26" fill="none" stroke="#C8FA4B" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="0"/>
+          </svg>
+          <div id="ringBlock" class="min-w-0 flex-1">
+            <div id="ringPct" class="font-display font-bold text-xl leading-none" style="color:var(--accent);">100%</div>
+            <div id="ringSub" class="text-xs text-slate-400 mt-1 font-mono">15 / 15 ADRs active</div>
+          </div>
+          <button id="ltNavCollapse" type="button" aria-label="Collapse the navigation"
+                  class="hidden shrink-0 w-8 h-8 rounded-lg items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path id="ltNavChevron" d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button id="sideClose" type="button" aria-label="Close navigation"
+                  class="md:hidden shrink-0 w-11 h-11 -mr-2 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="relative mt-3">
+          <input id="toolSearchInput" type="search" placeholder="Filter architecture & tools…" autocomplete="off"
+                  role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="curriculumNav"
+                  class="w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg pl-3 pr-8 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
+          <kbd class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] font-mono text-slate-400 select-none shadow-sm" aria-hidden="true">/</kbd>
+        </div>
+        <div class="flex gap-1.5 mt-2.5" id="difficultyFilters" role="group" aria-label="Section filter">
+          <button data-filter="all" class="filter-pill filter-btn active flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">All</button>
+          <button data-filter="arch" class="filter-pill filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Arch</button>
+          <button data-filter="adrs" class="filter-pill filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">ADRs</button>
+          <button data-filter="lab" class="filter-pill filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Lab</button>
+        </div>
+      </div>
+      <nav aria-label="Architecture Suite Navigation" class="flex-1 min-h-0 flex flex-col">
+        <div id="curriculumNav" class="sidebar p-3 space-y-4 flex-1 overflow-y-auto" role="listbox">
+          <div class="nav-group">
+            <div class="nav-group-label text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold px-2 mb-1.5">Architecture Suite</div>
+            <div class="space-y-0.5">
+              <a href="#overview" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:var(--accent);"></span>
+                <span class="nav-title truncate">00. Master Dossier & Metrics</span>
+              </a>
+              <a href="#visual-suite" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#38BDF8;"></span>
+                <span class="nav-title truncate">01. Archify Visual IR Tabs</span>
+              </a>
+              <a href="#decomp" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#34D399;"></span>
+                <span class="nav-title truncate">02. 6-Layer Decomposition</span>
+              </a>
+              <a href="#decisions" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="adrs">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#FBBF24;"></span>
+                <span class="nav-title truncate">03. 15 Architecture Records (ADRs)</span>
+              </a>
+              <a href="#physics-lab" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="lab">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#F43F5E;"></span>
+                <span class="nav-title truncate">04. 240Hz Euler Physics Lab</span>
+              </a>
+              <a href="#tools-ecosystem" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#A78BFA;"></span>
+                <span class="nav-title truncate">05. Tools & Skills Matrix</span>
+              </a>
+              <a href="#management-playbook" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#60A5FA;"></span>
+                <span class="nav-title truncate">06. Management Playbook (7 Rules)</span>
+              </a>
+              <a href="#verification" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch">
+                <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#34D399;"></span>
+                <span class="nav-title truncate">07. Verification Scorecard</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="nav-group pt-2 border-t border-[rgba(148,163,184,0.12)]">
+            <div class="nav-group-label text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold px-2 mb-1.5">LeetCode Manual Portal</div>
+            <div class="space-y-0.5">
+              <a href="index.html" class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors">
+                <span class="shrink-0">📖</span>
+                <span class="truncate">All 150 Problems Manual</span>
+              </a>
+              <a href="index.html#architecture-spec" class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors">
+                <span class="shrink-0">📜</span>
+                <span class="truncate">In-Reader Architecture Spec</span>
+              </a>
+              <a href="index.html#edge-cases-matrix" class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors">
+                <span class="shrink-0">🔬</span>
+                <span class="truncate">24-Chapter Edge Matrix</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Reader Container -->
+    <main id="contentContainer" tabindex="-1" class="flex-1 min-w-0 overflow-y-auto h-dvh -mt-14 pt-14 scroll-smooth outline-none focus:outline-none">
+      <div class="flex items-start justify-center gap-8 px-4 md:px-10 py-6 md:py-10 max-w-6xl mx-auto w-full">
+        <article class="flex-1 min-w-0 max-w-4xl prose prose-invert">
+          <div id="crumbRow" class="mb-3 flex items-center gap-2 text-xs font-mono text-slate-500">
+            <a href="index.html" class="hover:text-[var(--accent)] transition-colors">Top Interview 150</a>
+            <span>/</span>
+            <span class="text-slate-300 font-semibold">System Architecture & Governance</span>
+          </div>
+          <div id="articleHead" class="mb-6">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold uppercase tracking-wider bg-[rgba(200,250,75,0.12)] text-[var(--accent)] border border-[rgba(200,250,75,0.25)]">Production Architecture</span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-mono text-slate-400 bg-white/[0.04] border border-[rgba(148,163,184,0.15)]">15 ADRs Active</span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-mono text-slate-400 bg-white/[0.04] border border-[rgba(148,163,184,0.15)]">240Hz Euler Physics</span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">100% Verified</span>
+            </div>
+            <h1 class="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-3">Architecture, Technical Decisions & Engineering Governance</h1>
+            <p class="hero-description text-base text-slate-300 leading-relaxed font-sans" data-cursor-text="true">
+              An exhaustive, mathematically rigorous specification covering the Single-Page Application (SPA), the 5-codec Online Judge subsystem, QuickJS-Emscripten WASM sandbox isolation, stateless <code class="mono">SESSION_EPOCH</code> authentication, multi-tiered Upstash Redis rate limiting, delimiter-isolated prompt injection defense, 240Hz Euler spring cursor physics, and cryptographic fail-closed verification gates.
+            </p>
+          </div>
+
+          <div id="articleContent" class="space-y-12">
+            
+<section id="overview" class="scroll-mt-20">
+  <div class="metrics-grid grid grid-cols-2 md:grid-cols-3 gap-3 my-6">
+    <div class="metric-card card spot p-4" data-spot>
+      <div class="metric-value font-mono font-bold text-2xl text-[var(--accent)]">471 / 471</div>
+      <div class="metric-label text-xs font-semibold text-slate-300 mt-1">Chat Assertions</div>
+      <div class="metric-sublabel text-[11px] font-mono text-slate-500">0 failures / 100% green</div>
+    </div>
+    <div class="metric-card card spot p-4" data-spot>
+      <div class="metric-value font-mono font-bold text-2xl text-emerald-400">96 / 96</div>
+      <div class="metric-label text-xs font-semibold text-slate-300 mt-1">Judge Assertions</div>
+      <div class="metric-sublabel text-[11px] font-mono text-slate-500">Hermetic driver passes</div>
+    </div>
+    <div class="metric-card card spot p-4" data-spot>
+      <div class="metric-value font-mono font-bold text-2xl text-purple-400">5</div>
+      <div class="metric-label text-xs font-semibold text-slate-300 mt-1">Polyglot Codecs</div>
+      <div class="metric-sublabel text-[11px] font-mono text-slate-500">json, tree, list, graph, ops</div>
+    </div>
+    <div class="metric-card card spot p-4" data-spot>
+      <div class="metric-value font-mono font-bold text-2xl text-cyan-400">450 / 450</div>
+      <div class="metric-label text-xs font-semibold text-slate-300 mt-1">Syntax Blocks</div>
+      <div class="metric-sublabel text-[11px] font-mono text-slate-500">Acorn AST verified</div>
+    </div>
+    <div class="metric-card card spot p-4" data-spot>
+      <div class="metric-value font-mono font-bold text-2xl text-amber-400">159</div>
+      <div class="metric-label text-xs font-semibold text-slate-300 mt-1">Curriculum Guides</div>
+      <div class="metric-sublabel text-[11px] font-mono text-slate-500">24 topic categories</div>
+    </div>
+    <div class="metric-card card spot p-4" data-spot>
+      <div class="metric-value font-mono font-bold text-2xl text-slate-100">2</div>
+      <div class="metric-label text-xs font-semibold text-slate-300 mt-1">Pinned CSP Hashes</div>
+      <div class="metric-sublabel text-[11px] font-mono text-slate-500">Zero 'unsafe-inline'</div>
+    </div>
+  </div>
+</section>
+
+
+<section id="visual-suite" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(56,189,248,0.15)] text-[#38BDF8] font-mono font-bold text-xs">01</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">Interactive Archify Visual Architecture Suite</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">Compiled from Archify Typed IR Schemas</div>
+  </div>
+
+  <p style="color: var(--ink-muted); font-size: 14.5px; margin-bottom: 20px;">
+    The multi-tier topology, runtime sequence pipelines, compilation workflows, and verification lifecycles are modeled as formal Archify Intermediate Representations (IR). Click a tab below to preview the architectural contracts, or launch the interactive GPU-accelerated HTML renderers.
+  </p>
+
+        <div class="diagram-panel-box">
+          <div class="diagram-tabs-header">
+            <button class="diagram-tab-btn active" data-tab="tab-arch">
+              <span class="tab-badge arch">Architecture</span>
+              System Topology
+            </button>
+            <button class="diagram-tab-btn" data-tab="tab-seq">
+              <span class="tab-badge seq">Sequence</span>
+              Edge Chat Streaming
+            </button>
+            <button class="diagram-tab-btn" data-tab="tab-flow">
+              <span class="tab-badge flow">Workflow</span>
+              Dry-Run AST Pipeline
+            </button>
+            <button class="diagram-tab-btn" data-tab="tab-life">
+              <span class="tab-badge life">Lifecycle</span>
+              Verification Gates
+            </button>
+          </div>
+
+          <!-- TAB 1: SYSTEM TOPOLOGY -->
+          <div class="diagram-tab-content active" id="tab-arch">
+            <div class="diagram-preview-card card spot" data-spot>
+              <div class="diagram-header-info flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-[rgba(56,189,248,0.12)] text-[#38BDF8] border border-[rgba(56,189,248,0.25)]">Archify Interactive IR</span>
+                    <div class="diagram-title-text">Complete Multi-Tier System Topology</div>
+                  </div>
+                  <div class="diagram-desc-text">
+                    Interactive Archify model of client-side SPA boundaries, dual-theming engine, 240Hz Euler spring cursor physics, Vercel Edge AI streaming route, Upstash Redis rate limiting, and QuickJS-Emscripten WASM sandbox isolation.
+                  </div>
+                </div>
+                <div class="diagram-toolbar">
+                  <button type="button" class="diagram-tool-btn archify-zoom-out" data-target="frame-arch" title="Zoom Out (-)" aria-label="Zoom out">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-reset" data-target="frame-arch" title="Reset Zoom (100%)" aria-label="Reset zoom">
+                    <span class="zoom-badge font-mono text-xs">100%</span>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-in" data-target="frame-arch" title="Zoom In (+)" aria-label="Zoom in">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <div class="w-px h-3.5 bg-[var(--border-soft)] mx-0.5"></div>
+                  <button type="button" class="diagram-tool-btn archify-fullscreen" data-target="container-arch" title="Toggle Fullscreen" aria-label="Fullscreen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  </button>
+                  <a href="architecture/molly-system-architecture.html" target="_blank" rel="noopener noreferrer" class="diagram-tool-btn archify-launch" title="Open Interactive Visualizer in Dedicated Tab">
+                    <span>Expand</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                  </a>
+                </div>
+              </div>
+              <div class="archify-viewer-wrapper" id="container-arch">
+                <iframe id="frame-arch" class="archify-iframe" src="architecture/molly-system-architecture.html" title="Archify System Architecture Visualizer" loading="lazy"></iframe>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: CHAT SEQUENCE -->
+          <div class="diagram-tab-content" id="tab-seq">
+            <div class="diagram-preview-card card spot" data-spot>
+              <div class="diagram-header-info flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-[rgba(200,250,75,0.12)] text-[#C8FA4B] border border-[rgba(200,250,75,0.25)]">Archify Sequence IR</span>
+                    <div class="diagram-title-text">Edge SSE Streaming & Keepalive Protocol</div>
+                  </div>
+                  <div class="diagram-desc-text">
+                    Captures token reservation, Upstash rate limits, 15s tool reserve budget check, 10s SSE keepalive pings during inference, and the client's fence-aware <code class="mono">stableSplit()</code> dual-buffer Markdown reveal.
+                  </div>
+                </div>
+                <div class="diagram-toolbar">
+                  <button type="button" class="diagram-tool-btn archify-zoom-out" data-target="frame-seq" title="Zoom Out (-)" aria-label="Zoom out">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-reset" data-target="frame-seq" title="Reset Zoom (100%)" aria-label="Reset zoom">
+                    <span class="zoom-badge font-mono text-xs">100%</span>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-in" data-target="frame-seq" title="Zoom In (+)" aria-label="Zoom in">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <div class="w-px h-3.5 bg-[var(--border-soft)] mx-0.5"></div>
+                  <button type="button" class="diagram-tool-btn archify-fullscreen" data-target="container-seq" title="Toggle Fullscreen" aria-label="Fullscreen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  </button>
+                  <a href="architecture/molly-chat-streaming.html" target="_blank" rel="noopener noreferrer" class="diagram-tool-btn archify-launch" title="Open Interactive Visualizer in Dedicated Tab">
+                    <span>Expand</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                  </a>
+                </div>
+              </div>
+              <div class="archify-viewer-wrapper" id="container-seq">
+                <iframe id="frame-seq" class="archify-iframe" src="architecture/molly-chat-streaming.html" title="Archify Edge Chat Streaming Visualizer" loading="lazy"></iframe>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: DRY-RUN PIPELINE -->
+          <div class="diagram-tab-content" id="tab-flow">
+            <div class="diagram-preview-card card spot" data-spot>
+              <div class="diagram-header-info flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-[rgba(168,85,247,0.12)] text-[#A855F7] border border-[rgba(168,85,247,0.25)]">Archify Workflow IR</span>
+                    <div class="diagram-title-text">Dry-Run Engine AST & Execution Pipeline</div>
+                  </div>
+                  <div class="diagram-desc-text">
+                    Traces 159 Markdown guides through <code class="mono">gen-blocks.mjs</code>, statically precomputes identifier scopes into a depth-free <code class="mono">regionTable</code>, injects Acorn probes by exact slice offsets, and executes in QuickJS-Emscripten WASM.
+                  </div>
+                </div>
+                <div class="diagram-toolbar">
+                  <button type="button" class="diagram-tool-btn archify-zoom-out" data-target="frame-flow" title="Zoom Out (-)" aria-label="Zoom out">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-reset" data-target="frame-flow" title="Reset Zoom (100%)" aria-label="Reset zoom">
+                    <span class="zoom-badge font-mono text-xs">100%</span>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-in" data-target="frame-flow" title="Zoom In (+)" aria-label="Zoom in">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <div class="w-px h-3.5 bg-[var(--border-soft)] mx-0.5"></div>
+                  <button type="button" class="diagram-tool-btn archify-fullscreen" data-target="container-flow" title="Toggle Fullscreen" aria-label="Fullscreen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  </button>
+                  <a href="architecture/molly-dryrun-pipeline.html" target="_blank" rel="noopener noreferrer" class="diagram-tool-btn archify-launch" title="Open Interactive Visualizer in Dedicated Tab">
+                    <span>Expand</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                  </a>
+                </div>
+              </div>
+              <div class="archify-viewer-wrapper" id="container-flow">
+                <iframe id="frame-flow" class="archify-iframe" src="architecture/molly-dryrun-pipeline.html" title="Archify Dry-Run Engine Pipeline Visualizer" loading="lazy"></iframe>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: VERIFICATION LIFECYCLE -->
+          <div class="diagram-tab-content" id="tab-life">
+            <div class="diagram-preview-card card spot" data-spot>
+              <div class="diagram-header-info flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-[rgba(52,211,153,0.12)] text-[#34D399] border border-[rgba(52,211,153,0.25)]">Archify Lifecycle IR</span>
+                    <div class="diagram-title-text">Release Verification Lifecycle & Fail-Closed Gates</div>
+                  </div>
+                  <div class="diagram-desc-text">
+                    Enforces five ordered promotion phases: Staged Code &rarr; CSP SHA-256 Digest &rarr; Hermetic AST &amp; Trace Assertions &rarr; Playwright Recursive Luminance Contrast &rarr; Live Edge Deployment.
+                  </div>
+                </div>
+                <div class="diagram-toolbar">
+                  <button type="button" class="diagram-tool-btn archify-zoom-out" data-target="frame-life" title="Zoom Out (-)" aria-label="Zoom out">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-reset" data-target="frame-life" title="Reset Zoom (100%)" aria-label="Reset zoom">
+                    <span class="zoom-badge font-mono text-xs">100%</span>
+                  </button>
+                  <button type="button" class="diagram-tool-btn archify-zoom-in" data-target="frame-life" title="Zoom In (+)" aria-label="Zoom in">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <div class="w-px h-3.5 bg-[var(--border-soft)] mx-0.5"></div>
+                  <button type="button" class="diagram-tool-btn archify-fullscreen" data-target="container-life" title="Toggle Fullscreen" aria-label="Fullscreen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  </button>
+                  <a href="architecture/molly-verification-lifecycle.html" target="_blank" rel="noopener noreferrer" class="diagram-tool-btn archify-launch" title="Open Interactive Visualizer in Dedicated Tab">
+                    <span>Expand</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                  </a>
+                </div>
+              </div>
+              <div class="archify-viewer-wrapper" id="container-life">
+                <iframe id="frame-life" class="archify-iframe" src="architecture/molly-verification-lifecycle.html" title="Archify Verification Lifecycle Visualizer" loading="lazy"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+</section>
+
+
+<section id="decomp" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(52,211,153,0.15)] text-[#34D399] font-mono font-bold text-xs">02</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">Complete Subsystem Decomposition</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">Exhaustive Architectural Topology & 6-Layer Architecture</div>
+  </div>
+  
+        
+
+        <p style="color: var(--ink-muted); font-size: 14.5px; margin-bottom: 24px;">
+          The system is decomposed into six tightly decoupled subsystems designed for sub-millisecond execution, zero-trust edge boundaries, and fail-closed integrity:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 32px;">
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--cyan); margin-bottom: 8px;">1. Client Presentation Tier</div>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.6;">
+              Zero-framework vanilla SPA (<code class="mono">docs/index.html</code>). 56px inset glass header, 240Hz semi-implicit Euler spring cursor, and container-bounded delta scroll arithmetic.
+            </p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--purple); margin-bottom: 8px;">2. Online Judge & Polyglot Drivers</div>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.6;">
+              <code class="mono">api/judge/run.mjs</code> executing five exact codecs (<code class="mono">json</code>, <code class="mono">tree</code>, <code class="mono">list</code>, <code class="mono">graph</code>, <code class="mono">ops</code>). Defends against stdout bombs, console clobbering, and memory overflows.
+            </p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--rose); margin-bottom: 8px;">3. Stateless Auth & SESSION_EPOCH</div>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.6;">
+              GitHub OAuth 2.0 with HMAC-SHA256 session cookies. Features the <code class="mono">SESSION_EPOCH</code> global kill-switch for instant token invalidation with zero database lookups.
+            </p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px;">4. Edge AI Streaming & Abuse Defense</div>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.6;">
+              Vercel Edge streaming SSE proxy with 10s keepalive heartbeats, 52s total budget ceiling, Upstash Redis multi-tier rate limiting (5/min IP vs 20/min Auth), and two-channel delimiter fencing.
+            </p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--emerald); margin-bottom: 8px;">5. AST Dry-Run & QuickJS WASM Sandbox</div>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.6;">
+              Offline Acorn AST probe injection using static <code class="mono">regionTable</code> offsets. Emits Envelope v1.1 traces with in-realm Map/Set/BigInt serializers inside a 3s/16MB QuickJS WASM realm.
+            </p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--amber); margin-bottom: 8px;">6. Verification & Quality Gates</div>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.6;">
+              SHA-256 script digest enforcement in <code class="mono">vercel.json</code>, 471 chat assertions, 96 judge assertions, and Playwright recursive ancestor luminance contrast scans.
+            </p>
+          </div>
+        </div>
+      
+</section>
+
+
+<section id="decisions" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(251,191,36,0.15)] text-[#FBBF24] font-mono font-bold text-xs">03</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">15 Architectural & Technical Decision Records (ADRs)</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">Immutable Engineering Decisions, Root Causes & Rationale</div>
+  </div>
+  
+        
+
+        <div class="decision-grid">
+
+          <!-- DECISION 1 -->
+          <div class="decision-card card spot open" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-01</span>
+                <span class="decision-tag">UI / Vector</span>
+                <span class="decision-card-title">Injected SVG Vector Geometry vs. DOM Border-Radius Cursors</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement & Root Cause</div>
+                <div class="decision-block-text">
+                  When custom cursors use traditional HTML <code>&lt;div&gt;</code> elements with <code>border-radius: 50%</code> and CSS transforms, browser GPU compositors (Chromium Skia / WebKit CoreAnimation) isolate the element into a dedicated texture layer (<code>cc::PictureLayer</code>) rasterized <strong>once</strong> at base layout dimensions (32&times;32px). During page zoom (150%, 200%) or interactive scale pop (2.227&times;), the GPU fragment shader executes an affine matrix stretch on the low-res raster texture quad, producing severe bilinear blur, pixelation, and staircase artifacts.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label rejected">Rejected Alternatives</div>
+                <div class="decision-block-text">
+                  <strong>1. High-Resolution Oversized Divs (e.g. 256×256px scaled down):</strong> Wasted GPU texture memory and created subpixel shimmering during slow pointer drift.<br/>
+                  <strong>2. Fullscreen HTML5 Canvas Layer:</strong> Required full-viewport compositing passes every frame, draining battery life and degrading scroll frame rates.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Structured <code>#cur-dot</code> and <code>#cur-ring</code> with inline <code>&lt;svg&gt;</code> and <code>&lt;circle&gt;</code> elements. Enforced <code>shape-rendering="geometricPrecision"</code> for native analytic trigonometric curve anti-aliasing. Enforced <code>vector-effect="non-scaling-stroke"</code> on the lens ring to maintain an invariant 1.0px hairline stroke at any scale.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 2 -->
+          <div class="decision-card card spot open" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-02</span>
+                <span class="decision-tag">Physics / Math</span>
+                <span class="decision-card-title">240Hz Semi-Implicit Euler Dynamic Spring Physics</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement & Root Cause</div>
+                <div class="decision-block-text">
+                  Standard LERP followers lack mass and momentum, feeling sluggish at high speeds and drifting during slow adjustments. Explicit Euler integrators suffer from catastrophic numerical instability at high display refresh rates (120Hz/240Hz ProMotion displays) or during frametime hiccups, causing position values to diverge to infinity.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Mathematical Formulation & Adopted Integrator</div>
+                <div class="math-callout">
+                  F_spring = -k * (x - x_target)<br/>
+                  F_damping = -c * v<br/>
+                  a = F_spring + F_damping<br/>
+                  v_{t + Δt} = v_t + a * Δt<br/>
+                  x_{t + Δt} = x_t + v_{t + Δt} * Δt
+                </div>
+                <div class="decision-block-text">
+                  Constants deployed: <strong>Trailing Ring:</strong> <em>k</em> = 190, <em>c</em> = 17 (fluid, organic, critically damped trailing); <strong>Center Dot:</strong> <em>k</em> = 1400, <em>c</em> = 60 (instantaneous tactile magnetic snap); <strong>Scale Pop:</strong> <em>k</em> = 240, <em>c</em> = 20. Includes an automatic mechanical energy sleep gate (<em>E</em> = &frac12;<em>k</em>&Delta;<em>x</em>&sup2; + &frac12;<em>m</em><em>v</em>&sup2; &lt; &epsilon;) that pauses <code>requestAnimationFrame</code> when resting (0.00% idle CPU).
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 3 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-03</span>
+                <span class="decision-tag">Ergonomics</span>
+                <span class="decision-card-title">Hybrid Pointer Gating & Universal OS Cursor Suppression</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Tablets and touchscreen laptops report <code>pointer: coarse</code>, causing CSS media queries to suppress custom cursors even when an external mouse or Magic Keyboard trackpad is actively controlling the device. Conversely, tapping the touch screen dispatches touch coordinates, leaving an "orphaned cursor dot" frozen in place. In addition, Tailwind CSS preflight rules (<code>button { cursor: pointer; }</code>) override container-level <code>cursor: none</code>, leaking the OS hand cursor.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Dynamic event inspection: checks <code>e.pointerType === 'touch'</code> on every pointer event. Touching instantly hides the custom cursor and skips physics calculation. Deployed universal descendant suppression:
+                  <div class="math-callout">
+                    @media (hover: hover) and (pointer: fine) {<br/>
+                    &nbsp;&nbsp;html[data-cursor="on"], html[data-cursor="on"] * { cursor: none !important; }<br/>
+                    }
+                  </div>
+                  Over editable fields, the ring morphs into an SVG-free double-serif I-beam caret with spring constants switching to <em>k</em> = 1400, <em>c</em> = 60.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 4 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-04</span>
+                <span class="decision-tag">Geometry</span>
+                <span class="decision-card-title">Precision 3-Tier Snapping & Mathematical Quadrant Partitioning</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Centering the cursor ring directly over buttons and chips (<em>targetX</em> = <em>left</em> + <em>width</em> / 2) obscures the label text inside the button. Furthermore, snapping over inline hyperlinks in body text disorients readers and breaks reading flow.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Geometry</div>
+                <div class="decision-block-text">
+                  <strong>1. Action Controls (Exact Corner Snapping):</strong> Pinned to top-right vertex (<em>targetX</em> = <em>rect.right</em>, <em>targetY</em> = <em>rect.top</em>). Because the interior of the element occupies exactly one 90&deg; quadrant (180&deg; &le; &theta; &le; 270&deg;), exactly 25% of the circle is inside and 75% is outside, providing zero text occlusion.<br/>
+                  <strong>2. Sidebar Nav Items:</strong> Pinned to vertical midpoint of right border, bisecting the circle 50% / 50% to mirror the left indicator.<br/>
+                  <strong>3. Inline Links & Badges:</strong> Suppresses snap ring entirely (<code>opacity: 0</code>), scales center dot 1.6&times; with drop-shadow glow, and activates a 1.5px underline with 3px offset.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 5 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-05</span>
+                <span class="decision-tag">Judge / Codecs</span>
+                <span class="decision-card-title">Polyglot Codec Registry: Hard Rule G1 vs. Lazy Fallbacks</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement & Silent-Wrong Risk</div>
+                <div class="decision-block-text">
+                  In an algorithmic judge testing 150 diverse LeetCode problems, data structures vary widely: arrays/primitives (101), binary trees (20), linked lists (13), connected graphs (9), and stateful design classes (7). If an unrecognised structure falls back lazily to <code>JSON.stringify</code>, cyclic graphs trigger fatal runtime crashes, while functions returning scalar numbers (e.g. <code>maxDepth(root) = 3</code>) encoded with a default tree codec output <code>[null]</code>, resulting in the worst failure mode: <strong>silent-wrong execution traces</strong>.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture (Hard Rule G1)</div>
+                <div class="decision-block-text">
+                  Implemented exactly five codecs in <code>api/_lib/codecs.mjs</code> (<code>json</code>, <code>tree</code>, <code>list</code>, <code>graph</code>, <code>ops</code>). Hard Rule G1 strictly forbids default branches, lazy passthroughs, or fallbacks. Querying an unlisted codec throws <code>CodecNotImplementedError</code> immediately, failing CI loudly. Exotic values (<code>undefined</code>, <code>NaN</code>, <code>±Infinity</code>, <code>-0</code>, <code>BigInt</code>, <code>Map</code>/<code>Set</code>, typed arrays) and cyclic graphs are handled via back-references (<code>{__ref: N}</code>) in <code>scripts/lib/serialize.mjs</code>.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 6 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-06</span>
+                <span class="decision-tag">Auth / Sec</span>
+                <span class="decision-card-title">Stateless Authentication & The Zero-Database SESSION_EPOCH Kill-Switch</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement & Incident Response Defect</div>
+                <div class="decision-block-text">
+                  Stateless signed session cookies last 30 days to avoid constant re-authentication. However, if a signing secret or cookie is compromised, traditional stateless architectures have zero revocation mechanisms without standing up a centralized database blacklist, completely destroying edge speed.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture (SESSION_EPOCH)</div>
+                <div class="decision-block-text">
+                  In <code>api/_lib/session.mjs</code>, every session token embeds <code>{ githubId, login, epoch, iat, exp }</code> signed with HMAC-SHA256. The server checks <code>epoch === sessionEpoch()</code> on every invocation. In an incident, updating the environment variable <code>SESSION_EPOCH=2</code> instantly invalidates all outstanding cookies across all global edge instances simultaneously, with <strong>zero database queries</strong> and zero storage overhead. Malformed epochs safely fall back to default epoch 1 rather than logging everyone out.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 7 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-07</span>
+                <span class="decision-tag">Rate Limiting</span>
+                <span class="decision-card-title">Multi-Tier Rate Limiting & The NAT Collusion Defense</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Relying purely on IP-based rate limiting (5 req/min) punishes users behind shared NAT gateways (university campuses, corporate offices, mobile cell towers), causing collective denial of service. Conversely, attackers rotating IP addresses can easily bypass per-IP limits.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Implemented tiered quotas via Upstash Redis sliding window:
+                  <ul>
+                    <li><strong>Anonymous Callers:</strong> Capped at 5 req/min per IP.</li>
+                    <li><strong>Authenticated Callers:</strong> Authenticating via GitHub elevates the user to 20 req/min attached to their immutable GitHub ID (<code>chat:u:&lt;githubId&gt;</code>), decoupling them from NAT IP contention.</li>
+                    <li><strong>Daily IP Ceiling:</strong> Enforces an absolute 300 req/day per IP cap across both anonymous and authenticated traffic, ensuring total OpenAI budget protection.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 8 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-08</span>
+                <span class="decision-tag">Security / AI</span>
+                <span class="decision-card-title">Two-Channel Delimiter Fencing Against Prompt Injection</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  When the AI model fetches external web documentation (via Firecrawl) or receives client page context, untrusted text could contain prompt injections instructing the model to ignore safety constraints, exfiltrate API keys, or impersonate system actors. Naive keyword scrubbing corrupts legitimate JavaScript code containing object literals like <code>{ system: 'prod' }</code>.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Deployed strict boundary fencing with distinct delimiter channels:
+                  <div class="math-callout">
+                    Page Context: &lt;&lt;&lt;GUIDE_CONTENT&gt;&gt;&gt; ... &lt;&lt;&lt;END_GUIDE_CONTENT&gt;&gt;&gt;<br/>
+                    Tool Content: &lt;&lt;&lt;TOOL_CONTENT&gt;&gt;&gt; ... &lt;&lt;&lt;END_TOOL_CONTENT&gt;&gt;&gt;
+                  </div>
+                  System prompts explicitly instruct the model that content within tool fences is unverified data and must never be interpreted as instructions. Page context never enters the history array, preventing user prompt replay attacks.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 9 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-09</span>
+                <span class="decision-tag">Data Scale</span>
+                <span class="decision-card-title">Monolithic curriculum-data.js (3.09 MB) vs. Dynamic REST Chunking</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement & The 65MB Scale Wall</div>
+                <div class="decision-block-text">
+                  Should the 150 LeetCode guides be loaded on demand via individual HTTP requests or bundled into a single static payload? While dynamic loading saves initial bandwidth, network latency ruins instant client-side search across 450 dry-run tables. However, bundling all 3,400 LeetCode problems would create a catastrophic ~65 MB payload.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  For the curated LeetCode 150 curriculum, <code>scripts/build-site.mjs</code> compiles all guides into a monolithic 3.09 MB <code>docs/curriculum-data.js</code>. Served with aggressive HTTP caching and Gzip/Brotli compression (compressed to ~680 KB), this delivers <strong>zero-latency offline navigation</strong> and sub-5ms client-side fuzzy searching across the entire curriculum. Expansion beyond 150 is gated to dynamic edge routes.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 10 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-10</span>
+                <span class="decision-tag">AST / Dry-Run</span>
+                <span class="decision-card-title">Dry-Run AST Instrumentation: The Depth-Counter Fallacy</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement & The Fatal Flaw</div>
+                <div class="decision-block-text">
+                  Earlier prototypes used a runtime call-depth counter (<code>depth++</code> on enter, <code>depth--</code> on exit) to isolate top-level function invocations. <strong>The Fatal Flaw:</strong> 102 of the 450 LeetCode solutions are self-recursive algorithms. A runtime counter tagged the first call as <code>depth 0</code> and treated all recursive calls as <code>depth > 0</code>, silently suppressing the entire recursive call tree and emitting empty 1-frame traces that falsely passed naive assertion tests.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Abolished runtime depth inference completely. <code>scripts/gen-blocks.mjs</code> compiles an immutable static <code>regionTable</code> in <code>build/blocks.json</code>. Acorn probes are injected by exact character source slices, referencing the static region table. Enforced Rule V11 non-vacuity gates requiring &ge; 3 frames for recursive algorithms.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 11 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-11</span>
+                <span class="decision-tag">Edge / Stream</span>
+                <span class="decision-card-title">Edge AI Streaming: Reflow Containment & Wall-Clock Headroom</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Parsing Markdown, KaTeX, and Mermaid per SSE chunk causes extreme browser layout thrashing. Concurrently, Vercel Edge functions enforce a strict 60-second execution ceiling. Long-running model tool calls trigger reverse proxy disconnections and 504 gateway timeouts.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  <strong>1. stableSplit() Dual-Buffer Reveal:</strong> Separates settled text (up to the last completed paragraph outside code fences) from the live tail. settled markdown is parsed once (<code>paintReveal()</code>), while the live tail streams into raw <code>textContent</code> at 60fps.<br/>
+                  <strong>2. 52-Second Total Budget (TOTAL_BUDGET_MS = 52s):</strong> Leaves 8 seconds of execution headroom to synthesize an error frame.<br/>
+                  <strong>3. 10s SSE Keepalives:</strong> Emits <code>: ping\n\n</code> comments every 10s to keep HTTP proxies alive.<br/>
+                  <strong>4. 15s Tool Budget Guard:</strong> Verifies &ge; 15s remain before invoking web search; otherwise falls back to prose generation.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 12 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-12</span>
+                <span class="decision-tag">Security / CSP</span>
+                <span class="decision-card-title">Cryptographic Content Security Policy (CSP) Invariants</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  SPAs often resort to <code>'unsafe-inline'</code> to avoid Dark Mode flash-of-unstyled-content (FOUC). This violates security requirements and creates XSS exposure.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  <code>vercel.json</code> strictly forbids <code>'unsafe-inline'</code> for scripts. Pinned exactly 2 inline script blocks in <code>docs/index.html</code>. Synchronized via <code>scripts/refresh-csp-hash.mjs</code>, which calculates SHA-256 base64 digests and updates deployment manifests. Playwright tests fail closed if an unhashed script tag is introduced.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 13 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-13</span>
+                <span class="decision-tag">Layout</span>
+                <span class="decision-card-title">Layout Invariants: Inset Box-Shadow vs. Border-Bottom (56px Rule)</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Adding <code>border-bottom: 1px solid var(--border-soft)</code> to the frosted glass header increased its computed height from 56px to 57px in Chromium. This 1px deviation broke fixed viewport height computations across mobile drawer overlays and caused subpixel layout jitter during scrolling.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Replaced exterior borders with an inset box shadow:
+                  <div class="math-callout">
+                    box-shadow: inset 0 -1px 0 var(--border-soft) !important;
+                  </div>
+                  Preserves the exact 56px layout invariant with zero box-model reflow.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 14 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-14</span>
+                <span class="decision-tag">Storage / KV</span>
+                <span class="decision-card-title">Idempotent User Progress & Capped Prediction Event Buffer</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Tracking user problem passes and dry-run prediction telemetry in Upstash KV can cause unbounded array growth, degrading read latency and hitting KV storage limits. Furthermore, network outages during progress saves must never block judge verdict delivery.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  In <code>api/_lib/kv.mjs</code>, solved progress writes are strictly deduplicated sets (idempotent). Telemetry events are stored in a dedicated key space capped at exactly <strong>500 events</strong> using a FIFO drop queue. In case of Upstash KV network failure, the functions degrade gracefully to empty progress without failing code execution verdicts or throwing client-side exceptions.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISION 15 -->
+          <div class="decision-card card spot" data-spot>
+            <div class="decision-card-head">
+              <div class="decision-card-meta">
+                <span class="decision-id">DEC-15</span>
+                <span class="decision-tag">Visualizers</span>
+                <span class="decision-card-title">Custom Domain Visualizers (viz-array / viz-tree) vs. Generic Mermaid</span>
+              </div>
+              <span class="decision-toggle-icon">▼</span>
+            </div>
+            <div class="decision-card-body">
+              <div class="decision-section-block">
+                <div class="decision-block-label problem">Problem Statement</div>
+                <div class="decision-block-text">
+                  Mermaid diagrams are ideal for flowcharts and sequences, but rendering two-pointer array indices (e.g. <code>L</code>, <code>R</code>, <code>write</code>) or binary tree node traversals using generic Mermaid nodes is visually cluttered, slow to parse, and cannot animate dynamically during dry-run step stepping.
+                </div>
+              </div>
+              <div class="decision-section-block">
+                <div class="decision-block-label solution">Adopted Architecture</div>
+                <div class="decision-block-text">
+                  Engineered custom lightweight JSON-driven visualization blocks (<code>~~~viz-array</code>, <code>~~~viz-tree</code>, <code>~~~viz-matrix</code>) embedded directly in the curriculum markdown. The client renders memory cells with dedicated pointer badges (e.g. <code>p=0</code>, <code>L</code>, <code>R</code>) at sub-millisecond speeds, fully integrated with theme CSS variables.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      
+</section>
+
+
+<section id="physics-lab" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(244,63,94,0.15)] text-[#F43F5E] font-mono font-bold text-xs">04</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">240Hz Euler ODE Spring Physics & Geometry Lab</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">Real-time Numerical Simulation, Phase Space Trajectories & Energy Conservation</div>
+  </div>
+  
+        
+
+        <div class="interactive-lab-container">
+          <p style="color: var(--ink-muted); font-size: 14px; margin-bottom: 18px;">
+            Move your cursor inside the canvas below to interact with the real-time Semi-Implicit Euler spring simulator. Toggle between Trailing Lens (<em>k</em> = 190, <em>c</em> = 17) and Magnetic Snap (<em>k</em> = 1400, <em>c</em> = 60) to observe damping and energy sleep behavior.
+          </p>
+
+          <div class="lab-controls-bar">
+            <div class="lab-control-group">
+              <span class="lab-control-label">Spring Mode:</span>
+              <button class="lab-btn active" id="btnModeTrailing">Trailing Lens (k=190, c=17)</button>
+              <button class="lab-btn" id="btnModeSnap">Magnetic Snap (k=1400, c=60)</button>
+            </div>
+            <div class="lab-control-group">
+              <button class="lab-btn" id="btnResetPhysics">Center Target</button>
+            </div>
+          </div>
+
+          <div class="physics-canvas-box">
+            <div class="canvas-hud" id="physicsHud">
+              Mode: Trailing Lens<br/>
+              k = 190 | c = 17<br/>
+              Energy: 0.00 μJ (Sleeping: YES)
+            </div>
+            <canvas id="springCanvas"></canvas>
+          </div>
+        </div>
+      
+</section>
+
+
+<section id="tools-ecosystem" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(167,139,250,0.15)] text-[#A78BFA] font-mono font-bold text-xs">05</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">Tools & Skills Ecosystem Matrix</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">13 Specialized Capabilities, Runtime Libraries & Quality Gates</div>
+  </div>
+  
+        
+
+        <p style="color: var(--ink-muted); font-size: 14.5px; margin-bottom: 20px;">
+          The rapid development, hardening, and verification of the platform was powered by a curated suite of specialized tools, runtimes, and engineering disciplines:
+        </p>
+
+        <div class="tools-table-container card overflow-x-auto">
+          <div class="table-toolbar">
+            <input type="text" class="table-search-input" id="toolSearchInput" placeholder="Filter tools or skills...">
+            <div class="table-filter-pills">
+              <button class="filter-pill active" data-filter="all">All</button>
+              <button class="filter-pill" data-filter="engine">Engine & AST</button>
+              <button class="filter-pill" data-filter="edge">Edge & AI</button>
+              <button class="filter-pill" data-filter="test">Testing & QA</button>
+              <button class="filter-pill" data-filter="sec">Security & Auth</button>
+              <button class="filter-pill" data-filter="skill">Agentic Skills</button>
+            </div>
+          </div>
+
+          <table class="data-table" id="toolsTable">
+            <thead>
+              <tr>
+                <th>Tool / Skill</th>
+                <th>Category</th>
+                <th>Concrete Role in Codebase</th>
+                <th>Tangible Value & Bugs Prevented</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-cat="skill">
+                <td>
+                  <div class="tool-name-cell">Archify CLI</div>
+                </td>
+                <td><span class="tool-category-badge cat-skill">Agentic Skill</span></td>
+                <td>Compiles Architecture, Sequence, Workflow, and Lifecycle IR schemas into GPU-accelerated interactive HTML visualizers.</td>
+                <td>Eliminated architectural drift and outdated static drawings; provided real-time, interactive failure mode exploration for developers.</td>
+              </tr>
+              <tr data-cat="engine">
+                <td>
+                  <div class="tool-name-cell">QuickJS-Emscripten</div>
+                </td>
+                <td><span class="tool-category-badge cat-engine">Engine & AST</span></td>
+                <td>WebAssembly execution sandbox for LeetCode user solutions and dry-run code blocks (<code class="mono">api/_lib/sandbox.mjs</code>).</td>
+                <td>Guaranteed 100% hermetic isolation. Prevented arbitrary solution code from mutating Node host prototypes, memory leaks, or running infinite loops (3s/16MB limit).</td>
+              </tr>
+              <tr data-cat="engine">
+                <td>
+                  <div class="tool-name-cell">Polyglot Codecs</div>
+                </td>
+                <td><span class="tool-category-badge cat-engine">Engine & AST</span></td>
+                <td>5 specialized codecs (<code class="mono">json</code>, <code class="mono">tree</code>, <code class="mono">list</code>, <code class="mono">graph</code>, <code class="mono">ops</code>) in <code class="mono">api/_lib/codecs.mjs</code>.</td>
+                <td>Enforces Hard Rule G1 (zero lazy fallbacks), preventing silent-wrong execution traces and supporting cyclic graphs via back-references.</td>
+              </tr>
+              <tr data-cat="engine">
+                <td>
+                  <div class="tool-name-cell">Acorn & Acorn-walk</div>
+                </td>
+                <td><span class="tool-category-badge cat-engine">Engine & AST</span></td>
+                <td>Parses 450 JavaScript blocks into AST and injects non-invasive tracer probes (<code class="mono">scripts/instrument.mjs</code>).</td>
+                <td>Enabled source-slice level probe injection that preserved original line numbers and character offsets without modifying code execution semantics.</td>
+              </tr>
+              <tr data-cat="sec">
+                <td>
+                  <div class="tool-name-cell">SESSION_EPOCH</div>
+                </td>
+                <td><span class="tool-category-badge cat-sec">Security & Auth</span></td>
+                <td>Stateless HMAC-SHA256 session management with integer epoch validation (<code class="mono">api/_lib/session.mjs</code>).</td>
+                <td>Provides instantaneous global session invalidation without database lookups. Leaked cookies can be revoked in seconds via environment variable change.</td>
+              </tr>
+              <tr data-cat="edge">
+                <td>
+                  <div class="tool-name-cell">Vercel Edge Functions</div>
+                </td>
+                <td><span class="tool-category-badge cat-edge">Edge & AI</span></td>
+                <td>Low-latency SSE streaming proxy for AI chat (<code class="mono">api/chat.mjs</code>) operating on Vercel's global edge network.</td>
+                <td>Delivered sub-10ms TTFB globally, with keepalive comment dispatching preventing premature HTTP socket termination.</td>
+              </tr>
+              <tr data-cat="edge">
+                <td>
+                  <div class="tool-name-cell">Upstash Redis</div>
+                </td>
+                <td><span class="tool-category-badge cat-edge">Edge & AI</span></td>
+                <td>Distributed sliding window rate limiter (<code class="mono">@upstash/ratelimit</code>) per IP and authenticated session.</td>
+                <td>Prevented API token exhaustion and DDoS spam without requiring persistent server state or database connection pooling.</td>
+              </tr>
+              <tr data-cat="sec">
+                <td>
+                  <div class="tool-name-cell">Two-Channel Delimiters</div>
+                </td>
+                <td><span class="tool-category-badge cat-sec">Security & Auth</span></td>
+                <td>Distinct boundary fences for guide text vs untrusted tool web text (<code class="mono">api/_lib/chat-security.mjs</code>).</td>
+                <td>Defends against prompt injection attacks originating from web pages retrieved via external search tools.</td>
+              </tr>
+              <tr data-cat="test">
+                <td>
+                  <div class="tool-name-cell">Playwright Test</div>
+                </td>
+                <td><span class="tool-category-badge cat-test">Testing & QA</span></td>
+                <td>End-to-end browser automation suite running Desktop (1440×900) and Mobile Pixel 7 viewports.</td>
+                <td>Automated WCAG AA relative luminance checks over transparent ancestor DOM nodes; verified 56px mobile header height and pointer gating.</td>
+              </tr>
+              <tr data-cat="skill">
+                <td>
+                  <div class="tool-name-cell">Hyperplan / Adversarial</div>
+                </td>
+                <td><span class="tool-category-badge cat-skill">Agentic Skill</span></td>
+                <td>Multi-perspective architectural audit methodology testing assumptions against the running tree before implementation.</td>
+                <td>Exposed the "Phantom Problem" in chat persistence (saving hours of needless rewrites) and identified the recursive depth-counter defect.</td>
+              </tr>
+              <tr data-cat="test">
+                <td>
+                  <div class="tool-name-cell">Non-Vacuity (Rule V11)</div>
+                </td>
+                <td><span class="tool-category-badge cat-test">Testing & QA</span></td>
+                <td>Verification discipline asserting that generated traces contain &ge; 3 distinct execution frames for recursive problems.</td>
+                <td>Prevented silent test passes on empty traces across 102 recursive LeetCode solutions, ensuring trace validity.</td>
+              </tr>
+              <tr data-cat="engine">
+                <td>
+                  <div class="tool-name-cell">WAI-ARIA 1.2 Combobox</div>
+                </td>
+                <td><span class="tool-category-badge cat-engine">Engine & AST</span></td>
+                <td>Accessible virtual focus pattern with <code class="mono">aria-activedescendant</code> in curriculum search and command palette.</td>
+                <td>Eliminated DOM focus stealing, preventing virtual keyboard dismissals on mobile devices during search queries.</td>
+              </tr>
+              <tr data-cat="skill">
+                <td>
+                  <div class="tool-name-cell">Dagr Slicer & Guard</div>
+                </td>
+                <td><span class="tool-category-badge cat-skill">Agentic Skill</span></td>
+                <td>Sub-millisecond architectural boundary enforcement and surgical AST context extraction.</td>
+                <td>Prevented UI-to-database architectural boundary leakage and kept token consumption minimal during large-scale code refactoring.</td>
+              </tr>
+              <tr data-cat="edge">
+                <td>
+                  <div class="tool-name-cell">Firecrawl</div>
+                </td>
+                <td><span class="tool-category-badge cat-edge">Edge & AI</span></td>
+                <td>External web retrieval tool for live LeetCode documentation lookups in AI chat.</td>
+                <td>Enabled dynamic context retrieval while safely bounded by the 15-second execution headroom guard.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      
+</section>
+
+
+<section id="management-playbook" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(96,165,250,0.15)] text-[#60A5FA] font-mono font-bold text-xs">06</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">Engineering Management Playbook: 7 Strict Rules</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">Inviolable Operational Invariants & Governance Principles</div>
+  </div>
+  
+        
+
+        <div class="playbook-grid">
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 01</div>
+              <div class="playbook-title">The "Phantom Problem" Fallacy</div>
+              <div class="playbook-story">
+                Engineers frequently draft complex refactoring proposals based on memory or impression. During the chatbox hardening initiative, a plan proposed rewriting <code>saveStore()</code> to add persistence. Verification revealed <code>saveStore()</code> did not exist because persistence was already implemented and fully covered by tests under <code>STORAGE_KEY = 'lt150-chat-v1'</code>.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Never approve a refactoring proposal without verifying line numbers and running tests against the active tree first.
+            </div>
+          </div>
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 02</div>
+              <div class="playbook-title">The "Vacuous Test" Illusion</div>
+              <div class="playbook-story">
+                A 100% passing test suite can be completely hollow. In early dry-run engine prototypes, tests asserted that traces were produced. The test suite passed green, yet 102 recursive solutions emitted empty traces containing only the root frame because a runtime depth counter silently suppressed recursive calls.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Assertions must verify payload substance (e.g. Rule V11 non-vacuity). Periodically inject faulty inputs to test the test oracle.
+            </div>
+          </div>
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 03</div>
+              <div class="playbook-title">Serverless Time-Budget Defense</div>
+              <div class="playbook-story">
+                Vercel Edge Functions terminate abruptly at 60s without throwing catchable exceptions. Allowing an AI model to invoke multiple external search tool calls can consume 50s, leaving no time to stream prose answers back to the user before an HTTP 504 error.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Set a strict 52s global route budget, emit 10s keepalives, and require a 15s tool reserve before dispatching external calls.
+            </div>
+          </div>
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 04</div>
+              <div class="playbook-title">Recursive Contrast Resolution</div>
+              <div class="playbook-story">
+                Automated accessibility tests attempting to compute text contrast via <code>getComputedStyle().backgroundColor</code> return <code>rgba(0,0,0,0)</code> (transparent) on unstyled card containers. Parsing this as black produced hundreds of false test failures for dark text over white cards.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Contrast computation utilities must walk up the DOM ancestor tree until resolving an opaque background layer before calculating luminance.
+            </div>
+          </div>
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 05</div>
+              <div class="playbook-title">Layout Invariant Discipline</div>
+              <div class="playbook-story">
+                Adding a standard 1px border to the frosted glass header increased outer height from 56px to 57px, breaking mobile drawer positioning and causing subpixel scrolling jitter. Replacing exterior borders with inset box shadows preserved the 56px invariant.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Use inset box shadows for hairline container dividers and enforce rigid height invariants with automated viewport tests.
+            </div>
+          </div>
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 06</div>
+              <div class="playbook-title">Zero-Database Incident Response</div>
+              <div class="playbook-story">
+                Stateless session architectures are often crippled during security incidents because revoking leaked tokens usually requires retrofitting a database blacklist. By embedding an integer <code>epoch</code> into every signed token, revoking all outstanding tokens is a one-line environment variable bump.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Build global cryptographic kill-switches into stateless protocols at inception to enable instantaneous zero-database incident mitigation.
+            </div>
+          </div>
+
+          <div class="playbook-card">
+            <div>
+              <div class="playbook-num">Rule 07</div>
+              <div class="playbook-title">The Danger of Lazy Fallbacks</div>
+              <div class="playbook-story">
+                In data-intensive pipelines like algorithmic execution judges, developers often add lazy fallback branches (e.g. defaulting unrecognised structures to JSON). This produces "silent-wrong" data that looks plausible but corrupts execution trees.
+              </div>
+            </div>
+            <div class="playbook-principle">
+              <strong>Governance Rule:</strong> Enforce strict codec registries without fallbacks (Hard Rule G1). Codecs must fail loudly at build time rather than emitting corrupted runtime data.
+            </div>
+          </div>
+
+        </div>
+      
+</section>
+
+
+<section id="verification" class="scroll-mt-20">
+  <div class="section-header mb-4 border-b border-[var(--border-soft)] pb-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[rgba(52,211,153,0.15)] text-[#34D399] font-mono font-bold text-xs">07</span>
+      <h2 class="text-xl md:text-2xl font-bold font-display text-white m-0 border-none p-0">Automated Verification Scorecard</h2>
+    </div>
+    <div class="text-xs font-mono text-slate-400 mt-1">Cryptographic Proof-of-Correctness & Quality Gate Telemetry</div>
+  </div>
+  
+        
+
+        <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; box-shadow: var(--shadow-sm);">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Test Suite</th>
+                <th>Target Area</th>
+                <th>Verification Command</th>
+                <th>Assertions & Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>CSP Cryptographic Gate</strong></td>
+                <td>Content Security Policy</td>
+                <td><code>node scripts/refresh-csp-hash.mjs</code></td>
+                <td><span style="color: var(--emerald); font-weight: 700;">✅ 100% Match in vercel.json</span></td>
+              </tr>
+              <tr>
+                <td><strong>Judge Subsystem Suite</strong></td>
+                <td>Hermetic Codecs & Drivers</td>
+                <td><code>npm run test:judge</code></td>
+                <td><span style="color: var(--emerald); font-weight: 700;">✅ 96 Assertions / 0 Failures</span></td>
+              </tr>
+              <tr>
+                <td><strong>Chat Hardening Suite</strong></td>
+                <td>Edge SSE & Keepalive Auth</td>
+                <td><code>npm run test:chat</code></td>
+                <td><span style="color: var(--emerald); font-weight: 700;">✅ 471 Assertions / 0 Failures</span></td>
+              </tr>
+              <tr>
+                <td><strong>Dry-Run AST Validator</strong></td>
+                <td>Syntax & Trace Schema</td>
+                <td><code>npm test</code></td>
+                <td><span style="color: var(--emerald); font-weight: 700;">✅ 450 Syntax Blocks Passed</span></td>
+              </tr>
+              <tr>
+                <td><strong>Playwright E2E Suite</strong></td>
+                <td>Contrast, Cursor, Header</td>
+                <td><code>npx playwright test</code></td>
+                <td><span style="color: var(--emerald); font-weight: 700;">✅ WCAG AA &ge; 4.5:1 Luminance</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      
+</section>
+
+          </div>
+
+          <footer class="mt-12 pt-8 pb-10 border-t border-[var(--border-soft)] text-xs text-slate-500 font-mono">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <span class="font-bold text-slate-300">Top Interview 150</span> · Visual JS Manual & Architecture Suite
+              </div>
+              <div class="flex flex-wrap items-center gap-3 text-slate-400">
+                <a href="index.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-soft)] bg-white/[0.03] hover:bg-white/[0.07] hover:text-[var(--accent)] text-slate-300 transition-colors">
+                  <span>📖</span>
+                  <span>Solutions Manual</span>
+                </a>
+                <a href="index.html#architecture-spec" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
+                  <span>In-Reader Spec</span>
+                </a>
+                <a href="index.html#edge-cases-matrix" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
+                  <span>24-Ch Matrix</span>
+                </a>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-600">Built from executable guides · QuickJS WASM sandbox · Zero-dependency vanilla DOM</div>
+          </footer>
+        </article>
+      </div>
+    </main>
+
+    <!-- Right rail: the study assistant, and nothing else. -->
+    <div id="ltcBackdrop" class="ltc-backdrop"></div>
+    <aside id="ltRail" class="lt-rail" aria-label="Study assistant">
+      <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the study assistant"></div>
+
+      <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
+        <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
+        <div class="ltc-head">
+          <span class="ltc-drag-grip" aria-hidden="true" title="Drag to undock or move">
+            <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor"><circle cx="2" cy="2" r="1.25"/><circle cx="6" cy="2" r="1.25"/><circle cx="2" cy="7" r="1.25"/><circle cx="6" cy="7" r="1.25"/><circle cx="2" cy="12" r="1.25"/><circle cx="6" cy="12" r="1.25"/></svg>
+          </span>
+          <span class="ltc-head-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
+          </span>
+          <div class="ltc-head-txt">
+            <div class="ltc-head-title">Study assistant</div>
+            <div id="ltcPanelTitle" class="ltc-head-sub"></div>
+          </div>
+          <div class="ltc-head-actions">
+            <span class="ltc-status" data-state="idle" title="Ready">
+              <span class="ltc-status-dot" aria-hidden="true"></span>
+              <span class="ltc-status-txt" id="ltcStatusTxt">Ready</span>
+            </span>
+            <button id="ltcClear" class="ltc-icon-btn" type="button" title="Clear this conversation" aria-label="Clear this conversation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l-1-12M10 11v6M14 11v6"/></svg>
+            </button>
+            <button id="ltcClearAll" class="ltc-icon-btn" type="button" title="Clear every chat on this device" aria-label="Clear all chats on this device">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l-1-12M10 11v6M14 11v6"/><path d="M3.5 3.5l17 17"/></svg>
+            </button>
+            <button id="ltcPin" class="ltc-icon-btn" type="button" title="Expand to fullscreen" aria-label="Expand assistant to fullscreen">
+              <svg class="ltc-icon-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              <svg class="ltc-icon-dock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/><path d="M10 12l-3-3m0 0l3-3m-3 3h7"/></svg>
+            </button>
+            <button id="ltcFullscreen" class="ltc-icon-btn" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" style="display:none !important;" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+            <button id="ltcClose" class="ltc-icon-btn ltc-close" type="button" title="Minimize assistant" aria-label="Close or minimize the assistant">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- 8 Resize Handles for Floating Mode -->
+        <div class="ltc-resize-handles" aria-hidden="true">
+          <div class="ltc-handle ltc-handle-n" data-handle="n"></div>
+          <div class="ltc-handle ltc-handle-e" data-handle="e"></div>
+          <div class="ltc-handle ltc-handle-s" data-handle="s"></div>
+          <div class="ltc-handle ltc-handle-w" data-handle="w"></div>
+          <div class="ltc-handle ltc-handle-ne" data-handle="ne"></div>
+          <div class="ltc-handle ltc-handle-se" data-handle="se"></div>
+          <div class="ltc-handle ltc-handle-sw" data-handle="sw"></div>
+          <div class="ltc-handle ltc-handle-nw" data-handle="nw"></div>
+        </div>
+        <div class="ltc-log-wrap">
+          <div id="ltcLog" class="ltc-log outline-none focus:outline-none" tabindex="-1" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="false" aria-label="Conversation"></div>
+          <button id="ltcScrollDown" class="ltc-scroll-down" type="button" aria-label="Scroll to the latest message" title="Scroll to latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <form id="ltcForm" class="ltc-form" autocomplete="off">
+          <div class="ltc-think-line" aria-hidden="true"></div>
+          <div class="ltc-composer">
+            <textarea id="ltcInput" rows="1" placeholder="Ask about this page, any other guide, or the web…" aria-label="Message the assistant" enterkeyhint="send"></textarea>
+            <div class="ltc-actions">
+              <button id="ltcStop" class="ltc-stop" type="button" hidden aria-label="Stop generating">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+              </button>
+              <button id="ltcSend" class="ltc-send" type="submit" disabled aria-label="Send message" data-busy="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+              </button>
+            </div>
+          </div>
+          <p class="ltc-hint">Reads the page you are on · <kbd class="k">Enter</kbd> to send</p>
+        </form>
+      </aside>
+    </aside>
+  </div>
+
+  <!-- Floating & Fullscreen Portal Container for Assistant -->
+  <div id="ltcOverlay" class="ltc-overlay" aria-live="polite">
+    <div id="ltcSnapGhost" class="ltc-snap-ghost" aria-hidden="true"></div>
+  </div>
+
+  <!-- Mobile trigger for the assistant bottom sheet -->
+  <button id="ltcFab" class="ltc-fab" type="button" aria-expanded="false" aria-controls="ltcPanel" aria-label="Open the AI study assistant">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5M21 12a9 9 0 11-3.2-6.9M21 4v5h-5"/></svg>
+  </button>
+
+  <!-- Command Palette Modal (⌘K) -->
+  <div id="palette" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-150" role="dialog" aria-modal="true" aria-label="Jump to section or problem">
+    <div class="flex items-start justify-center pt-[12dvh] px-4">
+      <div id="paletteCard" class="card spot w-full md:max-w-xl rounded-2xl border border-[rgba(148,163,184,0.2)] bg-[var(--canvas-sub)] shadow-2xl shadow-black/60 overflow-hidden scale-[0.98] transition-transform duration-150" data-spot>
+        <div class="flex items-center gap-2 px-4 border-b border-[rgba(148,163,184,0.13)]">
+          <svg class="h-4 w-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+          <input id="paletteInput" type="text" placeholder="Type a section, ADR (e.g. ADR-01), or topic…" autocomplete="off"
+                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="paletteList"
+                 class="w-full bg-transparent py-4 text-[15px] placeholder-slate-500 focus:outline-none min-h-[52px]">
+          <kbd class="k shrink-0">esc</kbd>
+        </div>
+        <div id="paletteList" class="max-h-[50dvh] overflow-y-auto p-2" role="listbox"></div>
+        <div class="px-4 py-2.5 border-t border-[rgba(148,163,184,0.13)] flex items-center gap-4 text-[11px] text-slate-500 font-mono">
+          <span><kbd class="k">↑↓</kbd> navigate</span><span><kbd class="k">↵</kbd> jump</span><span><kbd class="k">esc</kbd> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="curriculum-data.js"></script>
+  <script>
+    'use strict';
+
+    // --- 1. DUAL THEME CONTROLLER & SYNC ---
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeBtnIcon');
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        if (themeIcon) themeIcon.textContent = '☀️';
+      } else {
+        document.documentElement.classList.remove('dark');
+        if (themeIcon) themeIcon.textContent = '🌙';
+      }
+      syncArchifyThemes(theme);
+    }
+
+    function syncArchifyThemes(theme) {
+      document.querySelectorAll('.archify-iframe').forEach(iframe => {
+        try {
+          if (iframe.contentDocument && iframe.contentDocument.documentElement) {
+            iframe.contentDocument.documentElement.setAttribute('data-theme', theme);
+          }
+        } catch (_) {}
+      });
+    }
+
+    const initialTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(initialTheme);
+
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('lt150-theme', next);
+        localStorage.setItem('arch-theme', next);
+        applyTheme(next);
+      });
+    }
+
+    // --- 2. MOBILE DRAWER CONTROLLER ---
+    const menuBtn = document.getElementById('menuBtn');
+    const sideClose = document.getElementById('sideClose');
+    const sideOverlay = document.getElementById('sideOverlay');
+    const sidebar = document.getElementById('sidebar');
+
+    function openSidebar() {
+      if (sidebar) sidebar.classList.remove('-translate-x-full');
+      if (sideOverlay) sideOverlay.classList.remove('hidden');
+    }
+    function closeSidebar() {
+      if (sidebar) sidebar.classList.add('-translate-x-full');
+      if (sideOverlay) sideOverlay.classList.add('hidden');
+    }
+    if (menuBtn) menuBtn.addEventListener('click', openSidebar);
+    if (sideClose) sideClose.addEventListener('click', closeSidebar);
+    if (sideOverlay) sideOverlay.addEventListener('click', closeSidebar);
+
+    // --- 3. READING PROGRESS BAR ---
+    const container = document.getElementById('contentContainer');
+    const bar = document.getElementById('progressBar');
+    function updateProgress() {
+      if (!container || !bar) return;
+      const total = container.scrollHeight - container.clientHeight;
+      const pct = total > 0 ? (container.scrollTop / total) * 100 : 0;
+      bar.style.width = pct + '%';
+    }
+    if (container) container.addEventListener('scroll', updateProgress, { passive: true });
+
+    // --- 4. KEYBOARD NAVIGATION & SHORTCUTS ---
+    window.addEventListener('keydown', (e) => {
+      // 1. Esc closes command palette & mobile sidebar
+      if (e.key === 'Escape') {
+        closePalette();
+        closeSidebar();
+        return;
+      }
+
+      // 2. Cmd+K / Ctrl+K opens palette
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        openPalette();
+        return;
+      }
+
+      // Ignore if user is currently typing in an input or textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      // 3. Search shortcut ('/') -> focus tool search input
+      if (e.key === '/') {
+        e.preventDefault();
+        const searchInput = document.getElementById('toolSearchInput');
+        if (searchInput) {
+          searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
+      // 4. Next section (']' or 'n' or 'j')
+      if (e.key === ']' || e.key === 'n' || e.key === 'N' || e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        const navLinks = Array.from(document.querySelectorAll('.sidebar .nav-link'));
+        const currentHash = window.location.hash || '#overview';
+        let idx = navLinks.findIndex(l => l.getAttribute('href') === currentHash);
+        if (idx < navLinks.length - 1) {
+          navLinks[idx + 1].click();
+        }
+        return;
+      }
+
+      // 5. Prev section ('[' or 'p' or 'k')
+      if (e.key === '[' || e.key === 'p' || e.key === 'P' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        const navLinks = Array.from(document.querySelectorAll('.sidebar .nav-link'));
+        const currentHash = window.location.hash || '#overview';
+        let idx = navLinks.findIndex(l => l.getAttribute('href') === currentHash);
+        if (idx > 0) {
+          navLinks[idx - 1].click();
+        }
+        return;
+      }
+    });
+
+    // --- 5. ARCHIFY DIAGRAM TABS CONTROLLER & INTERACTIVE TOOLBAR ---
+    const tabBtns = document.querySelectorAll('.diagram-tab-btn');
+    const tabContents = document.querySelectorAll('.diagram-tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const targetId = btn.getAttribute('data-tab');
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) targetContent.classList.add('active');
+      });
+    });
+
+    function getArchifyWindow(iframeId) {
+      const iframe = document.getElementById(iframeId);
+      if (!iframe) return null;
+      try {
+        return iframe.contentWindow;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function updateZoomBadge(toolbar, scale) {
+      if (!toolbar) return;
+      const badge = toolbar.querySelector('.zoom-badge');
+      if (badge && typeof scale === 'number') {
+        badge.textContent = `${Math.round(scale * 100)}%`;
+      }
+    }
+
+    // Zoom In (+)
+    document.querySelectorAll('.archify-zoom-in').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const frameId = btn.getAttribute('data-target');
+        const win = getArchifyWindow(frameId);
+        if (win && win.Archify && win.Archify.view) {
+          win.Archify.view.zoomIn();
+          const state = win.Archify.view.state();
+          if (state) updateZoomBadge(btn.closest('.diagram-toolbar'), state.scale);
+        }
+      });
+    });
+
+    // Zoom Out (-)
+    document.querySelectorAll('.archify-zoom-out').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const frameId = btn.getAttribute('data-target');
+        const win = getArchifyWindow(frameId);
+        if (win && win.Archify && win.Archify.view) {
+          win.Archify.view.zoomOut();
+          const state = win.Archify.view.state();
+          if (state) updateZoomBadge(btn.closest('.diagram-toolbar'), state.scale);
+        }
+      });
+    });
+
+    // Reset Zoom (100%)
+    document.querySelectorAll('.archify-zoom-reset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const frameId = btn.getAttribute('data-target');
+        const win = getArchifyWindow(frameId);
+        if (win && win.Archify && win.Archify.view) {
+          win.Archify.view.reset();
+          const state = win.Archify.view.state();
+          updateZoomBadge(btn.closest('.diagram-toolbar'), state ? state.scale : 1);
+        }
+      });
+    });
+
+    // Fullscreen Toggle (⛶)
+    document.querySelectorAll('.archify-fullscreen').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const containerId = btn.getAttribute('data-target');
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        } else if (container.requestFullscreen) {
+          container.requestFullscreen().catch(() => {});
+        }
+      });
+    });
+
+    // Ensure initial theme propagation to iframes on load
+    document.querySelectorAll('.archify-iframe').forEach(iframe => {
+      iframe.addEventListener('load', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        try {
+          if (iframe.contentDocument && iframe.contentDocument.documentElement) {
+            iframe.contentDocument.documentElement.setAttribute('data-theme', currentTheme);
+          }
+        } catch (_) {}
+      });
+    });
+
+
+    // --- 6. COLLAPSIBLE DECISION CARDS ---
+    const decisionCards = document.querySelectorAll('.decision-card');
+    decisionCards.forEach(card => {
+      const head = card.querySelector('.decision-card-head');
+      if (head) {
+        head.addEventListener('click', () => {
+          card.classList.toggle('open');
+        });
+      }
+    });
+
+    // --- 7. TOOLS TABLE & SECTION FILTERING ---
+    const searchInput = document.getElementById('toolSearchInput');
+    const filterPills = document.querySelectorAll('.filter-pill');
+    const tableRows = document.querySelectorAll('#toolsTable tbody tr');
+    const navItems = document.querySelectorAll('#curriculumNav .nav-item');
+
+    function filterToolsAndNav() {
+      const q = (searchInput ? searchInput.value || '' : '').toLowerCase().trim();
+      const activePill = document.querySelector('.filter-pill.active');
+      const filterCat = activePill ? activePill.getAttribute('data-filter') : 'all';
+
+      // Filter tools table rows
+      tableRows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowCat = row.getAttribute('data-cat') || '';
+        const matchesQuery = !q || text.includes(q);
+        const matchesCat = filterCat === 'all' || rowCat === filterCat ||
+                           (filterCat === 'arch' && (rowCat === 'skill' || rowCat === 'engine')) ||
+                           (filterCat === 'adrs' && rowCat === 'infra') ||
+                           (filterCat === 'lab' && rowCat === 'lib');
+        row.style.display = (matchesQuery && matchesCat) ? '' : 'none';
+      });
+
+      // Filter sidebar nav items
+      navItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        const cat = item.getAttribute('data-cat') || 'arch';
+        const matchesQuery = !q || text.includes(q);
+        const matchesCat = filterCat === 'all' || cat === filterCat;
+        item.style.display = (matchesQuery && matchesCat) ? '' : 'none';
+      });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterToolsAndNav);
+    filterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        filterPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        filterToolsAndNav();
+      });
+    });
+
+    // --- 8. COMMAND PALETTE (⌘K) ---
+    const palette = document.getElementById('palette');
+    const paletteCard = document.getElementById('paletteCard');
+    const paletteBtn = document.getElementById('paletteBtn');
+    const paletteInput = document.getElementById('paletteInput');
+    const paletteList = document.getElementById('paletteList');
+
+    const ARCH_ITEMS = [
+      { id: 'overview', title: '00. Master Architectural Dossier & Metrics', category: 'Architecture', hash: '#overview' },
+      { id: 'visual-suite', title: '01. Interactive Archify Visual Architecture Suite', category: 'Architecture', hash: '#visual-suite' },
+      { id: 'decomp', title: '02. Complete Subsystem Decomposition (6 Layers)', category: 'Architecture', hash: '#decomp' },
+      { id: 'decisions', title: '03. 15 Architecture Decision Records (ADRs)', category: 'ADRs', hash: '#decisions' },
+      { id: 'dec-01', title: 'ADR-01: Injected SVG Vector Geometry vs. DOM Border-Radius', category: 'ADRs', hash: '#dec-01' },
+      { id: 'dec-02', title: 'ADR-02: 240Hz Semi-Implicit Euler Dynamic Spring Physics', category: 'ADRs', hash: '#dec-02' },
+      { id: 'dec-03', title: 'ADR-03: Hybrid Pointer Gating & Universal OS Cursor Suppression', category: 'ADRs', hash: '#dec-03' },
+      { id: 'dec-04', title: 'ADR-04: Precision 3-Tier Snapping & Mathematical Quadrants', category: 'ADRs', hash: '#dec-04' },
+      { id: 'dec-05', title: 'ADR-05: Polyglot Codec Registry: Hard Rule G1 vs. Fallbacks', category: 'ADRs', hash: '#dec-05' },
+      { id: 'dec-06', title: 'ADR-06: Stateless Auth & Zero-Database SESSION_EPOCH', category: 'ADRs', hash: '#dec-06' },
+      { id: 'dec-07', title: 'ADR-07: Multi-Tier Rate Limiting & NAT Collusion Defense', category: 'ADRs', hash: '#dec-07' },
+      { id: 'dec-08', title: 'ADR-08: Two-Channel Delimiter Fencing Against Prompt Injection', category: 'ADRs', hash: '#dec-08' },
+      { id: 'dec-09', title: 'ADR-09: Monolithic curriculum-data.js vs. Dynamic REST Chunking', category: 'ADRs', hash: '#dec-09' },
+      { id: 'dec-10', title: 'ADR-10: Dry-Run AST Instrumentation: The Depth-Counter Fallacy', category: 'ADRs', hash: '#dec-10' },
+      { id: 'dec-11', title: 'ADR-11: Edge AI Streaming: Reflow Containment & Wall-Clock Headroom', category: 'ADRs', hash: '#dec-11' },
+      { id: 'dec-12', title: 'ADR-12: Cryptographic Content Security Policy (CSP) Invariants', category: 'ADRs', hash: '#dec-12' },
+      { id: 'dec-13', title: 'ADR-13: Layout Invariants: Inset Box-Shadow vs Border (56px)', category: 'ADRs', hash: '#dec-13' },
+      { id: 'dec-14', title: 'ADR-14: Idempotent User Progress & Capped Prediction Buffer', category: 'ADRs', hash: '#dec-14' },
+      { id: 'dec-15', title: 'ADR-15: Custom Domain Visualizers vs. Generic Mermaid', category: 'ADRs', hash: '#dec-15' },
+      { id: 'physics-lab', title: '04. 240Hz Euler ODE Spring Physics & Geometry Lab', category: 'Lab', hash: '#physics-lab' },
+      { id: 'tools-ecosystem', title: '05. Tools & Skills Ecosystem Matrix', category: 'Ecosystem', hash: '#tools-ecosystem' },
+      { id: 'management-playbook', title: '06. Engineering Management Playbook (7 Rules)', category: 'Governance', hash: '#management-playbook' },
+      { id: 'verification', title: '07. Automated Verification Scorecard', category: 'Verification', hash: '#verification' },
+      { id: 'manual', title: 'Top Interview 150 — Solutions Manual', category: 'Portal', url: 'index.html' }
+    ];
+
+    let selectedPaletteIndex = 0;
+    let filteredPaletteItems = [];
+
+    function openPalette() {
+      if (!palette) return;
+      palette.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        palette.classList.remove('opacity-0');
+        if (paletteCard) paletteCard.classList.remove('scale-[0.98]');
+      });
+      if (paletteInput) {
+        paletteInput.value = '';
+        paletteInput.focus();
+      }
+      renderPaletteResults('');
+    }
+
+    function closePalette() {
+      if (!palette) return;
+      palette.classList.add('opacity-0');
+      if (paletteCard) paletteCard.classList.add('scale-[0.98]');
+      setTimeout(() => {
+        palette.classList.add('hidden');
+      }, 150);
+    }
+
+    function renderPaletteResults(query) {
+      if (!paletteList) return;
+      const q = query.toLowerCase().trim();
+      filteredPaletteItems = ARCH_ITEMS.filter(it => !q || it.title.toLowerCase().includes(q) || it.category.toLowerCase().includes(q));
+      selectedPaletteIndex = 0;
+
+      if (filteredPaletteItems.length === 0) {
+        paletteList.innerHTML = '<div class="p-4 text-center text-xs font-mono text-slate-500">No matching sections or ADRs</div>';
+        return;
+      }
+
+      paletteList.innerHTML = filteredPaletteItems.map((it, idx) => `
+        <div class="pal-item flex items-center justify-between p-3 rounded-xl cursor-pointer text-sm font-sans transition-colors ${idx === 0 ? 'bg-white/[0.08] text-white' : 'text-slate-300 hover:bg-white/[0.04]'}" data-idx="${idx}">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="shrink-0 w-2 h-2 rounded-full" style="background:var(--accent);"></span>
+            <span class="font-medium truncate">${it.title}</span>
+          </div>
+          <span class="text-[11px] font-mono text-slate-500 px-2 py-0.5 rounded bg-white/[0.03] border border-white/5 shrink-0">${it.category}</span>
+        </div>
+      `).join('');
+
+      paletteList.querySelectorAll('.pal-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.getAttribute('data-idx'), 10);
+          activatePaletteItem(idx);
+        });
+      });
+    }
+
+    function activatePaletteItem(idx) {
+      const it = filteredPaletteItems[idx];
+      if (!it) return;
+      closePalette();
+      if (it.url) {
+        window.location.href = it.url;
+      } else if (it.hash) {
+        window.location.hash = it.hash;
+        const target = document.querySelector(it.hash);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+          if (target.classList.contains('decision-card')) {
+            target.classList.add('open');
+          }
+        }
+      }
+    }
+
+    if (paletteBtn) paletteBtn.addEventListener('click', openPalette);
+    if (palette) {
+      palette.addEventListener('click', (e) => {
+        if (e.target === palette) closePalette();
+      });
+    }
+    if (paletteInput) {
+      paletteInput.addEventListener('input', (e) => {
+        renderPaletteResults(e.target.value);
+      });
+      paletteInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (selectedPaletteIndex < filteredPaletteItems.length - 1) {
+            selectedPaletteIndex++;
+            updatePaletteActive();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (selectedPaletteIndex > 0) {
+            selectedPaletteIndex--;
+            updatePaletteActive();
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          activatePaletteItem(selectedPaletteIndex);
+        }
+      });
+    }
+
+    function updatePaletteActive() {
+      if (!paletteList) return;
+      const items = paletteList.querySelectorAll('.pal-item');
+      items.forEach((el, idx) => {
+        if (idx === selectedPaletteIndex) {
+          el.classList.add('bg-white/[0.08]', 'text-white');
+          el.classList.remove('text-slate-300');
+          el.scrollIntoView({ block: 'nearest' });
+        } else {
+          el.classList.remove('bg-white/[0.08]', 'text-white');
+          el.classList.add('text-slate-300');
+        }
+      });
+    }
+
+    // --- 9. INTERACTIVE 240Hz SEMI-IMPLICIT EULER CANVAS SIMULATOR ---
+    const canvas = document.getElementById('springCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const hud = document.getElementById('physicsHud');
+      const btnTrailing = document.getElementById('btnModeTrailing');
+      const btnSnap = document.getElementById('btnModeSnap');
+      const btnCenter = document.getElementById('btnResetPhysics');
+
+      let mode = 'trailing';
+      let k = 190, c = 17;
+      let targetX = 0, targetY = 0;
+      let posX = 0, posY = 0;
+      let velX = 0, velY = 0;
+      let isSleeping = false;
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        if (targetX === 0 && targetY === 0) {
+          targetX = rect.width / 2;
+          targetY = rect.height / 2;
+          posX = targetX;
+          posY = targetY;
+        }
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      if (btnTrailing) {
+        btnTrailing.addEventListener('click', () => {
+          mode = 'trailing'; k = 190; c = 17;
+          btnTrailing.classList.add('active');
+          if (btnSnap) btnSnap.classList.remove('active');
+          isSleeping = false;
+        });
+      }
+
+      if (btnSnap) {
+        btnSnap.addEventListener('click', () => {
+          mode = 'snap'; k = 1400; c = 60;
+          btnSnap.classList.add('active');
+          if (btnTrailing) btnTrailing.classList.remove('active');
+          isSleeping = false;
+        });
+      }
+
+      if (btnCenter) {
+        btnCenter.addEventListener('click', () => {
+          const rect = canvas.getBoundingClientRect();
+          targetX = rect.width / 2;
+          targetY = rect.height / 2;
+          isSleeping = false;
+        });
+      }
+
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        targetX = e.clientX - rect.left;
+        targetY = e.clientY - rect.top;
+        isSleeping = false;
+      });
+
+      let lastTime = performance.now();
+      function renderPhysics(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.033);
+        lastTime = now;
+
+        if (!isSleeping) {
+          const fx = -k * (posX - targetX) - c * velX;
+          const fy = -k * (posY - targetY) - c * velY;
+          velX += fx * dt;
+          velY += fy * dt;
+          posX += velX * dt;
+          posY += velY * dt;
+
+          const distSq = (posX - targetX) ** 2 + (posY - targetY) ** 2;
+          const speedSq = velX ** 2 + velY ** 2;
+          const energy = 0.5 * k * distSq + 0.5 * speedSq;
+
+          if (distSq < 0.04 && speedSq < 0.04) {
+            isSleeping = true;
+            posX = targetX;
+            posY = targetY;
+            velX = 0;
+            velY = 0;
+          }
+
+          if (hud) {
+            hud.innerHTML = `Mode: ${mode === 'trailing' ? 'Trailing Lens' : 'Magnetic Snap'}<br/>` +
+                            `k = ${k} | c = ${c}<br/>` +
+                            `Energy: ${(energy * 0.01).toFixed(2)} μJ (Sleeping: ${isSleeping ? 'YES' : 'NO'})`;
+          }
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        // Target Crosshair
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(targetX - 12, targetY); ctx.lineTo(targetX + 12, targetY);
+        ctx.moveTo(targetX, targetY - 12); ctx.lineTo(targetX, targetY + 12);
+        ctx.stroke();
+
+        // Elastic Tether Line
+        ctx.strokeStyle = mode === 'trailing' ? 'rgba(56, 189, 248, 0.35)' : 'rgba(200, 250, 75, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(targetX, targetY);
+        ctx.lineTo(posX, posY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Ring Follower
+        ctx.strokeStyle = mode === 'trailing' ? '#38BDF8' : '#C8FA4B';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(posX, posY, mode === 'trailing' ? 16 : 22, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Center Dot
+        ctx.fillStyle = mode === 'trailing' ? '#38BDF8' : '#C8FA4B';
+        ctx.beginPath();
+        ctx.arc(posX, posY, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        requestAnimationFrame(renderPhysics);
+      }
+      requestAnimationFrame(renderPhysics);
+    }
+
+    // --- 10. SPOTLIGHT TRACKING ([data-spot]) ---
+    document.addEventListener('pointermove', (e) => {
+      const spotCard = e.target.closest && e.target.closest('[data-spot]');
+      if (spotCard) {
+        const rect = spotCard.getBoundingClientRect();
+        const mx = ((e.clientX - rect.left) / rect.width) * 100;
+        const my = ((e.clientY - rect.top) / rect.height) * 100;
+        spotCard.style.setProperty('--mx', `${mx.toFixed(1)}%`);
+        spotCard.style.setProperty('--my', `${my.toFixed(1)}%`);
+      }
+    }, { passive: true });
+  </script>
+  <script src="chat-widget.js"></script>
+  <script src="assets/cursor.js"></script>
+</body>
+</html>

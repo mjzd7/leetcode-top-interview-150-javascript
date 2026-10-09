@@ -1,0 +1,65 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Release Verification Lifecycle & Fail-Closed Gates",
+    "output": "docs/architecture/molly-verification-lifecycle.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "main", "label": "Verification Promotion Rail" },
+    { "id": "terminal", "label": "Terminal Gate Rejections" }
+  ],
+  "states": [
+    { "id": "staged", "type": "start", "label": "Code Staged", "sublabel": "Docs or UI modified", "lane": "main", "col": 0, "step": "01", "tag": "start" },
+    { "id": "csp_gate", "type": "active", "label": "CSP Integrity", "sublabel": "refresh-csp-hash.mjs", "lane": "main", "col": 1, "step": "02", "tag": "sha256" },
+    { "id": "hermetic_gate", "type": "active", "label": "Hermetic AST & Unit", "sublabel": "278 Node & WASM tests", "lane": "main", "col": 2, "step": "03", "tag": "envelope" },
+    { "id": "e2e_gate", "type": "decision", "label": "Playwright E2E", "sublabel": "WCAG AA + 56px header", "lane": "main", "col": 3, "step": "04", "tag": "browser" },
+    { "id": "live_prod", "type": "success", "label": "Live Production", "sublabel": "Vercel edge deployed", "lane": "main", "col": 4, "step": "05", "tag": "success" },
+    { "id": "csp_fail", "type": "failure", "label": "CSP Blocked", "sublabel": "Script hash mismatch", "lane": "terminal", "col": 1, "tag": "rejected" },
+    { "id": "hermetic_fail", "type": "failure", "label": "Hermetic Rejected", "sublabel": "Trace drift / unit fail", "lane": "terminal", "col": 2, "tag": "rejected" },
+    { "id": "e2e_fail", "type": "failure", "label": "Visual Regression", "sublabel": "Contrast or wrap error", "lane": "terminal", "col": 3, "tag": "rejected" },
+    { "id": "quarantine", "type": "failure", "label": "Release Blocked", "sublabel": "Edge push aborted", "lane": "terminal", "col": 4, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "from": "staged", "to": "csp_gate" },
+    { "from": "csp_gate", "to": "hermetic_gate" },
+    { "from": "csp_gate", "to": "csp_fail", "variant": "security", "label": "hash mismatch" },
+    { "from": "hermetic_gate", "to": "e2e_gate" },
+    { "from": "hermetic_gate", "to": "hermetic_fail", "variant": "security", "label": "schema drift / red" },
+    { "from": "e2e_gate", "to": "live_prod", "variant": "emphasis", "label": "all green" },
+    { "from": "e2e_gate", "to": "e2e_fail", "variant": "security", "label": "contrast fail" },
+    { "from": "e2e_fail", "to": "quarantine", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Strict Cryptographic Guardrails",
+      "items": [
+        "Vercel CSP forbids 'unsafe-inline' scripts completely",
+        "Every inline script block in docs/index.html is cryptographically pinned by SHA-256 digest in vercel.json",
+        "Modifications must run 'node scripts/refresh-csp-hash.mjs --write' or builds abort immediately"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Hermetic Quality Assurance",
+      "items": [
+        "278 unit assertions verify AST serializers, envelope v1.1 schemas, and codecs without network dependencies",
+        "Non-vacuity checks (V11) prevent empty traces from silently passing on recursive solution algorithms",
+        "QuickJS WASM sandbox executes in isolated memory to guarantee zero pollution of host global prototypes"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Browser Invariant Audits",
+      "items": [
+        "Playwright scans relative luminance recursively over transparent ancestor elements to guarantee true WCAG AA >= 4.5:1",
+        "Mobile header invariants assert height is exactly 56px and action controls are 40px down to 360px viewport",
+        "Apple-motion cursor physics verified for hybrid pointer gating, preventing orphaned cursor dots on touch devices"
+      ]
+    }
+  ]
+}

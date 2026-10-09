@@ -218,6 +218,20 @@
     #paletteBtn kbd.k {
       font-size: 0.62rem; padding: 0.05rem 0.3rem; line-height: 1.15;
     }
+    .arch-tab {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      padding: 0.4rem 0.75rem; border-radius: 0.5rem;
+      font-size: 0.8125rem; font-weight: 500; font-family: var(--font-mono);
+      color: var(--fg-muted); background: transparent; border: 1px solid transparent;
+      cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+    }
+    .arch-tab:hover {
+      color: var(--fg); background: var(--canvas-sub);
+    }
+    .arch-tab[aria-selected="true"] {
+      color: var(--accent); background: var(--accent-soft); border-color: var(--accent-rim);
+      font-weight: 600;
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
     }
@@ -438,6 +452,11 @@
   z-index: 44;
   overflow: visible !important;
 }
+html[data-theme="light"] .ltc-panel[data-mode="floating"] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 16px 36px -4px rgba(16, 24, 40, 0.15), 0 32px 64px -12px rgba(16, 24, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
 .ltc-panel[data-mode="floating"] .ltc-head {
   border-top-left-radius: 13px;
   border-top-right-radius: 13px;
@@ -451,18 +470,32 @@
   backdrop-filter: blur(24px) saturate(190%);
   -webkit-backdrop-filter: blur(24px) saturate(190%);
 }
+html[data-theme="light"] .ltc-panel[data-mode="floating"].is-dragging {
+  background: rgba(255, 255, 255, 0.88) !important;
+}
 .ltc-panel[data-mode="floating"] .ltc-form {
   background: linear-gradient(180deg, rgba(8, 9, 13, 0.4), rgba(8, 9, 13, 0.8) 40%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-form {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), var(--canvas) 40%) !important;
+  border-top: 1px solid var(--border-soft);
 }
 .ltc-panel[data-mode="floating"] .ltc-composer {
   background: rgba(15, 19, 28, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-composer {
+  background: var(--canvas-sub) !important;
+  border-color: var(--border-soft) !important;
+}
 .ltc-panel[data-mode="floating"] .ltc-log-wrap::after {
   background: linear-gradient(to top, rgba(13, 16, 23, 0.9), transparent);
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-log-wrap::after {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent) !important;
 }
 .ltc-panel[data-mode="floating"]:not(.is-open) {
   display: none !important;
@@ -978,7 +1011,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     .ltc-msg-body td:first-child, .ltc-msg-body th:first-child { color: var(--muted); }
     .ltc-msg-body tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
     .ltc-msg-body tbody tr:last-child td { border-bottom: none; }
-    .ltc-msg-body strong { color: #fff; }
+    .ltc-msg-body strong { color: var(--fg); }
     /* Mermaid in the chat reuses the article's .mermaid look, but the rail is
        far narrower than the article column, so the size caps are overridden. */
     .ltc-msg-body .mermaid {
@@ -1060,22 +1093,22 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     /* Codebox container with structured header strip */
     .chat-code {
       margin: 0.6rem 0;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border-soft);
       border-radius: 0.7rem;
       overflow: hidden;
-      background: #0A0D13;
+      background: var(--canvas-ins);
     }
     .chat-code-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.35rem 0.75rem;
-      background: rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+      border-bottom: 1px solid var(--border-soft);
       font-family: var(--font-mono);
       min-height: 30px;
     }
     .chat-code-lang {
       font-size: 11px;
-      color: var(--muted);
+      color: var(--fg-muted);
       text-transform: lowercase;
       letter-spacing: 0.02em;
     }
@@ -1091,12 +1124,16 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     }
     .chat-code-copy {
       display: inline-flex; align-items: center; justify-content: center;
-      border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.06);
-      color: #AEB8CC; border-radius: 0.35rem; padding: 0.15rem 0.45rem;
+      border: 1px solid var(--border-soft); background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+      color: var(--fg-muted); border-radius: 0.35rem; padding: 0.15rem 0.45rem;
       font-family: var(--font-mono); font-size: 10.5px; min-height: 22px;
-      cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
+      cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
-    .chat-code-copy:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+    .chat-code-copy:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent-rim);
+    }
     .ltc-msg-error {
       font-size: 12px; line-height: 1.55; color: #FB7185;
       border: 1px solid rgba(251, 113, 133, 0.3); background: rgba(251, 113, 133, 0.07);
@@ -1459,7 +1496,26 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           <div id="crumbRow" class="hidden mb-3 items-center gap-2 text-xs font-mono text-slate-500"></div>
           <div id="articleHead" class="mb-6"></div>
           <div id="articleContent" class="prose max-w-none"></div>
-          <footer class="mt-10 pb-6 text-xs text-slate-600 font-mono">Top Interview 150 · Visual JS Manual · built from executable guides</footer>
+          <footer class="mt-12 pt-8 pb-10 border-t border-[var(--border-soft)] text-xs text-slate-500 font-mono">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <span class="font-bold text-slate-300">Top Interview 150</span> · Visual JS Manual
+              </div>
+              <div class="flex flex-wrap items-center gap-3 text-slate-400">
+                <a id="footerArchSuiteLink" href="ARCHITECTURE_AND_DECISIONS.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-soft)] bg-white/[0.03] hover:bg-white/[0.07] hover:text-[var(--accent)] text-slate-300 transition-colors">
+                  <span style="color:var(--accent);">🏛️</span>
+                  <span>Architecture Suite</span>
+                </a>
+                <button id="footerArchSpecBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
+                  <span>15 ADRs Spec</span>
+                </button>
+                <button id="footerEdgeMatrixBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
+                  <span>24-Ch Matrix</span>
+                </button>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-600">Built from executable guides · QuickJS WASM sandbox · Zero-dependency vanilla DOM</div>
+          </footer>
         </article>
       </div>
     </main>
@@ -1580,6 +1636,8 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     </div>
   </div>
 
+
+
   <script src="curriculum-data.js"></script>
 
   <script>
@@ -1594,6 +1652,22 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       allOrder.push(item.id);
       if (cat.category !== 'FOUNDATIONS') flatOrder.push(item.id);
     }));
+
+    // Register Architecture & Verification Suite documents for deep routing & reader view
+    if (window.ARCHITECTURE_DATA) {
+      if (window.ARCHITECTURE_DATA.spec) {
+        byId.set(window.ARCHITECTURE_DATA.spec.id, {
+          item: window.ARCHITECTURE_DATA.spec,
+          category: 'SYSTEM ARCHITECTURE & DECISIONS'
+        });
+      }
+      if (window.ARCHITECTURE_DATA.matrix) {
+        byId.set(window.ARCHITECTURE_DATA.matrix.id, {
+          item: window.ARCHITECTURE_DATA.matrix,
+          category: 'VERIFICATION & EDGE CASES'
+        });
+      }
+    }
 
     /* ---------- the 56px rail ---------- */
     /* One glyph per category, drawn to be told apart at 19px: a grid reads as a
@@ -2021,7 +2095,12 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       articleHead.innerHTML =
         '<div class="flex flex-wrap items-center gap-2 mb-3">' + badge(item.difficulty) +
         verifyLabel(entry) +
-        '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span></div>' +
+        '<span class="text-xs text-slate-500 font-mono">' + esc(item.pattern || '') + '</span>' +
+        '<button id="headArchBtn" title="Explore System Architecture Spec & ADRs" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border border-[var(--border-soft)] bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 transition-colors">' +
+          '<span style="color:var(--accent);">🏛️</span><span>Architecture</span></button>' +
+        '<button id="headEdgeBtn" title="Jump to Algorithmic & UI Edge-Case Matrix" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border border-[var(--border-soft)] bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 transition-colors">' +
+          '<span style="color:var(--accent);">🧪</span><span>Edge Cases</span></button>' +
+        '</div>' +
         /* One row owns every per-guide control. renderPrevNext appends #prevNext
            into it, which is why the node is moved rather than re-created: it is
            already wired and its dataset has to survive the re-render. */
@@ -2040,6 +2119,8 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         renderHead(entry);
         renderNav();
       };
+      if ($('headArchBtn')) $('headArchBtn').onclick = () => openArchitecture('architecture-spec');
+      if ($('headEdgeBtn')) $('headEdgeBtn').onclick = () => openArticle('edge-cases-matrix');
       /* renderHead owns prev/next, not openArticle. articleHead.innerHTML above
          discards everything inside it, and the row below is inside it, so any
          re-render of the head detaches a prevNext node parked in that row. The
@@ -2475,8 +2556,15 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           guideCard('docs_fresher-roadmap_index', 'Roadmap · Fresher (JS)', 'JS + DSA + backend + deploy + AI', '5 phases: OOP, 150 patterns, Postgres/REST, Docker/AWS, LangChain JS.') +
           guideCard('docs_mid-level-roadmap_index', 'Roadmap · Mid-level', 'Scale, distribute, RAG, secure', '4 domains: system design, Redis/Kafka/K8s, RAG agents, AI security.') +
         '</div>' +
+        '<h2 id="sec-architecture">System Architecture &amp; Verification Suite</h2>' +
+        '<p>A complete architectural breakdown of the Top Interview 150 platform: 15 technical decisions (ADRs), 6 runtime tiers, hermetic QuickJS AST probing, and the 24-chapter algorithmic edge-case verification matrix.</p>' +
+        '<div class="grid sm:grid-cols-2 gap-2.5 my-4">' +
+          guideCard('architecture-spec', 'System Architecture & ADRs', '15 Technical Decisions & Governance', 'QuickJS WASM sandbox, Vanilla DOM purity, 240Hz Euler spring cursor, Edge AI streaming.') +
+          guideCard('edge-cases-matrix', 'Edge-Case Verification Matrix', '24-Chapter Exhaustive Test Coverage', 'Algorithmic edge cases, empty/single/duplicate/overflow inputs, AST execution traces.') +
+        '</div>' +
         '<div class="flex flex-wrap gap-3 my-5">' +
           '<button id="homeStart" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] transition-transform active:scale-95" style="background:var(--accent);color:var(--accent-ink);">Start studying →</button>' +
+          '<button id="homeArch" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border min-h-[44px] transition-colors" style="border-color:var(--accent-rim);color:var(--accent);background:var(--accent-soft);">Explore Architecture (Suite) 🏛️</button>' +
           '<button id="homeSearch" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px] transition-colors" style="border-color:rgba(148,163,184,.25);color:#8B94A7;">Jump to a problem (⌘K)</button>' +
         '</div>' +
         '<h2 id="sec-guide">What each guide gives you</h2>' +
@@ -2505,6 +2593,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       closeSidebar();
       updateProgressBar();
       $('homeStart').onclick = () => { if (flatOrder.length) openArticle(flatOrder[0]); };
+      if ($('homeArch')) $('homeArch').onclick = () => openArchitecture('ARCHITECTURE_AND_DECISIONS.html');
       $('homeSearch').onclick = () => openPalette();
       contentArea.querySelectorAll('[data-guide]').forEach(b => { b.onclick = () => openArticle(b.dataset.guide); });
     }
@@ -2744,6 +2833,55 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       }
     };
 
+    /* ---------- architecture direct navigation (no laggy modal popup) ---------- */
+    function openArchitecture(target) {
+      if (!target || target === 'ARCHITECTURE_AND_DECISIONS.html' || target === 'master') {
+        window.location.href = 'ARCHITECTURE_AND_DECISIONS.html';
+      } else if (target.startsWith('architecture/')) {
+        window.location.href = target;
+      } else if (target === 'architecture-spec' || target === 'edge-cases-matrix') {
+        openArticle(target);
+      } else {
+        window.location.href = 'ARCHITECTURE_AND_DECISIONS.html';
+      }
+    }
+
+    // Wire base-of-page architecture links
+    const footerArchSpecBtn = $('footerArchSpecBtn');
+    if (footerArchSpecBtn) {
+      footerArchSpecBtn.onclick = () => openArticle('architecture-spec');
+    }
+    const footerEdgeMatrixBtn = $('footerEdgeMatrixBtn');
+    if (footerEdgeMatrixBtn) {
+      footerEdgeMatrixBtn.onclick = () => openArticle('edge-cases-matrix');
+    }
+
+    /* Pre-indexed Architecture Decisions & Visualizer Search Pool for Cmd+K */
+    const ARCH_SEARCH_POOL = [
+      { id: 'arch:master', title: 'Interactive Master Architecture Report & Physics Engine', category: 'SYSTEM ARCHITECTURE', difficulty: 'Architecture', type: 'arch-tab', src: 'ARCHITECTURE_AND_DECISIONS.html', terms: 'architecture master overview system design adr physics canvas' },
+      { id: 'arch:topology', title: 'System Architecture & Infrastructure Topology', category: 'SYSTEM ARCHITECTURE', difficulty: 'Architecture', type: 'arch-tab', src: 'architecture/molly-system-architecture.html', terms: 'archify system topology quickjs v8 vercel edge cloudflare' },
+      { id: 'arch:chat', title: 'Edge AI Streaming & SSE Keepalive Sequence', category: 'SYSTEM ARCHITECTURE', difficulty: 'Architecture', type: 'arch-tab', src: 'architecture/molly-chat-streaming.html', terms: 'archify chat streaming sse keepalive token delimiter fencing' },
+      { id: 'arch:dryrun', title: 'Hermetic QuickJS AST Probing & Trace Pipeline', category: 'SYSTEM ARCHITECTURE', difficulty: 'Architecture', type: 'arch-tab', src: 'architecture/molly-dryrun-pipeline.html', terms: 'archify dryrun pipeline wasm quickjs acorn ast envelope v1.1' },
+      { id: 'arch:verify', title: 'Zero-Regression Verification Lifecycle & Gates', category: 'SYSTEM ARCHITECTURE', difficulty: 'Architecture', type: 'arch-tab', src: 'architecture/molly-verification-lifecycle.html', terms: 'archify verification gates playwright unit tests fail-closed' },
+      { id: 'architecture-spec', title: 'System Architecture & 15 Technical Decisions Spec (ADR-01 - ADR-15)', category: 'SYSTEM ARCHITECTURE & DECISIONS', difficulty: 'Spec', type: 'guide', terms: 'adr decisions 15 spec architecture quickjs wasm vanilla dom' },
+      { id: 'edge-cases-matrix', title: 'Algorithmic & UI Edge-Case Verification Matrix (24 Chapters)', category: 'VERIFICATION & EDGE CASES', difficulty: 'Matrix', type: 'guide', terms: 'edge cases matrix 24 chapters invariant test verification table' },
+      { id: 'adr:01', title: 'ADR-01: QuickJS-Emscripten WebAssembly Sandbox vs Node/V8 Isolate', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-01 adr1 quickjs wasm hermetic sandboxing dryrun ast' },
+      { id: 'adr:02', title: 'ADR-02: Zero-Dependency Vanilla DOM Architecture vs Component Frameworks', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-02 adr2 zero dependency vanilla dom react svelte preact' },
+      { id: 'adr:03', title: 'ADR-03: Two-Phase Dual-Theme Architecture (Pre-Paint Script + Theme Tokens)', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-03 adr3 dual theme dark light fouc wcag pre-paint' },
+      { id: 'adr:04', title: 'ADR-04: 240Hz Semi-Implicit Euler Physics Spring Vector Morphing Cursor', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-04 adr4 240hz euler physics spring cursor svg canvas' },
+      { id: 'adr:05', title: 'ADR-05: Serverless Edge AI Streaming Proxy with Delimiter-Fenced SSE', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-05 adr5 serverless edge ai streaming sse vercel proxy' },
+      { id: 'adr:06', title: 'ADR-06: Two-Channel Delimiter Fencing for Prompt Safety & Markdown Integrity', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-06 adr6 prompt safety delimiter fencing injection mitigation' },
+      { id: 'adr:07', title: 'ADR-07: In-Memory Envelope v1.1 AST Probing over Subprocess Invocation', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-07 adr7 ast probing acorn envelope v1.1 trace execution' },
+      { id: 'adr:08', title: 'ADR-08: Five Hermetic Online Judge Polyglot Codecs for Data Interop', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-08 adr8 online judge codecs polyglot binary tree graph linked list' },
+      { id: 'adr:09', title: 'ADR-09: Synchronous SHA-256 Script Digest Content Security Policy (CSP)', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-09 adr9 csp sha-256 script digest vercel.json security' },
+      { id: 'adr:10', title: 'ADR-10: Ephemeral SESSION_EPOCH Token Invalidation Authorization', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-10 adr10 session epoch token auth security cookie' },
+      { id: 'adr:11', title: 'ADR-11: Two-Phase Progressive stableSplit() Markdown Guide Parser', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-11 adr11 stable split parser markdown regex build-site' },
+      { id: 'adr:12', title: 'ADR-12: Depth-Free AST Source-Slice Probing for Algorithm Traces', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-12 adr12 ast source slice depth-free probe acorn' },
+      { id: 'adr:13', title: 'ADR-13: CSS Native Math Fencing vs KaTeX Full Document Rewriting', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-13 adr13 css native math fencing katex performance' },
+      { id: 'adr:14', title: 'ADR-14: Client-Driven Sliding Window Rate Limiting for Chat Requests', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-14 adr14 sliding window rate limit client safety' },
+      { id: 'adr:15', title: 'ADR-15: Universal Cursor Suppression via Standalone SVG Vector Overlay', category: 'ARCHITECTURE DECISIONS', difficulty: 'ADR', type: 'guide-hash', targetId: 'architecture-spec', terms: 'adr-15 adr15 universal cursor suppression svg vector overlay' }
+    ];
+
     /* ---------- command palette ---------- */
     function fuzzyMatch(hay, needle) {
       hay = hay.toLowerCase();
@@ -2775,26 +2913,65 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     }
     function updatePalette(q) {
       const query = q.trim();
-      palResults = flatOrder
+
+      // 1. Architecture entries match
+      const archMatches = query ? ARCH_SEARCH_POOL.filter(item =>
+        fuzzyMatch(item.title + ' ' + item.category + ' ' + item.terms, query)
+      ).map(arch => ({
+        isArch: true,
+        archData: arch,
+        item: {
+          id: arch.id,
+          title: arch.title,
+          difficulty: arch.difficulty
+        },
+        category: arch.category
+      })) : [];
+
+      // 2. Standard curriculum guide matches
+      const guideMatches = flatOrder
         .map(id => byId.get(id))
-        .filter(e => !query || fuzzyMatch(e.item.title + ' ' + (e.item.pattern || '') + ' ' + e.category, query))
-        .slice(0, 12);
+        .filter(e => !query || fuzzyMatch(e.item.title + ' ' + (e.item.pattern || '') + ' ' + e.category, query));
+
+      palResults = [...archMatches, ...guideMatches].slice(0, 14);
       palIndex = 0;
-      paletteList.innerHTML = palResults.length ? '' : '<p class="text-sm text-slate-500 px-3 py-6 text-center">No matches. Try a pattern name like “sliding window”.</p>';
+      paletteList.innerHTML = palResults.length ? '' : '<p class="text-sm text-slate-500 px-3 py-6 text-center">No matches. Try a problem or ADR name like “ADR-04” or “sliding window”.</p>';
       palResults.forEach((e, i) => {
-        const done = doneSet.has(e.item.id);
+        const done = !e.isArch && doneSet.has(e.item.id);
         const div = document.createElement('div');
         div.className = 'pal-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer';
         div.setAttribute('role', 'option');
         div.id = 'pal-opt-' + e.item.id;
         div.dataset.optId = e.item.id;
         div.setAttribute('aria-selected', i === palIndex ? 'true' : 'false');
+        
+        let marker = done ? '✓' : '·';
+        let markerColor = done ? 'var(--accent)' : '#3A4358';
+        if (e.isArch) {
+          marker = '🏛️';
+          markerColor = 'var(--accent)';
+        }
+
         div.innerHTML =
-          '<span class="font-mono text-[11px] w-4 text-center shrink-0" style="color:' + (done ? 'var(--accent)' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
+          '<span class="font-mono text-[11px] w-4 text-center shrink-0" style="color:' + markerColor + '">' + marker + '</span>' +
           '<span class="flex-1 min-w-0"><span class="block text-sm text-slate-200 truncate">' + esc(e.item.title) + '</span>' +
           '<span class="block text-[11px] text-slate-500 font-mono truncate">' + esc(e.category) + '</span></span>' +
           badge(e.item.difficulty);
-        div.onclick = () => { closePalette(); openArticle(e.item.id); };
+
+        div.onclick = () => {
+          closePalette();
+          if (e.isArch) {
+            if (e.archData.type === 'arch-tab') {
+              openArchitecture(e.archData.src);
+            } else if (e.archData.type === 'guide') {
+              openArticle(e.archData.id);
+            } else if (e.archData.type === 'guide-hash') {
+              openArticle(e.archData.targetId);
+            }
+          } else {
+            openArticle(e.item.id);
+          }
+        };
         /* Hover paints only. Moving it onto palIndex would make Enter open whatever
            row the mouse last touched, not the row the arrow keys chose. */
         div.onmouseenter = () => {
@@ -2822,7 +2999,17 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       else if (e.key === 'ArrowUp') { e.preventDefault(); palIndex = Math.max(palIndex - 1, 0); paintPalSelection(); }
       else if (e.key === 'Home') { e.preventDefault(); palIndex = 0; paintPalSelection(); }
       else if (e.key === 'End') { e.preventDefault(); palIndex = Math.max(0, palResults.length - 1); paintPalSelection(); }
-      else if (e.key === 'Enter' && palResults[palIndex]) { closePalette(); openArticle(palResults[palIndex].item.id); }
+      else if (e.key === 'Enter' && palResults[palIndex]) {
+        closePalette();
+        const sel = palResults[palIndex];
+        if (sel.isArch) {
+          if (sel.archData.type === 'arch-tab') openArchitecture(sel.archData.src);
+          else if (sel.archData.type === 'guide') openArticle(sel.archData.id);
+          else if (sel.archData.type === 'guide-hash') openArticle(sel.archData.targetId);
+        } else {
+          openArticle(sel.item.id);
+        }
+      }
       else if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
@@ -3055,8 +3242,14 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     loadTableTrace();
     refreshAuth();
     const startId = location.hash ? location.hash.slice(1) : null;
-    if (startId && byId.has(startId)) openArticle(startId);
-    else openHome();
+    if (startId === 'architecture') {
+      openHome();
+      openArchitecture('ARCHITECTURE_AND_DECISIONS.html');
+    } else if (startId && byId.has(startId)) {
+      openArticle(startId);
+    } else {
+      openHome();
+    }
     checkLoginError();
     updateProgressBar();
 
@@ -3066,7 +3259,11 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     window.addEventListener('hashchange', () => {
       const id = location.hash.slice(1);
       if (!id) { openHome(); return; }
-      if (byId.has(id) && id !== currentItemId) openArticle(id);
+      if (id === 'architecture') {
+        openArchitecture('ARCHITECTURE_AND_DECISIONS.html');
+      } else if (byId.has(id) && id !== currentItemId) {
+        openArticle(id);
+      }
     });
 
     /* ---------- Spotlight Tracking ([data-spot]) ---------- */
