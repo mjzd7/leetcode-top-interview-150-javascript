@@ -98,7 +98,10 @@
       line-height: 1.6;
     }
     .prose pre code { font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
-    .prose .table-scroll { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--line); border-radius: 0.75rem; }
+    .prose .table-scroll {
+      overflow-x: auto; overscroll-behavior-x: contain;
+      margin: 1.4rem 0; border: 1px solid var(--line); border-radius: 0.75rem;
+    }
     /* Codeboxes carry their own rhythm (same 1.4rem as tables/diagrams) so gaps
        never depend on the neighbour; the inner pre margin from the Prism theme
        is neutralised so it can't leak through the wrap. */
@@ -106,7 +109,23 @@
     .prose .code-wrap > pre { margin-top: 0; margin-bottom: 0; }
     .prose .table-scroll table { margin: 0; width: max-content; min-width: 100%; }
     .prose table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 1.4rem 0; font-size: 0.85rem; }
-    .prose th, .prose td { border: none; border-bottom: 1px solid var(--line); padding: 0.55rem 0.9rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+    .prose th, .prose td {
+      border: none; border-bottom: 1px solid var(--line);
+      padding: 0.55rem 0.9rem; text-align: left; white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .prose th:first-child, .prose td:first-child,
+    .ltc-table-scroll th:first-child, .ltc-table-scroll td:first-child { min-width: 48px; }
+    .prose th:not(:first-child), .prose td:not(:first-child),
+    .ltc-table-scroll th:not(:first-child), .ltc-table-scroll td:not(:first-child) { min-width: 90px; }
+    .prose .table-scroll tbody tr:nth-child(even) td,
+    .ltc-table-scroll tbody tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    html[data-theme="light"] .prose .table-scroll tbody tr:nth-child(even) td,
+    html[data-theme="light"] .ltc-table-scroll tbody tr:nth-child(even) td {
+      background: rgba(0, 0, 0, 0.025);
+    }
     .prose th { background: rgba(200, 250, 75, 0.06); font-weight: 600; color: var(--accent); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
     .prose h1 { font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 1rem; }
     .prose h2 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.8rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
@@ -166,6 +185,7 @@
     #palette { transition: opacity 0.15s ease; }
     #paletteCard { transition: transform 0.15s ease, opacity 0.15s ease; }
     .pal-item[aria-selected="true"] { background: rgba(200, 250, 75, 0.1); }
+    .nav-item[aria-selected="true"] { background: rgba(200, 250, 75, 0.1); }
     .copy-btn { opacity: 0; transition: opacity 0.15s ease, background-color 0.15s ease; }
     .code-wrap:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
     /* Touch views: no dedicated button (it overlaps code) — double-tap the box to copy instead. */
@@ -742,6 +762,17 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     .ltc-icon-btn:active {
       transform: translateY(0) scale(0.96);
     }
+    /* Proportional scaling scoped to desktop floating window mode */
+    .ltc-panel[data-mode="floating"] .ltc-icon-btn {
+      width: 32px; height: 32px; border-radius: 7px;
+    }
+    .ltc-panel[data-mode="floating"] .ltc-send,
+    .ltc-panel[data-mode="floating"] .ltc-stop {
+      width: 34px; height: 34px; border-radius: 9px;
+    }
+    .ltc-panel[data-mode="floating"] .ltc-chip {
+      min-height: 32px; padding: 0.35rem 0.75rem;
+    }
     .ltc-close { display: inline-flex !important; }
     .ltc-log-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
     /* The scroll-down chevron floats over the last message, so that message has
@@ -1026,14 +1057,32 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     .ltc-msg-body h1 { font-size: 1rem; }
     .ltc-msg-body h2 { font-size: 0.92rem; }
     .ltc-msg-body h3 { font-size: 0.86rem; color: var(--accent); }
-    /* The copy button is emitted by the marked renderer, not post-processed. */
-    .chat-code { position: relative; margin: 0.6rem 0; }
+    /* Codebox container with structured header strip */
+    .chat-code {
+      margin: 0.6rem 0;
+      border: 1px solid var(--line);
+      border-radius: 0.7rem;
+      overflow: hidden;
+      background: #0A0D13;
+    }
+    .chat-code-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.35rem 0.75rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--line);
+      font-family: var(--font-mono);
+      min-height: 30px;
+    }
+    .chat-code-lang {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
     .chat-code pre {
-      margin: 0; background: #0A0D13; border: 1px solid var(--line);
-      border-radius: 0.7rem; overflow-x: auto;
-      /* Top padding reserves a strip for the absolutely-positioned Copy button
-         so it never sits on top of the first line of code. */
-      padding: 1.85rem 0.85rem 0.75rem;
+      margin: 0; background: transparent; border: none;
+      border-radius: 0; overflow-x: auto;
+      padding: 0.75rem 0.85rem;
       font-size: 0.76rem; line-height: 1.55;
     }
     .chat-code code {
@@ -1041,12 +1090,13 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       white-space: pre;
     }
     .chat-code-copy {
-      position: absolute; top: 6px; right: 6px; z-index: 1;
+      display: inline-flex; align-items: center; justify-content: center;
       border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.06);
-      color: #AEB8CC; border-radius: 0.4rem; padding: 0.2rem 0.5rem;
-      font-family: var(--font-mono); font-size: 10px; min-height: 26px;
+      color: #AEB8CC; border-radius: 0.35rem; padding: 0.15rem 0.45rem;
+      font-family: var(--font-mono); font-size: 10.5px; min-height: 22px;
+      cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
     }
-    .chat-code-copy:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+    .chat-code-copy:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
     .ltc-msg-error {
       font-size: 12px; line-height: 1.55; color: #FB7185;
       border: 1px solid rgba(251, 113, 133, 0.3); background: rgba(251, 113, 133, 0.07);
@@ -1385,8 +1435,12 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
-        <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
-               class="mt-3 w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
+        <div class="relative mt-3">
+          <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
+                  role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="curriculumNav" aria-activedescendant=""
+                  class="w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg pl-3 pr-8 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
+          <kbd class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] font-mono text-slate-400 select-none shadow-sm" aria-hidden="true">/</kbd>
+        </div>
         <div class="flex gap-1.5 mt-2.5" id="difficultyFilters" role="group" aria-label="Difficulty filter">
           <button data-diff="ALL" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">All</button>
           <button data-diff="Easy" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Easy</button>
@@ -1394,11 +1448,11 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           <button data-diff="Hard" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Hard</button>
         </div>
       </div>
-      <nav id="curriculumNav" class="p-3 space-y-5 flex-1 overflow-y-auto" aria-label="Curriculum"></nav>
+      <nav aria-label="Curriculum" class="flex-1 min-h-0 flex flex-col"><div id="curriculumNav" class="p-3 space-y-5 flex-1 overflow-y-auto" role="listbox"></div></nav>
     </aside>
 
     <!-- Reader -->
-    <main id="contentContainer" class="flex-1 min-w-0 overflow-y-auto h-dvh -mt-14 pt-14 scroll-smooth">
+    <main id="contentContainer" tabindex="-1" class="flex-1 min-w-0 overflow-y-auto h-dvh -mt-14 pt-14 scroll-smooth outline-none focus:outline-none">
       <div class="flex items-start justify-center gap-8 px-4 md:px-10 py-6 md:py-10 max-w-6xl mx-auto w-full">
         <article class="flex-1 min-w-0 max-w-3xl">
           <div id="prevNext" hidden data-count="0"></div>
@@ -1470,7 +1524,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         <div class="ltc-handle ltc-handle-nw" data-handle="nw"></div>
       </div>
       <div class="ltc-log-wrap">
-        <div id="ltcLog" class="ltc-log" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="false" aria-label="Conversation"></div>
+        <div id="ltcLog" class="ltc-log outline-none focus:outline-none" tabindex="-1" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="false" aria-label="Conversation"></div>
         <button id="ltcScrollDown" class="ltc-scroll-down" type="button" aria-label="Scroll to the latest message" title="Scroll to latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
@@ -1514,6 +1568,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         <div class="flex items-center gap-2 px-4 border-b border-[rgba(148,163,184,0.13)]">
           <svg class="h-4 w-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
           <input id="paletteInput" type="text" placeholder="Type a problem, pattern, or topic…" autocomplete="off"
+                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="paletteList" aria-activedescendant=""
                  class="w-full bg-transparent py-4 text-[15px] placeholder-slate-500 focus:outline-none min-h-[52px]">
           <kbd class="k shrink-0">esc</kbd>
         </div>
@@ -1700,7 +1755,28 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       $('overallChip').innerHTML = '<span class="inline-block h-1.5 w-1.5 rounded-full" style="background:var(--accent)"></span>' + pct + '% complete';
     }
 
+    let navIndex = 0;
+    /* Sidebar highlight lives here: an index into the VISIBLE .nav-item rows,
+       painted as aria-selected so Enter and the screen reader agree on one row. */
+    function visibleNavItems() {
+      return [...nav.querySelectorAll('.nav-item')].filter(el => el.offsetParent !== null);
+    }
+    function paintNavSelection() {
+      const items = visibleNavItems();
+      items.forEach((el, i) => el.setAttribute('aria-selected', i === navIndex ? 'true' : 'false'));
+      const active = items[navIndex];
+      if (!active) { searchInput.setAttribute('aria-activedescendant', ''); return; }
+      searchInput.setAttribute('aria-activedescendant', active.dataset.guideId);
+      /* #curriculumNav is the scrollport; scrollIntoView would walk up to the
+         article scroller too, so move this one container by the delta instead. */
+      const navBox = nav.getBoundingClientRect();
+      const box = active.getBoundingClientRect();
+      if (box.top < navBox.top) nav.scrollTop -= navBox.top - box.top + 8;
+      else if (box.bottom > navBox.bottom) nav.scrollTop += box.bottom - navBox.bottom + 8;
+    }
     function renderNav() {
+      navIndex = 0;
+      searchInput.setAttribute('aria-activedescendant', '');
       nav.innerHTML = '';
       if (!DATA.length) {
         nav.innerHTML = '<p class="text-sm text-slate-500 px-2">No curriculum data found. Run <span class="font-mono">npm run build</span>.</p>';
@@ -1792,6 +1868,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
             : 'No guide has difficulty ' + esc(activeFilter) + '.')
           + '</p>';
       }
+      if (shown) paintNavSelection();
       renderProgress();
     }
 
@@ -2574,6 +2651,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     (function initNavCollapse() {
       const el = $('sidebar'), btn = $('ltNavCollapse');
       if (!el || !btn) return;
+      if (window.innerWidth >= 768) el.classList.remove('-translate-x-full');
       const KEY = 'lt150-nav-stage';
       let stage = 0;
       try { const v = parseInt(localStorage.getItem(KEY), 10); if (v >= 0 && v <= 2) stage = v; } catch (e) {}
@@ -2644,6 +2722,27 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       btn.onclick = () => { activeFilter = btn.dataset.diff; paintFilterPills(); renderNav(); };
     });
     searchInput.oninput = (e) => { searchQuery = e.target.value; renderNav(); };
+    searchInput.onkeydown = (e) => {
+      const items = visibleNavItems();
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (!items.length) return; navIndex = Math.min(navIndex + 1, items.length - 1); paintNavSelection(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (!items.length) return; navIndex = Math.max(navIndex - 1, 0); paintNavSelection(); }
+      else if (e.key === 'Home') { e.preventDefault(); if (!items.length) return; navIndex = 0; paintNavSelection(); }
+      else if (e.key === 'End') { e.preventDefault(); if (!items.length) return; navIndex = items.length - 1; paintNavSelection(); }
+      else if (e.key === 'Enter' && items[navIndex]) { e.preventDefault(); openArticle(items[navIndex].dataset.guideId); }
+      else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (searchQuery) {
+          searchQuery = '';
+          searchInput.value = '';
+          renderNav();
+        } else {
+          searchInput.blur();
+          closeSidebar();
+          if (scroller) scroller.focus();
+        }
+      }
+    };
 
     /* ---------- command palette ---------- */
     function fuzzyMatch(hay, needle) {
@@ -2668,6 +2767,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       setTimeout(() => paletteInput.focus(), 30);
     }
     function closePalette() {
+      paletteInput.setAttribute('aria-activedescendant', '');
       palette.classList.add('opacity-0');
       paletteCard.classList.add('opacity-0', 'scale-[0.98]');
       setTimeout(() => palette.classList.add('hidden'), 150);
@@ -2686,6 +2786,8 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         const div = document.createElement('div');
         div.className = 'pal-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer';
         div.setAttribute('role', 'option');
+        div.id = 'pal-opt-' + e.item.id;
+        div.dataset.optId = e.item.id;
         div.setAttribute('aria-selected', i === palIndex ? 'true' : 'false');
         div.innerHTML =
           '<span class="font-mono text-[11px] w-4 text-center shrink-0" style="color:' + (done ? 'var(--accent)' : '#3A4358') + '">' + (done ? '✓' : '·') + '</span>' +
@@ -2693,12 +2795,24 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           '<span class="block text-[11px] text-slate-500 font-mono truncate">' + esc(e.category) + '</span></span>' +
           badge(e.item.difficulty);
         div.onclick = () => { closePalette(); openArticle(e.item.id); };
-        div.onmousemove = () => { palIndex = i; paintPalSelection(); };
+        /* Hover paints only. Moving it onto palIndex would make Enter open whatever
+           row the mouse last touched, not the row the arrow keys chose. */
+        div.onmouseenter = () => {
+          paletteList.querySelectorAll('.pal-item').forEach(el => { el.style.background = ''; });
+          if (i !== palIndex) div.style.background = 'rgba(148,163,184,0.08)';
+        };
+        div.onmouseleave = () => { div.style.background = ''; };
         paletteList.appendChild(div);
       });
     }
     function paintPalSelection() {
-      paletteList.querySelectorAll('.pal-item').forEach((el, i) => el.setAttribute('aria-selected', i === palIndex ? 'true' : 'false'));
+      paletteList.querySelectorAll('.pal-item').forEach((el, i) => {
+        el.setAttribute('aria-selected', i === palIndex ? 'true' : 'false');
+        if (i === palIndex) paletteInput.setAttribute('aria-activedescendant', el.dataset.optId || '');
+      });
+      /* The list is a scrollport; without this the arrow walks off-screen. */
+      const active = paletteList.querySelector('.pal-item[aria-selected="true"]');
+      if (active) active.scrollIntoView({ block: 'nearest' });
     }
     $('paletteBtn').onclick = openPalette;
     $('guidesBtn').onclick = () => openArticle('24-maang-guides_01-maang-sde-roadmap');
@@ -2706,13 +2820,113 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     paletteInput.onkeydown = (e) => {
       if (e.key === 'ArrowDown') { e.preventDefault(); palIndex = Math.min(palIndex + 1, palResults.length - 1); paintPalSelection(); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); palIndex = Math.max(palIndex - 1, 0); paintPalSelection(); }
+      else if (e.key === 'Home') { e.preventDefault(); palIndex = 0; paintPalSelection(); }
+      else if (e.key === 'End') { e.preventDefault(); palIndex = Math.max(0, palResults.length - 1); paintPalSelection(); }
       else if (e.key === 'Enter' && palResults[palIndex]) { closePalette(); openArticle(palResults[palIndex].item.id); }
-      else if (e.key === 'Escape') closePalette();
+      else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closePalette();
+        if (scroller) scroller.focus();
+      }
     };
     palette.addEventListener('click', (e) => { if (e.target === palette.firstElementChild || e.target === palette) closePalette(); });
+
+    function isEditableTarget(target) {
+      if (!target) return false;
+      if (target.isContentEditable) return true;
+      const tag = (target.tagName || '').toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select';
+    }
+
     document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette.classList.contains('hidden') ? openPalette() : closePalette(); }
-      else if (e.key === 'Escape') { if (!palette.classList.contains('hidden')) closePalette(); else closeSidebar(); }
+      // 1. Palette shortcut (Cmd+K / Ctrl+K)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        palette.classList.contains('hidden') ? openPalette() : closePalette();
+        return;
+      }
+
+      // 2. Chat shortcut (Cmd+Shift+L / Ctrl+Shift+L or Alt+C)
+      if (((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'l') ||
+          (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'c')) {
+        e.preventDefault();
+        if (window.LtChat) window.LtChat.open();
+        const ci = $('ltcInput');
+        if (ci) { ci.focus(); ci.select(); }
+        return;
+      }
+
+      // 3. Escape key handling across the entire page
+      if (e.key === 'Escape') {
+        const isPalOpen = !palette.classList.contains('hidden');
+        if (isPalOpen) closePalette();
+        closeSidebar();
+        if (window.LtChat) {
+          const mode = document.getElementById('ltcPanel')?.getAttribute('data-mode');
+          if (mode === 'fullscreen' || mode === 'floating' || mode === 'pinned-right' || window.innerWidth < 1280) {
+            window.LtChat.close();
+          }
+        }
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) {
+          document.activeElement.blur();
+        }
+        if (scroller) scroller.focus();
+        return;
+      }
+
+      // Guard for single-key shortcuts when typing in inputs
+      const isEditable = isEditableTarget(document.activeElement);
+      if (isEditable || e.metaKey || e.ctrlKey || e.altKey) return;
+
+      // 4. Sidebar Search shortcut ('/')
+      if (e.key === '/') {
+        e.preventDefault();
+        if (window.innerWidth < 768) openSidebar();
+        if (sidebar.dataset.stage === '2') setNavStage(0, true);
+        searchInput.focus();
+        searchInput.select();
+        return;
+      }
+
+      // 5. Chat shortcut ('c')
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        if (window.LtChat) window.LtChat.open();
+        const ci = $('ltcInput');
+        if (ci) { ci.focus(); ci.select(); }
+        return;
+      }
+
+      // 6. Previous guide ('[' or 'p')
+      if (e.key === '[' || e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        const idx = allOrder.indexOf(currentItemId);
+        if (idx > 0) openArticle(allOrder[idx - 1]);
+        return;
+      }
+
+      // 7. Next guide (']' or 'n')
+      if (e.key === ']' || e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        const idx = allOrder.indexOf(currentItemId);
+        if (idx >= 0 && idx < allOrder.length - 1) {
+          openArticle(allOrder[idx + 1]);
+        } else if (currentItemId === null && allOrder.length > 0) {
+          openArticle(allOrder[0]);
+        }
+        return;
+      }
+
+      // 8. Mark complete toggle ('m' or 'x')
+      if (e.key === 'm' || e.key === 'M' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        if (currentItemId && byId.has(currentItemId)) {
+          const btn = $('doneToggle');
+          if (btn) btn.click();
+        }
+        return;
+      }
     });
 
     /* ---------- reading progress & mobile auto-hiding header ---------- */

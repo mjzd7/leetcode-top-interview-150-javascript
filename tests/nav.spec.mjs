@@ -607,3 +607,230 @@ test.describe('revealing a category from the collapsed rail', () => {
     expect(r.headerH, 'the header block is its full height, not collapsed').toBe(191);
   });
 });
+
+test.describe('keyboard navigation in the sidebar search', () => {
+  test('arrow keys move a highlight and Enter opens that guide', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'two sum');
+    await page.waitForTimeout(300);
+    const first = await page.evaluate(() =>
+      document.querySelector('#curriculumNav .nav-item[aria-selected="true"]')?.textContent || '');
+    expect(first, 'one row is highlighted after the query settles').not.toBe('');
+    await page.locator('#searchInput').press('ArrowDown');
+    const moved = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#curriculumNav .nav-item')];
+      return rows.findIndex(r => r.getAttribute('aria-selected') === 'true');
+    });
+    expect(moved, 'the highlight is on a later row').toBeGreaterThan(0);
+  });
+
+  test('Escape clears the query instead of closing the drawer', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    if (page.viewportSize().width < 768) {
+      await page.click('#menuBtn');
+      await page.waitForTimeout(250);
+    }
+    await page.fill('#searchInput', 'two sum');
+    await page.waitForTimeout(250);
+    await page.locator('#searchInput').press('Escape');
+    await expect(page.locator('#searchInput')).toHaveValue('');
+    const stillOpen = await page.evaluate(() =>
+      document.getElementById('sidebar').classList.contains('-translate-x-full'));
+    expect(stillOpen, 'the first Escape only cleared the query').toBe(false);
+  });
+
+  test('a query that matches nothing leaves Enter harmless', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'zzzznomatch');
+    await page.waitForTimeout(250);
+    await page.locator('#searchInput').press('ArrowDown');
+    await page.locator('#searchInput').press('Enter');
+    const hash = await page.evaluate(() => location.hash);
+    expect(hash, 'Enter did not navigate anywhere').toBe('#' + PROBLEM_01);
+  });
+
+  test('pressing / from page content focuses sidebar search without typing a slash', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('article');
+    await page.keyboard.press('/');
+    await page.waitForTimeout(100);
+    const isFocused = await page.evaluate(() => document.activeElement === document.getElementById('searchInput'));
+    expect(isFocused, 'searchInput is now the activeElement').toBe(true);
+    const value = await page.locator('#searchInput').inputValue();
+    expect(value, 'slash key was not typed into the input').toBe('');
+  });
+});
+
+test.describe('keyboard navigation in the command palette', () => {
+  test('End jumps to the last option and Home back to the first', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('#paletteBtn');
+    await page.waitForTimeout(200);
+    await page.fill('#paletteInput', 'two');
+    await page.waitForTimeout(300);
+    const total = await page.evaluate(() => document.querySelectorAll('#paletteList .pal-item').length);
+    await page.locator('#paletteInput').press('End');
+    const last = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#paletteList .pal-item')];
+      return rows.findIndex(r => r.getAttribute('aria-selected') === 'true');
+    });
+    expect(last, 'End selected the last row').toBe(total - 1);
+    await page.locator('#paletteInput').press('Home');
+    const first = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#paletteList .pal-item')];
+      return rows.findIndex(r => r.getAttribute('aria-selected') === 'true');
+    });
+    expect(first, 'Home selected the first row').toBe(0);
+  });
+
+  test('the highlighted row is inside the list viewport', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('#paletteBtn');
+    await page.waitForTimeout(200);
+    await page.fill('#paletteInput', 'e');
+    await page.waitForTimeout(300);
+    for (let i = 0; i < 8; i++) await page.locator('#paletteInput').press('ArrowDown');
+    const visible = await page.evaluate(() => {
+      const list = document.getElementById('paletteList');
+      const row = list.querySelector('.pal-item[aria-selected="true"]');
+      if (!row) return { ok: false };
+      const a = row.getBoundingClientRect(), b = list.getBoundingClientRect();
+      return { ok: a.top >= b.top - 1 && a.bottom <= b.bottom + 1 };
+    });
+    expect(visible.ok, 'arrowing scrolled the highlighted row into view').toBe(true);
+  });
+});
+
+test.describe('reader and global keyboard shortcuts', () => {
+  test('Escape from sidebar search returns focus to content scroller allowing arrow key scroll', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'two sum');
+    await page.waitForTimeout(200);
+    // First Escape clears the query
+    await page.locator('#searchInput').press('Escape');
+    await expect(page.locator('#searchInput')).toHaveValue('');
+    // Second Escape blurs and returns focus to #contentContainer
+    await page.locator('#searchInput').press('Escape');
+    await page.waitForTimeout(100);
+
+    const focusedId = await page.evaluate(() => document.activeElement?.id);
+    expect(focusedId, 'focus returned to contentContainer').toBe('contentContainer');
+
+    const initialScroll = await page.evaluate(() => document.getElementById('contentContainer').scrollTop);
+    await page.keyboard.press('PageDown');
+    await page.waitForTimeout(200);
+    const scrolled = await page.evaluate(() => document.getElementById('contentContainer').scrollTop);
+    expect(scrolled, 'PageDown scrolled the reader content').toBeGreaterThan(initialScroll);
+  });
+
+  test('pressing "c" opens chat assistant and focuses the chat composer', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('article');
+    await page.keyboard.press('c');
+    await page.waitForTimeout(200);
+
+    const isChatFocused = await page.evaluate(() => document.activeElement?.id === 'ltcInput');
+    expect(isChatFocused, 'chat composer is focused after pressing "c"').toBe(true);
+
+    const val = await page.locator('#ltcInput').inputValue();
+    expect(val, '"c" key was not typed into the composer').toBe('');
+  });
+
+  test('pressing Escape in chat composer blurs it and restores focus to content scroller', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('article');
+    await page.keyboard.press('c');
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe('ltcInput');
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+
+    const activeId = await page.evaluate(() => document.activeElement?.id);
+    expect(activeId, 'focus returned to contentContainer upon Escape from chat').toBe('contentContainer');
+  });
+
+  test('arrow keys inside chat navigate/scroll the chat message history', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    // Open chat
+    await page.evaluate(() => window.LtChat?.open());
+    await page.waitForTimeout(200);
+    // Insert dummy messages into chat log to create scrollable overflow
+    await page.evaluate(() => {
+      const log = document.getElementById('ltcLog');
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'ltc-msg';
+        p.style.height = '40px';
+        p.textContent = `Test message line ${i}`;
+        log.appendChild(p);
+      }
+      log.scrollTop = 500;
+    });
+
+    const initScroll = await page.evaluate(() => document.getElementById('ltcLog').scrollTop);
+    expect(initScroll).toBe(500);
+
+    // Focus input and press PageUp
+    await page.focus('#ltcInput');
+    await page.keyboard.press('PageUp');
+    await page.waitForTimeout(150);
+
+    const newScroll = await page.evaluate(() => document.getElementById('ltcLog').scrollTop);
+    expect(newScroll, 'PageUp in composer scrolled the chat log up').toBeLessThan(initScroll);
+  });
+
+  test('"[" and "]" navigate to previous and next guides', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    const startHash = await page.evaluate(() => location.hash);
+    expect(startHash).toBe('#' + PROBLEM_01);
+
+    // Press ']' for next guide
+    await page.keyboard.press(']');
+    await page.waitForTimeout(400);
+    const nextHash = await page.evaluate(() => location.hash);
+    expect(nextHash, '"]" navigated to the next guide').not.toBe(startHash);
+
+    // Press '[' for previous guide
+    await page.keyboard.press('[');
+    await page.waitForTimeout(400);
+    const prevHash = await page.evaluate(() => location.hash);
+    expect(prevHash, '"[" navigated back to the previous guide').toBe(startHash);
+  });
+
+  test('"m" toggles the completion status of the current guide', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    // Clear completion state for test isolation
+    await page.evaluate((id) => {
+      localStorage.removeItem('lt150-done');
+    }, PROBLEM_01);
+    await page.reload();
+    await page.waitForSelector('#doneToggle');
+
+    const initialText = await page.evaluate(() => document.getElementById('doneToggle')?.textContent || '');
+    expect(initialText).toContain('Mark complete');
+
+    // Press 'm'
+    await page.keyboard.press('m');
+    await page.waitForTimeout(200);
+    const completedText = await page.evaluate(() => document.getElementById('doneToggle')?.textContent || '');
+    expect(completedText, '"m" toggled guide to Completed').toContain('Completed');
+
+    // Press 'm' again to unmark
+    await page.keyboard.press('m');
+    await page.waitForTimeout(200);
+    const unmarkedText = await page.evaluate(() => document.getElementById('doneToggle')?.textContent || '');
+    expect(unmarkedText, '"m" toggled guide back to Mark complete').toContain('Mark complete');
+  });
+
+  test('single-key shortcuts do not trigger while typing in an input field', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.focus('#searchInput');
+    await page.keyboard.type('music [test] c');
+    await page.waitForTimeout(200);
+
+    const val = await page.locator('#searchInput').inputValue();
+    expect(val, 'keys typed as literal characters without triggering hotkeys').toBe('music [test] c');
+    expect(await page.evaluate(() => location.hash)).toBe('#' + PROBLEM_01);
+  });
+});

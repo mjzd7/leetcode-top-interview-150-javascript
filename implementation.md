@@ -245,6 +245,62 @@
 
 ---
 
+### 1.15 WAI-ARIA 1.2 Combobox Architecture & Container-Bounded Scroll Mathematics in Sidebar Search & Command Palette
+* **The Root Cause (Standard `scrollIntoView()` Ancestor Page Walk & ARIA Mismatch)**:
+  1. **Page Walk Jitter**: Calling standard `element.scrollIntoView({ block: 'nearest' })` on a highlighted `.nav-item` inside `#curriculumNav` forces the browser to traverse up the DOM tree and adjust the scroll offsets of **all** scrollable parent containers—including the main `<article>` scroller and `window`. This caused severe viewport jumping whenever users used ArrowUp / ArrowDown in the sidebar search input.
+  2. **Accessibility Desynchronization**: Without explicit WAI-ARIA 1.2 combobox attributes (`role="combobox"`, `role="listbox"`, `role="option"`, `aria-activedescendant`), screen readers could not announce the currently highlighted guide during arrow navigation, leaving visually impaired users unable to navigate search results without transferring focus out of the input field.
+* **The Architectural Solution**:
+  1. **Container-Bounded Delta Arithmetic for Sidebar Navigation**:
+     In `paintNavSelection()`, instead of invoking `scrollIntoView()`, we compute relative boundary deltas using `getBoundingClientRect()` strictly between the `#curriculumNav` scrollport and the target `.nav-item`:
+     ```javascript
+     const navBox = nav.getBoundingClientRect();
+     const box = active.getBoundingClientRect();
+     if (box.top < navBox.top) nav.scrollTop -= navBox.top - box.top + 8;
+     else if (box.bottom > navBox.bottom) nav.scrollTop += box.bottom - navBox.bottom + 8;
+     ```
+     This confines scroll repositioning entirely to `nav.scrollTop` without walking up ancestor containers, eliminating any vertical jitter in the document body or article reader.
+  2. **WAI-ARIA 1.2 Combobox Semantic Alignment**:
+     - `#searchInput` is configured as `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded="true"`, `aria-controls="curriculumNav"`, and dynamically updates `aria-activedescendant="<guideId>"`.
+     - `#curriculumNav` is configured as `role="listbox"` wrapped within a structural `<nav aria-label="Curriculum" class="flex-1 min-h-0 flex flex-col">`.
+     - `#paletteInput` and `#paletteList` mirror this pattern with `aria-controls="paletteList"` and `pal-opt-${id}` option identifiers.
+
+---
+
+### 1.16 Decoupling Pointer Hover State from Keyboard Navigation Index
+* **The Usability Defect**:
+  In earlier implementations of the ⌘K command palette, `div.onmousemove = () => { palIndex = i; paintPalSelection(); }` bound the active selection index directly to pointer motion. If a user carefully navigated down a list using `ArrowDown` / `ArrowUp` or jumped to the bottom with `End`, any slight accidental movement of the mouse over another item would immediately overwrite `palIndex`. Pressing `Enter` would subsequently open the accidentally hovered item rather than the intended keyboard selection.
+* **The Architectural Solution**:
+  We decoupled visual hover styling from the keyboard selection state machine:
+  ```javascript
+  div.onmouseenter = () => {
+    paletteList.querySelectorAll('.pal-item').forEach(el => { el.style.background = ''; });
+    if (i !== palIndex) div.style.background = 'rgba(148,163,184,0.08)';
+  };
+  div.onmouseleave = () => { div.style.background = ''; };
+  ```
+  `palIndex` is strictly controlled by keyboard events (`ArrowUp`, `ArrowDown`, `Home`, `End`) and deterministic click triggers, ensuring keyboard selections remain immutable against ambient pointer movement.
+
+---
+
+### 1.17 Two-Stage Escape Handling & Focus-Isolated Event Dispatching
+* **The UX Conflict**:
+  Pressing `Escape` when filtering the sidebar was previously caught by the global document listener, which immediately dismissed the entire sidebar drawer. This created a frustrating experience for users who merely intended to reset their search filter.
+* **The Architectural Solution**:
+  1. **Two-Stage Escape in `searchInput.onkeydown`**:
+     ```javascript
+     else if (e.key === 'Escape') {
+       e.preventDefault();
+       if (searchQuery) { searchQuery = ''; searchInput.value = ''; renderNav(); }
+       else closeSidebar();
+     }
+     ```
+     - **Stage 1**: If `searchQuery` is non-empty, `Escape` clears the query, resets the input value, and re-renders the navigation list without closing the drawer.
+     - **Stage 2**: If `searchQuery` is already empty, `Escape` closes the sidebar drawer.
+  2. **Global Listener Focus Guard**:
+     The document-level keydown listener now checks `document.activeElement !== searchInput` before handling `Escape`, preventing double-execution or premature sidebar closure.
+
+---
+
 ## 2. Comprehensive Inventory of Project Modifications
 
 ### 2.1 Design Tokens & Theming (`docs/assets/theme.css`)
@@ -394,13 +450,39 @@
   - Added test `pseudocode sections across guides display pseudocode.md as codebox title` asserting all codeblocks under `### Pseudocode` display `pseudocode.md` and JS blocks display `solution.js`.
   - Full suite passed: 18/18 theming tests, 18/18 cursor tests, 2/2 CSP tests.
 
+### 2.12 Phase 12: WAI-ARIA 1.2 Keyboard Navigation & Focus Isolation (`docs/index.html` & `tests/nav.spec.mjs`)
+* **Context & Objectives**:
+  - Implement full keyboard accessibility across the curriculum sidebar filter and the ⌘K command palette using WAI-ARIA 1.2 Combobox specifications.
+  - Support `ArrowUp`, `ArrowDown`, `Home`, `End`, `Enter`, and two-stage `Escape` navigation without disrupting Tab focusability or causing ancestor layout jitter.
+* **Implementation (`docs/index.html`)**:
+  - **Sidebar Combobox**: Wrapped `#curriculumNav` in `<nav aria-label="Curriculum" class="flex-1 min-h-0 flex flex-col">`, added `role="listbox"`, `role="combobox"`, `aria-autocomplete="list"`, `aria-activedescendant`, and container-bounded delta scrolling in `paintNavSelection()`.
+  - **Command Palette Combobox**: Integrated `pal-opt-${id}` IDs, updated `paintPalSelection()` with `scrollIntoView({ block: 'nearest' })` on `#paletteList`, added `Home`/`End` handlers, and decoupled hover background styling from `palIndex`.
+  - **Two-Stage Escape**: Search input keydown handler clears filter query first before closing drawer; global listener guards against active search input.
+* **CSP Re-synchronization (`vercel.json`)**:
+  - Re-computed inline script hash via `scripts/refresh-csp-hash.mjs` and updated `vercel.json`.
+* **Automated E2E Testing (`tests/nav.spec.mjs`)**:
+  - Added 5 comprehensive test suites covering sidebar arrow selection + Enter, two-stage Escape, zero-match Enter safety, palette Home/End traversal, and viewport scroll containment.
+
+---
+
+### 2.13 Phase 13: Table Scrollport Geometry & Chatbox Visual Surface Hardening
+* **Context & Objectives**:
+  - Resolve horizontal table scroll layout shifts and inconsistent border clipping when scrolling between columns.
+  - Eliminate the artificial 1.85rem empty padding void in assistant codeblocks by introducing a structured header bar with language badge and unified copy action.
+  - Standardize button dimensions across the chat widget (header icons, composer submit/stop, suggestion chips) for balanced visual rhythm and responsive scaling across mobile and floating desktop modes.
+* **Architecture & Invariants**:
+  - **Table Layout**: Enforce minimum column dimensions, continuous row striping (`tbody tr:nth-child(even)`), and contained overflow bounds (`overscroll-behavior-x: contain`) on both `.table-scroll` and `.ltc-table-scroll`.
+  - **Chat Codebox Structure**: Structured as `<div class="chat-code"><div class="chat-code-head"><span class="chat-code-lang">lang</span><button class="chat-code-copy" ...>Copy</button></div><pre><code>...</code></pre></div>`.
+  - **Composer & Header Scale**: Scaled header `.ltc-icon-btn` to 32×32px and composer `.ltc-send` to 34×34px with matching border radii, freeing up header space on 380px floating panels while maintaining touch accessibility.
+
 ---
 
 ## 3. Verification Matrix
 
 | Suite | Status | Assertions / Tests |
 |---|---|---|
-| `npx playwright test` (Full E2E) | **PASSED** | 116 passed, 18 skipped, 0 failures (100% green) |
+| `npx playwright test` (Full E2E) | **PASSED** | 121 passed, 18 skipped, 0 failures (100% green) |
+| `npx playwright test tests/nav.spec.mjs` | **PASSED** | 57 passed, 17 skipped (viewport variants), 0 failures |
 | `npx playwright test tests/theming.spec.mjs` | **PASSED** | 18 passed, 0 failures |
 | `npx playwright test tests/cursor.spec.mjs` | **PASSED** | 18 passed, 14 skipped (mobile), 0 failures |
 | `npm run verify` | **PASSED** | 398 passed, 1 skipped, 0 failures |
@@ -409,5 +491,6 @@
 | `node scripts/test-dryrun-render.mjs` | **PASSED** | 141 checks, 0 failures |
 | `npm run csp:hash` (Strict CSP) | **PASSED** | 2/2 SHA-256 blocks verified in `vercel.json` |
 | Live Server HTTP Status | **PASSED** | HTTP/1.1 200 OK on `http://localhost:3000` |
+
 
 
