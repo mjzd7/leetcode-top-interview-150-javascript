@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AI Assistant Streaming Protocol & Budget Lifeline",
+    "output": "docs/architecture/molly-chat-streaming.html",
+    "viewBox": [1080, 860],
+    "column_fit": "spread",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "Learner", "sublabel": "Browser Session" },
+    { "id": "widget", "type": "frontend", "label": "Chat Widget", "sublabel": "docs/chat-widget.js" },
+    { "id": "api", "type": "backend", "label": "API Route", "sublabel": "api/chat.mjs (Vercel)" },
+    { "id": "limiter", "type": "security", "label": "Rate Limiter", "sublabel": "Upstash Redis" },
+    { "id": "budget", "type": "backend", "label": "Budget Guard", "sublabel": "15s Reserve Ceiling" },
+    { "id": "llm", "type": "cloud", "label": "OpenAI / LLM", "sublabel": "GPT-4o Stream" },
+    { "id": "dom", "type": "frontend", "label": "Render Pipeline", "sublabel": "Mermaid & KaTeX" }
+  ],
+  "segments": [
+    { "from": 150, "to": 285, "label": "Handshake & Security Policy" },
+    { "from": 295, "to": 495, "label": "Streaming & Heartbeat Keepalive" },
+    { "from": 505, "to": 705, "label": "Stable Split Reveal & Settled Formatting" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "widget", "y": 165, "label": "Submit question (e.g. 3Sum pointers)", "variant": "default" },
+    { "id": "m2", "from": "widget", "to": "api", "y": 200, "label": "POST /api/chat (guide context + history)", "variant": "emphasis" },
+    { "id": "m3", "from": "api", "to": "limiter", "y": 235, "label": "Evaluate sliding-window rate limit", "variant": "security" },
+    { "id": "m4", "from": "limiter", "to": "api", "y": 270, "label": "Quota approved (or synthetic 429)", "variant": "return" },
+    { "id": "m5", "from": "api", "to": "budget", "y": 305, "label": "Allocate budget (52s wall guard)", "variant": "default" },
+    { "id": "m6", "from": "budget", "to": "api", "y": 340, "label": "15s tool reserve reserved", "variant": "return" },
+    { "id": "m7", "from": "api", "to": "llm", "y": 375, "label": "Chat completion (stream: true)", "variant": "emphasis" },
+    { "id": "m8", "from": "api", "to": "widget", "y": 410, "label": "SSE heartbeat (: ping every 10s)", "variant": "dashed" },
+    { "id": "m9", "from": "llm", "to": "api", "y": 445, "label": "Upstream chunks: data: {choices:[...]}", "variant": "emphasis" },
+    { "id": "m10", "from": "api", "to": "widget", "y": 480, "label": "Forward raw SSE byte-for-byte", "variant": "emphasis" },
+    { "id": "m11", "from": "widget", "to": "dom", "y": 515, "label": "stableSplit() at last blank line", "variant": "default" },
+    { "id": "m12", "from": "widget", "to": "dom", "y": 550, "label": "paintReveal() stable prefix markdown", "variant": "default" },
+    { "id": "m13", "from": "widget", "to": "dom", "y": 585, "label": "Update live tail via raw textContent", "variant": "default" },
+    { "id": "m14", "from": "llm", "to": "api", "y": 620, "label": "Stream termination data: [DONE]", "variant": "return" },
+    { "id": "m15", "from": "api", "to": "widget", "y": 655, "label": "Close SSE channel cleanly", "variant": "return" },
+    { "id": "m16", "from": "widget", "to": "dom", "y": 690, "label": "renderMermaid() & KaTeX on settled DOM", "variant": "emphasis" }
+  ],
+  "activations": [
+    { "participant": "widget", "from": 165, "to": 700, "type": "frontend" },
+    { "participant": "api", "from": 200, "to": 665, "type": "backend" },
+    { "participant": "limiter", "from": 235, "to": 275, "type": "security" },
+    { "participant": "budget", "from": 305, "to": 345, "type": "backend" },
+    { "participant": "llm", "from": 375, "to": 625, "type": "cloud" },
+    { "participant": "dom", "from": 515, "to": 700, "type": "frontend" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Layout Thrashing Elimination",
+      "items": [
+        "stableSplit() finds the last blank line outside code fences",
+        "paintReveal() parses Markdown ONLY when the stable boundary moves (once per paragraph)",
+        "The live tail is updated via single textContent writes, running at 60fps with zero layout reflows"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Wall-Clock Time Budgeting",
+      "items": [
+        "Vercel serverless platform limit is hard-capped at 60 seconds",
+        "Route enforces TOTAL_BUDGET_MS = 52s, leaving 8s headroom to emit clean tail error frames",
+        "15s tool reserve prevents starting external tools (e.g. web search) that would time out before prose answers"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Reverse Proxy Keepalive",
+      "items": [
+        "During long LLM 'thinking' phases, proxies (Cloudflare, Vercel) sever idle connections after 15s",
+        "A 10s setInterval timer emits SSE comments (: ping), keeping TCP sockets warm without altering payload",
+        "Client parser ignores SSE comments, maintaining pure byte-for-byte JSON streaming integrity"
+      ]
+    }
+  ]
+}

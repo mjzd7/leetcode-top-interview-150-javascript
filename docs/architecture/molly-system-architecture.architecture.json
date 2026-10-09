@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LeetCode 150 Mastery & Interactive Engine — System Architecture",
+    "subtitle": "Modular SPA, 240Hz Euler spring physics, Acorn AST tracer, QuickJS WASM sandbox, and streaming AI assistant",
+    "output": "docs/architecture/molly-system-architecture.html"
+  },
+  "components": [
+    {
+      "id": "browser_spa",
+      "type": "frontend",
+      "label": "Single Page App",
+      "sublabel": "Vanilla ES Modules · Responsive UI",
+      "pos": [40, 240],
+      "size": [140, 64]
+    },
+    {
+      "id": "theme_engine",
+      "type": "frontend",
+      "label": "Dual Theming Engine",
+      "sublabel": "Obsidian Dark & Monochrome Light",
+      "pos": [40, 100],
+      "size": [140, 64],
+      "tag": "WCAG AA >= 4.5:1"
+    },
+    {
+      "id": "spring_physics",
+      "type": "frontend",
+      "label": "240Hz Spring Cursor",
+      "sublabel": "Semi-Implicit Euler Integrator",
+      "pos": [40, 380],
+      "size": [140, 64],
+      "tag": "Sleep Threshold"
+    },
+    {
+      "id": "chat_widget",
+      "type": "frontend",
+      "label": "Streaming Chat Widget",
+      "sublabel": "Stable Split + Live Tail Reveal",
+      "pos": [260, 240],
+      "size": [150, 64],
+      "tag": "Zero Layout Thrash"
+    },
+    {
+      "id": "mermaid_katex",
+      "type": "frontend",
+      "label": "Mermaid & KaTeX Engine",
+      "sublabel": "Dynamic Client Theming Sync",
+      "pos": [260, 100],
+      "size": [150, 64]
+    },
+    {
+      "id": "dryrun_player",
+      "type": "frontend",
+      "label": "Dry-Run Visualizer",
+      "sublabel": "Step/Play/Scrub State Player",
+      "pos": [260, 380],
+      "size": [150, 64],
+      "tag": "docs/dryrun"
+    },
+    {
+      "id": "vercel_edge",
+      "type": "backend",
+      "label": "Vercel Edge /api/chat",
+      "sublabel": "60s Max Duration · SSE Proxy",
+      "pos": [510, 240],
+      "size": [160, 64],
+      "tag": "maxDuration: 60s"
+    },
+    {
+      "id": "rate_limiter",
+      "type": "security",
+      "label": "Upstash Rate Limiter",
+      "sublabel": "Sliding Window + In-Memory Floor",
+      "pos": [510, 100],
+      "size": [160, 64],
+      "tag": "Security Guard"
+    },
+    {
+      "id": "token_budget",
+      "type": "backend",
+      "label": "Token & Tool Budgeter",
+      "sublabel": "15s Tool Reserve · 52s Wall Guard",
+      "pos": [510, 380],
+      "size": [160, 64]
+    },
+    {
+      "id": "openai_llm",
+      "type": "cloud",
+      "label": "OpenAI GPT-4o / LLM",
+      "sublabel": "Byte-for-byte SSE Stream",
+      "pos": [770, 240],
+      "size": [160, 64],
+      "tag": "External AI"
+    },
+    {
+      "id": "github_auth",
+      "type": "external",
+      "label": "GitHub OAuth 2.0",
+      "sublabel": "Developer Identity Provider",
+      "pos": [770, 100],
+      "size": [160, 64]
+    },
+    {
+      "id": "corpus_blocks",
+      "type": "database",
+      "label": "159 Markdown Guides",
+      "sublabel": "450 LeetCode Solution Blocks",
+      "pos": [40, 530],
+      "size": [140, 64]
+    },
+    {
+      "id": "acorn_ast",
+      "type": "backend",
+      "label": "Acorn AST Instrumenter",
+      "sublabel": "Depth-Free Region Alignment",
+      "pos": [260, 530],
+      "size": [150, 64],
+      "tag": "Self-Recursion Safe"
+    },
+    {
+      "id": "quickjs_wasm",
+      "type": "backend",
+      "label": "QuickJS WASM Sandbox",
+      "sublabel": "Hermetic Emscripten Runner",
+      "pos": [510, 530],
+      "size": [160, 64],
+      "tag": "Zero-Leak Sandbox"
+    },
+    {
+      "id": "trace_catalog",
+      "type": "database",
+      "label": "Static Traces (.json)",
+      "sublabel": "Envelope v1.1 Validated Catalog",
+      "pos": [770, 530],
+      "size": [160, 64]
+    },
+    {
+      "id": "csp_gate",
+      "type": "security",
+      "label": "CSP SHA-256 Gate",
+      "sublabel": "Zero 'unsafe-inline' Integrity",
+      "pos": [1030, 100],
+      "size": [160, 64],
+      "tag": "Cryptographic CSP"
+    },
+    {
+      "id": "playwright_suite",
+      "type": "security",
+      "label": "Playwright Test Suite",
+      "sublabel": "WCAG Contrast & Layout Invariants",
+      "pos": [1030, 240],
+      "size": [160, 64],
+      "tag": "Zero Flake Matrix"
+    },
+    {
+      "id": "production_deploy",
+      "type": "cloud",
+      "label": "Vercel Production Edge",
+      "sublabel": "Static Assets + Edge Functions",
+      "pos": [1030, 380],
+      "size": [160, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Client Presentation & Interaction Layer",
+      "wraps": ["browser_spa", "theme_engine", "spring_physics", "chat_widget", "mermaid_katex", "dryrun_player"]
+    },
+    {
+      "kind": "region",
+      "label": "Secure Serverless API Gateway",
+      "wraps": ["vercel_edge", "rate_limiter", "token_budget"]
+    },
+    {
+      "kind": "region",
+      "label": "Deterministic Offline Tracing Pipeline",
+      "wraps": ["corpus_blocks", "acorn_ast", "quickjs_wasm", "trace_catalog"]
+    },
+    {
+      "kind": "region",
+      "label": "Quality Gates & Verification Pipeline",
+      "wraps": ["csp_gate", "playwright_suite", "production_deploy"]
+    }
+  ],
+  "connections": [
+    { "from": "browser_spa", "to": "theme_engine", "fromSide": "top", "toSide": "bottom" },
+    { "from": "browser_spa", "to": "spring_physics", "fromSide": "bottom", "toSide": "top" },
+    { "from": "browser_spa", "to": "chat_widget", "variant": "emphasis" },
+    { "from": "browser_spa", "to": "dryrun_player", "variant": "default" },
+    { "from": "theme_engine", "to": "mermaid_katex", "variant": "default" },
+    { "from": "chat_widget", "to": "vercel_edge", "label": "SSE Query", "labelDy": -18, "variant": "emphasis" },
+    { "from": "vercel_edge", "to": "rate_limiter", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "from": "vercel_edge", "to": "token_budget", "variant": "default", "fromSide": "bottom", "toSide": "top" },
+    { "from": "vercel_edge", "to": "openai_llm", "label": "Stream SSE", "labelDy": -18, "variant": "emphasis" },
+    { "from": "vercel_edge", "to": "github_auth", "variant": "security", "fromSide": "top", "toSide": "left" },
+    { "from": "corpus_blocks", "to": "acorn_ast", "label": "AST parse", "labelDy": -18, "variant": "emphasis" },
+    { "from": "acorn_ast", "to": "quickjs_wasm", "label": "probes", "labelDy": -18, "variant": "emphasis" },
+    { "from": "quickjs_wasm", "to": "trace_catalog", "label": "envelope", "labelDy": -18, "variant": "emphasis" },
+    { "from": "trace_catalog", "to": "dryrun_player", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "from": "vercel_edge", "to": "playwright_suite", "variant": "dashed" },
+    { "from": "playwright_suite", "to": "csp_gate", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "from": "playwright_suite", "to": "production_deploy", "fromSide": "bottom", "toSide": "top", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Interactive Client Architecture",
+      "items": [
+        "Single-page vanilla ES modules: zero bundle bloat and instant load times",
+        "240Hz Euler spring cursor physics: 6px diff-blended dot + 32px lens ring with sleep threshold",
+        "Dual theming system: Obsidian Dark + Monochrome Brutalist Light with guaranteed WCAG AA >= 4.5:1",
+        "Hybrid pointer gate: suppresses custom cursor on touch tap to prevent orphaned screen dots"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Robust Streaming AI Assistant",
+      "items": [
+        "Stable split markdown rendering: breaks at last blank line, eliminating streaming layout thrashing",
+        "Wall-clock budget protection: 52s total timeout guard under Vercel 60s hard ceiling",
+        "15s tool reserve: rejects tool calls when time is low to guarantee delivery of a complete prose answer",
+        "10s heartbeat comment: prevents reverse proxy and edge connection drops during silent inference"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AST Instrumentation & Sandbox Tracing",
+      "items": [
+        "Depth-free region alignment: prevents empty traces for 102 self-recursive solution blocks",
+        "Acorn AST traversal: probes attached by exact source slice, guaranteeing code/offset parity",
+        "QuickJS-Emscripten WASM: hermetic sandbox execution preventing prototype pollution and host memory leaks",
+        "Envelope v1.1 schema validation: strict JSON schema assertion guaranteeing flawless dry-run replay"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Fail-Closed Quality Gates",
+      "items": [
+        "Cryptographic CSP enforcement: exact SHA-256 script hashing without 'unsafe-inline' in vercel.json",
+        "Playwright E2E verification: automated WCAG 2.1 AA luminance scanning over transparent DOM ancestors",
+        "Mobile layout invariants: rigid 56px header height and 40px touch targets tested down to 360px viewport",
+        "Automated deployment safety: builds require passing all 278 unit assertions, golden traces, and E2E suites"
+      ]
+    }
+  ]
+}

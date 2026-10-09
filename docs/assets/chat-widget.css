@@ -1,0 +1,1087 @@
+/* ---------- AI chat widget (docs/chat-widget.js) ---------- */
+    /* Desktop: a flex sibling of <main>, always present. Mobile: a bottom sheet
+       revealed by the FAB. Both layouts live here so the widget markup stays
+       one element and the JS only has to know which mode it is in. */
+    .ltc-panel {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      height: var(--ltc-panel-h, 72dvh); display: flex; flex-direction: column; min-height: 0;
+      background: var(--surface); border-top: 1px solid var(--line);
+      box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
+      transform: translateY(101%);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+      visibility: hidden;
+    }
+    .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
+    .lt-rail { display: contents; }
+    #ltRailResizer { display: none; }
+    .nav-group-rule { display: none; }
+    /* Hidden at every width, not just from md up. These two defaults used to live
+       inside the min-width: 768px query, so below it .nav-cat-btn fell back to
+       inline-block: a 0x0 empty button, but an inline-level box still builds a
+       line box from the font strut, and that put 24px of dead space above each of
+       the 27 group headers. Sidebar groups were 44px apart on a phone and 20px on
+       a desktop — denser the other way round. */
+    .nav-cat-btn, .nav-group-rule { display: none; }
+    @media (min-width: 768px) {
+      #sidebar[data-stage="1"] { width: 200px; }
+      #sidebar[data-stage="2"] { width: 56px; }
+      #sidebar[data-stage="1"] .nav-badge,
+      #sidebar[data-stage="2"] .nav-badge { display: none; }
+      #sidebar[data-stage="2"] .nav-title,
+      #sidebar[data-stage="2"] .nav-group-label,
+      #sidebar[data-stage="2"] .nav-group-count { display: none; }
+      /* At 56px these collapse to unusable slivers, so they go too. */
+      #sidebar[data-stage="2"] #searchInput,
+      #sidebar[data-stage="2"] #difficultyFilters,
+      #sidebar[data-stage="2"] .mod-bar { display: none; }
+      /* 16px of padding plus the 12px flex gap pushed the 32px collapse button
+         to x=28..60 inside a 56px rail, so it hung 4px over the content edge. */
+      #sidebar[data-stage="2"] > div:first-child { padding-left: 0; padding-right: 0; gap: 0; }
+      /* And the row inside it, which the rule above cannot reach: with the ring
+         block gone the button is the row's only child, so it centres on the
+         icon column's line instead of starting at the rail's left edge. */
+      #sidebar[data-stage="2"] > div:first-child > div { justify-content: center; }
+      #ltNavCollapse { display: flex; }
+
+      /* ---- the 56px rail has two modes, toggled with the option key ----
+         A collapsed rail of 175 identical dots is a memory test: nothing says
+         what you are about to click. Category mode trades the list for the 28
+         destinations it contains; number mode trades it for the guide's own
+         number. Both are learnable, which a dot is not. */
+      #sidebar[data-stage="2"] .nav-group-text { display: none; }
+      #sidebar[data-stage="2"] .nav-cat-btn { display: flex; }
+      #sidebar[data-stage="2"] #curriculumNav { padding-left: 0; padding-right: 0; }
+
+      /* Category mode: one accent glyph per category, the guide list hidden. */
+      #sidebar[data-stage="2"][data-rail-mode="cat"] .nav-item { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="cat"] .nav-group { margin-bottom: 2px; }
+      .nav-cat-btn {
+        display: none; align-items: center; justify-content: center;
+        width: 40px; height: 40px; margin: 0 auto; border-radius: 11px;
+        color: var(--muted); cursor: pointer;
+        border: 1px solid transparent; background: transparent;
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      }
+      .nav-cat-btn svg { width: 19px; height: 19px; }
+      .nav-cat-btn:hover { color: var(--accent); background: rgba(200, 250, 75, 0.08); }
+      .nav-cat-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      /* The category the open guide belongs to, so the rail still says where
+         you are when the guide list itself is hidden. */
+      .nav-cat-btn[data-current="true"] {
+        color: var(--accent); background: rgba(200, 250, 75, 0.12);
+        border-color: rgba(200, 250, 75, 0.35);
+      }
+      .nav-cat-btn[data-done="true"]::after {
+        content: ''; position: absolute; margin: -20px 0 0 20px;
+        width: 5px; height: 5px; border-radius: 999px; background: var(--accent);
+      }
+
+      /* Number mode: the guide's own number stands in for the title. */
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-cat-btn { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-item {
+        justify-content: center; padding-left: 0; padding-right: 0; gap: 0;
+      }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-mark { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-group { margin-bottom: 2px; }
+      /* The category divider keeps number mode scannable without becoming one
+         of the 4px voids the old headers left behind. */
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-group-rule {
+        display: block; height: 1px; margin: 6px 10px;
+        background: rgba(148, 163, 184, 0.16);
+      }
+      .nav-group-rule { display: none; }
+      .nav-code { display: none; }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-code {
+        display: block; font-family: var(--font-mono);
+        font-size: 11px; line-height: 1; letter-spacing: -0.03em;
+        color: var(--fg-muted); font-variant-numeric: tabular-nums;
+      }
+      #sidebar[data-stage="2"][data-rail-mode="num"] .nav-item[data-done="true"] .nav-code { color: var(--accent); }
+
+      /* The old active state was rgba(200,250,75,.1) — invisible at 56px. The
+         rail's whole job is orientation, so it gets a filled accent chip plus a
+         left bar, and the row is marked for assistive tech. */
+      #sidebar[data-stage="2"] .nav-item[aria-current="page"] {
+        background: rgba(200, 250, 75, 0.16) !important;
+        color: var(--accent) !important;
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      #sidebar[data-stage="2"] .nav-item[data-done="true"] .nav-title { opacity: 0.75; }
+    }
+    .ltc-backdrop {
+      position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .ltc-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    /* The rail docks at 1280, not 1024. A docked sidebar (320px) plus a docked
+       rail (380px) leaves the reader 580px, and after the column's own px-10 that
+       is 500px of prose — at 1024 it was 244px, which wrapped every sentence to
+       one or two words a line and broke URLs mid-token. 1280 is the width where
+       the column can still afford the rail. All three docking queries move
+       together: the rail, .ltc-close and .ltc-fab. Moving only this one would
+       leave the assistant with no way in and no way out between 1024 and 1280. */
+    @media (min-width: 1280px) {
+      .ltc-backdrop { display: none; }
+      .lt-rail {
+        display: flex; flex-direction: column; min-height: 0;
+        position: sticky; top: 3.5rem; align-self: flex-start;
+        flex: 0 0 var(--lt-rail-w, 380px); width: var(--lt-rail-w, 380px);
+        height: calc(100dvh - 3.5rem);
+        border-left: 1px solid var(--line);
+      }
+      /* Sits entirely left of the rail: overlapping the panel put the chat log
+         on top of it, and z-index did not reliably win. */
+      #ltRailResizer {
+        display: block; position: absolute; left: -9px; top: 0; bottom: 0;
+        width: 9px; cursor: col-resize; touch-action: none; background: none;
+        user-select: none; -webkit-user-select: none;
+      }
+      #ltRailResizer::after {
+        content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+        background: transparent; transition: background 0.15s ease;
+      }
+      #ltRailResizer:hover::after,
+      #ltRailResizer:focus-visible::after,
+      #ltRailResizer.is-dragging::after { background: var(--accent); }
+      #ltRailResizer:focus-visible { outline: none; }
+      /* The assistant is the rail, so it takes the column outright rather than
+         sharing it with a list. flex:1 rather than a fixed height, and min-height
+         0 so the log scrolls inside it instead of the panel growing past the
+         viewport and pushing the composer off the bottom. */
+      .ltc-panel {
+        position: relative; top: auto; left: auto; right: auto; bottom: auto;
+        flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
+        transform: none; visibility: visible; box-shadow: none;
+        border-left: none;
+        background: var(--rail-bg);
+      }
+      /* Only once the reader has dragged: until then the panel keeps filling the
+         column, which is the better default than any number. margin-top: auto
+         keeps it welded to the rail's bottom edge, so the space a shorter panel
+         gives up goes above it rather than leaving a void below. */
+      .ltc-panel[data-resized] { flex: 0 0 var(--ltc-panel-h); margin-top: auto; }
+    }
+
+/* --- Overlay Container --- */
+.ltc-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 44;
+}
+
+/* --- Base Panel Defaults --- */
+.ltc-panel {
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* --- Mode 1: Docked (Desktop &ge;1280px) --- */
+@media (min-width: 1280px) {
+  .ltc-panel[data-mode="docked"] {
+    position: relative !important; top: auto !important; left: auto !important;
+    right: auto !important; bottom: auto !important; width: 100% !important;
+    height: auto; flex: 1 1 auto; border-radius: 0; border: none;
+    box-shadow: none;
+  }
+  .ltc-panel[data-mode="docked"][data-resized] {
+    flex: 0 0 var(--ltc-panel-h) !important;
+    height: var(--ltc-panel-h) !important;
+    margin-top: auto !important;
+  }
+  .lt-rail[data-collapsed="true"] {
+    display: none !important; width: 0 !important; flex: 0 0 0 !important;
+  }
+}
+@media (max-width: 1279px) {
+  .ltc-panel[data-mode="docked"] {
+    position: fixed !important; inset: auto 0 0 0 !important; display: none !important;
+  }
+}
+
+/* --- Mode 2: Floating Window --- */
+.ltc-panel[data-mode="floating"] {
+  position: fixed !important;
+  left: var(--ltc-x, 800px);
+  top: var(--ltc-y, 80px);
+  width: var(--ltc-w, 420px);
+  height: var(--ltc-h, 560px);
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 72px);
+  background: rgba(13, 16, 23, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 32px 64px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 44;
+  overflow: visible !important;
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 16px 36px -4px rgba(16, 24, 40, 0.15), 0 32px 64px -12px rgba(16, 24, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+.ltc-panel[data-mode="floating"] .ltc-head {
+  border-top-left-radius: 13px;
+  border-top-right-radius: 13px;
+}
+.ltc-panel[data-mode="floating"] .ltc-form {
+  border-bottom-left-radius: 13px;
+  border-bottom-right-radius: 13px;
+}
+.ltc-panel[data-mode="floating"].is-dragging {
+  background: rgba(13, 16, 23, 0.72);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"].is-dragging {
+  background: rgba(255, 255, 255, 0.88) !important;
+}
+.ltc-panel[data-mode="floating"] .ltc-form {
+  background: linear-gradient(180deg, rgba(8, 9, 13, 0.4), rgba(8, 9, 13, 0.8) 40%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-form {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), var(--canvas) 40%) !important;
+  border-top: 1px solid var(--border-soft);
+}
+.ltc-panel[data-mode="floating"] .ltc-composer {
+  background: rgba(15, 19, 28, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-composer {
+  background: var(--canvas-sub) !important;
+  border-color: var(--border-soft) !important;
+}
+.ltc-panel[data-mode="floating"] .ltc-log-wrap::after {
+  background: linear-gradient(to top, rgba(13, 16, 23, 0.9), transparent);
+}
+html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-log-wrap::after {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent) !important;
+}
+.ltc-panel[data-mode="floating"]:not(.is-open) {
+  display: none !important;
+}
+.ltc-panel[data-mode="floating"] .ltc-head {
+  cursor: grab; user-select: none; -webkit-user-select: none;
+}
+.ltc-panel[data-mode="floating"].is-dragging .ltc-head {
+  cursor: grabbing;
+}
+
+/* --- Mode 3: Pinned Right --- */
+.ltc-panel[data-mode="pinned-right"] {
+  position: fixed !important;
+  right: 12px !important; left: auto !important;
+  top: 64px !important;
+  bottom: 12px !important;
+  width: var(--ltc-w, 380px) !important;
+  height: calc(100dvh - 76px) !important;
+  max-width: calc(100vw - 24px);
+  background: var(--rail-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  z-index: 44;
+}
+.ltc-panel[data-mode="pinned-right"]:not(.is-open) {
+  display: none !important;
+}
+
+/* --- Mode 4: Snap Bottom (Mobile/Tablet Portrait) --- */
+.ltc-panel[data-mode="snap-bottom"] {
+  position: fixed !important;
+  left: 0 !important; right: 0 !important; bottom: 0 !important; top: auto !important;
+  width: 100% !important;
+  background: var(--rail-bg);
+  border-bottom: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+  z-index: 44;
+  height: var(--ltc-snap-h, 40dvh);
+  transform: translateY(101%);
+  visibility: hidden;
+  transition: transform var(--dur-move) var(--ease-out);
+}
+.ltc-panel[data-mode="snap-bottom"].is-open {
+  transform: translateY(0);
+  visibility: visible;
+}
+.ltc-panel[data-mode="snap-bottom"][data-snap-step="90dvh"] {
+  height: calc(90dvh - env(safe-area-inset-top, 0px));
+}
+
+/* --- Mode 5: Fullscreen --- */
+.ltc-panel[data-mode="fullscreen"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  z-index: 44 !important;
+  background: var(--rail-bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-head {
+  background: var(--rail-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-form {
+  background: var(--rail-bg);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-composer {
+  background: var(--canvas-ins, rgba(15, 19, 28, 0.75));
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.ltc-panel[data-mode="fullscreen"] .ltc-log-wrap::after {
+  background: linear-gradient(to top, var(--rail-bg), transparent);
+}
+.ltc-panel[data-mode="fullscreen"]:not(.is-open) {
+  display: none !important;
+}
+#ltcFullscreen { display: none !important; }
+.ltc-panel[data-mode="docked"] #ltcPin .ltc-icon-maximize { display: block !important; }
+.ltc-panel[data-mode="docked"] #ltcPin .ltc-icon-dock { display: none !important; }
+.ltc-panel:not([data-mode="docked"]) #ltcPin .ltc-icon-maximize { display: none !important; }
+.ltc-panel:not([data-mode="docked"]) #ltcPin .ltc-icon-dock { display: block !important; }
+
+/* Drag and Resize Global Cursor Locks & Feedback */
+body.is-chat-dragging,
+body.is-chat-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+body[data-resizing="n"] *, body[data-resizing="s"] * { cursor: ns-resize !important; user-select: none !important; }
+body[data-resizing="e"] *, body[data-resizing="w"] * { cursor: ew-resize !important; user-select: none !important; }
+body[data-resizing="ne"] *, body[data-resizing="sw"] * { cursor: nesw-resize !important; user-select: none !important; }
+body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !important; user-select: none !important; }
+
+.ltc-panel.is-dragging {
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 1.5px rgba(200, 250, 75, 0.45) !important;
+  opacity: 0.98;
+}
+
+.ltc-panel.is-resizing {
+  box-shadow: 0 0 0 2px rgba(200, 250, 75, 0.5), 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+  transition: none !important;
+}
+
+/* --- Mobile Landscape Short Height (h <= 500px) --- */
+@media (max-height: 500px) {
+  .ltc-panel[data-mode="snap-bottom"],
+  .ltc-panel[data-mode="pinned-right"] {
+    /* Hard rule: force right side-card on short viewports */
+    left: auto !important; right: 8px !important; bottom: 8px !important; top: 8px !important;
+    width: 360px !important; height: auto !important; border-radius: 12px !important;
+    transform: none !important;
+  }
+  .ltc-panel[data-mode="snap-bottom"]:not(.is-open),
+  .ltc-panel[data-mode="pinned-right"]:not(.is-open) {
+    display: none !important;
+  }
+}
+
+/* --- 8 Resize Handles --- */
+/* --- 8 Resize Handles --- */
+.ltc-resize-handles { position: absolute; inset: 0; pointer-events: none; }
+.ltc-handle { position: absolute; pointer-events: auto; z-index: 10; background: transparent; }
+.ltc-panel[data-mode="docked"] .ltc-handle,
+.ltc-panel[data-mode="pinned-right"] .ltc-handle,
+.ltc-panel[data-mode="snap-bottom"] .ltc-handle,
+.ltc-panel[data-mode="fullscreen"] .ltc-handle { display: none !important; }
+
+.ltc-panel[data-mode="floating"] .ltc-handle-n,
+.ltc-panel[data-mode="floating"] .ltc-handle-s,
+.ltc-panel[data-mode="floating"] .ltc-handle-e,
+.ltc-panel[data-mode="floating"] .ltc-handle-w,
+.ltc-panel[data-mode="floating"] .ltc-handle-ne,
+.ltc-panel[data-mode="floating"] .ltc-handle-nw,
+.ltc-panel[data-mode="floating"] .ltc-handle-se,
+.ltc-panel[data-mode="floating"] .ltc-handle-sw { display: block; }
+
+.ltc-handle-n  { top: -6px; left: 14px; right: 14px; cursor: ns-resize; height: 14px; }
+.ltc-handle-s  { bottom: -6px; left: 14px; right: 14px; cursor: ns-resize; height: 14px; }
+.ltc-handle-e  { right: -6px; top: 14px; bottom: 14px; cursor: ew-resize; width: 14px; }
+.ltc-handle-w  { left: -6px; top: 14px; bottom: 14px; cursor: ew-resize; width: 14px; }
+.ltc-handle-ne { top: -8px; right: -8px; cursor: nesw-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle-nw { top: -8px; left: -8px; cursor: nwse-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle-se { bottom: -8px; right: -8px; cursor: nwse-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle-sw { bottom: -8px; left: -8px; cursor: nesw-resize; width: 24px; height: 24px; z-index: 12; }
+.ltc-handle::after { display: none !important; }
+
+/* In floating and fullscreen modes, hide panel top height resizer */
+.ltc-panel[data-mode="floating"] .ltc-panel-resizer,
+.ltc-panel[data-mode="fullscreen"] .ltc-panel-resizer {
+  display: none !important;
+}
+
+/* Height divider on the panel's top edge, mirroring #ltRailResizer. */
+    .ltc-panel-resizer {
+      position: absolute; left: 0; right: 0; top: -5px; height: 10px; z-index: 3;
+      cursor: row-resize; touch-action: none; background: none;
+      user-select: none; -webkit-user-select: none;
+    }
+    .ltc-panel-resizer::after {
+      content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 2px;
+      background: transparent; transition: background 0.15s ease;
+    }
+    .ltc-panel-resizer:hover::after,
+    .ltc-panel-resizer:focus-visible::after,
+    .ltc-panel-resizer.is-dragging::after { background: rgba(200, 250, 75, 0.4); }
+    .ltc-panel-resizer:focus-visible { outline: none; }
+
+/* --- Snap to Edge Ghost Zone --- */
+.ltc-snap-ghost {
+  position: fixed; right: 0; top: 3.5rem; bottom: 0;
+  width: var(--lt-rail-w, 380px);
+  background: linear-gradient(90deg, rgba(200, 250, 75, 0.01), rgba(200, 250, 75, 0.07));
+  border-left: 2px dashed rgba(200, 250, 75, 0.45);
+  box-shadow: inset 16px 0 32px -12px rgba(200, 250, 75, 0.15);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity var(--dur-ui) var(--ease-smooth), transform var(--dur-ui) var(--ease-snappy);
+  z-index: 43;
+}
+.ltc-snap-ghost.is-active {
+  opacity: 1;
+  transform: translateX(0);
+}
+    .ltc-head {
+      display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;
+      padding: 0.7rem 0.75rem 0.7rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 45%), linear-gradient(180deg, rgba(200, 250, 75, 0.035), transparent);
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .ltc-head:active,
+    .ltc-panel.is-dragging .ltc-head {
+      cursor: grabbing;
+    }
+    .ltc-head-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px;
+      color: var(--accent-ink);
+      background: linear-gradient(140deg, #D8FF6B, #A8DE2C);
+      box-shadow: 0 3px 12px rgba(200, 250, 75, 0.22);
+      transition: transform var(--dur-ui) var(--ease-bouncy), box-shadow var(--dur-ui) var(--ease-smooth);
+    }
+    .ltc-head:hover .ltc-head-mark {
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: 0 4px 16px rgba(200, 250, 75, 0.35);
+    }
+    .ltc-head-mark svg { width: 17px; height: 17px; }
+    .ltc-drag-grip {
+      display: inline-flex; align-items: center; justify-content: center;
+      color: rgba(148, 163, 184, 0.4);
+      flex-shrink: 0;
+      margin-right: -2px;
+      cursor: grab;
+      transition: color 0.15s ease;
+    }
+    .ltc-head:hover .ltc-drag-grip {
+      color: var(--accent);
+    }
+    .ltc-head-txt {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+    .ltc-head-title {
+      font-family: var(--font-display); font-size: 0.82rem; font-weight: 700;
+      letter-spacing: -0.01em; color: #fff; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ltc-head-sub {
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.35; margin-top: 1px;
+    }
+    .ltc-head-actions { margin-left: auto; display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+    /* Live context state. Compact dot badge in non-fullscreen modes to leave ample space for title & context */
+    .ltc-status {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.2rem 0.5rem; border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(255, 255, 255, 0.03);
+      font-family: var(--font-mono); font-size: 9.5px;
+      color: var(--muted); white-space: nowrap;
+      transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .ltc-status-dot {
+      width: 6px; height: 6px; border-radius: 999px; flex-shrink: 0;
+      background: #34D399; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
+    }
+    .ltc-panel[data-streaming="true"] .ltc-status {
+      color: var(--accent); border-color: rgba(200, 250, 75, 0.3);
+      background: rgba(200, 250, 75, 0.08);
+    }
+    .ltc-panel[data-streaming="true"] .ltc-status-dot {
+      background: var(--accent);
+      animation: ltc-pulse 1.1s ease-out infinite;
+    }
+    @keyframes ltc-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(200, 250, 75, 0.5); }
+      70% { box-shadow: 0 0 0 7px rgba(200, 250, 75, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(200, 250, 75, 0); }
+    }
+    .ltc-panel:not([data-mode="fullscreen"]) .ltc-status-txt { display: none !important; }
+    .ltc-panel:not([data-mode="fullscreen"]) .ltc-status { padding: 0.25rem 0.35rem; }
+    .ltc-icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; flex-shrink: 0; padding: 0; border-radius: 9px;
+      border: 1px solid transparent; background: transparent;
+      color: var(--muted); cursor: pointer;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.12s cubic-bezier(.2, .9, .2, 1);
+    }
+    .ltc-icon-btn svg { width: 15px; height: 15px; }
+    .ltc-icon-btn:hover {
+      color: var(--fg); background: var(--canvas-ins);
+      border-color: var(--border-soft);
+      transform: translateY(-1px);
+    }
+    .ltc-icon-btn:active {
+      transform: translateY(0) scale(0.96);
+    }
+    /* Proportional scaling scoped to desktop floating window mode */
+    .ltc-panel[data-mode="floating"] .ltc-icon-btn {
+      width: 32px; height: 32px; border-radius: 7px;
+    }
+    .ltc-panel[data-mode="floating"] .ltc-send,
+    .ltc-panel[data-mode="floating"] .ltc-stop {
+      width: 34px; height: 34px; border-radius: 9px;
+    }
+    .ltc-panel[data-mode="floating"] .ltc-chip {
+      min-height: 32px; padding: 0.35rem 0.75rem;
+    }
+    .ltc-close { display: inline-flex !important; }
+    .ltc-log-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
+    /* The scroll-down chevron floats over the last message, so that message has
+       to fade out under it rather than sit raw behind a circle. The gradient
+       starts at the rail's own background colour, so the log dissolves into the
+       panel instead of ending on a visible edge. */
+    .ltc-log-wrap::after {
+      content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
+      pointer-events: none; z-index: 1; opacity: 0;
+      background: linear-gradient(to top, var(--rail-bg), transparent);
+      transition: opacity 0.2s ease;
+    }
+    .ltc-log-wrap:has(.ltc-scroll-down.is-shown)::after { opacity: 1; }
+    .ltc-log {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      padding: 1rem 0.9rem 1.25rem; display: flex; flex-direction: column; gap: 1.15rem;
+      scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    }
+    .ltc-log::-webkit-scrollbar { width: 9px; }
+    .ltc-log::-webkit-scrollbar-track { background: transparent; }
+    .ltc-log::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2); border-radius: 999px;
+      border: 2px solid transparent; background-clip: content-box;
+    }
+    .ltc-log::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.34); background-clip: content-box; }
+    .ltc-scroll-down {
+      position: absolute; left: 50%; bottom: 0.75rem; z-index: 2;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(20, 25, 36, 0.86); color: #C6CDDB;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+      opacity: 0; transform: translate(-50%, 10px) scale(0.9); pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .ltc-scroll-down svg { width: 16px; height: 16px; }
+    .ltc-scroll-down.is-shown { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
+    .ltc-scroll-down:hover { color: #fff; border-color: rgba(200, 250, 75, 0.4); }
+    .ltc-scroll-down:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .ltc-empty {
+      margin: auto 0; display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 1.5rem 0.35rem 1rem;
+      animation: ltc-rise 0.4s cubic-bezier(0.32, 0.72, 0, 1) both;
+    }
+    .ltc-empty-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px; border-radius: 13px; margin-bottom: 0.9rem;
+      color: var(--accent);
+      background: rgba(200, 250, 75, 0.08);
+      border: 1px solid rgba(200, 250, 75, 0.2);
+    }
+    .ltc-empty-mark svg { width: 22px; height: 22px; }
+    .ltc-empty-title {
+      font-family: var(--font-display); font-weight: 700; color: #fff;
+      font-size: 1.05rem; letter-spacing: -0.02em; margin: 0 0 0.3rem;
+    }
+    .ltc-empty-page {
+      font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+      margin: 0 0 0.5rem; line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .ltc-empty-badge {
+      display: inline-block; margin-bottom: 0.7rem;
+      padding: 0.15rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03);
+      font-family: var(--font-mono); font-size: 9.5px;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .ltc-empty-sub { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; max-width: 34ch; }
+    .ltc-empty-privacy {
+      /* --muted (6.4:1 on the panel), NOT the hint's #5A6377, which is 3.2:1 and
+         fails AA at this size. Subordinate via size and the rule above it. */
+      font-size: 0.68rem; color: var(--muted); line-height: 1.65;
+      margin: 1.1rem 0 0; max-width: 42ch;
+      border-top: 1px solid rgba(148, 163, 184, 0.12); padding-top: 0.85rem;
+    }
+    .ltc-suggestions {
+      display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
+      margin-top: 1.1rem; width: 100%;
+    }
+    .ltc-chip {
+      border: 1px solid rgba(148, 163, 184, 0.18); background: rgba(255, 255, 255, 0.03);
+      color: #C6CDDB; border-radius: 999px; padding: 0.45rem 0.8rem;
+      font-size: 11.5px; font-family: var(--font-body);
+      text-align: left; line-height: 1.4; min-height: 44px; cursor: pointer;
+      transition: background-color 0.16s ease, border-color 0.16s ease,
+                  color 0.16s ease, transform 0.16s ease;
+    }
+    .ltc-chip:hover {
+      background: rgba(200, 250, 75, 0.08); border-color: rgba(200, 250, 75, 0.34);
+      color: #E9EDF4; transform: translateY(-1px);
+    }
+    .ltc-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .ltc-chip:active { transform: translateY(0) scale(0.975); }
+    /* Messages: the assistant speaks in full-width prose with a small mark, the
+       reader gets a right-aligned pill. No ASSISTANT/YOU caption rows — those
+       read like a debug log and told the reader nothing they could not see. */
+    .ltc-msg { display: flex; flex-direction: column; gap: 0.35rem; }
+    .ltc-msg--user { align-items: flex-end; }
+    .ltc-msg-head { display: flex; align-items: center; min-height: 0; }
+    .ltc-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 6px; color: var(--accent);
+      background: rgba(200, 250, 75, 0.1); border: 1px solid rgba(200, 250, 75, 0.18);
+    }
+    .ltc-mark svg { width: 12px; height: 12px; }
+    .ltc-mark--busy { animation: ltc-mark-pulse 1.3s ease-in-out infinite; }
+    @keyframes ltc-mark-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    .ltc-msg-body {
+      font-size: 0.855rem; line-height: 1.68; color: #D3DAE7;
+      max-width: 100%; overflow-wrap: anywhere;
+    }
+    .ltc-msg--user { max-width: 92%; }
+    .ltc-msg--user .ltc-msg-body {
+      background: var(--raised); border: 1px solid var(--line);
+      color: #E9EDF4; border-radius: 14px 14px 4px 14px; padding: 0.55rem 0.8rem;
+    }
+    /* Message entry: a short rise + fade. Long enough to read as arrival, short
+       enough that it never delays the answer the reader asked for. */
+    .ltc-enter { animation: ltc-rise 0.32s cubic-bezier(0.32, 0.72, 0, 1) both; }
+    .ltc-enter.ltc-settled { animation: none; }
+    @keyframes ltc-rise {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: none; }
+    }
+    .ltc-msg-actions {
+      display: flex; gap: 0.25rem; margin-top: 0.1rem;
+      opacity: 0; transition: opacity 0.18s ease;
+    }
+    .ltc-msg:hover .ltc-msg-actions,
+    .ltc-msg:focus-within .ltc-msg-actions { opacity: 1; }
+    /* Keep it reachable when there is no pointer to hover with. */
+    @media (hover: none) { .ltc-msg-actions { opacity: 1; } }
+    .ltc-msg-copy {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 28px; height: 28px; padding: 0 0.45rem; border-radius: 8px;
+      border: 1px solid transparent; background: transparent; color: #5A6377;
+      cursor: pointer;
+      font-family: var(--font-mono); font-size: 10px;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .ltc-msg-copy svg { width: 14px; height: 14px; }
+    .ltc-msg-copy:hover { color: #E9EDF4; background: rgba(255, 255, 255, 0.07); border-color: var(--line); }
+    .ltc-msg-copy.is-done { color: var(--accent); }
+    .ltc-msg-copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
+    /* The reveal caret. A blinking block, not a spinner: it says "more is
+       coming" in the place the next word will appear. */
+    .ltc-caret {
+      display: inline-block; vertical-align: -2px;
+      width: 2px; height: 1.02em; margin-left: 2px; border-radius: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 7px rgba(200, 250, 75, 0.55);
+      animation: ltc-caret-blink 1s steps(1, end) infinite;
+    }
+    @keyframes ltc-caret-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+    .ltc-msg-tail { white-space: pre-wrap; }
+    .ltc-msg-body p { margin: 0 0 0.6rem; }
+    .ltc-msg-body p:last-child { margin-bottom: 0; }
+    /* Tailwind's CDN preflight resets list-style/margin on ul+ol, so bullets and
+       numbers have to be restored explicitly or every list renders as loose
+       indented paragraphs. */
+    .ltc-msg-body ul { list-style: disc outside; margin: 0 0 0.6rem; padding-left: 1.15rem; }
+    .ltc-msg-body ol { list-style: decimal outside; margin: 0 0 0.6rem; padding-left: 1.3rem; }
+    .ltc-msg-body li { margin-bottom: 0.25rem; }
+    .ltc-msg-body li::marker { color: var(--accent); }
+    .ltc-msg-body li > p { margin-bottom: 0.25rem; }
+    .ltc-msg-body code:not(pre code) {
+      background: rgba(200, 250, 75, 0.1); color: var(--accent);
+      padding: 0.1rem 0.35rem; border-radius: 0.3rem; font-size: 0.9em;
+      font-family: var(--font-mono);
+    }
+    /* Dry-run traces are naturally wide. The wrapper confines the overflow to
+       the table so the message bubble and the rail keep their width. */
+    .ltc-table-scroll {
+      overflow-x: auto; overscroll-behavior-x: contain; margin: 0.6rem 0;
+      border: 1px solid var(--line); border-radius: 0.6rem;
+    }
+    /* width: max-content gives every column the width of its widest cell, which
+       is what the wrapper's overflow-x exists to handle; min-width: 100% keeps a
+       narrow table filling the bubble. A `width: 100%` table instead squeezed
+       columns under their nowrap content, which is what let a sticky cell spill
+       over its neighbour. */
+    .ltc-msg-body table {
+      width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; margin: 0;
+      font-size: 0.78rem; line-height: 1.5;
+      font-family: var(--font-mono);
+    }
+    .ltc-msg-body th, .ltc-msg-body td {
+      border-bottom: 1px solid var(--line);
+      padding: 0.4rem 0.55rem; text-align: left; white-space: nowrap;
+    }
+    /* No sticky cells: `border-collapse: collapse` paints every cell background
+       in one layer beneath all cell content, so a stuck cell cannot cover the
+       text that scrolls under it — the row label ends up written on top of its
+       own neighbours. The wrapper scrolls, so the label is a short scroll away. */
+    .ltc-msg-body th {
+      background: rgba(200, 250, 75, 0.07); color: var(--accent);
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+      font-size: 0.7rem;
+    }
+    .ltc-msg-body td:first-child, .ltc-msg-body th:first-child { color: var(--muted); }
+    .ltc-msg-body tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
+    .ltc-msg-body tbody tr:last-child td { border-bottom: none; }
+    .ltc-msg-body strong { color: var(--fg); }
+    /* Mermaid in the chat reuses the article's .mermaid look, but the rail is
+       far narrower than the article column, so the size caps are overridden. */
+    .ltc-msg-body .mermaid {
+      padding: 0.7rem; margin: 0.6rem 0; border-radius: 0.6rem;
+      background: var(--canvas-sub); border: 1px solid var(--line);
+      overflow-x: auto; align-items: flex-start; justify-content: flex-start;
+    }
+    .ltc-msg-body .mermaid svg { max-width: 100% !important; width: auto; height: auto; min-width: 0; }
+    .ltc-mermaid-error {
+      background: var(--canvas-sub); border: 1px dashed rgba(251, 113, 133, 0.35); color: var(--muted);
+      border-radius: 0.6rem; padding: 0.6rem 0.7rem; margin: 0.6rem 0;
+      font-size: 0.74rem; line-height: 1.5; white-space: pre; overflow-x: auto;
+    }
+    /* The label is what makes the fallback above readable: it says the diagram
+       failed and that the text below is its source, so the reader knows to read
+       or copy it rather than waiting for a picture. It is a block, and quieter
+       and smaller than the source it introduces, so the seam between the two is
+       visible instead of the block reading as one undifferentiated dump. */
+    .ltc-mermaid-error-note {
+      display: block; font-family: var(--font-body); font-size: 0.68rem;
+      line-height: 1.45; color: #FB7185; white-space: normal;
+      margin: 0 0 0.45rem; padding-bottom: 0.4rem;
+      border-bottom: 1px solid rgba(251, 113, 133, 0.22);
+    }
+    /* viz-array: an array drawn as cells, with pointer markers and a Map/Set row.
+       Cells and pointer slots share ONE grid (row 1 / row 2) so a pointer can
+       never drift off the cell it names — the column count comes from --viz-cols
+       so the template does not have to be repeated per element. */
+    .viz-array {
+      background: var(--canvas-ins); border: 1px solid var(--line); border-radius: 0.6rem;
+      padding: 0.7rem; margin: 0.6rem 0; overflow-x: auto;
+    }
+    .viz-title {
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
+      margin-bottom: 0.5rem; white-space: nowrap;
+    }
+    .viz-grid {
+      display: grid; gap: 4px 4px; row-gap: 3px;
+      grid-template-columns: repeat(var(--viz-cols, 1), minmax(38px, 1fr));
+      min-width: max-content;
+    }
+    .viz-cell {
+      border: 1px solid var(--line); border-radius: 0.4rem; background: var(--raised);
+      color: var(--fg); font-family: var(--font-mono); font-size: 0.78rem;
+      text-align: center; padding: 0.4rem 0.3rem; min-width: 34px;
+    }
+    .viz-cell.is-active {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-soft); font-weight: 600;
+    }
+    .viz-cell.is-done { opacity: 0.55; }
+    .viz-cell.is-swapped { border-color: var(--done); color: var(--done); }
+    .viz-cell.is-error { border-color: var(--hard); color: var(--hard); }
+    .viz-pointer {
+      display: block; text-align: center; font-family: var(--font-mono);
+      font-size: 0.62rem; color: var(--accent); letter-spacing: 0.04em;
+    }
+    .viz-pointer::before { content: "▲ "; font-size: 0.55rem; }
+    .viz-row {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem;
+      margin-top: 0.55rem; font-family: var(--font-mono); font-size: 0.7rem;
+    }
+    .viz-row-label {
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+      font-size: 0.6rem; margin-right: 0.15rem;
+    }
+    .viz-pair, .viz-item {
+      border: 1px solid var(--line); border-radius: 0.35rem; background: var(--raised);
+      padding: 0.15rem 0.4rem; color: var(--fg-prose); white-space: nowrap;
+    }
+    .viz-k { color: var(--accent); }
+    .viz-arrow { color: var(--muted); margin: 0 0.2rem; }
+    .ltc-msg-body h1, .ltc-msg-body h2, .ltc-msg-body h3 {
+      font-family: var(--font-display); color: #fff; margin: 0.8rem 0 0.4rem; line-height: 1.3;
+    }
+    .ltc-msg-body h1 { font-size: 1rem; }
+    .ltc-msg-body h2 { font-size: 0.92rem; }
+    .ltc-msg-body h3 { font-size: 0.86rem; color: var(--accent); }
+    /* Codebox container with structured header strip */
+    .chat-code {
+      margin: 0.6rem 0;
+      border: 1px solid var(--border-soft);
+      border-radius: 0.7rem;
+      overflow: hidden;
+      background: var(--canvas-ins);
+    }
+    .chat-code-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.35rem 0.75rem;
+      background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+      border-bottom: 1px solid var(--border-soft);
+      font-family: var(--font-mono);
+      min-height: 30px;
+    }
+    .chat-code-lang {
+      font-size: 11px;
+      color: var(--fg-muted);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    .chat-code pre {
+      margin: 0; background: transparent; border: none;
+      border-radius: 0; overflow-x: auto;
+      padding: 0.75rem 0.85rem;
+      font-size: 0.76rem; line-height: 1.55;
+    }
+    .chat-code code {
+      font-family: var(--font-mono); font-variant-ligatures: none;
+      white-space: pre;
+    }
+    .chat-code-copy {
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border-soft); background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+      color: var(--fg-muted); border-radius: 0.35rem; padding: 0.15rem 0.45rem;
+      font-family: var(--font-mono); font-size: 10.5px; min-height: 22px;
+      cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .chat-code-copy:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent-rim);
+    }
+    .ltc-msg-error {
+      font-size: 12px; line-height: 1.55; color: #FB7185;
+      border: 1px solid rgba(251, 113, 133, 0.3); background: rgba(251, 113, 133, 0.07);
+      border-radius: 0.5rem; padding: 0.4rem 0.6rem; margin-top: 0.35rem;
+    }
+    /* The 429 soft gate. Deliberately the same treatment as the portal's
+       login_error banner (checkLoginError), so the two read as the same kind of
+       notice rather than as two different systems shouting. A plain div in the
+       log: never a modal, never role=alert, and nothing here disables the
+       composer. Chat is not gated on login (D-10) — this only offers a higher
+       limit to a reader who has already been rate-limited three times running. */
+    .ltc-gate {
+      font-size: 12px; line-height: 1.55; color: var(--fg);
+      border: 1px solid rgba(251, 113, 133, 0.35); background: rgba(251, 113, 133, 0.07);
+      border-radius: 0.5rem; padding: 0.45rem 0.6rem; margin-top: 0.3rem;
+    }
+    .ltc-gate a {
+      color: var(--accent); text-decoration: underline;
+      text-underline-offset: 2px; font-weight: 600; white-space: nowrap;
+    }
+    .ltc-gate a:hover { color: #D6FF63; }
+    .ltc-retry {
+      align-self: flex-start; margin-top: 0.3rem;
+      border: 1px solid rgba(200, 250, 75, 0.35); background: rgba(200, 250, 75, 0.07);
+      color: var(--accent); border-radius: 0.5rem; padding: 0.3rem 0.65rem;
+      font-family: var(--font-mono); font-size: 11px; min-height: 32px;
+    }
+    /* An answer that hit the output cap. A subordinate line, not a dialog and
+       not the error treatment: the answer above it is real and copyable, only
+       unfinished, so it reads as a footnote rather than as a failure. */
+    .ltc-truncated {
+      align-self: flex-start; margin-top: 0.15rem; padding-left: 0.5rem;
+      border-left: 2px solid rgba(200, 250, 75, 0.35);
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
+      color: var(--muted);
+    }
+    /* The thinking indicator, and why the dots are gone: Gemini runs a short
+       bright gradient chip that slides across a transparent track on the seam
+       above the input, rather than an ellipsis floating in the transcript. The
+       chip's end stops are transparent, so it dissolves into the conversation
+       instead of sitting on top of it as a bar. Green because green is the
+       accent this widget already speaks in (--accent), so the line reads as
+       part of the panel rather than as a spinner dropped in from elsewhere. */
+    .ltc-think-line {
+      position: absolute; top: -4px; left: 0; right: 0; height: 9px;
+      overflow: hidden; pointer-events: none;
+      opacity: 0; transition: opacity 0.25s ease;
+    }
+    .ltc-panel[data-streaming="true"] .ltc-think-line { opacity: 1; }
+    .ltc-think-line::before {
+      content: ''; position: absolute; top: 3px; left: 0;
+      width: 48%; height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(200, 250, 75, 0.2) 22%,
+        #C8FA4B 50%,
+        rgba(200, 250, 75, 0.2) 78%,
+        transparent 100%);
+      box-shadow: 0 0 8px rgba(200, 250, 75, 0.45);
+      animation: ltc-think-sweep 1.15s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    }
+    /* -100% parks the chip's trailing edge on the track's left edge and 208.33%
+       is 1/0.48, the offset that parks its leading edge on the right edge. Equal
+       travel past each edge is what makes the loop seamless, and clipping to the
+       track is what fades the chip in and out instead of popping it.
+
+       The chip is wide and the easing gentle on purpose. A strong ease-out parks
+       the chip against the right edge where it crawls — measured per-frame it
+       went 31, 20, 19, 11, 10, 5, 4 px per 90ms, so the back half of the cycle
+       was a near-stop that a glance reads as a static line. */
+    @keyframes ltc-think-sweep {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(208.33%); }
+    }
+    @keyframes ltc-think-breathe {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    /* The line carries no text, so on its own the wait would be silent: the
+       header's "Thinking" is display:none below 1180px. This keeps the
+       announcement the dots used to give without putting a dot back on screen. */
+    .ltc-sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .ltc-form {
+      position: relative;
+      flex-shrink: 0; border-top: 1px solid var(--line);
+      padding: 0.7rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+      display: flex; flex-direction: column; gap: 0.45rem;
+      background: linear-gradient(180deg, rgba(8, 9, 13, 0.6), var(--bg) 40%);
+    }
+    /* One pill, not a bare textarea over two rectangles: the field and its
+       controls share a border, so the composer reads as a single control. */
+    .ltc-composer {
+      display: flex; align-items: flex-end; gap: 0.4rem;
+      border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 18px;
+      background: var(--surface); padding: 0.35rem 0.35rem 0.35rem 0.8rem;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+    .ltc-composer:focus-within {
+      border-color: rgba(200, 250, 75, 0.45);
+      background: #0F131C;
+      box-shadow: 0 0 0 3px rgba(200, 250, 75, 0.07);
+    }
+    #ltcInput {
+      flex: 1 1 auto; min-width: 0; resize: none; border: 0; background: transparent;
+      padding: 0.4rem 0; font-size: 13.5px; line-height: 1.55; color: #E9EDF4;
+      font-family: var(--font-body); min-height: 30px; max-height: 168px;
+    }
+    #ltcInput:focus { outline: none; }
+    #ltcInput::placeholder { color: #5A6377; }
+    #ltcInput:disabled { opacity: 0.55; }
+    .ltc-actions { display: flex; gap: 0.35rem; align-items: center; flex-shrink: 0; }
+    .ltc-send, .ltc-stop {
+      display: inline-flex; align-items: center; justify-content: center;
+      /* 44px: WCAG 2.5.8 AA only asks 24, and 34 cleared it. This is the one
+         control below that is aimed at rather than looked at. */
+      width: 44px; height: 44px; flex-shrink: 0; padding: 0;
+      border-radius: 11px; border: 1px solid transparent; cursor: pointer;
+      transition: background-color 0.16s ease, color 0.16s ease,
+                  border-color 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+    }
+    .ltc-send svg, .ltc-stop svg { width: 16px; height: 16px; }
+    .ltc-send { background: var(--accent); color: var(--accent-ink); }
+    .ltc-send:hover:not(:disabled) { background: #D6FF63; transform: translateY(-1px); }
+    .ltc-send:active:not(:disabled) { transform: translateY(0) scale(0.96); }
+    .ltc-send:disabled {
+      background: rgba(148, 163, 184, 0.1); color: #4A5265;
+      cursor: not-allowed; border-color: var(--line);
+    }
+    .ltc-send[data-busy="true"] { opacity: 0.5; pointer-events: none; }
+    .ltc-send:focus-visible, .ltc-stop:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .ltc-stop {
+      background: rgba(251, 113, 133, 0.12); color: #FB7185;
+      border-color: rgba(251, 113, 133, 0.32);
+    }
+    .ltc-stop:hover { background: rgba(251, 113, 133, 0.2); transform: translateY(-1px); }
+    .ltc-stop:active { transform: translateY(0) scale(0.96); }
+    .ltc-hint {
+      margin: 0; padding: 0 0.25rem;
+      font-family: var(--font-mono); font-size: 9.5px; color: #5A6377;
+      line-height: 1.6;
+    }
+    .ltc-hint .k { font-size: 0.6rem; padding: 0.05rem 0.25rem; }
+    @media (max-width: 420px) { .ltc-hint { display: none; } }
+    .ltc-fab {
+      position: fixed; right: 1rem;
+      bottom: 1rem;
+      z-index: 41;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px; border-radius: 999px;
+      background: var(--accent); color: var(--accent-ink);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      transition: transform 0.18s cubic-bezier(.2, .9, .2, 1), opacity 0.18s ease, visibility 0.18s;
+    }
+    .ltc-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55); }
+    .ltc-fab:active { transform: translateY(0) scale(0.96); }
+    .ltc-fab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    /* Center the glyph optically: the bubble's ink sits slightly high (the arrow
+       nub lives in the top-right corner of the viewBox), and explicit sizing
+       beats relying on Tailwind's h-6/w-6 surviving a CDN hiccup. */
+    .ltc-fab svg { width: 23px; height: 23px; transform: translateY(0.75px); }
+    /* The FAB sits exactly where the sheet's Send button is, so it must tuck
+       away while the sheet is up or it swallows the tap. */
+    .ltc-fab.is-tucked { opacity: 0; pointer-events: none; transform: scale(0.7); visibility: hidden; }
+    @media (min-width: 1280px) {
+      body:has(#ltRail:not([data-collapsed="true"])) .ltc-fab { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ltc-panel { transition: none; }
+      /* Reduced motion drops the travel, not the signal. A chip crossing the
+         panel is exactly the large-scale movement the setting exists to
+         suppress, but a frozen segment reads as a broken widget — which is what
+         a frozen one got reported as. So the fallback breathes opacity instead:
+         no translation, no scale, no parallax, and the turn still looks alive.
+         Centred, because 48% of the track leaves 26% either side. */
+      .ltc-think-line::before {
+        animation: ltc-think-breathe 1.5s ease-in-out infinite;
+        left: 26%;
+      }
+      /* The reveal is already instant under reduced motion (see paintReveal);
+         these are the decorative animations that would otherwise still run. */
+      .ltc-enter, .ltc-empty, .ltc-mark--busy, .ltc-caret { animation: none; }
+      .ltc-panel[data-streaming="true"] .ltc-status-dot { animation: none; }
+      .ltc-scroll-down { transition: none; }
+    }
