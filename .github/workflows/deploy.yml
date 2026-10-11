@@ -28,7 +28,12 @@ jobs:
     # and the Pages deploy skipped, because the workflow outgrew the bound it was given. The old
     # note here claimed ~250 s of steps; that counted neither `npm ci`, nor `playwright install`,
     # nor `npm run build`, nor the two tool installs. Measure the JOB, not the steps you can see.
-    timeout-minutes: 30
+    # Raised 30 → 60 after four consecutive job-level cancellations (two on
+    # 2026-10-09, two on 2026-10-11) with zero test failures: the e2e step
+    # alone needs >20 min on a loaded runner, so the 30-min cap killed the
+    # job before the Pages deploy step ever ran. Same fix as the 15 → 30
+    # raise above — measure the job, then give it room.
+    timeout-minutes: 60
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
