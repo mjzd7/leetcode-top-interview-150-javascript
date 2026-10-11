@@ -683,6 +683,27 @@ test.describe('keyboard navigation in the command palette', () => {
     expect(first, 'Home selected the first row').toBe(0);
   });
 
+  test('lists question guides before architecture entries', async ({ page }) => {
+    // "sliding window" matches the four sliding-window question guides AND
+    // ADR-14 (terms: "sliding window rate limit client safety"), so both
+    // pools are non-empty and the row order between them is observable.
+    await open(page, PROBLEM_01);
+    await page.click('#paletteBtn');
+    await page.waitForTimeout(200);
+    await page.fill('#paletteInput', 'sliding window');
+    await page.waitForTimeout(300);
+    const rows = await page.evaluate(() =>
+      [...document.querySelectorAll('#paletteList .pal-item')].map(el => el.dataset.optId));
+    const isArch = (id) => id.startsWith('arch:') || id.startsWith('adr:');
+    expect(rows.length, 'the query matches both guides and arch entries').toBeGreaterThan(1);
+    expect(rows.some(isArch), 'at least one arch entry matched').toBe(true);
+    expect(rows[0], 'the first row is a question guide, not an arch entry').not.toMatch(/^(arch:|adr:)/);
+    const lastGuide = rows.findLastIndex((id) => !isArch(id));
+    const firstArch = rows.findIndex(isArch);
+    expect(firstArch, 'every question guide ranks above every arch entry')
+      .toBeGreaterThan(lastGuide);
+  });
+
   test('the highlighted row is inside the list viewport', async ({ page }) => {
     await open(page, PROBLEM_01);
     await page.click('#paletteBtn');
