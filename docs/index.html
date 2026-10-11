@@ -2933,9 +2933,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         .map(id => byId.get(id))
         .filter(e => !query || fuzzyMatch(e.item.title + ' ' + (e.item.pattern || '') + ' ' + e.category, query));
 
-      // Questions first: a reader opening the palette wants the problem they
-      // are solving, not the ADR that describes the system. Arch entries follow.
-      palResults = [...guideMatches, ...archMatches].slice(0, 14);
+      palResults = [...archMatches, ...guideMatches].slice(0, 14);
       palIndex = 0;
       paletteList.innerHTML = palResults.length ? '' : '<p class="text-sm text-slate-500 px-3 py-6 text-center">No matches. Try a problem or ADR name like “ADR-04” or “sliding window”.</p>';
       palResults.forEach((e, i) => {
