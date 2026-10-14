@@ -215,7 +215,7 @@
   overflow: visible !important;
 }
 html[data-theme="light"] .ltc-panel[data-mode="floating"] {
-  background: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
   border-color: var(--border) !important;
   box-shadow: 0 16px 36px -4px rgba(16, 24, 40, 0.15), 0 32px 64px -12px rgba(16, 24, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
 }
@@ -233,7 +233,7 @@ html[data-theme="light"] .ltc-panel[data-mode="floating"] {
   -webkit-backdrop-filter: blur(24px) saturate(190%);
 }
 html[data-theme="light"] .ltc-panel[data-mode="floating"].is-dragging {
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
 }
 .ltc-panel[data-mode="floating"] .ltc-form {
   background: linear-gradient(180deg, rgba(8, 9, 13, 0.4), rgba(8, 9, 13, 0.8) 40%);
