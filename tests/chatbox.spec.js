@@ -2474,8 +2474,22 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
     const backdropFilter = await panel.evaluate(el => window.getComputedStyle(el).backdropFilter || window.getComputedStyle(el).webkitBackdropFilter);
     expect(backdropFilter).toContain('blur');
 
+    const isLight = await page.evaluate(() => document.documentElement.getAttribute('data-theme') === 'light');
     const bgColor = await panel.evaluate(el => window.getComputedStyle(el).backgroundColor);
-    expect(bgColor).toMatch(/rgba\(13,\s*16,\s*23,\s*0\.82\)/);
+    if (isLight) {
+      expect(bgColor).toMatch(/rgba\(255,\s*255,\s*255,\s*0\.82\)/);
+    } else {
+      expect(bgColor).toMatch(/rgba\(13,\s*16,\s*23,\s*0\.82\)/);
+    }
+
+    // Toggle theme to verify both dark and light modes maintain translucent glass
+    await page.click('#themeToggle');
+    const toggledBgColor = await panel.evaluate(el => window.getComputedStyle(el).backgroundColor);
+    if (isLight) {
+      expect(toggledBgColor).toMatch(/rgba\(13,\s*16,\s*23,\s*0\.82\)/);
+    } else {
+      expect(toggledBgColor).toMatch(/rgba\(255,\s*255,\s*255,\s*0\.82\)/);
+    }
   });
 
   test('fullscreen window has no backdrop-filter blur for crisp solid rendering', async ({ page }) => {
