@@ -518,23 +518,6 @@ html[data-theme="light"] #ltcInput::placeholder {
   color: var(--fg-prose);
 }
 
-/* Mac-Style Traffic Light Strip in Code Blocks */
-.chat-code {
-  position: relative;
-  margin: 0.6rem 0;
-}
-.chat-code::before {
-  content: '';
-  position: absolute;
-  top: 13px;
-  left: 12px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--badge-hard-fg);
-  box-shadow: 12px 0 0 var(--badge-med-fg), 24px 0 0 var(--badge-easy-fg);
-  z-index: 1;
-}
 html[data-theme="light"] .chat-code pre {
   background: var(--canvas-ins);
   border-color: var(--border-soft);
@@ -1439,8 +1422,11 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
   content: '';
   position: absolute;
   inset: 0;
+  width: auto;
+  height: auto;
   border-radius: inherit;
   background: var(--sheen);
+  box-shadow: none;
   opacity: 0.8;
   pointer-events: none;
   z-index: 1;
@@ -1468,6 +1454,26 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
   box-shadow: var(--shadow-lift);
 }
 
+.chat-code-head {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.75rem;
+  background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
+  border-bottom: 1px solid var(--border-soft);
+  font-family: var(--font-mono);
+  min-height: 30px;
+}
+
+.chat-code-lang {
+  font-size: 11px;
+  color: var(--fg-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
 .chat-code pre {
   position: relative;
   z-index: 2;
@@ -1476,7 +1482,7 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
   border: none !important;
   border-radius: 0 !important;
   overflow-x: auto;
-  padding: 1.85rem 0.85rem 0.75rem;
+  padding: 0.75rem 0.85rem;
   font-size: 0.76rem;
   line-height: 1.55;
 }
@@ -1489,10 +1495,11 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
 
 /* Chat Code Copy Button Physical Style */
 .chat-code-copy {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 10 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 4;
   border: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
   color: var(--fg-muted);
@@ -1500,7 +1507,7 @@ html[data-theme="light"] table.tbl tbody tr:hover td:first-child {
   padding: 0.2rem 0.6rem;
   font-family: var(--font-mono);
   font-size: 10px;
-  min-height: 26px;
+  min-height: 24px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
