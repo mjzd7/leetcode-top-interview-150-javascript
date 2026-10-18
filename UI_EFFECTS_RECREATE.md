@@ -106,7 +106,8 @@ content:''; position:absolute; inset:0; border-radius:inherit; background: var(-
 --sheen is a top-to-bottom linear gradient light→transparent. Creates glossy top edge. Hover lift: translateY(-2px to -3px) + border-color color-mix(accent 35-42%) + var(--shadow-lift). Active: scale(0.975-0.985) and translateY(0).
 
 ### 2.7 Mac traffic lights in code blocks
-.chat-code::before: three 6px dots positioned top-left (13px/12px), using ::before at top 13px left 12px width/height 6px border-radius 50% with box-shadow: 12px 0 0 var(--badge-med-fg), 24px 0 0 var(--badge-easy-fg), fill var(--badge-hard-fg). z-index 1.
+- Article code blocks (.code / .code-bar): structured header with `.code-bar .dots` containing three 10px circular indicators (red, amber, green via `--badge-hard-fg`, `--badge-med-fg`, `--badge-easy-fg`), centered code title, and copy button.
+- Chat code blocks (.chat-code): clean structured header strip `.chat-code-head` with `.chat-code-lang` on the left and `.chat-code-copy` button on the right; `.chat-code::before` provides the specular sheen layer across the container.
 
 ### 2.8 Button sweep highlight
 .btn, button[data-guide], #homeStart, #guidesBtn, #themeToggle use position relative overflow hidden. ::after: inset 0; background linear-gradient(105deg, transparent 32%, rgba(255,255,255,.26) 48%, transparent 64%) [light uses .7 transparency]; transform translateX(-120%); transition transform 0.3s var(--ease-smooth). Hover: translateX(120%). Subtle one-shot sweep.
