@@ -860,6 +860,12 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       overflow: hidden;
       background: var(--canvas-ins);
     }
+    .chat-code[data-code-kind="code"] {
+      border-left: 2px solid color-mix(in srgb, #38bdf8 55%, var(--border-soft));
+    }
+    .chat-code[data-code-kind="pseudocode"] {
+      border-left: 2px solid color-mix(in srgb, #c084fc 60%, var(--border-soft));
+    }
     .chat-code-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.35rem 0.75rem;
@@ -869,21 +875,47 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       min-height: 30px;
     }
     .chat-code-lang {
-      font-size: 11px;
-      color: var(--fg-muted);
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 10.5px; font-weight: 600;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.24);
+      border-radius: 999px;
+      padding: 0.1rem 0.5rem;
       text-transform: lowercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.03em;
     }
-    .chat-code pre {
-      margin: 0; background: transparent; border: none;
-      border-radius: 0; overflow-x: auto;
+    .chat-code[data-code-kind="pseudocode"] .chat-code-lang {
+      color: #c084fc;
+      background: rgba(192, 132, 252, 0.13);
+      border-color: rgba(192, 132, 252, 0.28);
+    }
+    .chat-code pre,
+    .chat-code pre[class*="language-"] {
+      margin: 0 !important; background: transparent !important; border: none !important;
+      border-radius: 0 !important; overflow-x: auto;
       padding: 0.75rem 0.85rem;
       font-size: 0.76rem; line-height: 1.55;
+      color: #e6edf3; text-shadow: none !important;
     }
-    .chat-code code {
+    .chat-code code,
+    .chat-code code[class*="language-"] {
       font-family: var(--font-mono); font-variant-ligatures: none;
-      white-space: pre;
+      white-space: pre; color: inherit;
+      background: transparent !important; text-shadow: none !important;
     }
+    .chat-code .token { background: transparent !important; text-shadow: none !important; }
+    .chat-code .token.keyword, .chat-code .token.atrule, .chat-code .token.tag, .chat-code .token.important { color: #c792ea !important; font-weight: 600; }
+    .chat-code .token.function, .chat-code .token.method { color: #61afef !important; font-weight: 500; }
+    .chat-code .token.builtin, .chat-code .token.class-name, .chat-code .token.namespace { color: #ffcb6b !important; }
+    .chat-code .token.string, .chat-code .token.char, .chat-code .token.attr-value, .chat-code .token.regex, .chat-code .token.template-string { color: #4ade80 !important; }
+    .chat-code .token.number { color: #f78c6c !important; }
+    .chat-code .token.boolean, .chat-code .token.constant, .chat-code .token.symbol { color: #ff7b72 !important; font-weight: 600; }
+    .chat-code .token.variable, .chat-code .token.parameter { color: #79c0ff !important; }
+    .chat-code .token.property, .chat-code .token.attr-name { color: #2dd4bf !important; }
+    .chat-code .token.operator, .chat-code .token.entity, .chat-code .token.url { color: #89ddff !important; }
+    .chat-code .token.punctuation { color: #94a3b8 !important; }
+    .chat-code .token.comment, .chat-code .token.prolog, .chat-code .token.doctype, .chat-code .token.cdata { color: #8b99a8 !important; font-style: italic; }
     .chat-code-copy {
       display: inline-flex; align-items: center; justify-content: center;
       border: 1px solid var(--border-soft); background: color-mix(in srgb, var(--canvas) 60%, var(--canvas-sub));
