@@ -812,6 +812,37 @@
    * code block in a chat answer into a blank box. `code` is escaped here because
    * a custom renderer returns raw HTML that marked will not re-escape.
    */
+  var PSEUDO_LANGS = ['pseudocode', 'pseudo', 'algo', 'algorithm'];
+  var CODE_LANGS = [
+    'js', 'javascript', 'ts', 'typescript', 'jsx', 'tsx',
+    'py', 'python', 'java', 'cpp', 'c++', 'c', 'cs', 'csharp',
+    'go', 'rust', 'rs', 'rb', 'ruby', 'php', 'swift', 'kt', 'kotlin',
+    'scala', 'sql', 'json', 'html', 'css', 'sh', 'bash', 'shell'
+  ];
+
+  /**
+   * Detect whether a fenced block is algorithmic pseudocode rather than a
+   * concrete programming language. Guides and model replies frequently fence
+   * pseudocode as ```pseudocode, ```pseudo, ```text, ```plaintext, or an
+   * untagged ``` block using keywords like FUNCTION, FOR ... FROM ... TO,
+   * IF ... THEN, RETURN, SORT, or <- / ← assignment arrows.
+   */
+  function isPseudocode(lang, code) {
+    var l = String(lang || '').toLowerCase();
+    if (PSEUDO_LANGS.indexOf(l) !== -1) return true;
+    if (CODE_LANGS.indexOf(l) !== -1) return false;
+    var src = String(code || '');
+    var looksLikeRealCode =
+      /\b(?:const|let|var)\s+[a-zA-Z_$][\w$]*\s*=|=>|\bconsole\.log\b|\bnew\s+(?:Map|Set|Array|WeakMap)\b|\bdef\s+[a-zA-Z_]\w*\s*\(|\bpublic\s+(?:class|static|int|void)\b|#include\s*</.test(src) &&
+      !/(?:\b(?:FUNCTION|PROCEDURE|ALGORITHM|THEN|REPEAT|UNTIL)\b|<-|←|:=)/i.test(src);
+    if (looksLikeRealCode) return false;
+    if (l === 'text' || l === 'plaintext' || l === 'txt') return true;
+    if (!l) {
+      return /(?:\b(?:FUNCTION|PROCEDURE|ALGORITHM|INPUT|OUTPUT|BEGIN|END|FOR\b|WHILE\b|REPEAT\b|UNTIL\b|IF\b|THEN\b|ELSE\b|RETURN\b|INITIALIZE|SET\b|SORT\b|SWAP\b|COPY\b|INSERT\b|APPEND\b|PUSH\b|POP\b|ENQUEUE\b|DEQUEUE\b|STEP\b)\b|<-|←|:=|→|->)/i.test(src);
+    }
+    return false;
+  }
+
   function makeRenderer() {
     var renderer = new marked.Renderer();
     renderer.code = function (a, b) {
@@ -832,10 +863,13 @@
         if (viz) return viz;
       }
 
-      var langLabel = lang ? esc(lang) : 'code';
-      var cls = lang ? ' class="language-' + esc(lang) + '"' : '';
+      var isPseudo = isPseudocode(lang, code);
+      var kind = isPseudo ? 'pseudocode' : 'code';
+      var langLabel = isPseudo ? 'pseudocode' : (lang ? esc(lang) : 'code');
+      var prismLang = lang ? esc(lang) : (isPseudo ? 'pseudocode' : 'javascript');
+      var cls = ' class="language-' + prismLang + '"';
       return (
-        '<div class="chat-code">' +
+        '<div class="chat-code" data-code-kind="' + kind + '">' +
         '<div class="chat-code-head">' +
         '<span class="chat-code-lang">' + langLabel + '</span>' +
         '<button class="chat-code-copy" type="button" data-copy aria-label="Copy code to clipboard">Copy</button>' +
@@ -851,6 +885,122 @@
   function getRenderer() {
     if (!renderer && window.marked && window.marked.Renderer) renderer = makeRenderer();
     return renderer;
+  }
+
+  /**
+   * Enrich Prism's JavaScript grammar and register a dedicated pseudocode
+   * grammar (plus common language aliases) so both code and pseudocode boxes
+   * inside the chatbox tokenize with rich, editor-grade semantic spans.
+   */
+  var prismReady = false;
+  function ensurePrismGrammars() {
+    if (prismReady || !window.Prism || !window.Prism.languages) return;
+    var L = window.Prism.languages;
+
+    if (L.javascript) {
+      if (L.insertBefore) {
+        L.insertBefore('javascript', 'keyword', {
+          'builtin': /\b(?:Map|Set|WeakMap|WeakSet|Array|Object|String|Number|Boolean|Symbol|BigInt|Math|JSON|Promise|RegExp|Error|Date|console|window|document|Infinity|NaN|undefined|parseInt|parseFloat|isNaN|isFinite)\b/
+        });
+        L.insertBefore('javascript', 'operator', {
+          'property': {
+            pattern: /(\.\s*)[a-zA-Z_$][\w$]*(?!\s*\()/,
+            lookbehind: true
+          },
+          'variable': [
+            {
+              pattern: /(\b(?:const|let|var)\s+)[a-zA-Z_$][\w$]*/,
+              lookbehind: true
+            },
+            /\b[a-zA-Z_$][\w$]*(?=\s*(?:\[|\.(?=[a-zA-Z_$])))/
+          ]
+        });
+      }
+      L.js = L.javascript;
+    }
+
+    var pseudoGrammar = {
+      'comment': [
+        { pattern: /(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/, lookbehind: true, greedy: true },
+        { pattern: /(^|[^\\:])\/\/.*/, lookbehind: true, greedy: true },
+        { pattern: /(^|\s)#.*/, lookbehind: true, greedy: true }
+      ],
+      'string': {
+        pattern: /(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,
+        greedy: true
+      },
+      'constant': /\b(?:INFINITY|INF|MAX_INT|MIN_INT|PI|EPSILON)\b|\bO\([0-9a-zA-Z\s+*\-^/log()]+\)/i,
+      'boolean': /\b(?:TRUE|FALSE|NULL|NIL|NONE|EMPTY|VISITED|UNVISITED|FOUND|NOT_FOUND)\b/i,
+      'builtin': /\b(?:Map|HashMap|Set|HashSet|Array|List|LinkedList|ListNode|TreeNode|Graph|Node|Stack|Queue|Deque|PriorityQueue|MinHeap|MaxHeap|Heap|Trie|UnionFind|DisjointSet|Pair|Tuple|Matrix|Window|String|Integer|Boolean)\b/i,
+      'keyword': /\b(?:FUNCTION|PROCEDURE|ALGORITHM|INPUT|OUTPUT|REQUIRE|ENSURE|BEGIN|END|IF|THEN|ELSE|ELIF|ELSEIF|FOR|EACH|EVERY|FROM|TO|DOWNTO|STEP|IN|OF|WHILE|DO|REPEAT|UNTIL|LOOP|BREAK|CONTINUE|RETURN|YIELD|MATCH|CASE|DEFAULT|TRY|CATCH|THROW|INITIALIZE|INIT|SET|LET|VAR|CONST|DEFINE|SORT|BY|ASCENDING|DESCENDING|COPY|INTO|SWAP|WITH|INSERT|APPEND|PREPEND|REMOVE|DELETE|POP|PUSH|ENQUEUE|DEQUEUE|ADD|CLEAR|VISIT|TRAVERSE|RECURSE|CALL|PRINT|AND|OR|NOT|XOR|MOD|DIV|IS)\b/i,
+      'function': /\b[a-zA-Z_]\w*(?=\s*\()/i,
+      'number': /\b0x[\da-fA-F]+\b|(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:e[+-]?\d+)?\b/i,
+      'property': {
+        pattern: /(\.\s*)[a-zA-Z_]\w*(?!\s*\()/,
+        lookbehind: true
+      },
+      'variable': [
+        {
+          pattern: /(\b(?:FOR|EACH|SET|LET|VAR|INIT|INITIALIZE)\s+)[a-zA-Z_]\w*/i,
+          lookbehind: true
+        },
+        /\b[a-zA-Z_]\w*(?=\s*(?:<-|←|:=|\[\s*[^\]]|\.(?=[a-zA-Z_])))/
+      ],
+      'operator': /<-|←|->|→|↔|:=|==|!=|<>|<=|>=|≤|≥|\.\.|\+=|-=|\*=|\/=|[+\-*/%=<>!&|^~]/,
+      'punctuation': /[{}[\];(),.:]/
+    };
+
+    L.pseudocode = pseudoGrammar;
+    L.pseudo = pseudoGrammar;
+    L.algo = pseudoGrammar;
+    L.algorithm = pseudoGrammar;
+    L.text = pseudoGrammar;
+    L.plaintext = pseudoGrammar;
+    L.txt = pseudoGrammar;
+
+    if (L.javascript) {
+      var polyglot = L.extend ? L.extend('javascript', {
+        'comment': [
+          { pattern: /(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/, lookbehind: true, greedy: true },
+          { pattern: /(^|[^\\:])\/\/.*/, lookbehind: true, greedy: true },
+          { pattern: /(^|\s)#.*/, lookbehind: true, greedy: true }
+        ],
+        'keyword': /\b(?:abstract|as|async|await|auto|bool|break|case|catch|char|class|const|constexpr|continue| debugger|def|default|del|delete|do|double|elif|else|enum|except|export|extends|extern|final|finally|float|fn|for|from|func|function|get|global|go|goto|if|impl|implements|import|in|inline|instanceof|int|interface|is|lambda|let|long|loop|match|mod|move|mut|namespace|new|nonlocal|not|null|of|operator|or|override|package|pass|private|protected|pub|public|raise|range|ref|register|return|self|set|short|signed|sizeof|static|str|struct|super|switch|synchronized|template|this|throw|throws|trait|try|type|typedef|typeof|union|unsafe|unsigned|use|using|val|var|vector|virtual|void|volatile|where|while|with|yield)\b/,
+        'boolean': /\b(?:true|false|True|False|None|nullptr|nil)\b/,
+        'builtin': /\b(?:Map|Set|WeakMap|WeakSet|Array|Object|String|Number|Boolean|Symbol|BigInt|Math|JSON|Promise|RegExp|Error|Date|console|window|document|Infinity|NaN|undefined|parseInt|parseFloat|isNaN|isFinite|len|range|enumerate|zip|min|max|sum|abs|sorted|reversed|list|dict|set|tuple|int|str|float|bool|print|vector|unordered_map|unordered_set|priority_queue|deque|stack|queue|pair|string|ListNode|TreeNode)\b/
+      }) : L.javascript;
+
+      CODE_LANGS.forEach(function (k) {
+        if (!L[k]) L[k] = polyglot;
+      });
+    }
+
+    prismReady = true;
+  }
+
+  /**
+   * Tokenize every `.chat-code pre code` inside `scope` via Prism so both code
+   * and pseudocode blocks get vivid, multi-color editor syntax highlighting.
+   */
+  function highlightCode(scope) {
+    if (!scope || !window.Prism || !window.Prism.highlightElement) return;
+    ensurePrismGrammars();
+    var L = window.Prism.languages;
+    scope.querySelectorAll('.chat-code pre code').forEach(function (codeEl) {
+      if (codeEl.getAttribute('data-prism-highlighted') === '1') return;
+      var box = codeEl.closest('.chat-code');
+      var isPseudo = box && box.getAttribute('data-code-kind') === 'pseudocode';
+      var m = (codeEl.className || '').match(/language-([^\s]+)/);
+      var lang = m ? m[1] : (isPseudo ? 'pseudocode' : 'javascript');
+      if (!m) codeEl.classList.add('language-' + lang);
+      if (L && !L[lang]) {
+        L[lang] = isPseudo ? L.pseudocode : (L.javascript || L.pseudocode);
+      }
+      try {
+        window.Prism.highlightElement(codeEl);
+        codeEl.setAttribute('data-prism-highlighted', '1');
+      } catch (e) { /* leave escaped source intact on grammar failure */ }
+    });
   }
 
   /**
@@ -980,11 +1130,14 @@
     // Assistant markdown is sanitised; user text is always escaped.
     body.innerHTML = m.role === 'assistant' ? renderMarkdown(m.content) : esc(m.content);
     enhanceTables(body);
-    // Math for a settled message: a restored thread, or the turn the reveal has
-    // just handed back. User turns are skipped on purpose — their text is
+    // Syntax-highlight code & pseudocode blocks and typeset math for a settled
+    // assistant message. User turns are skipped on purpose — their text is
     // escaped rather than markdown, and KaTeX would rewrite a reader's own words
     // ("$5 and $10") into a formula.
-    if (m.role === 'assistant') renderMath(body);
+    if (m.role === 'assistant') {
+      highlightCode(body);
+      renderMath(body);
+    }
     // Fire-and-forget: Mermaid replaces the node's contents with an <svg> once
     // it resolves, so nothing downstream depends on this having finished.
     renderMermaid(body);
@@ -1272,6 +1425,7 @@
       var prefix = split > 0 ? text.slice(0, split) : '';
       r.md.innerHTML = renderMarkdown(prefix);
       enhanceTables(r.md);
+      highlightCode(r.md);
       // Math on the PREFIX ONLY, never the tail. This is the whole reason the
       // reveal splits where it does: stableSplit is fence-aware, so a `$…$` pair
       // inside the prefix is already closed and typesets once with nothing left

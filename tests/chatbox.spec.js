@@ -2641,6 +2641,114 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
     // Verify zero overlap between article content and the docked chatbot rail
     expect(articleBox.x + articleBox.width).toBeLessThanOrEqual(railBox.x + 1);
   });
+
+  test('code boxes and pseudocode boxes inside chat render vivid, differently colored editor syntax tokens in dark and light mode', async ({ page }) => {
+    await page.goto(ARTICLE_URL);
+    await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+
+    const reply = [
+      'Here is the step-by-step pseudocode:',
+      '',
+      '```pseudocode',
+      '// Sliding window scan',
+      'FUNCTION twoSum(nums, target):',
+      '    seen <- empty Map',
+      '    FOR i FROM 0 TO nums.length - 1 DO',
+      '        need <- target - nums[i]',
+      '        IF need IN seen THEN',
+      '            RETURN [seen.get(need), i]',
+      '    RETURN false',
+      '```',
+      '',
+      'And here is the JavaScript implementation:',
+      '',
+      '```js',
+      '// O(n) hash map lookup',
+      'function twoSum(nums, target) {',
+      '  const seen = new Map();',
+      '  for (let i = 0; i < nums.length; i++) {',
+      '    const label = "idx";',
+      '    if (seen.has(target - nums[i])) return true;',
+      '  }',
+      '  return false;',
+      '}',
+      '```'
+    ].join('\n');
+
+    await mockChat(page, [reply]);
+    await openChat(page);
+
+    await page.locator(input).fill('show pseudocode and js code');
+    await page.locator(sendBtn).click();
+
+    const bubble = assistantBubble(page);
+    const boxes = bubble.locator('.chat-code');
+    await expect(boxes).toHaveCount(2, { timeout: 15_000 });
+
+    const pseudoBox = boxes.nth(0);
+    const codeBox = boxes.nth(1);
+
+    await expect(pseudoBox).toHaveAttribute('data-code-kind', 'pseudocode');
+    await expect(pseudoBox.locator('.chat-code-lang')).toHaveText('pseudocode');
+    await expect(codeBox).toHaveAttribute('data-code-kind', 'code');
+    await expect(codeBox.locator('.chat-code-lang')).toHaveText('js');
+
+    const inspectColors = async () => {
+      return await page.evaluate(() => {
+        function collectBoxStats(box) {
+          const tokens = Array.from(box.querySelectorAll('pre code .token'));
+          const byType = {};
+          const colors = new Set();
+          for (const t of tokens) {
+            const c = getComputedStyle(t).color;
+            colors.add(c);
+            const cls = Array.from(t.classList).find((k) => k !== 'token') || 'token';
+            if (!byType[cls]) byType[cls] = c;
+          }
+          return {
+            tokenCount: tokens.length,
+            uniqueColorCount: colors.size,
+            byType
+          };
+        }
+        const allBoxes = document.querySelectorAll('#ltcLog .chat-code');
+        return {
+          pseudo: collectBoxStats(allBoxes[0]),
+          code: collectBoxStats(allBoxes[1])
+        };
+      });
+    };
+
+    // Dark mode check
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const darkStats = await inspectColors();
+    expect(darkStats.pseudo.tokenCount).toBeGreaterThan(15);
+    expect(darkStats.pseudo.uniqueColorCount).toBeGreaterThanOrEqual(6);
+    expect(darkStats.pseudo.byType.keyword).toBeTruthy();
+    expect(darkStats.pseudo.byType.function).toBeTruthy();
+    expect(darkStats.pseudo.byType.keyword).not.toBe(darkStats.pseudo.byType.function);
+    expect(darkStats.pseudo.byType.keyword).not.toBe(darkStats.pseudo.byType.number);
+
+    expect(darkStats.code.tokenCount).toBeGreaterThan(15);
+    expect(darkStats.code.uniqueColorCount).toBeGreaterThanOrEqual(6);
+    expect(darkStats.code.byType.keyword).toBeTruthy();
+    expect(darkStats.code.byType.function).toBeTruthy();
+    expect(darkStats.code.byType.string).toBeTruthy();
+    expect(darkStats.code.byType.keyword).not.toBe(darkStats.code.byType.string);
+    expect(darkStats.code.byType.function).not.toBe(darkStats.code.byType.number);
+
+    // Switch to light mode and verify vivid distinct token colors remain active
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+    const lightStats = await inspectColors();
+    expect(lightStats.pseudo.uniqueColorCount).toBeGreaterThanOrEqual(6);
+    expect(lightStats.code.uniqueColorCount).toBeGreaterThanOrEqual(6);
+    expect(lightStats.code.byType.keyword).not.toBe(darkStats.code.byType.keyword);
+    expect(lightStats.pseudo.byType.keyword).not.toBe(darkStats.pseudo.byType.keyword);
+  });
 });
+
 
 
