@@ -983,7 +983,20 @@
    * and pseudocode blocks get vivid, multi-color editor syntax highlighting.
    */
   function highlightCode(scope) {
-    if (!scope || !window.Prism || !window.Prism.highlightElement) return;
+    if (!scope) return;
+    if (!window.Prism || !window.Prism.highlightElement) {
+      // If Prism is still loading (defer script), retry once it lands or DOM is ready.
+      var retry = function () {
+        if (window.Prism && window.Prism.highlightElement) {
+          highlightCode(scope);
+        }
+      };
+      if (document.readyState !== 'complete') {
+        window.addEventListener('load', retry, { once: true });
+      }
+      setTimeout(retry, 250);
+      return;
+    }
     ensurePrismGrammars();
     var L = window.Prism.languages;
     scope.querySelectorAll('.chat-code pre code').forEach(function (codeEl) {
