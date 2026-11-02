@@ -2377,6 +2377,34 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
     await expect(page.locator(fab)).toBeHidden();
   });
 
+  test('desktop self-heals stale snap-bottom mode from localStorage and always reveals FAB when closed', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() => {
+      try { localStorage.setItem('lt150-chat-mode', 'snap-bottom'); } catch (e) {}
+    });
+    await page.goto(ARTICLE_URL);
+    await page.waitForSelector('#ltcPanel', { state: 'attached' });
+
+    // 1. Desktop must normalize stale snap-bottom to docked in the right rail
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+    const panelBox = await page.locator('#ltcPanel').boundingBox();
+    expect(panelBox.width).toBeLessThan(600);
+    expect(panelBox.x).toBeGreaterThan(900);
+
+    // 2. Closing the assistant collapses the rail and reveals #ltcFab
+    await page.locator('#ltcClose').click();
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+    await expect(page.locator(fab)).toBeVisible();
+
+    // 3. Clicking #ltcFab reopens the assistant in docked mode
+    await page.locator(fab).click();
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
+    await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
+    await expect(page.locator(fab)).toBeHidden();
+  });
+
   test('header title does not wrap or cram in docked mode', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(ARTICLE_URL);

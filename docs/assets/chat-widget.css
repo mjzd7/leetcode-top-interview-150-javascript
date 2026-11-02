@@ -181,6 +181,9 @@
     height: auto; flex: 1 1 auto; border-radius: 0; border: none;
     box-shadow: none;
   }
+  .ltc-panel[data-mode="docked"]:not(.is-open) {
+    display: none !important;
+  }
   .ltc-panel[data-mode="docked"][data-resized] {
     flex: 0 0 var(--ltc-panel-h) !important;
     height: var(--ltc-panel-h) !important;
@@ -1097,7 +1100,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
        away while the sheet is up or it swallows the tap. */
     .ltc-fab.is-tucked { opacity: 0; pointer-events: none; transform: scale(0.7); visibility: hidden; }
     @media (min-width: 1280px) {
-      body:has(#ltRail:not([data-collapsed="true"])) .ltc-fab { display: none; }
+      body:has(#ltRail:not([data-collapsed="true"]) .ltc-panel.is-open[data-mode="docked"]) .ltc-fab { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
       .ltc-panel { transition: none; }

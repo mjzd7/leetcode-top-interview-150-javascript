@@ -1879,14 +1879,23 @@
     syncArticle(true);
     state.open = true;
     state.pinScroll = true;
+    if (isDesktop() && state.mode === 'snap-bottom') {
+      setMode('docked', false);
+    } else if (!isDesktop() && state.mode === 'docked') {
+      setMode('snap-bottom', false);
+    }
     el.panel.classList.add('is-open');
     el.panel.removeAttribute('aria-hidden');
     el.fab.setAttribute('aria-expanded', 'true');
     el.fab.classList.add('is-tucked');
     el.fab.setAttribute('aria-hidden', 'true');
     var rail = $('ltRail');
-    if (rail && (state.mode === 'docked' || !state.mode)) {
-      rail.removeAttribute('data-collapsed');
+    if (rail) {
+      if (state.mode === 'docked' || !state.mode) {
+        rail.removeAttribute('data-collapsed');
+      } else if (isDesktop()) {
+        rail.setAttribute('data-collapsed', 'true');
+      }
     }
     if (el.backdrop) {
       if (state.mode === 'snap-bottom' && (state.snapStep === '90dvh' || isSheet())) {
@@ -1925,7 +1934,7 @@
     el.fab.classList.remove('is-tucked');
     el.fab.removeAttribute('aria-hidden');
     if (el.backdrop) el.backdrop.classList.remove('is-open');
-    if (state.mode === 'docked' && isDesktop()) {
+    if (isDesktop()) {
       var r = $('ltRail');
       if (r) {
         r.setAttribute('data-collapsed', 'true');
@@ -2133,7 +2142,13 @@ function mountPanel(mode) {
     if (rail && el.panel && el.panel.parentElement !== rail) {
       rail.appendChild(el.panel);
     }
-    if (rail && mode === 'docked') rail.removeAttribute('data-collapsed');
+    if (rail) {
+      if (mode === 'docked' && state.open) {
+        rail.removeAttribute('data-collapsed');
+      } else if (isDesktop()) {
+        rail.setAttribute('data-collapsed', 'true');
+      }
+    }
   } else {
     if (overlay && el.panel && el.panel.parentElement !== overlay) {
       overlay.appendChild(el.panel);
@@ -2145,6 +2160,11 @@ function mountPanel(mode) {
 }
 
 function setMode(newMode, persist) {
+  if (isDesktop() && newMode === 'snap-bottom') {
+    newMode = 'docked';
+  } else if (!isDesktop() && newMode === 'docked') {
+    newMode = 'snap-bottom';
+  }
   if (state.mode && state.mode !== newMode && state.mode !== 'fullscreen') {
     state.prevMode = state.mode;
   }
@@ -2219,8 +2239,14 @@ function setMode(newMode, persist) {
   }
 
   if (el.fab) {
-    var isTucked = state.open || (newMode === 'docked' && isDesktop());
+    var isTucked = !!state.open;
     el.fab.classList.toggle('is-tucked', isTucked);
+    el.fab.setAttribute('aria-expanded', isTucked ? 'true' : 'false');
+    if (isTucked) {
+      el.fab.setAttribute('aria-hidden', 'true');
+    } else {
+      el.fab.removeAttribute('aria-hidden');
+    }
   }
 
   if (persist) {
@@ -2236,7 +2262,7 @@ function getCurrentMode() {
   var stored = null;
   try { stored = localStorage.getItem(MODE_KEY); } catch (e) {}
   if (stored) {
-    if (isDesktop()) return stored;
+    if (isDesktop()) return stored === 'snap-bottom' ? 'docked' : stored;
     if (stored === 'docked') return 'snap-bottom';
     return stored;
   }
@@ -2262,6 +2288,11 @@ function initMode() {
     state.open = true;
     el.panel.classList.add('is-open');
     el.panel.removeAttribute('aria-hidden');
+    try {
+      if (localStorage.getItem(MODE_KEY) === 'snap-bottom') {
+        localStorage.setItem(MODE_KEY, 'docked');
+      }
+    } catch (e) {}
   } else {
     state.open = false;
     el.panel.classList.remove('is-open');
@@ -2643,7 +2674,7 @@ function init() {
           if (scroller) scroller.focus();
           return;
         }
-        if (isSheet()) {
+        if (isSheet() || mode === 'snap-bottom') {
           e.stopPropagation();
           if (state.streaming) stop();
           close();
