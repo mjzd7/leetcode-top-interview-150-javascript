@@ -110,7 +110,7 @@ test.describe('Architecture Integration Suite', () => {
     // 4. Keyboard shortcut '/' focuses search input
     await page.keyboard.press('/');
     await page.waitForTimeout(200);
-    expect(await page.evaluate(() => document.activeElement?.id)).toBe('toolSearchInput');
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe('searchInput');
 
     // 5. Section jumping via 'n' and 'p'
     await page.evaluate(() => document.activeElement?.blur());
@@ -132,16 +132,16 @@ test.describe('Architecture Integration Suite', () => {
     await expect(iframes).toHaveCount(4);
 
     const frameArch = page.locator('#frame-arch');
-    await expect(frameArch).toHaveAttribute('src', 'architecture/molly-system-architecture.html');
+    await expect(frameArch).toHaveAttribute('src', 'architecture/system-architecture.html');
 
     const frameSeq = page.locator('#frame-seq');
-    await expect(frameSeq).toHaveAttribute('src', 'architecture/molly-chat-streaming.html');
+    await expect(frameSeq).toHaveAttribute('src', 'architecture/chat-streaming.html');
 
     const frameFlow = page.locator('#frame-flow');
-    await expect(frameFlow).toHaveAttribute('src', 'architecture/molly-dryrun-pipeline.html');
+    await expect(frameFlow).toHaveAttribute('src', 'architecture/dryrun-pipeline.html');
 
     const frameLife = page.locator('#frame-life');
-    await expect(frameLife).toHaveAttribute('src', 'architecture/molly-verification-lifecycle.html');
+    await expect(frameLife).toHaveAttribute('src', 'architecture/verification-lifecycle.html');
 
     // Verify zoom toolbar buttons exist
     const zoomInBtns = page.locator('.archify-zoom-in');
@@ -192,6 +192,141 @@ test.describe('Architecture Integration Suite', () => {
     });
 
     expect(rawDollarMatches).toEqual([]);
+  });
+
+  test('left navigation bar supports 3 collapse stages, Alt+V dual rail modes, and category reveal', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar collapse stages are desktop rail features');
+    await page.goto('/ARCHITECTURE_AND_DECISIONS.html');
+    await page.waitForTimeout(500);
+
+    const sidebar = page.locator('#sidebar');
+    const collapseBtn = page.locator('#ltNavCollapse');
+
+    // 1. Initial stage is 0
+    expect(await sidebar.getAttribute('data-stage')).toBe('0');
+
+    // 2. Stage cycle: 0 -> 1 -> 2 -> 0
+    await collapseBtn.click();
+    await page.waitForTimeout(100);
+    expect(await sidebar.getAttribute('data-stage')).toBe('1');
+    expect(await page.evaluate(() => localStorage.getItem('lt150-nav-stage'))).toBe('1');
+
+    await collapseBtn.click();
+    await page.waitForTimeout(100);
+    expect(await sidebar.getAttribute('data-stage')).toBe('2');
+    expect(await page.evaluate(() => localStorage.getItem('lt150-nav-stage'))).toBe('2');
+
+    // In stage 2, metric ring block should be hidden
+    expect(await page.locator('#ringBlock').evaluate(el => el.classList.contains('hidden'))).toBe(true);
+
+    // 3. Alt+V toggles rail mode between 'cat' and 'num'
+    expect(await sidebar.getAttribute('data-rail-mode')).toBe('cat');
+    await page.keyboard.press('Alt+v');
+    await page.waitForTimeout(100);
+    expect(await sidebar.getAttribute('data-rail-mode')).toBe('num');
+    expect(await page.evaluate(() => localStorage.getItem('lt150-rail-mode'))).toBe('num');
+
+    await page.keyboard.press('Alt+v');
+    await page.waitForTimeout(100);
+    expect(await sidebar.getAttribute('data-rail-mode')).toBe('cat');
+
+    // 4. Clicking category glyph in stage 2 reveals category and widens to stage 0
+    const catBtn = page.locator('.nav-cat-btn[data-cat="adrs"]').first();
+    await catBtn.click();
+    await page.waitForTimeout(200);
+    expect(await sidebar.getAttribute('data-stage')).toBe('0');
+
+    // 5. Cycling from stage 2 returns to stage 0
+    await collapseBtn.click(); // 0 -> 1
+    await collapseBtn.click(); // 1 -> 2
+    expect(await sidebar.getAttribute('data-stage')).toBe('2');
+    await collapseBtn.click(); // 2 -> 0
+    expect(await sidebar.getAttribute('data-stage')).toBe('0');
+  });
+
+  test('sidebar search and filter pills dynamically filter navigation items and show empty state', async ({ page, isMobile }) => {
+    await page.goto('/ARCHITECTURE_AND_DECISIONS.html');
+    await page.waitForTimeout(500);
+
+    if (isMobile) {
+      await page.locator('#menuBtn').click();
+      await page.waitForTimeout(200);
+    }
+
+    const searchInput = page.locator('#searchInput');
+
+    // Filter for "Euler"
+    await searchInput.fill('Euler');
+    await page.waitForTimeout(100);
+
+    const physicsLabLink = page.locator('#curriculumNav a[href="#physics-lab"]');
+    const overviewLink = page.locator('#curriculumNav a[href="#overview"]');
+    await expect(physicsLabLink).toBeVisible();
+    await expect(overviewLink).toBeHidden();
+
+    // Clear search and test filter pill "ADRs"
+    await searchInput.fill('');
+    const adrsPill = page.locator('#difficultyFilters button[data-filter="adrs"]');
+    await adrsPill.click();
+    await page.waitForTimeout(100);
+
+    const decisionsLink = page.locator('#curriculumNav a[href="#decisions"]');
+    await expect(decisionsLink).toBeVisible();
+    await expect(physicsLabLink).toBeHidden();
+
+    // Reset to "All"
+    const allPill = page.locator('#difficultyFilters button[data-filter="all"]');
+    await allPill.click();
+    await page.waitForTimeout(100);
+    await expect(overviewLink).toBeVisible();
+
+    // Non-existent search shows empty state
+    await searchInput.fill('xyznonexistentquery999');
+    await page.waitForTimeout(100);
+    const emptyState = page.locator('#navEmptyState');
+    await expect(emptyState).toBeVisible();
+    await expect(emptyState).toHaveText('No matching sections found');
+  });
+
+  test('chat assistant rail supports keyboard shortcut c, resizer drag/keys, and context sync', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop chat rail and keyboard shortcuts');
+    await page.goto('/ARCHITECTURE_AND_DECISIONS.html');
+    await page.waitForTimeout(500);
+
+    // 1. Pressing 'c' focuses the chat input
+    await page.keyboard.press('c');
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe('ltcInput');
+
+    // 2. Rail resizer handles arrow keys to adjust --lt-rail-w
+    const handle = page.locator('#ltRailResizer');
+    const initialW = await page.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lt-rail-w'), 10) || 380);
+
+    await handle.focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForTimeout(100);
+    const expandedW = await page.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lt-rail-w'), 10));
+    expect(expandedW).toBe(initialW + 32);
+
+    // Double-click resets back to default (380px)
+    await handle.dispatchEvent('dblclick');
+    await page.waitForTimeout(100);
+    const resetW = await page.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lt-rail-w'), 10));
+    expect(resetW).toBe(380);
+
+    // 3. Scrollspy updates active nav link and crumb
+    await page.evaluate(() => {
+      const container = document.getElementById('contentContainer');
+      const target = document.getElementById('decisions');
+      if (container && target) {
+        container.scrollTop = target.offsetTop - 50;
+      }
+    });
+    await page.waitForTimeout(300);
+
+    const activeLink = page.locator('#curriculumNav a[aria-current="page"]');
+    await expect(activeLink).toHaveAttribute('href', '#decisions');
+    await expect(page.locator('#crumbActive')).toContainText('03. 15 Architecture Records (ADRs)');
   });
 });
 

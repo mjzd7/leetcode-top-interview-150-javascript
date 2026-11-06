@@ -3,7 +3,7 @@
   "diagram_type": "sequence",
   "meta": {
     "title": "AI Assistant Streaming Protocol & Budget Lifeline",
-    "output": "docs/architecture/molly-chat-streaming.html",
+    "output": "docs/architecture/chat-streaming.html",
     "viewBox": [1080, 860],
     "column_fit": "spread",
     "animation": "trace",

@@ -6,7 +6,7 @@
     "animation": "trace",
     "visual_preset": "signal-flow",
     "quality_profile": "showcase",
-    "output": "docs/architecture/molly-dryrun-pipeline.html"
+    "output": "docs/architecture/dryrun-pipeline.html"
   },
   "lanes": [
     { "id": "source", "label": "Markdown Corpus" },

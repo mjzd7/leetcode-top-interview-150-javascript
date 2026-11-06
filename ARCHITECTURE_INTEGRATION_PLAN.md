@@ -2,26 +2,26 @@
 
 **Document Version:** 1.0.0 (Production-Grade & Procedurally Actionable)  
 **Status:** Materialized & Under Active Execution  
-**Target Platform:** LeetCode 150 JavaScript Mastery (`molly`)  
+**Target Platform:** Invariant (LeetCode 150 JavaScript Mastery)  
 **Artifact References:**  
-- Architecture & Technical Decisions Spec: [`docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md`](file:///Users/mm/orca/workspaces/LeetCode%20Solutions%20Manual/molly/docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md)  
-- Standalone Interactive Master Report: [`docs/ARCHITECTURE_AND_DECISIONS.html`](file:///Users/mm/orca/workspaces/LeetCode%20Solutions%20Manual/molly/docs/ARCHITECTURE_AND_DECISIONS.html)  
-- Archify Interactive Visualizer Suite: [`docs/architecture/`](file:///Users/mm/orca/workspaces/LeetCode%20Solutions%20Manual/molly/docs/architecture/)  
-- Algorithmic & UI Edge-Case Verification Matrix: [`EDGE_CASES_VERIFICATION_MATRIX.md`](file:///Users/mm/orca/workspaces/LeetCode%20Solutions%20Manual/molly/EDGE_CASES_VERIFICATION_MATRIX.md)  
-- Production Client Shell: [`docs/index.html`](file:///Users/mm/orca/workspaces/LeetCode%20Solutions%20Manual/molly/docs/index.html)
+- Architecture & Technical Decisions Spec: [`docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md`](file:///Users/mm/orca/projects/LeetCode%20Solutions%20Manual/docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md)  
+- Standalone Interactive Master Report: [`docs/ARCHITECTURE_AND_DECISIONS.html`](file:///Users/mm/orca/projects/LeetCode%20Solutions%20Manual/docs/ARCHITECTURE_AND_DECISIONS.html)  
+- Archify Interactive Visualizer Suite: [`docs/architecture/`](file:///Users/mm/orca/projects/LeetCode%20Solutions%20Manual/docs/architecture/)  
+- Algorithmic & UI Edge-Case Verification Matrix: [`EDGE_CASES_VERIFICATION_MATRIX.md`](file:///Users/mm/orca/projects/LeetCode%20Solutions%20Manual/EDGE_CASES_VERIFICATION_MATRIX.md)  
+- Production Client Shell: [`docs/index.html`](file:///Users/mm/orca/projects/LeetCode%20Solutions%20Manual/docs/index.html)
 
 ---
 
 ## 1. Executive Summary & Architectural Motivation
 
-The **LeetCode 150 JavaScript Mastery** platform has evolved from a static curriculum viewer into a multi-tiered distributed application encompassing:
+The **Invariant** (LeetCode 150 JavaScript Mastery) platform has evolved from a static curriculum viewer into a multi-tiered distributed application encompassing:
 1. A zero-framework, GPU-accelerated client Single-Page Application (SPA) with a 240Hz semi-implicit Euler spring physics vector morphing cursor engine.
 2. A hermetic QuickJS-Emscripten WebAssembly dry-run execution and Acorn AST probing pipeline generating Envelope v1.1 execution traces.
 3. A Vercel Edge AI streaming proxy with resilient 10s SSE keepalives, token reservations, and delimiter-fenced prompt safety.
 4. A full Online Judge subsystem with 5 polyglot codecs and cyclic graph serialization.
 5. An interactive Archify Intermediate Representation (IR) visualization suite and an exhaustive 24-chapter Algorithmic & UI Edge-Case Verification Matrix.
 
-While these architectural assets (`docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md`, `docs/ARCHITECTURE_AND_DECISIONS.html`, `docs/architecture/*.html`, and `EDGE_CASES_VERIFICATION_MATRIX.md`) exist as rigorous standalone artifacts, they must be deeply and procedurally woven into the primary learner navigation, Command-K jump palette, header ergonomic controls, and automated verification harness of the `molly` web application.
+While these architectural assets (`docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md`, `docs/ARCHITECTURE_AND_DECISIONS.html`, `docs/architecture/*.html`, and `EDGE_CASES_VERIFICATION_MATRIX.md`) exist as rigorous standalone artifacts, they must be deeply and procedurally woven into the primary learner navigation, Command-K jump palette, header ergonomic controls, and automated verification harness of the Invariant web application.
 
 This plan specifies the exact sequence, architectural invariants, code changes, and test gates required to achieve 100% end-to-end integration without violating header height invariants (56px), mobile responsive collapsing, or strict Content Security Policy (CSP) script-src hash enforcement.
 
@@ -103,10 +103,10 @@ flowchart TD
   1. Lightweight modal dialog `#archModal` containing:
      - Tabs for:
        - **Master Report & Physics Sandbox** (`docs/ARCHITECTURE_AND_DECISIONS.html`)
-       - **System Architecture** (`docs/architecture/molly-system-architecture.html`)
-       - **Chat Streaming Sequence** (`docs/architecture/molly-chat-streaming.html`)
-       - **Dry-Run Trace Pipeline** (`docs/architecture/molly-dryrun-pipeline.html`)
-       - **Verification Lifecycle** (`docs/architecture/molly-verification-lifecycle.html`)
+       - **System Architecture** (`docs/architecture/system-architecture.html`)
+       - **Chat Streaming Sequence** (`docs/architecture/chat-streaming.html`)
+       - **Dry-Run Trace Pipeline** (`docs/architecture/dryrun-pipeline.html`)
+       - **Verification Lifecycle** (`docs/architecture/verification-lifecycle.html`)
        - **Full Markdown Spec** (`docs/PROJECT_ARCHITECTURE_AND_DECISIONS.md`)
        - **Edge Cases Matrix** (`EDGE_CASES_VERIFICATION_MATRIX.md`)
      - Quick "Open in New Tab" pop-out link for dedicated multi-monitor viewing.

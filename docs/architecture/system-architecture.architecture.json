@@ -4,7 +4,7 @@
   "meta": {
     "title": "LeetCode 150 Mastery & Interactive Engine — System Architecture",
     "subtitle": "Modular SPA, 240Hz Euler spring physics, Acorn AST tracer, QuickJS WASM sandbox, and streaming AI assistant",
-    "output": "docs/architecture/molly-system-architecture.html"
+    "output": "docs/architecture/system-architecture.html"
   },
   "components": [
     {

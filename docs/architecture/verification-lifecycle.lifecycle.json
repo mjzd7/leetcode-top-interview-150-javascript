@@ -3,7 +3,7 @@
   "diagram_type": "lifecycle",
   "meta": {
     "title": "Release Verification Lifecycle & Fail-Closed Gates",
-    "output": "docs/architecture/molly-verification-lifecycle.html",
+    "output": "docs/architecture/verification-lifecycle.html",
     "animation": "trace",
     "visual_preset": "signal-flow",
     "quality_profile": "showcase"
