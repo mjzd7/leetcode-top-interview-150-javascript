@@ -570,6 +570,8 @@ button[data-guide],
 #guidesBtn,
 #paletteBtn,
 #themeToggle,
+#authArea a,
+#authArea button,
 .ltc-send,
 .ltc-chip {
   transition: transform 0.18s var(--ease-snappy, cubic-bezier(0.2, 0.9, 0.2, 1)),
@@ -726,6 +728,12 @@ html[data-theme="light"] #authArea a {
   background: #FFFFFF !important;
   color: #1E293B !important;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+}
+html[data-theme="light"] #authArea button:hover,
+html[data-theme="light"] #authArea a:hover {
+  background: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+  color: #0F172A !important;
 }
 
 /* 3D Tactile Keycaps in Light Mode */
@@ -964,7 +972,11 @@ html[data-theme="light"] .ltc-hint {
 a.btn,
 button[data-guide],
 #homeStart,
-#guidesBtn {
+#guidesBtn,
+#paletteBtn,
+#themeToggle,
+#authArea a,
+#authArea button {
   position: relative;
   overflow: hidden;
   text-decoration: none !important;
@@ -977,19 +989,32 @@ button[data-guide],
 .btn:hover:not(:disabled),
 button[data-guide]:hover:not(:disabled),
 #homeStart:hover:not(:disabled),
-#guidesBtn:hover:not(:disabled) {
+#guidesBtn:hover:not(:disabled),
+#paletteBtn:hover:not(:disabled),
+#themeToggle:hover:not(:disabled),
+#authArea a:hover,
+#authArea button:hover:not(:disabled) {
   transform: translateY(-1px);
+  border-color: var(--accent-rim);
 }
 .btn:active:not(:disabled),
 button[data-guide]:active:not(:disabled),
 #homeStart:active:not(:disabled),
-#guidesBtn:active:not(:disabled) {
+#guidesBtn:active:not(:disabled),
+#paletteBtn:active:not(:disabled),
+#themeToggle:active:not(:disabled),
+#authArea a:active,
+#authArea button:active:not(:disabled) {
   transform: translateY(0) scale(0.975);
 }
 .btn::after,
 button[data-guide]::after,
 #homeStart::after,
-#guidesBtn::after {
+#guidesBtn::after,
+#paletteBtn::after,
+#themeToggle::after,
+#authArea a::after,
+#authArea button::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -1001,13 +1026,21 @@ button[data-guide]::after,
 .btn:hover:not(:disabled)::after,
 button[data-guide]:hover:not(:disabled)::after,
 #homeStart:hover:not(:disabled)::after,
-#guidesBtn:hover:not(:disabled)::after {
+#guidesBtn:hover:not(:disabled)::after,
+#paletteBtn:hover:not(:disabled)::after,
+#themeToggle:hover:not(:disabled)::after,
+#authArea a:hover::after,
+#authArea button:hover:not(:disabled)::after {
   transform: translateX(120%);
 }
 html[data-theme="light"] .btn::after,
 html[data-theme="light"] button[data-guide]::after,
 html[data-theme="light"] #homeStart::after,
-html[data-theme="light"] #guidesBtn::after {
+html[data-theme="light"] #guidesBtn::after,
+html[data-theme="light"] #paletteBtn::after,
+html[data-theme="light"] #themeToggle::after,
+html[data-theme="light"] #authArea a::after,
+html[data-theme="light"] #authArea button::after {
   background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,.7) 48%, transparent 64%);
 }
 
@@ -1058,11 +1091,51 @@ html[data-theme="light"] #guidesBtn::after {
   transform-origin: 0% 50%;
 }
 
+/* Header & Footer Logo 'Invariant' & Noether Symmetry Mark — Theme-Aware Hover Color Inversion
+   Dark mode: Lime (#C8FA4B) <-> White (--fg)
+   Light mode: Indigo (#4338CA) <-> Deep Ink (--fg) */
+#brandHome .font-display,
+.brand-lockup .font-display {
+  color: var(--fg);
+  transition: color 0.18s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+#brandHome .logo-part-accent,
+.brand-lockup .logo-part-accent,
+.brand-logo-svg .logo-part-accent {
+  fill: var(--accent);
+  transition: fill 0.18s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+#brandHome .logo-part-fg,
+.brand-lockup .logo-part-fg,
+.brand-logo-svg .logo-part-fg {
+  fill: var(--fg);
+  transition: fill 0.18s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+#brandHome:hover .font-display,
+#brandHome:focus-visible .font-display,
+.brand-lockup:hover .font-display {
+  color: var(--accent) !important;
+}
+#brandHome:hover .logo-part-accent,
+#brandHome:focus-visible .logo-part-accent,
+.brand-lockup:hover .logo-part-accent,
+.brand-pill:hover .logo-part-accent,
+.brand-logo-svg:hover .logo-part-accent {
+  fill: var(--fg) !important;
+}
+#brandHome:hover .logo-part-fg,
+#brandHome:focus-visible .logo-part-fg,
+.brand-lockup:hover .logo-part-fg,
+.brand-pill:hover .logo-part-fg,
+.brand-logo-svg:hover .logo-part-fg {
+  fill: var(--accent) !important;
+}
+
 /* ==========================================================================
    Inline Links, Tags & LeetCode Pills
    No static underline at rest; dynamic underline, glow, and lift on hover
    ========================================================================== */
-a:not(.btn):not(.nav-item):not(#brandHome):not(#paletteBtn):not(#guidesBtn):not(#themeToggle):not(.ltc-chip):not(.nav-cat-btn):not([role="button"]):not([class*="btn"]):not([class*="h-11"]):not([class*="h-10"]),
+a:not(.btn):not(.nav-item):not(#brandHome):not(#paletteBtn):not(#guidesBtn):not(#themeToggle):not(#authArea a):not(.ltc-chip):not(.nav-cat-btn):not([role="button"]):not([class*="btn"]):not([class*="h-11"]):not([class*="h-10"]),
 .prose a,
 .prose a > code,
 .leetcode-link,
@@ -1077,7 +1150,7 @@ footer a {
 }
 
 /* Hover state: underline dynamically to highlight for the user */
-a:not(.btn):not(.nav-item):not(#brandHome):not(#paletteBtn):not(#guidesBtn):not(#themeToggle):not(.ltc-chip):not(.nav-cat-btn):not([role="button"]):not([class*="btn"]):not([class*="h-11"]):not([class*="h-10"]):hover,
+a:not(.btn):not(.nav-item):not(#brandHome):not(#paletteBtn):not(#guidesBtn):not(#themeToggle):not(#authArea a):not(.ltc-chip):not(.nav-cat-btn):not([role="button"]):not([class*="btn"]):not([class*="h-11"]):not([class*="h-10"]):hover,
 .prose a:hover,
 .prose a:hover > code,
 .leetcode-link:hover,
@@ -1123,7 +1196,7 @@ footer a:hover {
 .primer-link,
 .prose code.primer-link {
   text-decoration: none !important;
-  cursor: pointer !important;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;

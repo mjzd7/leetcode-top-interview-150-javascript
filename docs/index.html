@@ -9,7 +9,7 @@
   <meta property="og:title" content="Invariant — Visual JavaScript Interview Manual">
   <meta property="og:description" content="150 problems solved at 3 depths (Brute Force, Optimized, Canonical Proof) with interactive traces and MAANG interview guides.">
   <meta property="og:type" content="website">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M4 7H28L25.5 12H6.5L4 7Z' fill='%23C8FA4B' fill-opacity='0.38'/%3E%3Cpath d='M7.5 14H24.5L22 19H10L7.5 14Z' fill='%23C8FA4B' fill-opacity='0.68'/%3E%3Cpath d='M11 21H21L19 26.5H13L11 21Z' fill='%23C8FA4B'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z' fill='%23C8FA4B'/%3E%3Cpath d='M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z' fill='%23E9EDF4'/%3E%3Cpath d='M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z' fill='%23C8FA4B'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -260,7 +260,58 @@
        the 27 group headers. Sidebar groups were 44px apart on a phone and 20px on
        a desktop — denser the other way round. */
     .nav-cat-btn, .nav-group-rule { display: none; }
+    #ltNavResizer { display: none; }
+    #sidebar.is-resizing { transition: none !important; }
+    #sidebar:not([data-stage="2"]) .nav-group[data-cat-collapsed="true"] .nav-group-items { display: none; }
+    .nav-group-chevron { transition: transform 0.16s ease; }
+    .nav-group[data-cat-collapsed="true"] .nav-group-chevron { transform: rotate(-90deg); }
+    .nav-group-text {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      border: none;
+      margin: 0;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
     @media (min-width: 768px) {
+      #ltNavResizer {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 9px;
+        cursor: col-resize;
+        z-index: 25;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #ltNavResizer::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--accent-rim);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      #ltNavResizer:hover::after,
+      #ltNavResizer:focus-visible::after,
+      #ltNavResizer.is-dragging::after {
+        opacity: 1;
+      }
+      #ltNavResizer:focus-visible {
+        outline: none;
+      }
+      #sidebar[data-nav-resized="true"] {
+        width: var(--lt-nav-w, 320px);
+        max-width: none;
+      }
       #sidebar[data-stage="1"] { width: 200px; }
       #sidebar[data-stage="2"] { width: 56px; }
       #sidebar[data-stage="1"] .nav-badge,
@@ -596,17 +647,21 @@ html[data-theme="light"] .ltc-panel[data-mode="floating"] .ltc-log-wrap::after {
 .ltc-panel:not([data-mode="docked"]) #ltcPin .ltc-icon-dock { display: block !important; }
 
 /* Drag and Resize Global Cursor Locks & Feedback */
+html:not([data-cursor="on"]) body.is-chat-dragging,
+html:not([data-cursor="on"]) body.is-chat-dragging * {
+  cursor: grabbing !important;
+}
 body.is-chat-dragging,
 body.is-chat-dragging * {
-  cursor: grabbing !important;
   user-select: none !important;
   -webkit-user-select: none !important;
 }
 
-body[data-resizing="n"] *, body[data-resizing="s"] * { cursor: ns-resize !important; user-select: none !important; }
-body[data-resizing="e"] *, body[data-resizing="w"] * { cursor: ew-resize !important; user-select: none !important; }
-body[data-resizing="ne"] *, body[data-resizing="sw"] * { cursor: nesw-resize !important; user-select: none !important; }
-body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !important; user-select: none !important; }
+html:not([data-cursor="on"]) body[data-resizing="n"] *, html:not([data-cursor="on"]) body[data-resizing="s"] * { cursor: ns-resize !important; }
+html:not([data-cursor="on"]) body[data-resizing="e"] *, html:not([data-cursor="on"]) body[data-resizing="w"] * { cursor: ew-resize !important; }
+html:not([data-cursor="on"]) body[data-resizing="ne"] *, html:not([data-cursor="on"]) body[data-resizing="sw"] * { cursor: nesw-resize !important; }
+html:not([data-cursor="on"]) body[data-resizing="nw"] *, html:not([data-cursor="on"]) body[data-resizing="se"] * { cursor: nwse-resize !important; }
+body[data-resizing] * { user-select: none !important; }
 
 .ltc-panel.is-dragging {
   box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 1.5px rgba(200, 250, 75, 0.45) !important;
@@ -1416,7 +1471,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
 
   <!-- Reading progress hairline -->
   <div class="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
-    <div id="progressBar" class="h-full w-0" style="background: var(--accent);"></div>
+    <div id="progressBar" class="h-full w-0" style="background: var(--accent); min-width: 1px;"></div>
   </div>
 
   <!-- Header. The hairline is an inset shadow, not a border: a border would make
@@ -1428,12 +1483,12 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
-      <a href="#" id="brandHome" class="flex items-center gap-2.5 shrink-0 min-w-0">
-        <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">
-          <svg class="h-5 w-5" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/>
-            <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/>
-            <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
+      <a href="#" id="brandHome" class="brand-lockup flex items-center gap-2.5 shrink-0 min-w-0">
+        <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0">
+          <svg class="brand-logo-svg h-6 w-6" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+            <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+            <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
           </svg>
         </span>
         <span class="font-display font-bold tracking-tight text-[15px] md:text-base truncate">Invariant</span>
@@ -1444,7 +1499,6 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       <button id="themeToggle" type="button" aria-label="Switch colour theme" class="inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] text-slate-300">
         <span id="themeIcon">☀️</span>
       </button>
-      <button id="guidesBtn" title="Open the MAANG interview guides" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 h-10 text-sm font-semibold shrink-0 whitespace-nowrap" style="color:var(--accent);">Guides</button>
       <button id="paletteBtn" aria-label="Jump to a guide" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         <span class="hidden md:inline">Jump to…</span>
@@ -1459,6 +1513,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
 
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[var(--canvas-sub)] md:bg-transparent flex flex-col overflow-hidden">
+      <div id="ltNavResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the navigation sidebar" title="Drag to resize · Double-click to reset"></div>
       <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
         <div class="flex items-center gap-3">
           <svg id="ringSvg" width="52" height="52" viewBox="0 0 64 64" class="shrink-0 -rotate-90" aria-hidden="true">
@@ -1505,25 +1560,27 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           <div id="crumbRow" class="hidden mb-3 items-center gap-2 text-xs font-mono text-slate-500"></div>
           <div id="articleHead" class="mb-6"></div>
           <div id="articleContent" class="prose max-w-none"></div>
-          <footer class="mt-12 pt-8 pb-10 border-t border-[var(--border-soft)] text-xs text-slate-500 font-mono">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-              <div>
-                <span class="font-bold text-slate-300">Invariant</span> · Visual JavaScript Interview Manual
+          <footer class="mt-12 pt-8 pb-10 border-t border-[var(--border-soft)] text-xs text-slate-500 font-mono space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="inline-flex items-center gap-2 brand-lockup">
+                <svg class="w-4 h-4 shrink-0 brand-logo-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                  <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                  <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                  <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                </svg>
+                <span><span class="font-bold text-slate-300 font-display">Invariant</span> · Visual JavaScript Interview Manual</span>
               </div>
-              <div class="flex flex-wrap items-center gap-3 text-slate-400">
-                <a id="footerArchSuiteLink" href="ARCHITECTURE_AND_DECISIONS.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-soft)] bg-white/[0.03] hover:bg-white/[0.07] hover:text-[var(--accent)] text-slate-300 transition-colors">
-                  <span style="color:var(--accent);">🏛️</span>
-                  <span>Architecture Suite</span>
-                </a>
-                <button id="footerArchSpecBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
-                  <span>15 ADRs Spec</span>
-                </button>
-                <button id="footerEdgeMatrixBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
-                  <span>24-Ch Matrix</span>
-                </button>
+              <div class="flex flex-wrap items-center gap-4 text-slate-400">
+                <a id="footerArchSuiteLink" href="ARCHITECTURE_AND_DECISIONS.html" class="hover:text-slate-200 transition-colors">Architecture</a>
+                <span class="text-slate-600" aria-hidden="true">·</span>
+                <span>developed by <a id="footerAuthorLink" href="https://github.com/mjzd7/leetcode-top-interview-150-javascript" target="_blank" rel="noopener noreferrer" class="hover:text-slate-200 transition-colors">mjzd7</a></span>
               </div>
             </div>
             <div class="text-[11px] text-slate-600">Built from executable guides · QuickJS WASM sandbox · Zero-dependency vanilla DOM</div>
+            <div class="pt-3 border-t border-[var(--border-soft)] flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 text-[11px] text-slate-500 leading-relaxed">
+              <div class="shrink-0">&copy; 2026 Invariant. All rights reserved.</div>
+              <div class="text-slate-600 sm:text-right max-w-2xl">Independently developed for educational purposes; not affiliated with, endorsed by, or sponsored by LeetCode or any mentioned company. All trademarks and brand names are the property of their respective owners.</div>
+            </div>
           </footer>
         </article>
       </div>
@@ -1534,10 +1591,10 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     <!-- Right rail: the study assistant, and nothing else. It shared the column with
          an "On this page" list capped at 45% of the height until that was removed.
          Below 1280px the rail is display:contents and the assistant is a sheet. -->
-    <aside id="ltRail" class="lt-rail" aria-label="Study assistant">
+    <aside id="ltRail" class="lt-rail" data-collapsed="true" aria-label="Study assistant">
       <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the study assistant"></div>
 
-      <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
+      <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant" aria-hidden="true">
       <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
       <div class="ltc-head">
         <span class="ltc-drag-grip" aria-hidden="true" title="Drag to undock or move">
@@ -1653,6 +1710,15 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     'use strict';
     /* ---------- data index ---------- */
     const DATA = (window.CURRICULUM_DATA || []).filter(c => c && Array.isArray(c.items));
+    const CATEGORY_ORDER = {
+      'FOUNDATIONS': 0,
+      'MODERN ENGINEER SKILLS': 1,
+      'MAANG GUIDES': 2,
+      'FRESHER ROADMAP': 3,
+      'MID-LEVEL ROADMAP': 4,
+    };
+    const catOrderKey = (cat) => (cat in CATEGORY_ORDER ? CATEGORY_ORDER[cat] : 5);
+    DATA.sort((a, b) => catOrderKey(a.category) - catOrderKey(b.category));
     const byId = new Map();
     const flatOrder = [];
     const allOrder = [];
@@ -1872,6 +1938,21 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       if (box.top < navBox.top) nav.scrollTop -= navBox.top - box.top + 8;
       else if (box.bottom > navBox.bottom) nav.scrollTop += box.bottom - navBox.bottom + 8;
     }
+    const DEFAULT_COLLAPSED_CATS = ['MODERN ENGINEER SKILLS', 'MAANG GUIDES', 'FRESHER ROADMAP', 'MID-LEVEL ROADMAP'];
+    let collapsedCats = new Set(DEFAULT_COLLAPSED_CATS);
+    try {
+      const raw = localStorage.getItem('lt150-collapsed-cats');
+      if (raw !== null) {
+        const savedCats = JSON.parse(raw);
+        if (Array.isArray(savedCats)) collapsedCats = new Set(savedCats);
+      }
+    } catch (e) {}
+    function saveCollapsedCats() {
+      try {
+        localStorage.setItem('lt150-collapsed-cats', JSON.stringify(Array.from(collapsedCats)));
+      } catch (e) {}
+    }
+
     function renderNav() {
       navIndex = 0;
       searchInput.setAttribute('aria-activedescendant', '');
@@ -1888,6 +1969,7 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
             return aQ - bQ;
           })
         : DATA;
+      const isSearching = Boolean(searchQuery && searchQuery.trim());
       catsToRender.forEach(cat => {
         const all = cat.items;
         const items = cat.items.filter(item => {
@@ -1898,10 +1980,12 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
           return item.title.toLowerCase().includes(q) || item.content.toLowerCase().includes(q);
         });
         if (!items.length) return;
+        const isCollapsed = !isSearching && collapsedCats.has(cat.category);
         const isFound = cat.category === 'FOUNDATIONS';
         const doneCount = isFound ? 0 : items.filter(i => doneSet.has(i.id)).length;
         const wrap = document.createElement('div');
         wrap.className = 'nav-group';
+        if (isCollapsed) wrap.dataset.catCollapsed = 'true';
         const catDone = all.filter(i => doneSet.has(i.id)).length;
         const catCurrent = all.some(i => i.id === currentItemId);
         /* Category mode's destination: the glyph opens the rail and scrolls to
@@ -1920,21 +2004,39 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
         catBtn.onclick = () => revealCategory(cat.category);
         wrap.appendChild(catBtn);
 
-        const head = document.createElement('div');
-        head.className = 'px-2 pt-1 nav-group-text';
-        head.innerHTML = '<div class="flex items-baseline justify-between gap-2">' +
-          '<span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">' + esc(cat.category) + '</span>' +
+        const head = document.createElement('button');
+        head.type = 'button';
+        head.className = 'w-full text-left px-2 pt-1 nav-group-text group/cat flex flex-col cursor-pointer select-none';
+        head.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+        head.setAttribute('aria-label', 'Toggle ' + cat.category + ' category (' + all.length + ' guides)');
+        head.innerHTML = '<div class="flex items-baseline justify-between gap-2 w-full">' +
+          '<div class="flex items-center gap-1.5 min-w-0">' +
+          '<svg class="nav-group-chevron h-3 w-3 shrink-0 text-slate-500 group-hover/cat:text-slate-300 transition-colors" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>' +
+          '<span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display truncate">' + esc(cat.category) + '</span>' +
+          '</div>' +
           (isFound
             ? '<span class="nav-group-count text-[10px] font-mono text-slate-600">' + items.length + '</span>'
             : '<span class="nav-group-count text-[10px] font-mono text-slate-500">' + doneCount + '/' + items.length + '</span>') +
           '</div>' +
-          (isFound ? '' : '<div class="mod-bar mt-1.5"><span style="width:' + Math.round((doneCount / items.length) * 100) + '%"></span></div>');
+          (isFound ? '' : '<div class="mod-bar mt-1.5 w-full"><span style="width:' + Math.round((doneCount / items.length) * 100) + '%"></span></div>');
+        head.onclick = () => {
+          if (collapsedCats.has(cat.category)) {
+            collapsedCats.delete(cat.category);
+            wrap.dataset.catCollapsed = 'false';
+            head.setAttribute('aria-expanded', 'true');
+          } else {
+            collapsedCats.add(cat.category);
+            wrap.dataset.catCollapsed = 'true';
+            head.setAttribute('aria-expanded', 'false');
+          }
+          saveCollapsedCats();
+        };
         wrap.appendChild(head);
         const rule = document.createElement('div');
         rule.className = 'nav-group-rule';
         wrap.appendChild(rule);
         const list = document.createElement('div');
-        list.className = 'space-y-0.5 mt-1';
+        list.className = 'nav-group-items space-y-0.5 mt-1';
         items.forEach(item => {
           const done = doneSet.has(item.id);
           const active = item.id === currentItemId;
@@ -2072,6 +2174,11 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     /* Opened from a category glyph: widen the rail and scroll the group into
        view, so the click lands somewhere legible instead of just toggling. */
     function revealCategory(category) {
+      if (collapsedCats.has(category)) {
+        collapsedCats.delete(category);
+        saveCollapsedCats();
+        renderNav();
+      }
       if ($('sidebar').dataset.stage === '2') setNavStage(0, true);
       requestAnimationFrame(() => {
         const group = [...nav.querySelectorAll('.nav-group')]
@@ -2501,6 +2608,10 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
     async function openArticle(id) {
       const entry = byId.get(id);
       if (!entry) return;
+      if (entry.category && collapsedCats.has(entry.category)) {
+        collapsedCats.delete(entry.category);
+        saveCollapsedCats();
+      }
       currentItemId = id;
       renderNav();
       renderHead(entry);
@@ -2572,11 +2683,11 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       const feat = (t, d) => '<div data-spot class="card hoverable rounded-xl border border-[rgba(148,163,184,0.15)] bg-white/[0.02] px-4 py-3.5"><div class="text-sm font-semibold text-slate-100">' + t + '</div><div class="text-[13px] text-slate-400 mt-1 leading-relaxed">' + d + '</div></div>';
 
       contentArea.innerHTML =
-        '<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border mb-3 text-[11px] font-mono" style="border-color:var(--accent-rim);background:var(--accent-soft);color:var(--accent);">' +
-          '<svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 32 32" fill="none" aria-hidden="true">' +
-            '<path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/>' +
-            '<path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/>' +
-            '<path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>' +
+        '<div class="brand-pill inline-flex items-center gap-2 px-2.5 py-1 rounded-full border mb-3 text-[11px] font-mono" style="border-color:var(--accent-rim);background:var(--accent-soft);color:var(--accent);">' +
+          '<svg class="brand-logo-svg h-3.5 w-3.5 shrink-0" viewBox="0 0 32 32" fill="none" aria-hidden="true">' +
+            '<path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>' +
+            '<path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>' +
+            '<path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>' +
           '</svg>' +
           '<span>Invariant · LeetCode Top Interview 150 in JavaScript</span>' +
         '</div>' +
@@ -2687,9 +2798,15 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
 
     async function refreshAuth() {
       const area = $('authArea');
+      const octoIcon = '<svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
       const paintLoggedOut = () => {
         judgeUser = null;
-        area.innerHTML = '<a href="/api/auth/login" class="inline-flex items-center justify-center gap-2 px-3.5 h-10 rounded-lg text-[13px] font-semibold border transition-colors whitespace-nowrap" style="border-color:rgba(148,163,184,.25);color:var(--fg-muted);"><span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span></a>';
+        area.innerHTML =
+          '<a id="loginBtn" href="/api/auth/login" class="btn inline-flex items-center justify-center gap-2 px-3.5 h-10 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 text-[13px] font-semibold text-slate-300 hover:text-slate-100 whitespace-nowrap">' +
+          octoIcon +
+          '<span class="hidden sm:inline">Login with GitHub</span>' +
+          '<span class="sm:hidden">Login</span>' +
+          '</a>';
       };
       let me = null;
       try {
@@ -2707,8 +2824,13 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       renderNav();
       area.innerHTML =
         '<div class="flex items-center gap-2">' +
-        '<span class="hidden sm:inline text-xs font-mono text-slate-400 max-w-[120px] truncate" title="' + esc(me.login || '') + '">' + esc(me.login || 'github') + '</span>' +
-        '<button id="logoutBtn" class="inline-flex items-center justify-center px-3 h-10 rounded-lg text-[13px] font-semibold border" style="border-color:rgba(148,163,184,.25);color:var(--fg-muted);">Logout</button></div>';
+        '<button id="logoutBtn" type="button" title="Logged in as ' + esc(me.login || 'github') + ' · Click to logout" class="btn inline-flex items-center justify-center gap-2 px-3 h-10 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 text-[13px] font-semibold text-slate-300 hover:text-slate-100 whitespace-nowrap">' +
+        octoIcon +
+        '<span class="hidden sm:inline font-mono text-xs max-w-[110px] truncate" style="color:var(--accent)">' + esc(me.login || 'github') + '</span>' +
+        '<span class="hidden sm:inline text-slate-600" aria-hidden="true">·</span>' +
+        '<span>Logout</span>' +
+        '</button>' +
+        '</div>';
       $('logoutBtn').onclick = async () => {
         try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
         paintLoggedOut();
@@ -2823,9 +2945,126 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       try { const v = parseInt(localStorage.getItem(KEY), 10); if (v >= 0 && v <= 2) stage = v; } catch (e) {}
       setNavStage(stage, false);
       btn.onclick = () => {
+        delete el.dataset.navResized;
+        el.style.removeProperty('--lt-nav-w');
+        try { localStorage.removeItem('lt150-nav-w'); } catch (e) {}
         stage = parseInt(el.dataset.stage, 10) || 0;
         setNavStage(stage + 1, true);
       };
+    })();
+
+    /* ---------- left nav drag-to-resize ---------- */
+    (function initNavResize() {
+      const sidebar = $('sidebar'), resizer = $('ltNavResizer');
+      if (!sidebar || !resizer) return;
+      const KEY = 'lt150-nav-w', DEF = 320, MIN = 56, SNAP_ICON = 110, COMPACT_MAX = 230, MAX = 480;
+
+      const getMaxAllowedWidth = () => {
+        const rail = $('ltRail');
+        const railOpen = window.innerWidth >= 1280 && rail && rail.dataset.collapsed !== 'true';
+        const railW = railOpen
+          ? (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lt-rail-w'), 10) || 384)
+          : 0;
+        return Math.min(MAX, Math.max(200, window.innerWidth - railW - 520));
+      };
+
+      const resetToDefault = () => {
+        delete sidebar.dataset.navResized;
+        sidebar.style.removeProperty('--lt-nav-w');
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        setNavStage(0, true);
+        resizer.setAttribute('aria-valuenow', String(DEF));
+      };
+
+      const applyWidth = (w, persist) => {
+        if (w < SNAP_ICON) {
+          setNavStage(2, persist);
+          delete sidebar.dataset.navResized;
+          sidebar.style.removeProperty('--lt-nav-w');
+          if (persist) { try { localStorage.removeItem(KEY); } catch (e) {} }
+          resizer.setAttribute('aria-valuenow', String(MIN));
+          return MIN;
+        }
+        const maxW = getMaxAllowedWidth();
+        const clamped = Math.min(maxW, Math.max(SNAP_ICON, Math.round(w)));
+        sidebar.dataset.navResized = 'true';
+        sidebar.style.setProperty('--lt-nav-w', clamped + 'px');
+        if (clamped <= COMPACT_MAX) {
+          setNavStage(1, persist);
+        } else {
+          setNavStage(0, persist);
+        }
+        if (persist) { try { localStorage.setItem(KEY, String(clamped)); } catch (e) {} }
+        resizer.setAttribute('aria-valuenow', String(clamped));
+        return clamped;
+      };
+
+      // Restore saved width from localStorage if present
+      let saved = null;
+      try {
+        const v = parseInt(localStorage.getItem(KEY), 10);
+        if (!isNaN(v) && v > 0) saved = v;
+      } catch (e) {}
+      if (saved !== null) {
+        if (saved < SNAP_ICON) {
+          setNavStage(2, false);
+          delete sidebar.dataset.navResized;
+          sidebar.style.removeProperty('--lt-nav-w');
+        } else {
+          const maxW = getMaxAllowedWidth();
+          const clamped = Math.min(maxW, Math.max(SNAP_ICON, saved));
+          sidebar.dataset.navResized = 'true';
+          sidebar.style.setProperty('--lt-nav-w', clamped + 'px');
+          if (clamped <= COMPACT_MAX) setNavStage(1, false);
+          else setNavStage(0, false);
+          resizer.setAttribute('aria-valuenow', String(clamped));
+        }
+      }
+
+      let dragging = false;
+      resizer.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        dragging = true;
+        resizer.classList.add('is-dragging');
+        sidebar.classList.add('is-resizing');
+        try { resizer.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+
+      resizer.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        applyWidth(e.clientX, true);
+      });
+
+      const onPointerEnd = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        resizer.classList.remove('is-dragging');
+        sidebar.classList.remove('is-resizing');
+        try { resizer.releasePointerCapture(e.pointerId); } catch (err) {}
+      };
+
+      resizer.addEventListener('pointerup', onPointerEnd);
+      resizer.addEventListener('pointercancel', onPointerEnd);
+      resizer.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        resetToDefault();
+      });
+
+      resizer.addEventListener('keydown', (e) => {
+        if (e.key === 'Home') {
+          e.preventDefault();
+          resetToDefault();
+          return;
+        }
+        const curW = sidebar.getBoundingClientRect().width;
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          applyWidth(curW - 24, true);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          applyWidth(curW + 24, true);
+        }
+      });
     })();
 
     /* ---------- rail resize (item C) ---------- */
@@ -2923,15 +3162,6 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       }
     }
 
-    // Wire base-of-page architecture links
-    const footerArchSpecBtn = $('footerArchSpecBtn');
-    if (footerArchSpecBtn) {
-      footerArchSpecBtn.onclick = () => openArticle('architecture-spec');
-    }
-    const footerEdgeMatrixBtn = $('footerEdgeMatrixBtn');
-    if (footerEdgeMatrixBtn) {
-      footerEdgeMatrixBtn.onclick = () => openArticle('edge-cases-matrix');
-    }
 
     /* Pre-indexed Architecture Decisions & Visualizer Search Pool for Cmd+K */
     const ARCH_SEARCH_POOL = [
@@ -3080,7 +3310,6 @@ body[data-resizing="nw"] *, body[data-resizing="se"] * { cursor: nwse-resize !im
       if (active) active.scrollIntoView({ block: 'nearest' });
     }
     $('paletteBtn').onclick = openPalette;
-    $('guidesBtn').onclick = () => openArticle('24-maang-guides_01-maang-sde-roadmap');
     paletteInput.oninput = (e) => updatePalette(e.target.value);
     paletteInput.onkeydown = (e) => {
       if (e.key === 'ArrowDown') { e.preventDefault(); palIndex = Math.min(palIndex + 1, palResults.length - 1); paintPalSelection(); }

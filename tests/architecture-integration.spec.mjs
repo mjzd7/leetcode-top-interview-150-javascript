@@ -16,23 +16,15 @@ test.describe('Architecture Integration Suite', () => {
   test('base of the page features architecture section with direct links and buttons', async ({ page }) => {
     await open(page, '');
     const footerLink = page.locator('#footerArchSuiteLink');
-    const footerSpecBtn = page.locator('#footerArchSpecBtn');
-    const footerMatrixBtn = page.locator('#footerEdgeMatrixBtn');
+    const footerAuthorLink = page.locator('#footerAuthorLink');
 
     await expect(footerLink).toBeVisible();
     await expect(footerLink).toHaveAttribute('href', 'ARCHITECTURE_AND_DECISIONS.html');
-    await expect(footerSpecBtn).toBeVisible();
-    await expect(footerMatrixBtn).toBeVisible();
+    await expect(footerLink).toContainText('Architecture');
 
-    // Clicking 15 ADRs Spec opens in-reader spec
-    await footerSpecBtn.click();
-    await page.waitForTimeout(300);
-    await expect(page.locator('article h1')).toContainText('Architecture, Technical Decisions & Engineering Governance');
-
-    // Clicking 24-Ch Matrix opens verification matrix
-    await footerMatrixBtn.click();
-    await page.waitForTimeout(300);
-    await expect(page.locator('article h1')).toContainText('Algorithmic & UI Edge-Case Matrix');
+    await expect(footerAuthorLink).toBeVisible();
+    await expect(footerAuthorLink).toHaveAttribute('href', 'https://github.com/mjzd7/leetcode-top-interview-150-javascript');
+    await expect(footerAuthorLink).toContainText('mjzd7');
   });
 
   test('no pop-up modal exists on the page', async ({ page }) => {
@@ -327,6 +319,102 @@ test.describe('Architecture Integration Suite', () => {
     const activeLink = page.locator('#curriculumNav a[aria-current="page"]');
     await expect(activeLink).toHaveAttribute('href', '#decisions');
     await expect(page.locator('#crumbActive')).toContainText('03. 15 Architecture Records (ADRs)');
+  });
+
+  test('chatbox closes and reopens reliably without disappearing on ARCHITECTURE_AND_DECISIONS.html', async ({ page, isMobile }) => {
+    await page.goto('/ARCHITECTURE_AND_DECISIONS.html');
+    await page.waitForTimeout(500);
+
+    const rail = page.locator('#ltRail');
+    const fab = page.locator('#ltcFab');
+    const closeBtn = page.locator('#ltcClose');
+    const panel = page.locator('#ltcPanel');
+
+    // Initially chat starts closed by default
+    await expect(fab).toBeVisible();
+    if (!isMobile) {
+      await expect(rail).toHaveAttribute('data-collapsed', 'true');
+    }
+    await expect(panel).toBeHidden();
+
+    // Click #ltcFab to open
+    await fab.click();
+    await page.waitForTimeout(200);
+    await expect(panel).toBeVisible();
+    if (!isMobile) {
+      await expect(rail).not.toHaveAttribute('data-collapsed', 'true');
+    }
+
+    // Click #ltcClose to close
+    await closeBtn.click();
+    await page.waitForTimeout(200);
+    await expect(panel).toBeHidden();
+    if (!isMobile) {
+      await expect(rail).toHaveAttribute('data-collapsed', 'true');
+    }
+
+    // CRITICAL: Verify #ltcFab remains VISIBLE and does NOT disappear permanently
+    await expect(fab).toBeVisible();
+
+    // Click #ltcFab again to reopen
+    await fab.click();
+    await page.waitForTimeout(200);
+    await expect(panel).toBeVisible();
+    if (!isMobile) {
+      await expect(rail).not.toHaveAttribute('data-collapsed', 'true');
+    }
+  });
+
+  test('left sidebar resizer (#ltNavResizer) and collapsible category groups work on ARCHITECTURE_AND_DECISIONS.html', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar resize and keyboard operations are desktop features');
+    await page.goto('/ARCHITECTURE_AND_DECISIONS.html');
+    await page.waitForTimeout(500);
+
+    const sidebar = page.locator('#sidebar');
+    const resizer = page.locator('#ltNavResizer');
+
+    // 1. #ltNavResizer is attached and has accessible separator attributes
+    await expect(resizer).toBeAttached();
+    await expect(resizer).toHaveAttribute('role', 'separator');
+
+    // 2. Adjust navigation sidebar width via keyboard ArrowRight on #ltNavResizer
+    await resizer.focus();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(100);
+    const customW = await sidebar.evaluate(el => el.style.getPropertyValue('--lt-nav-w'));
+    expect(customW).toBe('344px');
+    expect(await page.evaluate(() => localStorage.getItem('lt150-nav-w'))).toBe('344');
+
+    // 3. Double-click resets back to default (320px) Stage 0
+    await resizer.dispatchEvent('dblclick');
+    await page.waitForTimeout(100);
+    expect(await sidebar.getAttribute('data-stage')).toBe('0');
+    expect(await sidebar.evaluate(el => el.style.getPropertyValue('--lt-nav-w'))).toBe('');
+    expect(await page.evaluate(() => localStorage.getItem('lt150-nav-w'))).toBeNull();
+
+    // 4. Collapsible categories: clicking category header toggles collapsed state and updates localStorage
+    const firstGroup = page.locator('#curriculumNav .nav-group[data-cat-key]').first();
+    const catKey = await firstGroup.getAttribute('data-cat-key');
+    const groupToggle = firstGroup.locator('.nav-group-toggle');
+
+    // Initially expanded
+    await expect(firstGroup).not.toHaveAttribute('data-cat-collapsed', 'true');
+
+    // Click to collapse
+    await groupToggle.click();
+    await page.waitForTimeout(100);
+    await expect(firstGroup).toHaveAttribute('data-cat-collapsed', 'true');
+
+    const storedCollapsed = await page.evaluate(() => JSON.parse(localStorage.getItem('lt150-collapsed-cats') || '[]'));
+    expect(storedCollapsed).toContain(catKey);
+
+    // Click again to expand
+    await groupToggle.click();
+    await page.waitForTimeout(100);
+    await expect(firstGroup).not.toHaveAttribute('data-cat-collapsed', 'true');
+
+    const storedAfterExpand = await page.evaluate(() => JSON.parse(localStorage.getItem('lt150-collapsed-cats') || '[]'));
+    expect(storedAfterExpand).not.toContain(catKey);
   });
 });
 

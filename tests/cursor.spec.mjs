@@ -449,6 +449,8 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     // Dynamic underline applied on hover
     const linkHoverDecor = await leetCodeLink.evaluate((el) => getComputedStyle(el).textDecorationLine);
     expect(linkHoverDecor).toBe('underline');
+    expect(await leetCodeLink.evaluate((el) => getComputedStyle(el).cursor)).toBe('none');
+    expect(await leetCodeLink.locator('code').evaluate((el) => getComputedStyle(el).cursor)).toBe('none');
 
     // Ring circle removed
     const ringOpacity = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).opacity);
@@ -468,9 +470,10 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     const primerLink = page.locator('.primer-link').first();
     await expect(primerLink).toBeVisible();
 
-    // 1. Resting state: MUST NOT be underlined at rest
+    // 1. Resting state: MUST NOT be underlined at rest, and native OS cursor MUST be none
     const textDecorationRest = await primerLink.evaluate((el) => getComputedStyle(el).textDecorationLine);
     expect(textDecorationRest).toBe('none');
+    expect(await primerLink.evaluate((el) => getComputedStyle(el).cursor)).toBe('none');
 
     // 2. Hover state: move mouse directly over primer link
     const box = await primerLink.boundingBox();
@@ -483,9 +486,10 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
       { timeout: 5000 }
     );
 
-    // Dynamic underline applied on hover
+    // Dynamic underline applied on hover, native OS cursor remains none
     const textDecorationHover = await primerLink.evaluate((el) => getComputedStyle(el).textDecorationLine);
     expect(textDecorationHover).toBe('underline');
+    expect(await primerLink.evaluate((el) => getComputedStyle(el).cursor)).toBe('none');
 
     // Ring circle is removed (opacity 0)
     const ringOpacity = await page.locator('#cur-ring').evaluate((el) => getComputedStyle(el).opacity);
@@ -506,6 +510,8 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/index.html');
     await page.waitForSelector('#ltcPanel', { state: 'attached' });
+    await page.click('#ltcFab');
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
 
     // Detach panel to floating mode
     const header = page.locator('#ltcPanel .ltc-head');
@@ -568,6 +574,8 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/index.html');
     await page.waitForSelector('#ltcPanel', { state: 'attached' });
+    await page.click('#ltcFab');
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
 
     // Hover over drag grip in header
     const grip = page.locator('#ltcPanel .ltc-drag-grip');
@@ -606,6 +614,8 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/index.html');
     await page.waitForSelector('#ltcPin', { state: 'attached' });
+    await page.click('#ltcFab');
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
 
     // Click toggle to enter fullscreen
     await page.click('#ltcPin');
@@ -643,6 +653,51 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
       null,
       { timeout: 5000 }
     );
+  });
+
+  test('hovering over buttons and links morphs cursor into white Invariant logo shape', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop fine pointer only');
+
+    await page.goto('/index.html');
+    await page.waitForSelector('#cur-dot .cur-dot-logo', { state: 'attached' });
+
+    // At rest in empty space, circle is visible and logo shape is hidden
+    await page.mouse.move(10, 10);
+    const restDisplay = await page.evaluate(() => ({
+      circle: getComputedStyle(document.querySelector('#cur-dot .cur-dot-circle')).display,
+      logo: getComputedStyle(document.querySelector('#cur-dot .cur-dot-logo')).display,
+    }));
+    expect(restDisplay.circle).toBe('block');
+    expect(restDisplay.logo).toBe('none');
+
+    // Hover over a button (#themeToggle): cursor morphs into white logo shape
+    const toggle = page.locator('#themeToggle');
+    const box = await toggle.boundingBox();
+    expect(box).toBeTruthy();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+    await page.waitForFunction(
+      () => document.documentElement.getAttribute('data-cursor-mode') === 'link',
+      null,
+      { timeout: 5000 }
+    );
+
+    const hoverState = await page.evaluate(() => {
+      const dot = document.querySelector('#cur-dot');
+      const circle = document.querySelector('#cur-dot .cur-dot-circle');
+      const logo = document.querySelector('#cur-dot .cur-dot-logo');
+      const ringCircle = document.querySelector('#cur-ring .cur-ring-circle');
+      return {
+        dotColor: getComputedStyle(dot).color,
+        circleDisplay: getComputedStyle(circle).display,
+        logoDisplay: getComputedStyle(logo).display,
+        ringCircleOpacity: getComputedStyle(ringCircle).opacity,
+      };
+    });
+    expect(hoverState.dotColor).toBe('rgb(255, 255, 255)');
+    expect(hoverState.circleDisplay).toBe('none');
+    expect(hoverState.logoDisplay).toBe('block');
+    expect(hoverState.ringCircleOpacity).toBe('1');
   });
 });
 

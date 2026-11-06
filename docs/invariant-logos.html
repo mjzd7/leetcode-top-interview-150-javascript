@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invariant — 5 Studio Logo Options &amp; Lockup Showcase</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z' fill='%23C8FA4B'/%3E%3Cpath d='M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z' fill='%23E9EDF4'/%3E%3Cpath d='M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z' fill='%23C8FA4B'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <link rel="stylesheet" href="assets/theme.css">
+  <link rel="stylesheet" href="assets/cursor.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --canvas: #08090D;
+      --canvas-sub: #0D1017;
+      --canvas-ins: #0A0D13;
+      --raised: #121724;
+      --border: #2A3448;
+      --border-soft: rgba(148, 163, 184, 0.14);
+      --fg: #E9EDF4;
+      --fg-prose: #C6CDDB;
+      --fg-muted: #8B94A7;
+      --fg-subtle: #768390;
+      --accent: #C8FA4B;
+      --accent-ink: #08090D;
+      --accent-soft: rgba(200, 250, 75, 0.10);
+      --accent-rim: rgba(200, 250, 75, 0.45);
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    html[data-theme="light"] {
+      --canvas: #FFFFFF;
+      --canvas-sub: #F4F5F7;
+      --canvas-ins: #EAECF0;
+      --raised: #EAECF0;
+      --border: #9AA1AD;
+      --border-soft: rgba(16, 24, 40, 0.12);
+      --fg: #101828;
+      --fg-prose: #1D2939;
+      --fg-muted: #475467;
+      --fg-subtle: #667085;
+      --accent: #4338CA;
+      --accent-ink: #FFFFFF;
+      --accent-soft: rgba(67, 56, 202, 0.08);
+      --accent-rim: rgba(67, 56, 202, 0.45);
+    }
+
+    body {
+      background: var(--canvas);
+      color: var(--fg);
+      font-family: var(--font-body);
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-display { font-family: var(--font-display); }
+    .font-mono { font-family: var(--font-mono); }
+
+    kbd.k {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      background: var(--canvas-ins);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 0.375rem;
+      padding: 0.1rem 0.4rem;
+      color: var(--fg-muted);
+      line-height: 1.1;
+    }
+
+    .option-card {
+      background: var(--canvas-sub);
+      border: 1px solid var(--border-soft);
+      border-radius: 1.25rem;
+      transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .option-card:hover {
+      border-color: rgba(148, 163, 184, 0.35);
+      transform: translateY(-2px);
+    }
+    .option-card.is-selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 18px 44px -10px rgba(0, 0, 0, 0.55);
+    }
+
+    .lockup-stage {
+      background:
+        radial-gradient(circle at 22% 50%, var(--accent-soft), transparent 68%),
+        linear-gradient(to right, rgba(148,163,184,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
+      background-color: var(--canvas);
+    }
+
+    .pill-btn {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 0.42rem 0.8rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-soft);
+      background: var(--canvas-sub);
+      color: var(--fg-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill-btn:hover {
+      color: var(--fg);
+      border-color: var(--border);
+    }
+    .pill-btn.active {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .browser-frame {
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      background: var(--canvas);
+      box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.65);
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-24">
+
+  <!-- Sticky Control Bar -->
+  <div class="sticky top-0 z-50 backdrop-blur-xl border-b border-[var(--border-soft)]" style="background: rgba(8,9,13,0.88);">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-0.5 rounded text-[11px] font-mono uppercase tracking-wider font-semibold" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Logo Study v3</span>
+        <span class="font-display font-bold text-sm md:text-base">Invariant — 5 Lockup-Engineered Logo Options</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1" id="mountBtns">
+          <button type="button" data-mount="open" class="pill-btn active" title="Clean vector mark directly beside text (like Linear, Vercel, Raycast)">Open Vector + Text</button>
+          <button type="button" data-mount="solid" class="pill-btn" title="Solid high-contrast app tile beside text">Solid Badge + Text</button>
+        </div>
+        <div class="flex items-center gap-1" id="caseBtns">
+          <button type="button" data-case="title" class="pill-btn active">Invariant</button>
+          <button type="button" data-case="dot" class="pill-btn">Invariant.</button>
+          <button type="button" data-case="lower" class="pill-btn">invariant</button>
+        </div>
+        <button id="themeBtn" type="button" class="pill-btn" title="Toggle Dark / Light theme">🌓 Theme</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-4 md:px-8 pt-8 space-y-12">
+
+    <!-- ===================================================================
+         DIAGNOSIS: WHY THE EARLIER LOGO LOOKED WEAK BESIDE "INVARIANT"
+         =================================================================== -->
+    <section class="rounded-2xl border border-[var(--border-soft)] p-5 md:p-6" style="background: var(--canvas-sub);">
+      <div class="grid md:grid-cols-12 gap-6 items-center">
+        <div class="md:col-span-7 space-y-2">
+          <div class="text-xs font-mono uppercase tracking-widest" style="color: #FB7185;">Diagnosis · Why the earlier mark felt off with the text</div>
+          <h1 class="font-display font-bold text-xl md:text-2xl tracking-tight">Fixing the Icon + Wordmark Lockup</h1>
+          <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-muted);">
+            The earlier 3-slab keystone had three visual problems as soon as the word <strong>Invariant</strong> was placed beside it (and earlier badge options tried to cram letters inside a box):
+          </p>
+          <ul class="text-xs space-y-1.5 pt-1" style="color: var(--fg-prose);">
+            <li><strong>1. Looked like a UI "Filter / Sort" button:</strong> Three shrinking horizontal bars trapped inside a faint bordered box reads as a table filter control, not a brand identity.</li>
+            <li><strong>2. Washed-out opacity &amp; dead space beside <code class="font-mono">I</code>:</strong> The 38%-opacity top slab vanished into the background box, while the narrow bottom left an awkward diagonal gap next to the vertical stem of <strong>I</strong>.</li>
+            <li><strong>3. Zero color bridge to the text:</strong> A 100% green icon inside a green border felt detached from the white wordmark. By removing the weak border box and adding a <strong>crisp secondary facet in the exact wordmark color (<code class="font-mono">--fg</code>)</strong>, the symbol and text fuse into one cohesive lockup.</li>
+          </ul>
+        </div>
+
+        <!-- Before vs After Mini Comparison -->
+        <div class="md:col-span-5 grid grid-cols-1 gap-3">
+          <div class="rounded-xl border border-rose-500/25 p-3.5 flex items-center justify-between" style="background: var(--canvas);">
+            <div class="flex items-center gap-2.5">
+              <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">
+                <svg class="h-5 w-5" viewBox="0 0 32 32" fill="none">
+                  <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/>
+                  <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/>
+                  <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
+                </svg>
+              </span>
+              <span class="font-display font-bold tracking-tight text-base">Invariant</span>
+            </div>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400">Earlier (Looks like filter button)</span>
+          </div>
+
+          <div class="rounded-xl border p-3.5 flex items-center justify-between" style="background: var(--canvas); border-color: var(--accent-rim);">
+            <div class="flex items-center gap-2.5">
+              <span class="h-8 w-8 flex items-center justify-center shrink-0">
+                <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
+                  <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                  <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                  <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                </svg>
+              </span>
+              <span class="font-display font-bold tracking-[-0.03em] text-[17px]">Invariant</span>
+            </div>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded" style="background: var(--accent-soft); color: var(--accent);">New Dual-Tone Lockup</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         PART 1: 5 THOUGHTFUL, UNCLAIMED LOGO OPTIONS FOR "INVARIANT"
+         =================================================================== -->
+    <section class="space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-soft)] pb-4">
+        <div>
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 01 · 5 Studio Options for "Invariant"</div>
+          <h2 class="font-display font-bold text-2xl md:text-3xl tracking-tight">5 Thoughtful Logos That Look Amazing With the Wordmark</h2>
+          <p class="text-sm mt-1" style="color: var(--fg-muted);">
+            Zero letters inside the icon, exact negative-space cuts (no muddy overlaps), and verified unclaimed across tech &amp; interview platforms. Click any card to test it in the full header below.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="optionsGrid">
+
+        <!-- ===============================================================
+             OPTION 01: THE NOETHER SYMMETRY WEAVE (45° Interlocking Hooks + Core)
+             =============================================================== -->
+        <article class="option-card is-selected p-6 flex flex-col justify-between cursor-pointer" data-option="1">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent); color: var(--accent-ink);">Option 01 · Top Pick</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">Noether Symmetry Weave</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <!-- Hero Lockup Stage -->
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Upper-Left 45° Hook (Accent) -->
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                      <!-- Lower-Right 45° Hook (Exact point-reflection, 3px negative-space cut, Foreground color bridges text) -->
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                      <!-- Unmoving Central Invariant Diamond -->
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <!-- Solid App Tile + 16px Favicon -->
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="currentColor"/>
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="currentColor"/>
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
+              </div>
+            </div>
+
+            <h3 class="font-display font-bold text-lg mb-1.5">1. The Noether Symmetry Weave</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              In Emmy Noether’s theorem, every continuous symmetry creates a conserved invariant. Two precision-cut 45° hooks interlock with a razor-sharp 3px negative-space channel around an unmoving center diamond. Because the right hook matches the exact color of <strong>Invariant</strong>, it visually pulls the wordmark into the symbol.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">Exact 45° non-overlapping cuts · Bridges icon &amp; text</span>
+            <span class="select-indicator font-semibold" style="color: var(--accent);">● Active in Header</span>
+          </div>
+        </article>
+
+        <!-- ===============================================================
+             OPTION 02: THE ISOMETRIC MÖBIUS ROTOR (120° Rotational Invariant)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer" data-option="2">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 02 · Top Pick</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">120° Rotational Invariant</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Blade 0 (Top-Right, Accent) -->
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/>
+                      <!-- Blade 1 (Bottom-Right, Foreground matches wordmark) -->
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/>
+                      <!-- Blade 2 (Left Vertical Spine, Accent 75%) -->
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)" fill-opacity="0.72"/>
+                      <!-- Isometric Central Core -->
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="currentColor"/>
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="currentColor"/>
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="currentColor"/>
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/>
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/>
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)"/>
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/>
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/>
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)" fill-opacity="0.72"/>
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
+              </div>
+            </div>
+
+            <h3 class="font-display font-bold text-lg mb-1.5">2. The Isometric Möbius Rotor</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              Constructed with exact 120° rotational symmetry (C₃ group invariance): three identical isometric L-blades lock around a central hexagonal prism with a uniform 2.1px negative-space channel. Notice how its flush vertical right edge aligns straight beside the stem of <code class="font-mono">I</code> in <strong>Invariant</strong>.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">3 blades = 3 solution levels · Flush vertical right edge</span>
+            <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
+          </div>
+        </article>
+
+        <!-- ===============================================================
+             OPTION 03: THE GYROSCOPIC GIMBAL (Concentric Sliced Orbits + Fixed Core)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer" data-option="3">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 03</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">Gyroscopic Fixpoint</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Upper-Left Gimbal Arc (Accent) -->
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/>
+                      <!-- Lower-Right Gimbal Arc (Foreground matches wordmark) -->
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/>
+                      <!-- Unmoving Gyroscopic Diamond Core -->
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="currentColor"/>
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="currentColor"/>
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/>
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/>
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/>
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/>
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
+              </div>
+            </div>
+
+            <h3 class="font-display font-bold text-lg mb-1.5">3. The Gyroscopic Gimbal</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              A gyroscope’s center axis stays invariant while the outer gimbal rings rotate around it. Typographically, a circular outer silhouette placed beside the vertical <code class="font-mono">I</code> stem of <strong>Invariant</strong> creates the classic circle-to-vertical contrast used by Linear, PlanetScale, and CircleCI.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">Circle-to-stem contrast · Literal invariant physics</span>
+            <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
+          </div>
+        </article>
+
+        <!-- ===============================================================
+             OPTION 04: THE CROSS-RATIO CALIPER (4-Fold Projective Invariant)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer" data-option="4">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 04</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">Projective Cross-Ratio</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Top-Left & Bottom-Right opposing caliper blades (Accent) -->
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/>
+                      <!-- Top-Right & Bottom-Left opposing caliper blades (Foreground matches wordmark) -->
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/>
+                      <!-- Central locked diamond pin -->
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="currentColor"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="currentColor"/>
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="currentColor"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="currentColor"/>
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/>
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/>
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/>
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/>
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
+              </div>
+            </div>
+
+            <h3 class="font-display font-bold text-lg mb-1.5">4. The Cross-Ratio Caliper</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              In projective geometry, the cross-ratio of four points is the fundamental invariant across any perspective change. Four precision-mitred corner jaws carve a negative-space 4-point compass star around a central diamond—giving a razor-sharp architectural square right beside <strong>Invariant</strong>.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">Swiss architectural precision · Flush right stem alignment</span>
+            <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
+          </div>
+        </article>
+
+        <!-- ===============================================================
+             OPTION 05: THE PHASE-LOCK ATTRACTOR (Non-Overlapping Over/Under Weave)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer lg:col-span-2" data-option="5">
+          <div class="grid lg:grid-cols-12 gap-6 items-center">
+            <div class="lg:col-span-7">
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 05</span>
+                  <span class="text-xs font-mono" style="color: var(--fg-muted);">Strange Attractor / Phase Invariant</span>
+                </div>
+                <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+              </div>
+              <h3 class="font-display font-bold text-lg mb-1.5">5. The Phase-Lock Attractor</h3>
+              <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+                In dynamical systems, an invariant manifold (or Lorenz attractor) is the twin-wing orbit a system always converges to. Here, the left faceted loop is solid accent while the right loop weaves cleanly underneath with an exact 2.4px negative-space cut. Its horizontal poise mirrors the rhythm of the wordmark <strong>Invariant</strong>.
+              </p>
+              <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+                <span style="color: var(--fg-muted);">Clean over-under negative-space cut · Zero overlap</span>
+                <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
+              </div>
+            </div>
+
+            <div class="lg:col-span-5 lockup-stage rounded-xl border border-[var(--border-soft)] p-5 flex flex-col gap-4">
+              <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Left Attractor Wing (Complete Faceted Loop, Accent) -->
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="var(--accent)"/>
+                      <!-- Right Attractor Wing (Clean parallel negative-space cut around Left Wing, Foreground) -->
+                      <path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="var(--fg)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="currentColor"/>
+                      <path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="var(--accent)"/>
+                      <path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="var(--fg)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         PART 2: 4 THOUGHTFUL UNCLAIMED BRAND NAMES + MATCHING LOGOS
+         (In case you also want to compare alternative names beside their marks)
+         =================================================================== -->
+    <section class="space-y-5 pt-4">
+      <div class="border-b border-[var(--border-soft)] pb-4">
+        <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 02 · Bonus Name + Logo Lockup Alternatives</div>
+        <h2 class="font-display font-bold text-2xl md:text-3xl tracking-tight">4 Unclaimed Alternative Names That Pair Effortlessly With Logos</h2>
+        <p class="text-sm mt-1" style="color: var(--fg-muted);">
+          In case you also felt the word <strong>Invariant</strong> itself was long or tricky to balance next to a symbol, here are 4 shorter, CS-rooted names that are <strong>100% unclaimed in coding interview prep</strong> and have natural visual symbols.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Alt 1: Halmos -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 01 · Q.E.D. Tombstone</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M5 5H21V13H13V27H5V5Z" fill="var(--accent)"/>
+                <path d="M16 16H27V27H16V16Z" fill="var(--fg)"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Halmos</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              Named after mathematician Paul Halmos, who invented the <strong>∎</strong> tombstone symbol that ends every proof in CLRS. Short, 6 letters, zero collisions.
+            </p>
+          </div>
+        </div>
+
+        <!-- Alt 2: Fixpoint -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 02 · f(x) = x</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M4 9.5L13 16L4 22.5V9.5Z" fill="var(--fg)"/>
+                <path d="M28 9.5L19 16L28 22.5V9.5Z" fill="var(--fg)"/>
+                <rect x="16" y="10.3" width="8" height="8" rx="1.2" transform="rotate(45 16 10.3)" fill="var(--accent)"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Fixpoint</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              In recursion, lattice theory, and binary search, a <strong>fixpoint</strong> is the exact state where <code class="font-mono">f(x) = x</code> stabilizes. Punchy 2-syllable developer brand.
+            </p>
+          </div>
+        </div>
+
+        <!-- Alt 3: Basecase -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 03 · Induction Base</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M6 6H26L21 13H6V6Z" fill="var(--fg)"/>
+                <path d="M6 16H21L16 23H6V16Z" fill="var(--accent)" fill-opacity="0.7"/>
+                <rect x="6" y="25" width="20" height="3.5" rx="1" fill="var(--accent)"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Basecase</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              Every recursive algorithm, DP state transition, and inductive proof rests on its <strong>base case</strong>. Instantly understood by every software engineer.
+            </p>
+          </div>
+        </div>
+
+        <!-- Alt 4: Stratum -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 04 · 3 Solution Layers</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M16 3L28 9.5L16 16L4 9.5L16 3Z" fill="var(--accent)"/>
+                <path d="M28 15.5L16 22L4 15.5L7.8 13.4L16 17.8L24.2 13.4L28 15.5Z" fill="var(--fg)"/>
+                <path d="M28 21.5L16 28L4 21.5L7.8 19.4L16 23.8L24.2 19.4L28 21.5Z" fill="var(--accent)" fill-opacity="0.65"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Stratum</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              Directly reflects how every problem in this manual is solved across <strong>3 architectural strata</strong> (Brute Force → Optimized → Canonical Proof).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         LIVE FULL-WIDTH NAVBAR + HERO SIMULATOR
+         =================================================================== -->
+    <section class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        <div>
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Live Context Test</div>
+          <h2 class="font-display font-bold text-xl md:text-2xl tracking-tight">See the Selected Lockup in the Actual Site Header</h2>
+        </div>
+        <div class="text-xs font-mono px-3 py-1.5 rounded-lg border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--fg-muted);">
+          Previewing: <strong id="activeOptionLabel" style="color: var(--accent);">Option 01 · The Noether Symmetry Weave</strong>
+        </div>
+      </div>
+
+      <div class="browser-frame">
+        <!-- Exact 56px Portal Header -->
+        <header class="h-14 px-4 md:px-6 flex items-center gap-3 border-b border-[var(--border-soft)]" style="background: var(--canvas-sub);">
+          <a href="#optionsGrid" class="flex items-center gap-2.5 shrink-0 min-w-0" style="text-decoration: none; color: inherit;">
+            <span id="liveHeaderMark" class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all"></span>
+            <span id="liveHeaderWordmark" class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px] truncate">Invariant</span>
+          </a>
+          <div class="flex-1"></div>
+          <div class="hidden sm:flex items-center gap-2 text-xs font-mono shrink-0" style="color: var(--fg-muted);">
+            <span class="inline-block h-1.5 w-1.5 rounded-full" style="background: var(--accent);"></span>18 / 150 done
+          </div>
+          <button type="button" class="flex items-center justify-center gap-2 rounded-lg border border-[var(--border-soft)] px-3 h-9 text-xs shrink-0" style="background: rgba(255,255,255,0.03); color: var(--fg-muted);">
+            <span>Jump to…</span>
+            <span class="hidden md:flex items-center gap-1"><kbd class="k">⌘</kbd><kbd class="k">K</kbd></span>
+          </button>
+        </header>
+
+        <!-- Simulated Hero Strip -->
+        <div class="p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6" style="background: var(--canvas);">
+          <div class="max-w-xl space-y-2">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-[11px] font-mono" style="border-color: var(--accent-rim); background: var(--accent-soft); color: var(--accent);">
+              <span>LeetCode Top Interview 150</span>
+              <span>·</span>
+              <span>JavaScript (ES2024)</span>
+            </div>
+            <h3 class="font-display font-bold text-2xl md:text-3xl tracking-tight">Solve the Top 150 from brute force to proof.</h3>
+            <p class="text-sm leading-relaxed" style="color: var(--fg-prose);">
+              Click any of the 5 cards above (or toggle <strong>Open Vector + Text</strong> vs <strong>Solid Badge + Text</strong> in the top bar) to compare how the logo and wordmark lock together in the 56px header.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-12 pt-8 pb-6 border-t border-[var(--border-soft)] text-xs font-mono space-y-3" style="color: var(--fg-muted);">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <a href="index.html" class="inline-flex items-center gap-2 brand-lockup" style="text-decoration: none; color: inherit;">
+          <svg class="w-4 h-4 shrink-0 brand-logo-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+            <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+            <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+          </svg>
+          <span><strong class="font-display" style="color: var(--fg);">Invariant</strong> · Brand Identity Showcase</span>
+        </a>
+        <div class="flex flex-wrap items-center gap-4">
+          <a href="index.html" class="hover:underline">Manual</a>
+          <span aria-hidden="true">·</span>
+          <a href="ARCHITECTURE_AND_DECISIONS.html" class="hover:underline">Architecture</a>
+        </div>
+      </div>
+      <div class="pt-3 border-t border-[var(--border-soft)] flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 text-[11px] leading-relaxed">
+        <div class="shrink-0">&copy; 2026 Invariant. All rights reserved.</div>
+        <div class="sm:text-right max-w-2xl">Independently developed for educational purposes; not affiliated with, endorsed by, or sponsored by LeetCode or any mentioned company. All trademarks and brand names are the property of their respective owners.</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    const OPTIONS = {
+      1: {
+        name: 'Option 01 · The Noether Symmetry Weave',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/><path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/><path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="currentColor"/><path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="currentColor"/><path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="currentColor"/></svg>`
+      },
+      2: {
+        name: 'Option 02 · The Isometric Möbius Rotor',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/><path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/><path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)" fill-opacity="0.72"/><path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="currentColor"/><path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="currentColor"/><path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="currentColor"/><path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="currentColor"/></svg>`
+      },
+      3: {
+        name: 'Option 03 · The Gyroscopic Gimbal',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/><path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/><rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="currentColor"/><path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="currentColor"/><rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="currentColor"/></svg>`
+      },
+      4: {
+        name: 'Option 04 · The Cross-Ratio Caliper',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/><path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/><path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/><path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/><rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="currentColor"/><path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="currentColor"/><path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="currentColor"/><path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="currentColor"/><rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="currentColor"/></svg>`
+      },
+      5: {
+        name: 'Option 05 · The Phase-Lock Attractor',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="var(--accent)"/><path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="var(--fg)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="currentColor"/><path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="currentColor"/></svg>`
+      }
+    };
+
+    const CASES = {
+      title: 'Invariant',
+      dot: 'Invariant<span style="color: var(--accent);">.</span>',
+      lower: 'invariant'
+    };
+
+    let selectedOption = 1;
+    let mountMode = 'open';
+    let caseMode = 'title';
+
+    function syncUI() {
+      const opt = OPTIONS[selectedOption];
+      const liveMark = document.getElementById('liveHeaderMark');
+      if (mountMode === 'open') {
+        liveMark.innerHTML = opt.openSvg;
+        liveMark.style.background = 'transparent';
+        liveMark.style.color = 'var(--accent)';
+        liveMark.style.border = 'none';
+      } else {
+        liveMark.innerHTML = opt.solidSvg;
+        liveMark.style.background = 'var(--accent)';
+        liveMark.style.color = 'var(--accent-ink)';
+      }
+
+      document.querySelectorAll('.wordmark-text').forEach(el => {
+        el.innerHTML = CASES[caseMode];
+      });
+
+      document.getElementById('activeOptionLabel').textContent = opt.name;
+
+      document.querySelectorAll('[data-option]').forEach(card => {
+        const id = Number(card.dataset.option);
+        const active = id === selectedOption;
+        card.classList.toggle('is-selected', active);
+        const ind = card.querySelector('.select-indicator');
+        if (ind) {
+          ind.textContent = active ? '● Active in Header' : 'Click to preview';
+          ind.style.color = active ? 'var(--accent)' : 'var(--fg-muted)';
+          ind.style.fontWeight = active ? '600' : '400';
+        }
+      });
+
+      document.querySelectorAll('[data-mount]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mount === mountMode);
+      });
+
+      document.querySelectorAll('[data-case]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.case === caseMode);
+      });
+    }
+
+    document.querySelectorAll('[data-option]').forEach(card => {
+      card.addEventListener('click', () => {
+        selectedOption = Number(card.dataset.option);
+        syncUI();
+      });
+    });
+
+    document.querySelectorAll('[data-mount]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mountMode = btn.dataset.mount;
+        syncUI();
+      });
+    });
+
+    document.querySelectorAll('[data-case]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        caseMode = btn.dataset.case;
+        syncUI();
+      });
+    });
+
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      root.classList.toggle('dark', next === 'dark');
+    });
+
+    syncUI();
+  </script>
+  <script src="assets/cursor.js"></script>
+</body>
+</html>

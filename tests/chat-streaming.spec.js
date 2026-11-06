@@ -34,9 +34,11 @@ const PRIMER = '00-foundations_01-js-interview-runtime-quirks';
 const isMobile = (page) => page.viewportSize().width < 1024;
 
 async function openChat(page) {
-  if (isMobile(page)) {
+  const panel = page.locator('#ltcPanel');
+  const isOpen = await panel.evaluate((el) => el.classList.contains('is-open')).catch(() => false);
+  if (!isOpen) {
     await page.locator('#ltcFab').click();
-    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
+    await expect(panel).toHaveClass(/is-open/);
   }
   await expect(page.locator(input)).toBeVisible();
 }

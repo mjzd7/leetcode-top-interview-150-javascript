@@ -1,8 +1,8 @@
-# LeetCode Top Interview 150 — Visual JavaScript Manual
+# Invariant — LeetCode Top Interview 150 Visual JavaScript Manual
 
 Crack MAANG JavaScript interviews with **150 problems, each solved 3 ways** — brute force → optimized → canonical — with diagrams, dry runs, V8 gotchas, and real interview follow-ups. Every solution is executable and CI-tested.
 
-**Live manual:** https://leetcode-top-interview-150-javascri.vercel.app
+**Live manual:** https://invariant-manual.vercel.app
 
 ![150 guides](https://img.shields.io/badge/guides-150-C8FA4B) ![JavaScript](https://img.shields.io/badge/language-JavaScript_ES2024-F7DF1E) ![tests](https://img.shields.io/badge/assertions-828-34D399) ![license](https://img.shields.io/badge/license-MIT-8B94A7)
 

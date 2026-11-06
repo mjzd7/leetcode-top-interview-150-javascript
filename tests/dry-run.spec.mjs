@@ -93,7 +93,11 @@ async function openGuide(page) {
 
 /** Open the sidebar if this viewport keeps it off-canvas, then click a guide by title. */
 async function openGuideFromNav(page, title) {
-  if (page.viewportSize().width < 768) await page.locator('#menuBtn').click();
+  if (page.viewportSize().width < 768) {
+    await page.locator('#contentContainer').evaluate((el) => { el.scrollTop = 0; });
+    await page.locator('header.glass').evaluate((el) => el.classList.remove('header-hidden'));
+    await page.locator('#menuBtn').click();
+  }
   await page.locator('#curriculumNav .nav-item', { hasText: title }).first().click();
 }
 

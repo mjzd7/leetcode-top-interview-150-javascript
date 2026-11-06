@@ -9,7 +9,7 @@
 
   // Interactive targets selector
   const INTERACTIVE_SELECTOR =
-    'a, button, [role="button"], input, select, .nav-item, #paletteBtn, #guidesBtn, #themeToggle, [data-cur="link"], .ltc-chip';
+    'a, button, [role="button"], [role="tab"], [role="option"], [role="menuitem"], summary, label[for], input, select, .nav-item, .pal-item, .decision-card-head, .option-card, .showcase-card, #paletteBtn, #guidesBtn, #themeToggle, #authArea a, #authArea button, [data-cur="link"], .ltc-chip';
 
   const TEXT_SELECTOR =
     '.prose p, .prose li, .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6, .prose blockquote, .prose td, .prose th, pre, pre code, textarea, input[type="text"], input:not([type]), input[type="search"], [contenteditable="true"], [data-cursor-text]';
@@ -66,16 +66,21 @@
     if (!document.body || isMounted) return;
 
     dot = document.getElementById('cur-dot');
+    const dotMarkup =
+      '<svg class="cur-dot-circle" viewBox="0 0 6 6" width="6" height="6" style="display:block;overflow:visible;"><circle cx="3" cy="3" r="3" fill="#ffffff" shape-rendering="geometricPrecision"/></svg>' +
+      '<svg class="cur-dot-logo" viewBox="0 0 32 32" width="22" height="22" fill="none" style="display:none;overflow:visible;" shape-rendering="geometricPrecision">' +
+      '<path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="currentColor"/>' +
+      '<path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="currentColor"/>' +
+      '<path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="currentColor"/>' +
+      '</svg>';
     if (!dot) {
       dot = document.createElement('div');
       dot.id = 'cur-dot';
       dot.setAttribute('aria-hidden', 'true');
-      dot.innerHTML =
-        '<svg viewBox="0 0 6 6" width="6" height="6" style="display:block;overflow:visible;"><circle cx="3" cy="3" r="3" fill="#ffffff" shape-rendering="geometricPrecision"/></svg>';
+      dot.innerHTML = dotMarkup;
       document.body.appendChild(dot);
-    } else if (!dot.querySelector('svg')) {
-      dot.innerHTML =
-        '<svg viewBox="0 0 6 6" width="6" height="6" style="display:block;overflow:visible;"><circle cx="3" cy="3" r="3" fill="#ffffff" shape-rendering="geometricPrecision"/></svg>';
+    } else if (!dot.querySelector('.cur-dot-logo')) {
+      dot.innerHTML = dotMarkup;
     }
 
     ring = document.getElementById('cur-ring');
@@ -124,7 +129,7 @@
     // Explicit buttons, controls, chips, and toggles follow Rule 3 (corner snap)
     if (
       el.closest(
-        'button, [role="button"], #themeToggle, #paletteBtn, #guidesBtn, #brandHome, .btn, .copy-btn, .nav-cat-btn, .ltc-chip, [data-cur="button"]'
+        'button, [role="button"], #themeToggle, #paletteBtn, #guidesBtn, #brandHome, #authArea a, #authArea button, .btn, .copy-btn, .nav-cat-btn, .ltc-chip, [data-cur="button"]'
       )
     ) {
       return false;
@@ -179,9 +184,10 @@
 
     // 0b. Active resizing mode
     const resizingEdge = document.body.getAttribute('data-resizing');
-    if (resizingEdge) {
+    const isDraggingResizer = document.querySelector('#ltNavResizer.is-dragging, #ltRailResizer.is-dragging, .ltc-panel-resizer.is-dragging');
+    if (resizingEdge || isDraggingResizer) {
       let mode = 'resize-ew';
-      if (resizingEdge === 'e' || resizingEdge === 'w') {
+      if (resizingEdge === 'e' || resizingEdge === 'w' || isDraggingResizer) {
         mode = 'resize-ew';
       } else if (resizingEdge === 'n' || resizingEdge === 's') {
         mode = 'resize-ns';
@@ -203,7 +209,7 @@
 
     // 0c. Hovering over handles or resizers
     if (targetEl instanceof Element) {
-      const handle = targetEl.closest('.ltc-handle, .ltc-panel-resizer, #ltRailResizer');
+      const handle = targetEl.closest('.ltc-handle, .ltc-panel-resizer, #ltRailResizer, #ltNavResizer');
       if (handle) {
         let mode = 'resize-ew';
         if (handle.classList.contains('ltc-handle-n') || handle.classList.contains('ltc-handle-s') || handle.classList.contains('ltc-panel-resizer')) {

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Design a Rate Limiter — system design chapter + top 50 questions</title>
 <meta name="description" content="Rate limiter system design: 5 algorithms, distributed architecture, atomicity, 429 contract, failure modes, and 50 interview questions." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z' fill='%23C8FA4B'/%3E%3Cpath d='M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z' fill='%23E9EDF4'/%3E%3Cpath d='M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z' fill='%23C8FA4B'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -117,8 +118,14 @@
 
 <header class="top">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-    <a href="../index.html" style="font:500 12px var(--mono); color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-      <span>&larr;</span> Back to Top 150 Manual
+    <a href="../index.html" id="brandHome" class="brand-lockup" style="font:600 14px var(--font-display); color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+      <svg class="brand-logo-svg" width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+        <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+        <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+      </svg>
+      <span class="font-display">Invariant</span>
+      <span style="font:500 11px var(--mono); color:var(--muted); margin-left:4px;">&larr; Back to Manual</span>
     </a>
     <button id="themeToggle" type="button" aria-label="Switch colour theme" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer;">
       <span id="themeIcon">☀️</span>
@@ -797,6 +804,27 @@ policy, retry budgets, the interview clock — is consolidated from:
   <li>Google SRE Book ch. 21 + Workbook ch. 11 — overload, client-side adaptive throttling, retry budgets, load shedding</li>
   <li>Real API contracts observed in production docs: tiered per-key/per-org limits, per-endpoint-class buckets, concurrency caps, cost quotas, "limits are best-effort and fail open" — the shapes customers actually rely on</li>
 </ul>
+
+<footer>
+  <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+    <a href="../index.html" class="brand-lockup" style="display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:var(--ink);">
+      <svg class="brand-logo-svg" width="16" height="16" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+        <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+        <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+      </svg>
+      <span><b class="font-display">Invariant</b> · System Design Deep Dive</span>
+    </a>
+    <div>
+      <a href="../ARCHITECTURE_AND_DECISIONS.html" style="color:var(--muted); text-decoration:none;">Architecture</a>
+      <span style="margin:0 6px;">·</span>
+      <span>developed by <a href="https://github.com/mjzd7/leetcode-top-interview-150-javascript" target="_blank" rel="noopener noreferrer" style="color:var(--muted);">mjzd7</a></span>
+    </div>
+  </div>
+  <div style="padding-top:10px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; font-size:11px; line-height:1.6;">
+    <span>&copy; 2026 Invariant. All rights reserved.</span>
+    <span style="max-width:620px;">Independently developed for educational purposes; not affiliated with, endorsed by, or sponsored by LeetCode or any mentioned company. All trademarks and brand names are the property of their respective owners.</span>
+  </div>
 </footer>
 </div>
 <script>

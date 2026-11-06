@@ -30,9 +30,24 @@ const isMobile = (page) => page.viewportSize().width < 1024;
 
 /** Open the assistant the way a reader would for the current viewport. */
 async function openChat(page) {
-  if (isMobile(page)) {
+  const p = page.locator(panel);
+  const isOpen = await p.evaluate((el) => el.classList.contains('is-open')).catch(() => false);
+  if (!isOpen) {
     await page.locator(fab).click();
-    await expect(page.locator(panel)).toHaveClass(/is-open/);
+    await expect(p).toHaveClass(/is-open/);
+    await page.evaluate(() => {
+      const saved = parseInt(localStorage.getItem('lt150-chat-h'), 10) || 0;
+      const resizer = document.getElementById('ltcPanelResizer');
+      const panelEl = document.getElementById('ltcPanel');
+      if (!panelEl) return;
+      if (saved) {
+        panelEl.setAttribute('data-resized', '');
+        panelEl.style.setProperty('--ltc-panel-h', saved + 'px');
+        if (resizer) resizer.setAttribute('aria-valuenow', String(saved));
+      } else if (resizer) {
+        resizer.setAttribute('aria-valuenow', String(Math.round(panelEl.getBoundingClientRect().height)));
+      }
+    });
   }
   await expect(page.locator(input)).toBeVisible();
 }
@@ -104,7 +119,14 @@ test('renders the assistant in the viewport-appropriate surface', async ({ page 
     await expect(page.locator(fab)).toBeVisible();
     await expect(page.locator(panel)).not.toHaveClass(/is-open/);
   } else {
-    // Desktop: a permanent flex column, and the FAB must get out of the way.
+    // Desktop: chatbox starts closed by default (#ltcPanel is not .is-open, #ltcFab is visible)
+    await expect(page.locator(fab)).toBeVisible();
+    await expect(page.locator(panel)).not.toHaveClass(/is-open/);
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+
+    // Once opened via FAB: docked column in uncollapsed rail, and FAB gets tucked/hidden
+    await page.locator(fab).click();
+    await expect(page.locator(panel)).toHaveClass(/is-open/);
     await expect(page.locator(fab)).toBeHidden();
     await expect(page.locator(panel)).toBeVisible();
     const box = await page.locator(panel).boundingBox();
@@ -1960,6 +1982,7 @@ test('the assistant takes the rail top to bottom', async ({ page }) => {
 
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
 
   const railBox = await page.locator(rail).boundingBox();
   const chat = await page.locator(panel).boundingBox();
@@ -2017,6 +2040,7 @@ test('the rail has a draggable divider', async ({ page }) => {
 
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
 
   await expect(page.locator(resizer)).toBeVisible();
   await expect(page.locator(resizer)).toHaveAttribute('role', 'separator');
@@ -2029,6 +2053,7 @@ test('dragging the divider resizes the rail and clamps to 320-720', async ({ pag
 
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
 
   // The rail hugs the right edge, so its width is innerWidth minus the
   // divider's x: dragging left widens it, dragging right narrows it.
@@ -2051,12 +2076,14 @@ test('the rail width survives a reload and resets on double-click', async ({ pag
 
   await page.goto(ARTICLE_URL);
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
 
   await dragTo(page, 1440 - 520);
   const dragged = await railWidth(page);
 
   await page.reload();
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
   expect(await railWidth(page), 'width persisted across reload').toBeCloseTo(dragged, 0);
 
   await page.locator(resizer).dblclick();
@@ -2206,6 +2233,7 @@ test('the assistant height survives a reload and resets on double-click', async 
 
   await page.reload();
   await page.waitForSelector(`${log} .ltc-empty`, { state: 'attached' });
+  await openChat(page);
   expect(await panelHeight(page), 'height persisted across reload').toBeCloseTo(dragged, 0);
 
   await page.locator(panelResizer).dblclick();
@@ -2299,6 +2327,7 @@ test('the nav stage survives a reload', async ({ page }) => {
 
 test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
   async function detachToFloat(page) {
+    await openChat(page);
     const header = page.locator('#ltcPanel .ltc-head');
     const headerBox = await header.boundingBox();
     const startX = headerBox.x + 80;
@@ -2313,6 +2342,14 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
   test('mode transitions: docked -> fullscreen -> docked via single button and close button', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(ARTICLE_URL);
+
+    // Initial desktop state starts closed by default
+    await expect(page.locator('#ltcPanel')).not.toHaveClass(/is-open/);
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+    await expect(page.locator(fab)).toBeVisible();
+
+    // Open chat into docked mode
+    await openChat(page);
 
     // 1. Initial desktop docked state
     await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
@@ -2353,13 +2390,19 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
     await page.goto(ARTICLE_URL);
     await page.waitForSelector('#ltcPanel', { state: 'attached' });
 
-    // 1. In docked mode, #ltcClose MUST be visible to the user
+    // Starts closed by default, FAB is visible
+    await expect(page.locator(fab)).toBeVisible();
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+
+    // Restore/open assistant via FAB into docked mode
+    await page.locator(fab).click();
+    await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
     await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
+    await expect(page.locator(fab)).toBeHidden();
+
+    // 1. In docked mode, #ltcClose MUST be visible to the user
     const closeBtn = page.locator('#ltcClose');
     await expect(closeBtn).toBeVisible();
-
-    // In docked uncollapsed mode, FAB is hidden
-    await expect(page.locator(fab)).toBeHidden();
 
     // 2. Click close button in docked mode
     await closeBtn.click();
@@ -2385,6 +2428,14 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
     await page.goto(ARTICLE_URL);
     await page.waitForSelector('#ltcPanel', { state: 'attached' });
 
+    // Chatbox starts closed by default with FAB visible
+    await expect(page.locator(fab)).toBeVisible();
+    await expect(page.locator('#ltRail')).toHaveAttribute('data-collapsed', 'true');
+
+    // Open via FAB
+    await page.locator(fab).click();
+    await expect(page.locator('#ltcPanel')).toHaveClass(/is-open/);
+
     // 1. Desktop must normalize stale snap-bottom to docked in the right rail
     await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
     await expect(page.locator('#ltRail')).not.toHaveAttribute('data-collapsed', 'true');
@@ -2408,6 +2459,7 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
   test('header title does not wrap or cram in docked mode', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(ARTICLE_URL);
+    await openChat(page);
 
     // Docked mode header checks
     const title = page.locator('#ltcPanel .ltc-head-title');
@@ -2456,6 +2508,7 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
   test('cursor and visual feedback during header drag and handle resize', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(ARTICLE_URL);
+    await openChat(page);
 
     const header = page.locator('#ltcPanel .ltc-head');
     const headerBox = await header.boundingBox();
@@ -2523,6 +2576,7 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
   test('fullscreen window has no backdrop-filter blur for crisp solid rendering', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(ARTICLE_URL);
+    await openChat(page);
 
     await page.click('#ltcPin');
     await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'fullscreen');
@@ -2559,6 +2613,7 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
     // Reload page and check restored position
     await page.reload();
     await page.waitForSelector('#ltcPanel', { state: 'attached' });
+    await openChat(page);
     await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'floating');
     const reloadedBox = await page.locator('#ltcPanel').boundingBox();
     expect(reloadedBox.x).toBeCloseTo(movedBox.x, -1);
@@ -2617,6 +2672,7 @@ test.describe('Chat Float / Pin / Fullscreen Invariant Suite', () => {
   test('dragging header from docked mode detaches into floating mode', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(ARTICLE_URL);
+    await openChat(page);
     await expect(page.locator('#ltcPanel')).toHaveAttribute('data-mode', 'docked');
 
     const header = page.locator('#ltcPanel .ltc-head');

@@ -44,7 +44,19 @@
   background: #fff;
 }
 
-/* Hover mode */
+/* Hover mode (buttons, controls, nav-items, and inline links):
+   Morph cursor into the white Invariant Noether Symmetry Weave logo (never green) */
+@keyframes cur-logo-pop {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 html[data-cursor-mode="link"] #cur-ring {
   color: var(--accent-rim, rgba(200, 250, 75, 0.55));
 }
@@ -56,13 +68,39 @@ html[data-cursor-mode="link"] #cur-ring:not(:has(svg)) {
 html[data-cursor-mode="inline-link"] #cur-ring {
   opacity: 0 !important;
 }
-html[data-cursor-mode="inline-link"] #cur-dot svg {
-  transform: scale(1.6);
-  transition: transform 0.18s var(--ease-snappy);
-  filter: drop-shadow(0 0 6px var(--accent));
+
+html[data-cursor-mode="link"] #cur-dot,
+html[data-cursor-mode="inline-link"] #cur-dot {
+  width: 22px !important;
+  height: 22px !important;
+  margin: -11px 0 0 -11px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
 }
-html[data-cursor-mode="inline-link"] #cur-dot svg circle {
-  fill: var(--accent) !important;
+
+html[data-cursor-mode="link"] #cur-dot .cur-dot-circle,
+html[data-cursor-mode="inline-link"] #cur-dot .cur-dot-circle {
+  display: none !important;
+}
+
+html[data-cursor-mode="link"] #cur-dot .cur-dot-logo,
+html[data-cursor-mode="inline-link"] #cur-dot .cur-dot-logo {
+  display: block !important;
+  width: 22px;
+  height: 22px;
+  color: inherit;
+  filter: none;
+  animation: cur-logo-pop 0.16s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+/* When mix-blend-mode is forced to normal (e.g. open chat panel) in light mode, use dark ink */
+html[data-theme="light"] body:has(.ltc-panel.is-open)[data-cursor-mode="link"] #cur-dot,
+html[data-theme="light"] body:has(.ltc-panel.is-open)[data-cursor-mode="inline-link"] #cur-dot,
+html[data-theme="light"][data-cursor-mode="link"] body:has(.ltc-panel.is-open) #cur-dot,
+html[data-theme="light"][data-cursor-mode="inline-link"] body:has(.ltc-panel.is-open) #cur-dot {
+  color: #0A0D13 !important;
 }
 
 /* Text mode: reform circle into custom I-beam straight-line caret */
@@ -137,13 +175,24 @@ html[data-cursor-mode^="grab"] #cur-ring {
 }
 
 body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-dot {
-  background: var(--accent, #C8FA4B) !important;
-  box-shadow: 0 0 8px var(--accent, #C8FA4B), 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-dot {
+  color: #0A0D13 !important;
+}
+html[data-theme="light"] body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-dot .cur-dot-circle circle {
+  fill: #0A0D13 !important;
 }
 body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-ring {
-  color: var(--accent, #C8FA4B) !important;
-  border-color: color-mix(in srgb, var(--accent, #C8FA4B) 65%, transparent) !important;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #C8FA4B) 30%, transparent) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] body:has(.ltc-panel[data-mode="fullscreen"].is-open) #cur-ring {
+  color: rgba(10, 13, 19, 0.45) !important;
+  border-color: rgba(10, 13, 19, 0.45) !important;
 }
 
 /* =========================================================================
@@ -319,8 +368,10 @@ html[data-theme="light"][data-cursor-mode="grabbing"] #cur-ring {
 
 /* Universal native cursor suppression: native cursor stays hidden everywhere when custom cursor is active */
 @media (hover: hover) and (pointer: fine) {
-  html[data-cursor="on"],
-  html[data-cursor="on"] * {
+  html[data-cursor="on"][data-cursor="on"][data-cursor="on"],
+  html[data-cursor="on"][data-cursor="on"][data-cursor="on"] *,
+  html[data-cursor="on"] .prose code.primer-link,
+  html[data-cursor="on"] .primer-link {
     cursor: none !important;
   }
 }

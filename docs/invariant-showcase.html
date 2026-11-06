@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invariant — Studio Logo Collection, Brand Audit & Front Page Revamp</title>
+  <title>Invariant — 5 Studio Logo Options &amp; Lockup Showcase</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z' fill='%23C8FA4B'/%3E%3Cpath d='M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z' fill='%23E9EDF4'/%3E%3Cpath d='M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z' fill='%23C8FA4B'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/fonts/fonts.css">
   <link rel="stylesheet" href="assets/theme.css">
+  <link rel="stylesheet" href="assets/cursor.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root, html[data-theme="dark"] {
@@ -17,7 +19,7 @@
       --canvas-ins: #0A0D13;
       --raised: #121724;
       --border: #2A3448;
-      --border-soft: rgba(148, 163, 184, 0.13);
+      --border-soft: rgba(148, 163, 184, 0.14);
       --fg: #E9EDF4;
       --fg-prose: #C6CDDB;
       --fg-muted: #8B94A7;
@@ -69,34 +71,34 @@
       line-height: 1.1;
     }
 
-    .showcase-card {
+    .option-card {
       background: var(--canvas-sub);
       border: 1px solid var(--border-soft);
-      border-radius: 1rem;
+      border-radius: 1.25rem;
       transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
     }
-    .showcase-card:hover {
-      border-color: rgba(148, 163, 184, 0.3);
+    .option-card:hover {
+      border-color: rgba(148, 163, 184, 0.35);
       transform: translateY(-2px);
     }
-    .showcase-card.is-selected {
+    .option-card.is-selected {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 14px 36px -8px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 0 0 1px var(--accent), 0 18px 44px -10px rgba(0, 0, 0, 0.55);
     }
 
-    .logo-stage {
+    .lockup-stage {
       background:
-        radial-gradient(circle at 50% 0%, var(--accent-soft), transparent 70%),
-        linear-gradient(to right, rgba(148,163,184,0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(148,163,184,0.05) 1px, transparent 1px);
-      background-size: 100% 100%, 16px 16px, 16px 16px;
+        radial-gradient(circle at 22% 50%, var(--accent-soft), transparent 68%),
+        linear-gradient(to right, rgba(148,163,184,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
       background-color: var(--canvas);
     }
 
     .pill-btn {
       font-family: var(--font-mono);
       font-size: 12px;
-      padding: 0.4rem 0.75rem;
+      padding: 0.42rem 0.8rem;
       border-radius: 0.5rem;
       border: 1px solid var(--border-soft);
       background: var(--canvas-sub);
@@ -122,912 +124,762 @@
       background: var(--canvas);
       box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.65);
     }
-
-    .tell-strike {
-      background: rgba(251, 113, 133, 0.14);
-      color: #FB7185;
-      padding: 0.05rem 0.3rem;
-      border-radius: 0.25rem;
-      text-decoration: line-through;
-      text-decoration-color: rgba(251, 113, 133, 0.6);
-    }
-    .human-fix {
-      background: var(--accent-soft);
-      color: var(--accent);
-      padding: 0.05rem 0.35rem;
-      border-radius: 0.25rem;
-      font-weight: 500;
-    }
-
-    .preview-prose { color: var(--fg-prose); font-size: 0.95rem; line-height: 1.72; }
-    .preview-prose h1 { font-family: var(--font-display); font-size: clamp(1.75rem, 3.6vw, 2.35rem); font-weight: 700; color: var(--fg); letter-spacing: -0.025em; line-height: 1.18; margin-bottom: 0.85rem; }
-    .preview-prose h2 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--fg); letter-spacing: -0.01em; margin-top: 2.25rem; margin-bottom: 0.65rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--border-soft); }
-    .preview-prose p { margin-bottom: 0.9rem; }
   </style>
 </head>
 <body class="min-h-screen pb-24">
 
   <!-- Sticky Control Bar -->
-  <div class="sticky top-0 z-50 backdrop-blur-xl border-b border-[var(--border-soft)]" style="background: var(--header-bg, rgba(8,9,13,0.88));">
+  <div class="sticky top-0 z-50 backdrop-blur-xl border-b border-[var(--border-soft)]" style="background: rgba(8,9,13,0.88);">
     <div class="max-w-6xl mx-auto px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase tracking-wider font-semibold" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Studio Showcase v2</span>
-        <span class="font-display font-bold text-sm md:text-base">Invariant · Logos, Collision Check &amp; Front Page</span>
+        <span class="px-2.5 py-0.5 rounded text-[11px] font-mono uppercase tracking-wider font-semibold" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Logo Study v3</span>
+        <span class="font-display font-bold text-sm md:text-base">Invariant — 5 Lockup-Engineered Logo Options</span>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <a href="#sec-logos" class="pill-btn active">1. Studio Logos (8)</a>
-        <a href="#sec-audit" class="pill-btn">2. What's Taken vs Open</a>
-        <a href="#sec-preview" class="pill-btn">3. Live Front Page Preview</a>
+        <div class="flex items-center gap-1" id="mountBtns">
+          <button type="button" data-mount="open" class="pill-btn active" title="Clean vector mark directly beside text (like Linear, Vercel, Raycast)">Open Vector + Text</button>
+          <button type="button" data-mount="solid" class="pill-btn" title="Solid high-contrast app tile beside text">Solid Badge + Text</button>
+        </div>
+        <div class="flex items-center gap-1" id="caseBtns">
+          <button type="button" data-case="title" class="pill-btn active">Invariant</button>
+          <button type="button" data-case="dot" class="pill-btn">Invariant.</button>
+          <button type="button" data-case="lower" class="pill-btn">invariant</button>
+        </div>
         <button id="themeBtn" type="button" class="pill-btn" title="Toggle Dark / Light theme">🌓 Theme</button>
       </div>
     </div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4 md:px-8 pt-8 space-y-16">
+  <div class="max-w-6xl mx-auto px-4 md:px-8 pt-8 space-y-12">
 
     <!-- ===================================================================
-         SECTION 1: 8 ARCHITECTURAL / STUDIO-GRADE LOGOS FOR "INVARIANT"
+         DIAGNOSIS: WHY THE EARLIER LOGO LOOKED WEAK BESIDE "INVARIANT"
          =================================================================== -->
-    <section id="sec-logos" class="space-y-6 scroll-mt-20">
-      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-[var(--border-soft)] pb-5">
-        <div>
-          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 01 · Architectural Vector Marks</div>
-          <h1 class="font-display font-bold text-2xl md:text-3xl tracking-tight">8 Custom Logo Marks for <span style="color: var(--accent);">Invariant</span></h1>
-          <p class="text-sm mt-1.5 max-w-2xl" style="color: var(--fg-muted);">
-            Rebuilt from the ground up using <strong>solid geometric mass, negative-space cuts, and optical facets</strong> (in the spirit of Linear, Vercel, Cursor, and Raycast) rather than thin wireframe icon strokes. Every mark below is checked against existing companies named Invariant so there is zero visual collision.
+    <section class="rounded-2xl border border-[var(--border-soft)] p-5 md:p-6" style="background: var(--canvas-sub);">
+      <div class="grid md:grid-cols-12 gap-6 items-center">
+        <div class="md:col-span-7 space-y-2">
+          <div class="text-xs font-mono uppercase tracking-widest" style="color: #FB7185;">Diagnosis · Why the earlier mark felt off with the text</div>
+          <h1 class="font-display font-bold text-xl md:text-2xl tracking-tight">Fixing the Icon + Wordmark Lockup</h1>
+          <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-muted);">
+            The earlier 3-slab keystone had three visual problems as soon as the word <strong>Invariant</strong> was placed beside it (and earlier badge options tried to cram letters inside a box):
           </p>
+          <ul class="text-xs space-y-1.5 pt-1" style="color: var(--fg-prose);">
+            <li><strong>1. Looked like a UI "Filter / Sort" button:</strong> Three shrinking horizontal bars trapped inside a faint bordered box reads as a table filter control, not a brand identity.</li>
+            <li><strong>2. Washed-out opacity &amp; dead space beside <code class="font-mono">I</code>:</strong> The 38%-opacity top slab vanished into the background box, while the narrow bottom left an awkward diagonal gap next to the vertical stem of <strong>I</strong>.</li>
+            <li><strong>3. Zero color bridge to the text:</strong> A 100% green icon inside a green border felt detached from the white wordmark. By removing the weak border box and adding a <strong>crisp secondary facet in the exact wordmark color (<code class="font-mono">--fg</code>)</strong>, the symbol and text fuse into one cohesive lockup.</li>
+          </ul>
         </div>
 
-        <!-- Controls: Render Style + Wordmark Lockup -->
-        <div class="flex flex-wrap gap-4 shrink-0">
-          <div class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-mono uppercase tracking-wider" style="color: var(--fg-muted);">Header Mark Style</span>
-            <div class="flex gap-1.5" id="styleBtns">
-              <button type="button" data-style="standalone" class="pill-btn active">Standalone Mark</button>
-              <button type="button" data-style="badge" class="pill-btn">Filled Badge</button>
+        <!-- Before vs After Mini Comparison -->
+        <div class="md:col-span-5 grid grid-cols-1 gap-3">
+          <div class="rounded-xl border border-rose-500/25 p-3.5 flex items-center justify-between" style="background: var(--canvas);">
+            <div class="flex items-center gap-2.5">
+              <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">
+                <svg class="h-5 w-5" viewBox="0 0 32 32" fill="none">
+                  <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/>
+                  <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/>
+                  <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
+                </svg>
+              </span>
+              <span class="font-display font-bold tracking-tight text-base">Invariant</span>
             </div>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400">Earlier (Looks like filter button)</span>
           </div>
-          <div class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-mono uppercase tracking-wider" style="color: var(--fg-muted);">Wordmark Lockup</span>
-            <div class="flex gap-1.5" id="lockupBtns">
-              <button type="button" data-lockup="invariant" class="pill-btn active">Invariant</button>
-              <button type="button" data-lockup="invariant-150" class="pill-btn">Invariant 150</button>
-              <button type="button" data-lockup="invariant-tag" class="pill-btn">Invariant [JS·150]</button>
+
+          <div class="rounded-xl border p-3.5 flex items-center justify-between" style="background: var(--canvas); border-color: var(--accent-rim);">
+            <div class="flex items-center gap-2.5">
+              <span class="h-8 w-8 flex items-center justify-center shrink-0">
+                <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
+                  <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                  <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                  <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                </svg>
+              </span>
+              <span class="font-display font-bold tracking-[-0.03em] text-[17px]">Invariant</span>
             </div>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded" style="background: var(--accent-soft); color: var(--accent);">New Dual-Tone Lockup</span>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- 8 Studio Logo Cards -->
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4" id="logoGrid">
+    <!-- ===================================================================
+         PART 1: 5 THOUGHTFUL, UNCLAIMED LOGO OPTIONS FOR "INVARIANT"
+         =================================================================== -->
+    <section class="space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-soft)] pb-4">
+        <div>
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 01 · 5 Studio Options for "Invariant"</div>
+          <h2 class="font-display font-bold text-2xl md:text-3xl tracking-tight">5 Thoughtful Logos That Look Amazing With the Wordmark</h2>
+          <p class="text-sm mt-1" style="color: var(--fg-muted);">
+            Zero letters inside the icon, exact negative-space cuts (no muddy overlaps), and verified unclaimed across tech &amp; interview platforms. Click any card to test it in the full header below.
+          </p>
+        </div>
+      </div>
 
-        <!-- MARK 01: The Halmos Proof Cut (∎ + Chevron) -->
-        <div class="showcase-card is-selected p-4 flex flex-col justify-between cursor-pointer" data-logo-option="1">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="optionsGrid">
+
+        <!-- ===============================================================
+             OPTION 01: THE NOETHER SYMMETRY WEAVE (45° Interlocking Hooks + Core)
+             =============================================================== -->
+        <article class="option-card is-selected p-6 flex flex-col justify-between cursor-pointer" data-option="1">
           <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--accent);">01 · Top Pick</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Q.E.D. Proof Block</span>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent); color: var(--accent-ink);">Option 01 · Top Pick</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">Noether Symmetry Weave</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
             </div>
 
-            <!-- Stage: Standalone 56px + Filled Badge 36px + Favicon 18px -->
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <!-- Standalone Mark -->
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                  <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                    <!-- Solid architectural Halmos tombstone with negative-space pointer cut & invariant core -->
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5 7C5 5.89543 5.89543 5 7 5H25C26.1046 5 27 5.89543 27 7V25C27 26.1046 26.1046 27 25 27H14.5L19.5 16L14.5 16L9.5 27H7C5.89543 27 5 26.1046 5 25V7ZM14 11.5C14 10.6716 14.6716 10 15.5 10H20.5C21.3284 10 22 10.6716 22 11.5C22 12.3284 21.3284 13 20.5 13H15.5C14.6716 13 14 12.3284 14 11.5Z" fill="currentColor"/>
-                  </svg>
+            <!-- Hero Lockup Stage -->
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Upper-Left 45° Hook (Accent) -->
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                      <!-- Lower-Right 45° Hook (Exact point-reflection, 3px negative-space cut, Foreground color bridges text) -->
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                      <!-- Unmoving Central Invariant Diamond -->
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <!-- Solid App Tile + 16px Favicon -->
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="currentColor"/>
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="currentColor"/>
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
                 </div>
               </div>
-              <!-- Filled App Tile + 16px Favicon -->
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="36px Badge">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5 7C5 5.89543 5.89543 5 7 5H25C26.1046 5 27 5.89543 27 7V25C27 26.1046 26.1046 27 25 27H14.5L19.5 16L14.5 16L9.5 27H7C5.89543 27 5 26.1046 5 25V7ZM14 11.5C14 10.6716 14.6716 10 15.5 10H20.5C21.3284 10 22 10.6716 22 11.5C22 12.3284 21.3284 13 20.5 13H15.5C14.6716 13 14 12.3284 14 11.5Z" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);" title="16px Favicon">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5 7C5 5.89543 5.89543 5 7 5H25C26.1046 5 27 5.89543 27 7V25C27 26.1046 26.1046 27 25 27H14.5L19.5 16L14.5 16L9.5 27H7C5.89543 27 5 26.1046 5 25V7ZM14 11.5C14 10.6716 14.6716 10 15.5 10H20.5C21.3284 10 22 10.6716 22 11.5C22 12.3284 21.3284 13 20.5 13H15.5C14.6716 13 14 12.3284 14 11.5Z" fill="currentColor"/>
-                  </svg>
-                </span>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                      <path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                      <path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
               </div>
             </div>
 
-            <h3 class="font-display font-bold text-[15px] mb-1">1. The Halmos Proof Block (`∎`)</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              In algorithm textbooks (CLRS), every invariant proof ends with the Halmos tombstone `∎` (<em>Q.E.D.</em>). We carve a forward execution slash and constant bar into the monolith. <strong>100% unique in tech.</strong>
+            <h3 class="font-display font-bold text-lg mb-1.5">1. The Noether Symmetry Weave</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              In Emmy Noether’s theorem, every continuous symmetry creates a conserved invariant. Two precision-cut 45° hooks interlock with a razor-sharp 3px negative-space channel around an unmoving center diamond. Because the right hook matches the exact color of <strong>Invariant</strong>, it visually pulls the wordmark into the symbol.
             </p>
           </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Unclaimed motif</span>
-            <span class="select-label font-semibold" style="color: var(--accent);">● Active</span>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">Exact 45° non-overlapping cuts · Bridges icon &amp; text</span>
+            <span class="select-indicator font-semibold" style="color: var(--accent);">● Active in Header</span>
           </div>
-        </div>
+        </article>
 
-        <!-- MARK 02: The Fixpoint Monolith (Negative-Space I inside Interlocking Loop) -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="2">
+        <!-- ===============================================================
+             OPTION 02: THE ISOMETRIC MÖBIUS ROTOR (120° Rotational Invariant)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer" data-option="2">
           <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--accent);">02 · Top Pick</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Negative-Space `I`</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <!-- Top-left and bottom-right heavy geometric jaws locking around a negative-space I-beam -->
-                  <path d="M6 6H22L18 11H13.5V21H9.5L6 25V6Z" fill="currentColor"/>
-                  <path d="M26 26H10L14 21H18.5V11H22.5L26 7V26Z" fill="currentColor" fill-opacity="0.72"/>
-                </svg>
-              </div>
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M6 6H22L18 11H13.5V21H9.5L6 25V6Z" fill="currentColor"/>
-                    <path d="M26 26H10L14 21H18.5V11H22.5L26 7V26Z" fill="currentColor" fill-opacity="0.78"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M6 6H22L18 11H13.5V21H9.5L6 25V6Z" fill="currentColor"/>
-                    <path d="M26 26H10L14 21H18.5V11H22.5L26 7V26Z" fill="currentColor"/>
-                  </svg>
-                </span>
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 02 · Top Pick</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">120° Rotational Invariant</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Blade 0 (Top-Right, Accent) -->
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/>
+                      <!-- Blade 1 (Bottom-Right, Foreground matches wordmark) -->
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/>
+                      <!-- Blade 2 (Left Vertical Spine, Accent 75%) -->
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)" fill-opacity="0.72"/>
+                      <!-- Isometric Central Core -->
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="currentColor"/>
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="currentColor"/>
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="currentColor"/>
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/>
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/>
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)"/>
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/>
+                      <path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/>
+                      <path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)" fill-opacity="0.72"/>
+                      <path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
               </div>
             </div>
 
-            <h3 class="font-display font-bold text-[15px] mb-1">2. The Fixpoint Monogram</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              Two interlocking geometric jaws cycle around an unmoving **negative-space `I`** carved dead-center. Reads simultaneously as a loop cycle and a bold architectural letter `I`.
+            <h3 class="font-display font-bold text-lg mb-1.5">2. The Isometric Möbius Rotor</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              Constructed with exact 120° rotational symmetry (C₃ group invariance): three identical isometric L-blades lock around a central hexagonal prism with a uniform 2.1px negative-space channel. Notice how its flush vertical right edge aligns straight beside the stem of <code class="font-mono">I</code> in <strong>Invariant</strong>.
             </p>
           </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Unclaimed motif</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">3 blades = 3 solution levels · Flush vertical right edge</span>
+            <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
           </div>
-        </div>
+        </article>
 
-        <!-- MARK 03: The Binary Shear (O(log n) Diamond Split + Pivot Core) -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="3">
+        <!-- ===============================================================
+             OPTION 03: THE GYROSCOPIC GIMBAL (Concentric Sliced Orbits + Fixed Core)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer" data-option="3">
           <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--fg-muted);">Option 03</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Divide &amp; Conquer</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <!-- Upper-left sheared prism -->
-                  <path d="M16 3L26.5 13.5L21 13.5L13.5 13.5L13.5 21L13.5 26.5L3 16L16 3Z" fill="currentColor"/>
-                  <!-- Lower-right halved prism -->
-                  <path d="M29 16L16 29L16 18.5L26.5 18.5L29 16Z" fill="currentColor" fill-opacity="0.55"/>
-                  <!-- Fixed Pivot Diamond -->
-                  <rect x="16" y="13.2" width="4" height="4" transform="rotate(45 16 13.2)" fill="currentColor"/>
-                </svg>
-              </div>
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M16 3L26.5 13.5L13.5 13.5L13.5 26.5L3 16L16 3Z" fill="currentColor"/>
-                    <path d="M29 16L16 29L16 18.5L26.5 18.5L29 16Z" fill="currentColor" fill-opacity="0.65"/>
-                    <rect x="16" y="13.2" width="4" height="4" transform="rotate(45 16 13.2)" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M16 3L26.5 13.5L13.5 13.5L13.5 26.5L3 16L16 3Z" fill="currentColor"/>
-                    <path d="M29 16L16 29L16 18.5L26.5 18.5L29 16Z" fill="currentColor"/>
-                  </svg>
-                </span>
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 03</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">Gyroscopic Fixpoint</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Upper-Left Gimbal Arc (Accent) -->
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/>
+                      <!-- Lower-Right Gimbal Arc (Foreground matches wordmark) -->
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/>
+                      <!-- Unmoving Gyroscopic Diamond Core -->
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="currentColor"/>
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="currentColor"/>
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/>
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/>
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/>
+                      <path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/>
+                      <rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
               </div>
             </div>
 
-            <h3 class="font-display font-bold text-[15px] mb-1">3. The Binary Partition</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              Visualizes partitioning a search space around a fixed pivot (`[low, mid, high]`). A solid rotated square cleanly cleaved along its L-bound with an unmoving center diamond.
+            <h3 class="font-display font-bold text-lg mb-1.5">3. The Gyroscopic Gimbal</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              A gyroscope’s center axis stays invariant while the outer gimbal rings rotate around it. Typographically, a circular outer silhouette placed beside the vertical <code class="font-mono">I</code> stem of <strong>Invariant</strong> creates the classic circle-to-vertical contrast used by Linear, PlanetScale, and CircleCI.
             </p>
           </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Linear / Vercel feel</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">Circle-to-stem contrast · Literal invariant physics</span>
+            <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
           </div>
-        </div>
+        </article>
 
-        <!-- MARK 04: The Möbius Tri-Facet Loop -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="4">
+        <!-- ===============================================================
+             OPTION 04: THE CROSS-RATIO CALIPER (4-Fold Projective Invariant)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer" data-option="4">
           <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--fg-muted);">Option 04</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">3D Isometric Loop</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <!-- Facet 1 (Top-Left Ribbon) -->
-                  <path d="M16 3L27 9.5L22.5 12.2L16 8.4L9.5 12.2L9.5 20L5 22.5L5 9.5L16 3Z" fill="currentColor"/>
-                  <!-- Facet 2 (Right Ribbon) -->
-                  <path d="M27 9.5V22.5L16 29L16 23.6L22.5 19.8V12.2L27 9.5Z" fill="currentColor" fill-opacity="0.68"/>
-                  <!-- Facet 3 (Bottom-Inner Lock + Core Pillar) -->
-                  <path d="M16 29L5 22.5L9.5 20L16 23.6V29Z" fill="currentColor" fill-opacity="0.42"/>
-                  <path d="M13.8 12.5H18.2V19.5H13.8V12.5Z" fill="currentColor"/>
-                </svg>
-              </div>
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M16 3L27 9.5L22.5 12.2L16 8.4L9.5 12.2L9.5 20L5 22.5L5 9.5L16 3Z" fill="currentColor"/>
-                    <path d="M27 9.5V22.5L16 29L16 23.6L22.5 19.8V12.2L27 9.5Z" fill="currentColor" fill-opacity="0.72"/>
-                    <path d="M13.8 12.2H18.2V19.8H13.8V12.2Z" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M16 3L27 9.5V22.5L16 29L5 22.5V9.5L16 3ZM13.5 11.5V20.5H18.5V11.5H13.5Z" fill="currentColor" fill-rule="evenodd"/>
-                  </svg>
-                </span>
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 04</span>
+                <span class="text-xs font-mono" style="color: var(--fg-muted);">Projective Cross-Ratio</span>
+              </div>
+              <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
+            </div>
+
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] p-6 mb-4 flex flex-col gap-5">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Top-Left & Bottom-Right opposing caliper blades (Accent) -->
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/>
+                      <!-- Top-Right & Bottom-Left opposing caliper blades (Foreground matches wordmark) -->
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/>
+                      <!-- Central locked diamond pin -->
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);" title="Solid App Icon">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="currentColor"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="currentColor"/>
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="currentColor"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="currentColor"/>
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub);" title="16px Favicon">
+                    <svg class="w-4 h-4" viewBox="0 0 32 32" fill="none">
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/>
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/>
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Exact 56px Header Strip Preview -->
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/>
+                      <path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/>
+                      <path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/>
+                      <path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/>
+                      <rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
               </div>
             </div>
 
-            <h3 class="font-display font-bold text-[15px] mb-1">4. The Isometric Torus (`I`)</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              Three shaded isometric ribbons form an unbroken hexagonal loop around a floating solid `I` core. Gives depth on dark mode while collapsing cleanly to a single glyph at 16px.
+            <h3 class="font-display font-bold text-lg mb-1.5">4. The Cross-Ratio Caliper</h3>
+            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+              In projective geometry, the cross-ratio of four points is the fundamental invariant across any perspective change. Four precision-mitred corner jaws carve a negative-space 4-point compass star around a central diamond—giving a razor-sharp architectural square right beside <strong>Invariant</strong>.
             </p>
           </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ 3-tone dimensional</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
+          <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+            <span style="color: var(--fg-muted);">Swiss architectural precision · Flush right stem alignment</span>
+            <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
           </div>
-        </div>
+        </article>
 
-        <!-- MARK 05: The Converging Jaws (Heavy Geometric > | <) -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="5">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--fg-muted);">Option 05</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Two-Pointer Lock</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <!-- Heavy solid left chevron -->
-                  <path d="M4 7.5L12.5 16L4 24.5V19.2L7.2 16L4 12.8V7.5Z" fill="currentColor" fill-opacity="0.68"/>
-                  <!-- Heavy solid right chevron -->
-                  <path d="M28 7.5L19.5 16L28 24.5V19.2L24.8 16L28 12.8V7.5Z" fill="currentColor" fill-opacity="0.68"/>
-                  <!-- Unmoving central Invariant Pillar -->
-                  <rect x="13.75" y="4" width="4.5" height="24" rx="1.5" fill="currentColor"/>
-                </svg>
+        <!-- ===============================================================
+             OPTION 05: THE PHASE-LOCK ATTRACTOR (Non-Overlapping Over/Under Weave)
+             =============================================================== -->
+        <article class="option-card p-6 flex flex-col justify-between cursor-pointer lg:col-span-2" data-option="5">
+          <div class="grid lg:grid-cols-12 gap-6 items-center">
+            <div class="lg:col-span-7">
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">Option 05</span>
+                  <span class="text-xs font-mono" style="color: var(--fg-muted);">Strange Attractor / Phase Invariant</span>
+                </div>
+                <span class="text-[11px] font-mono" style="color: #34D399;">✓ Not Taken</span>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M4 7.5L12.5 16L4 24.5V19.2L7.2 16L4 12.8V7.5Z" fill="currentColor"/>
-                    <path d="M28 7.5L19.5 16L28 24.5V19.2L24.8 16L28 12.8V7.5Z" fill="currentColor"/>
-                    <rect x="13.75" y="4" width="4.5" height="24" rx="1.5" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M4 7.5L12.5 16L4 24.5V19.2L7.2 16L4 12.8V7.5Z" fill="currentColor"/>
-                    <path d="M28 7.5L19.5 16L28 24.5V19.2L24.8 16L28 12.8V7.5Z" fill="currentColor"/>
-                    <rect x="13.75" y="4" width="4.5" height="24" rx="1.5" fill="currentColor"/>
-                  </svg>
-                </span>
+              <h3 class="font-display font-bold text-lg mb-1.5">5. The Phase-Lock Attractor</h3>
+              <p class="text-xs md:text-sm leading-relaxed" style="color: var(--fg-prose);">
+                In dynamical systems, an invariant manifold (or Lorenz attractor) is the twin-wing orbit a system always converges to. Here, the left faceted loop is solid accent while the right loop weaves cleanly underneath with an exact 2.4px negative-space cut. Its horizontal poise mirrors the rhythm of the wordmark <strong>Invariant</strong>.
+              </p>
+              <div class="mt-4 pt-3 border-t border-[var(--border-soft)] flex items-center justify-between text-xs font-mono">
+                <span style="color: var(--fg-muted);">Clean over-under negative-space cut · Zero overlap</span>
+                <span class="select-indicator" style="color: var(--fg-muted);">Click to preview</span>
               </div>
             </div>
 
-            <h3 class="font-display font-bold text-[15px] mb-1">5. The Two-Pointer Pillar</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              Replaces thin strokes with solid architectural wedges (`>` and `<`) squeezing inward against an unyielding vertical `I` beam. Immediately communicates bounds + invariant.
-            </p>
-          </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Crisp at 16px</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
-          </div>
-        </div>
+            <div class="lg:col-span-5 lockup-stage rounded-xl border border-[var(--border-soft)] p-5 flex flex-col gap-4">
+              <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-3.5">
+                  <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
+                      <!-- Left Attractor Wing (Complete Faceted Loop, Accent) -->
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="var(--accent)"/>
+                      <!-- Right Attractor Wing (Clean parallel negative-space cut around Left Wing, Foreground) -->
+                      <path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="var(--fg)"/>
+                    </svg>
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="wordmark-text font-display font-bold text-3xl tracking-[-0.03em] leading-none">Invariant</span>
+                    <span class="font-mono text-[11px] tracking-wider uppercase mt-1" style="color: var(--fg-muted);">From Brute Force to Proof</span>
+                  </div>
+                </div>
 
-        <!-- MARK 06: The 3-Level Canonical Stack (Stepped Trapezoids) -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="6">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--fg-muted);">Option 06</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">L1 → L2 → L3 Stack</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <!-- Level 1: Wide Brute-Force Base (35% opacity) -->
-                  <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/>
-                  <!-- Level 2: Narrowed Optimized Layer (68% opacity) -->
-                  <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/>
-                  <!-- Level 3: Locked Canonical Keystone (100% solid) -->
-                  <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
-                </svg>
+                <div class="flex items-center gap-2">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="currentColor"/>
+                      <path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.45"/>
-                    <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.72"/>
-                    <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.5"/>
-                    <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.75"/>
-                    <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
-                  </svg>
-                </span>
+
+              <div class="rounded-lg border border-[var(--border-soft)] px-4 h-12 flex items-center justify-between text-xs" style="background: var(--canvas-sub);">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="var(--accent)"/>
+                      <path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="var(--fg)"/>
+                    </svg>
+                  </span>
+                  <span class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px]">Invariant</span>
+                </div>
+                <span class="font-mono text-[11px]" style="color: var(--fg-muted);">Actual 56px Navbar Scale</span>
               </div>
             </div>
-
-            <h3 class="font-display font-bold text-[15px] mb-1">6. The 3-Level Keystone</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              Three chamfered architectural slabs narrowing from $O(n^2)$ Brute Force at the top to the solid, high-contrast $O(n)$ Canonical Keystone at the base.
-            </p>
           </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Product-story mark</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
-          </div>
-        </div>
-
-        <!-- MARK 07: The Orbital Core (Dynamic Crescent + Fixed Diamond) -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="7">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--fg-muted);">Option 07</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Constant in Motion</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <!-- Sweeping tapered upper arc -->
-                  <path d="M6.2 18.5C4.8 12.2 8.8 6 15.2 4.8C20.2 3.9 25 6.4 27 10.8L23.2 12.4C21.8 9.5 18.6 8 15.3 8.6C11.1 9.4 8.5 13.4 9.4 17.6L6.2 18.5Z" fill="currentColor"/>
-                  <!-- Sweeping tapered lower arc -->
-                  <path d="M25.8 13.5C27.2 19.8 23.2 26 16.8 27.2C11.8 28.1 7 25.6 5 21.2L8.8 19.6C10.2 22.5 13.4 24 16.7 23.4C20.9 22.6 23.5 18.6 22.6 14.4L25.8 13.5Z" fill="currentColor" fill-opacity="0.65"/>
-                  <!-- Unmoving central diamond invariant -->
-                  <rect x="16" y="11.2" width="6.8" height="6.8" rx="1.2" transform="rotate(45 16 11.2)" fill="currentColor"/>
-                </svg>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M6.2 18.5C4.8 12.2 8.8 6 15.2 4.8C20.2 3.9 25 6.4 27 10.8L23.2 12.4C21.8 9.5 18.6 8 15.3 8.6C11.1 9.4 8.5 13.4 9.4 17.6L6.2 18.5Z" fill="currentColor"/>
-                    <path d="M25.8 13.5C27.2 19.8 23.2 26 16.8 27.2C11.8 28.1 7 25.6 5 21.2L8.8 19.6C10.2 22.5 13.4 24 16.7 23.4C20.9 22.6 23.5 18.6 22.6 14.4L25.8 13.5Z" fill="currentColor"/>
-                    <rect x="16" y="11.2" width="6.8" height="6.8" rx="1.2" transform="rotate(45 16 11.2)" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M6.2 18.5C4.8 12.2 8.8 6 15.2 4.8C20.2 3.9 25 6.4 27 10.8L23.2 12.4C21.8 9.5 18.6 8 15.3 8.6C11.1 9.4 8.5 13.4 9.4 17.6L6.2 18.5Z" fill="currentColor"/>
-                    <path d="M25.8 13.5C27.2 19.8 23.2 26 16.8 27.2C11.8 28.1 7 25.6 5 21.2L8.8 19.6C10.2 22.5 13.4 24 16.7 23.4C20.9 22.6 23.5 18.6 22.6 14.4L25.8 13.5Z" fill="currentColor"/>
-                    <rect x="16" y="11.2" width="6.8" height="6.8" rx="1.2" transform="rotate(45 16 11.2)" fill="currentColor"/>
-                  </svg>
-                </span>
-              </div>
-            </div>
-
-            <h3 class="font-display font-bold text-[15px] mb-1">7. The Orbital Fixpoint</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              Two variable-width state arcs cycle around a stationary central diamond (`◆`). Captures the literal definition of an invariant: the center that stays fixed while state mutates.
-            </p>
-          </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Organic + geometric</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
-          </div>
-        </div>
-
-        <!-- MARK 08: The Carved Equivalence Seal (I + ≡ Cutout) -->
-        <div class="showcase-card p-4 flex flex-col justify-between cursor-pointer" data-logo-option="8">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[11px] font-mono font-semibold uppercase tracking-wider" style="color: var(--fg-muted);">Option 08</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Carved Seal (`I≡`)</span>
-            </div>
-
-            <div class="logo-stage rounded-xl border border-[var(--border-soft)] p-4 mb-3.5 flex items-center justify-between">
-              <div class="w-12 h-12 flex items-center justify-center" style="color: var(--accent);">
-                <svg class="w-11 h-11" viewBox="0 0 32 32" fill="none">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M4 8C4 5.79086 5.79086 4 8 4H24C26.2091 4 28 5.79086 28 8V24C28 26.2091 26.2091 28 24 28H8C5.79086 28 4 26.2091 4 24V8ZM8.5 9V23H12V9H8.5ZM15.5 9H23.5V12.2H15.5V9ZM15.5 14.4H23.5V17.6H15.5V14.4ZM15.5 19.8H23.5V23H15.5V19.8Z" fill="currentColor"/>
-                </svg>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-md" style="background: var(--accent); color: var(--accent-ink);">
-                  <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
-                    <path d="M8.5 8V24H12.2V8H8.5ZM15.5 8H24V11.4H15.5V8ZM15.5 14.3H24V17.7H15.5V14.3ZM15.5 20.6H24V24H15.5V20.6Z" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span class="w-6 h-6 rounded flex items-center justify-center border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--accent);">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 32 32" fill="none">
-                    <path d="M8.5 8V24H12.2V8H8.5ZM15.5 8H24V11.4H15.5V8ZM15.5 14.3H24V17.7H15.5V14.3ZM15.5 20.6H24V24H15.5V20.6Z" fill="currentColor"/>
-                  </svg>
-                </span>
-              </div>
-            </div>
-
-            <h3 class="font-display font-bold text-[15px] mb-1">8. The Equivalence Seal (`I≡`)</h3>
-            <p class="text-xs leading-relaxed" style="color: var(--fg-muted);">
-              A heavy squircle seal with `I` and the triple identity bar `≡` carved out in negative space. Simultaneously references **Invariant (`I`)**, **Mathematical Equivalence (`≡`)**, and **JS Strict Equality (`===`)**.
-            </p>
-          </div>
-          <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] flex items-center justify-between text-[11px] font-mono">
-            <span style="color: #34D399;">✓ Ultra-crisp badge</span>
-            <span class="select-label" style="color: var(--fg-muted);">Preview</span>
-          </div>
-        </div>
+        </article>
 
       </div>
     </section>
 
     <!-- ===================================================================
-         SECTION 2: BRAND & LOGO AVAILABILITY / COLLISION CHECK
+         PART 2: 4 THOUGHTFUL UNCLAIMED BRAND NAMES + MATCHING LOGOS
+         (In case you also want to compare alternative names beside their marks)
          =================================================================== -->
-    <section id="sec-audit" class="space-y-5 scroll-mt-20">
+    <section class="space-y-5 pt-4">
       <div class="border-b border-[var(--border-soft)] pb-4">
-        <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 02 · Landscape &amp; Collision Check</div>
-        <h2 class="font-display font-bold text-2xl md:text-3xl tracking-tight">What is already taken vs. what is wide open</h2>
+        <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 02 · Bonus Name + Logo Lockup Alternatives</div>
+        <h2 class="font-display font-bold text-2xl md:text-3xl tracking-tight">4 Unclaimed Alternative Names That Pair Effortlessly With Logos</h2>
         <p class="text-sm mt-1" style="color: var(--fg-muted);">
-          We audited existing tech companies, open-source packages, and interview platforms using the name <strong>Invariant</strong> so your brand and logo stay distinct.
+          In case you also felt the word <strong>Invariant</strong> itself was long or tricky to balance next to a symbol, here are 4 shorter, CS-rooted names that are <strong>100% unclaimed in coding interview prep</strong> and have natural visual symbols.
         </p>
       </div>
 
-      <div class="showcase-card overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="border-b border-[var(--border-soft)] font-mono text-[11px] uppercase" style="background: var(--canvas-ins); color: var(--accent);">
-                <th class="py-3 px-4">Entity / Domain</th>
-                <th class="py-3 px-4">Sector</th>
-                <th class="py-3 px-4">Their Visual Mark (Avoided)</th>
-                <th class="py-3 px-4">Collision Risk with Us</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[var(--border-soft)]" style="color: var(--fg-prose);">
-              <tr>
-                <td class="py-3 px-4 font-semibold" style="color: var(--fg);">Coding Interview / DSA Platforms<br><span class="font-mono text-[11px] font-normal" style="color: var(--fg-muted);">(NeetCode, AlgoMonster, Structy, Grind75)</span></td>
-                <td class="py-3 px-4">Algorithm Interview Prep (Our Sector)</td>
-                <td class="py-3 px-4">None use "Invariant" or proof symbols (`∎`, `I≡`)</td>
-                <td class="py-3 px-4 font-mono font-semibold" style="color: #34D399;">✓ WIDE OPEN (0% overlap)</td>
-              </tr>
-              <tr>
-                <td class="py-3 px-4 font-semibold" style="color: var(--fg);">Invariant Labs<br><span class="font-mono text-[11px] font-normal" style="color: var(--fg-muted);">invariantlabs.ai (Acquired by Snyk)</span></td>
-                <td class="py-3 px-4">AI Agent Security &amp; MCP Guardrails</td>
-                <td class="py-3 px-4">Grid trajectory arrows + serif/sans "Invariant Labs" wordmark</td>
-                <td class="py-3 px-4 font-mono" style="color: #34D399;">Low — folded into Snyk; different sector &amp; mark</td>
-              </tr>
-              <tr>
-                <td class="py-3 px-4 font-semibold" style="color: var(--fg);">Invariant Protocol (INVT)<br><span class="font-mono text-[11px] font-normal" style="color: var(--fg-muted);">invariant.app</span></td>
-                <td class="py-3 px-4">Solana Web3 / DeFi AMM DEX</td>
-                <td class="py-3 px-4">Curved DeFi liquidity wave / slanted neon bar</td>
-                <td class="py-3 px-4 font-mono" style="color: #34D399;">Low — Web3 DEX; we avoided curved wave marks</td>
-              </tr>
-              <tr>
-                <td class="py-3 px-4 font-semibold" style="color: var(--fg);">Invarians<br><span class="font-mono text-[11px] font-normal" style="color: var(--fg-muted);">invarians.com</span></td>
-                <td class="py-3 px-4">On-chain Web3 Audit Trails</td>
-                <td class="py-3 px-4">Golomb L-trominoes (3-square L-tiles around an empty cell)</td>
-                <td class="py-3 px-4 font-mono" style="color: #34D399;">Zero — we avoided 3-square L-tromino grids</td>
-              </tr>
-              <tr>
-                <td class="py-3 px-4 font-semibold" style="color: var(--fg);">npm `invariant` / `tiny-invariant`<br><span class="font-mono text-[11px] font-normal" style="color: var(--fg-muted);">npmjs.com/package/invariant</span></td>
-                <td class="py-3 px-4">JS Assertion Micro-Library</td>
-                <td class="py-3 px-4">No logo (plain npm package README)</td>
-                <td class="py-3 px-4 font-mono" style="color: #FBBF24;">Tip: Pair header as <strong>Invariant</strong> or <strong>Invariant 150</strong> for search clarity</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Alt 1: Halmos -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 01 · Q.E.D. Tombstone</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M5 5H21V13H13V27H5V5Z" fill="var(--accent)"/>
+                <path d="M16 16H27V27H16V16Z" fill="var(--fg)"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Halmos</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              Named after mathematician Paul Halmos, who invented the <strong>∎</strong> tombstone symbol that ends every proof in CLRS. Short, 6 letters, zero collisions.
+            </p>
+          </div>
+        </div>
+
+        <!-- Alt 2: Fixpoint -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 02 · f(x) = x</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M4 9.5L13 16L4 22.5V9.5Z" fill="var(--fg)"/>
+                <path d="M28 9.5L19 16L28 22.5V9.5Z" fill="var(--fg)"/>
+                <rect x="16" y="10.3" width="8" height="8" rx="1.2" transform="rotate(45 16 10.3)" fill="var(--accent)"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Fixpoint</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              In recursion, lattice theory, and binary search, a <strong>fixpoint</strong> is the exact state where <code class="font-mono">f(x) = x</code> stabilizes. Punchy 2-syllable developer brand.
+            </p>
+          </div>
+        </div>
+
+        <!-- Alt 3: Basecase -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 03 · Induction Base</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M6 6H26L21 13H6V6Z" fill="var(--fg)"/>
+                <path d="M6 16H21L16 23H6V16Z" fill="var(--accent)" fill-opacity="0.7"/>
+                <rect x="6" y="25" width="20" height="3.5" rx="1" fill="var(--accent)"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Basecase</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              Every recursive algorithm, DP state transition, and inductive proof rests on its <strong>base case</strong>. Instantly understood by every software engineer.
+            </p>
+          </div>
+        </div>
+
+        <!-- Alt 4: Stratum -->
+        <div class="option-card p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+              <span style="color: var(--accent);">ALT 04 · 3 Solution Layers</span>
+              <span style="color: #34D399;">✓ Unclaimed</span>
+            </div>
+            <div class="lockup-stage rounded-xl border border-[var(--border-soft)] px-4 py-5 mb-3 flex items-center gap-3">
+              <svg class="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none">
+                <path d="M16 3L28 9.5L16 16L4 9.5L16 3Z" fill="var(--accent)"/>
+                <path d="M28 15.5L16 22L4 15.5L7.8 13.4L16 17.8L24.2 13.4L28 15.5Z" fill="var(--fg)"/>
+                <path d="M28 21.5L16 28L4 21.5L7.8 19.4L16 23.8L24.2 19.4L28 21.5Z" fill="var(--accent)" fill-opacity="0.65"/>
+              </svg>
+              <span class="font-display font-bold text-xl tracking-[-0.03em]">Stratum</span>
+            </div>
+            <p class="text-xs leading-relaxed" style="color: var(--fg-prose);">
+              Directly reflects how every problem in this manual is solved across <strong>3 architectural strata</strong> (Brute Force → Optimized → Canonical Proof).
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ===================================================================
-         SECTION 3: LIVE INTERACTIVE FRONT PAGE PREVIEW
+         LIVE FULL-WIDTH NAVBAR + HERO SIMULATOR
          =================================================================== -->
-    <section id="sec-preview" class="space-y-4 scroll-mt-20">
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+    <section class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
-          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Part 03 · Full Interactive Mockup</div>
-          <h2 class="font-display font-bold text-2xl md:text-3xl tracking-tight">Revamped Front Page (Humanized &amp; Use-Case First)</h2>
-          <p class="text-sm mt-1" style="color: var(--fg-muted);">
-            Click any of the 8 logos above to swap the header icon in real time. All 11 AI em-dashes and self-referential sidebar descriptions have been removed.
-          </p>
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--accent);">Live Context Test</div>
+          <h2 class="font-display font-bold text-xl md:text-2xl tracking-tight">See the Selected Lockup in the Actual Site Header</h2>
         </div>
         <div class="text-xs font-mono px-3 py-1.5 rounded-lg border border-[var(--border-soft)]" style="background: var(--canvas-sub); color: var(--fg-muted);">
-          Active: <strong id="activeLogoLabel" style="color: var(--accent);">01 · The Halmos Proof Block (`∎`)</strong>
+          Previewing: <strong id="activeOptionLabel" style="color: var(--accent);">Option 01 · The Noether Symmetry Weave</strong>
         </div>
       </div>
 
-      <!-- Simulated Portal Browser Window -->
       <div class="browser-frame">
-
-        <!-- Simulated Portal Header (matches docs/index.html h-14) -->
+        <!-- Exact 56px Portal Header -->
         <header class="h-14 px-4 md:px-6 flex items-center gap-3 border-b border-[var(--border-soft)]" style="background: var(--canvas-sub);">
-          <a href="#sec-preview" class="flex items-center gap-2.5 shrink-0 min-w-0" style="text-decoration: none; color: inherit;">
-            <span id="previewHeaderMark" class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all">
-              <!-- Populated by JS logo switcher -->
-            </span>
-            <span id="previewHeaderWordmark" class="font-display font-bold tracking-tight text-[15px] md:text-base truncate">
-              Invariant
-            </span>
+          <a href="#optionsGrid" class="flex items-center gap-2.5 shrink-0 min-w-0" style="text-decoration: none; color: inherit;">
+            <span id="liveHeaderMark" class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all"></span>
+            <span id="liveHeaderWordmark" class="wordmark-text font-display font-bold tracking-[-0.025em] text-[16px] truncate">Invariant</span>
           </a>
           <div class="flex-1"></div>
           <div class="hidden sm:flex items-center gap-2 text-xs font-mono shrink-0" style="color: var(--fg-muted);">
-            <span class="inline-block h-1.5 w-1.5 rounded-full" style="background: var(--accent);"></span>12% complete
+            <span class="inline-block h-1.5 w-1.5 rounded-full" style="background: var(--accent);"></span>18 / 150 done
           </div>
-          <button type="button" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border px-3 h-9 text-xs font-semibold shrink-0" style="border-color: var(--accent-rim); background: var(--accent-soft); color: var(--accent);">
-            Guides
-          </button>
           <button type="button" class="flex items-center justify-center gap-2 rounded-lg border border-[var(--border-soft)] px-3 h-9 text-xs shrink-0" style="background: rgba(255,255,255,0.03); color: var(--fg-muted);">
             <span>Jump to…</span>
             <span class="hidden md:flex items-center gap-1"><kbd class="k">⌘</kbd><kbd class="k">K</kbd></span>
           </button>
         </header>
 
-        <!-- Simulated Body: Left Sidebar + Main Front Page -->
-        <div class="flex items-start">
-
-          <!-- Left Sidebar Mock -->
-          <aside class="hidden lg:flex w-72 shrink-0 border-r border-[var(--border-soft)] flex-col p-4 space-y-4 self-stretch" style="background: var(--canvas-sub);">
-            <div class="flex items-center gap-3 pb-3 border-b border-[var(--border-soft)]">
-              <svg width="46" height="46" viewBox="0 0 64 64" class="shrink-0 -rotate-90">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(148,163,184,0.16)" stroke-width="7"/>
-                <circle cx="32" cy="32" r="26" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="143"/>
-              </svg>
-              <div>
-                <div class="font-display font-bold text-lg leading-none">12%</div>
-                <div class="text-xs font-mono mt-1" style="color: var(--fg-muted);">18 / 150 done</div>
-              </div>
+        <!-- Simulated Hero Strip -->
+        <div class="p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6" style="background: var(--canvas);">
+          <div class="max-w-xl space-y-2">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-[11px] font-mono" style="border-color: var(--accent-rim); background: var(--accent-soft); color: var(--accent);">
+              <span>LeetCode Top Interview 150</span>
+              <span>·</span>
+              <span>JavaScript (ES2024)</span>
             </div>
-            <div class="rounded-lg border border-[var(--border-soft)] px-3 py-2 text-xs flex items-center justify-between" style="background: rgba(255,255,255,0.02); color: var(--fg-muted);">
-              <span>Filter this list…</span>
-              <kbd class="k">/</kbd>
-            </div>
-            <div class="space-y-3 text-xs">
-              <div>
-                <div class="font-display font-bold text-[10px] uppercase tracking-widest mb-1.5" style="color: var(--fg-muted);">Foundations · 4</div>
-                <div class="space-y-1 font-mono text-[11px]" style="color: var(--fg-prose);">
-                  <div class="px-2 py-1.5 rounded bg-white/[0.02] truncate">· 01. JS Runtime Quirks</div>
-                  <div class="px-2 py-1.5 rounded bg-white/[0.02] truncate">· 02. Data Structure Polyfills</div>
-                  <div class="px-2 py-1.5 rounded bg-white/[0.02] truncate">· 03. Core Algorithmic Patterns</div>
-                  <div class="px-2 py-1.5 rounded bg-white/[0.02] truncate">· 04. Explaining Complexity</div>
-                </div>
-              </div>
-              <div>
-                <div class="font-display font-bold text-[10px] uppercase tracking-widest mb-1.5" style="color: var(--fg-muted);">Array / String · 24</div>
-                <div class="space-y-1 text-[12px]" style="color: var(--fg-prose);">
-                  <div class="px-2 py-1.5 rounded flex items-center justify-between"><span class="truncate"><span style="color: var(--accent);">✓</span> 88. Merge Sorted Array</span><span class="font-mono text-[10px]" style="color: #34D399;">Easy</span></div>
-                  <div class="px-2 py-1.5 rounded flex items-center justify-between"><span class="truncate"><span style="color: var(--accent);">✓</span> 27. Remove Element</span><span class="font-mono text-[10px]" style="color: #34D399;">Easy</span></div>
-                  <div class="px-2 py-1.5 rounded flex items-center justify-between"><span class="truncate">· 80. Remove Duplicates II</span><span class="font-mono text-[10px]" style="color: #FBBF24;">Med</span></div>
-                  <div class="px-2 py-1.5 rounded flex items-center justify-between"><span class="truncate">· 42. Trapping Rain Water</span><span class="font-mono text-[10px]" style="color: #FB7185;">Hard</span></div>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <!-- Main Reader Area: THE REVAMPED FRONT PAGE -->
-          <main class="flex-1 min-w-0 px-5 md:px-10 py-8 md:py-10 max-w-3xl mx-auto preview-prose">
-
-            <!-- 1. HERO: Immediate Use Case + Primary Actions -->
-            <div class="mb-8">
-              <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border mb-3 text-[11px] font-mono" style="border-color: var(--accent-rim); background: var(--accent-soft); color: var(--accent);">
-                <span>LeetCode Top Interview 150</span>
-                <span>·</span>
-                <span>JavaScript (ES2024)</span>
-              </div>
-
-              <h1>Solve the Top 150 from brute force to proof.</h1>
-
-              <p class="text-base leading-relaxed" style="color: var(--fg-prose);">
-                Most solution pages hand you the final trick and leave you to memorize it. In a real interview, you start with a working baseline, spot the wasted work, and prove why a faster invariant holds. <strong>Invariant</strong> walks through all 150 classic interview problems in JavaScript using that exact progression.
-              </p>
-
-              <!-- Primary Action Bar right at the top -->
-              <div class="flex flex-wrap items-center gap-2.5 mt-5">
-                <button type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px]" style="background: var(--accent); color: var(--accent-ink);">
-                  <span>Start Problem #1</span>
-                  <span aria-hidden="true">→</span>
-                </button>
-                <button type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border min-h-[44px]" style="border-color: var(--border); background: var(--canvas-sub); color: var(--fg);">
-                  <span>Read Foundation Primers (4)</span>
-                </button>
-                <button type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-mono border min-h-[44px]" style="border-color: var(--border-soft); color: var(--fg-muted);">
-                  <span>Search 175 guides</span>
-                  <kbd class="k">⌘K</kbd>
-                </button>
-              </div>
-            </div>
-
-            <!-- 2. HOW EACH PROBLEM GUIDE WORKS -->
-            <div class="rounded-2xl border border-[var(--border-soft)] p-5 my-7" style="background: var(--canvas-sub);">
-              <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-                <span class="font-display font-bold text-sm" style="color: var(--fg);">What happens inside every problem guide</span>
-                <span class="text-[11px] font-mono" style="color: var(--fg-muted);">150 problems · 828 CI-tested assertions</span>
-              </div>
-
-              <div class="grid sm:grid-cols-3 gap-2.5">
-                <div class="rounded-xl border border-[var(--border-soft)] p-3.5" style="background: var(--canvas);">
-                  <div class="flex items-center justify-between text-[11px] font-mono mb-1">
-                    <span style="color: var(--fg-muted);">STEP 01</span>
-                    <span class="px-1.5 py-0.5 rounded bg-white/5" style="color: var(--fg-muted);">Baseline</span>
-                  </div>
-                  <div class="font-display font-semibold text-sm" style="color: var(--fg);">Level 1 · Brute Force</div>
-                  <p class="text-xs mt-1 mb-0 leading-relaxed" style="color: var(--fg-muted);">
-                    Put a working solution on the board first and trace where it repeats work.
-                  </p>
-                </div>
-
-                <div class="rounded-xl border border-[var(--border-soft)] p-3.5" style="background: var(--canvas);">
-                  <div class="flex items-center justify-between text-[11px] font-mono mb-1">
-                    <span style="color: #FBBF24;">STEP 02</span>
-                    <span class="px-1.5 py-0.5 rounded" style="background: rgba(251,191,36,0.12); color: #FBBF24;">Bottleneck Cut</span>
-                  </div>
-                  <div class="font-display font-semibold text-sm" style="color: var(--fg);">Level 2 · Optimized</div>
-                  <p class="text-xs mt-1 mb-0 leading-relaxed" style="color: var(--fg-muted);">
-                    Use pre-sorting or auxiliary state to eliminate the inner loop, with full trace tables.
-                  </p>
-                </div>
-
-                <div class="rounded-xl border p-3.5" style="border-color: var(--accent-rim); background: var(--accent-soft);">
-                  <div class="flex items-center justify-between text-[11px] font-mono mb-1">
-                    <span style="color: var(--accent);">STEP 03</span>
-                    <span class="px-1.5 py-0.5 rounded font-semibold" style="background: var(--canvas); color: var(--accent);">Proof `∎`</span>
-                  </div>
-                  <div class="font-display font-semibold text-sm" style="color: var(--fg);">Level 3 · Canonical</div>
-                  <p class="text-xs mt-1 mb-0 leading-relaxed" style="color: var(--fg-prose);">
-                    The optimal algorithm, the loop invariant that proves it works, and how to explain it live.
-                  </p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-[var(--border-soft)] text-xs">
-                <div>
-                  <span class="font-mono text-[11px] block" style="color: var(--accent);">01 · Edge Cases</span>
-                  <span style="color: var(--fg-muted);">Empty, single, duplicate, and overflow inputs upfront.</span>
-                </div>
-                <div>
-                  <span class="font-mono text-[11px] block" style="color: var(--accent);">02 · Stepper Trace</span>
-                  <span style="color: var(--fg-muted);">Scrub forward and back through array and pointer states.</span>
-                </div>
-                <div>
-                  <span class="font-mono text-[11px] block" style="color: var(--accent);">03 · V8 &amp; JS Gotchas</span>
-                  <span style="color: var(--fg-muted);">GC pressure, `SMI` integers, typed arrays, and recursion depth.</span>
-                </div>
-                <div>
-                  <span class="font-mono text-[11px] block" style="color: var(--accent);">04 · MAANG Follow-Ups</span>
-                  <span style="color: var(--fg-muted);">How the solution changes when input streams or scales.</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 3. CHOOSE YOUR STARTING PATH -->
-            <h2 class="!mt-8">Pick where to start</h2>
-            <p class="text-sm" style="color: var(--fg-muted);">
-              Everything runs in your browser with no account required. Pick the path that fits your schedule:
+            <h3 class="font-display font-bold text-2xl md:text-3xl tracking-tight">Solve the Top 150 from brute force to proof.</h3>
+            <p class="text-sm leading-relaxed" style="color: var(--fg-prose);">
+              Click any of the 5 cards above (or toggle <strong>Open Vector + Text</strong> vs <strong>Solid Badge + Text</strong> in the top bar) to compare how the logo and wordmark lock together in the 56px header.
             </p>
-
-            <div class="grid sm:grid-cols-3 gap-3 my-4">
-              <div class="rounded-xl border border-[var(--border-soft)] p-4 flex flex-col justify-between" style="background: var(--canvas-sub);">
-                <div>
-                  <span class="text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Path A · 1–2 Hours</span>
-                  <div class="font-display font-bold text-sm mt-1" style="color: var(--fg);">JavaScript Foundations</div>
-                  <p class="text-xs mt-1.5 mb-0 leading-relaxed" style="color: var(--fg-muted);">
-                    Read the 4 primers before writing code: JS number quirks, zero-dependency Queue/Heap polyfills, core patterns, and Big-O phrasing.
-                  </p>
-                </div>
-                <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] text-xs font-mono" style="color: var(--accent);">
-                  Open Primer 01 →
-                </div>
-              </div>
-
-              <div class="rounded-xl border p-4 flex flex-col justify-between" style="border-color: var(--accent-rim); background: var(--accent-soft);">
-                <div>
-                  <span class="text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Path B · 23 Topic Tracks</span>
-                  <div class="font-display font-bold text-sm mt-1" style="color: var(--fg);">The 150 Problem Curriculum</div>
-                  <p class="text-xs mt-1.5 mb-0 leading-relaxed" style="color: var(--fg-prose);">
-                    Work track by track from Arrays &amp; Two Pointers through Trees, Graphs, and Dynamic Programming. Progress saves automatically.
-                  </p>
-                </div>
-                <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] text-xs font-mono font-semibold" style="color: var(--accent);">
-                  Start Track 01 (Arrays) →
-                </div>
-              </div>
-
-              <div class="rounded-xl border border-[var(--border-soft)] p-4 flex flex-col justify-between" style="background: var(--canvas-sub);">
-                <div>
-                  <span class="text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Path C · Full-Loop Prep</span>
-                  <div class="font-display font-bold text-sm mt-1" style="color: var(--fg);">Beyond the Coding Round</div>
-                  <p class="text-xs mt-1.5 mb-0 leading-relaxed" style="color: var(--fg-muted);">
-                    System design (HLD/LLD), OS/DBMS/Network fundamentals, behavioral stories, and candidate strategies with top-50 question banks.
-                  </p>
-                </div>
-                <div class="mt-3 pt-2.5 border-t border-[var(--border-soft)] text-xs font-mono" style="color: var(--accent);">
-                  Browse MAANG Guides ↓
-                </div>
-              </div>
-            </div>
-
-            <!-- 4. MAANG INTERVIEW GUIDES -->
-            <h2>MAANG interview guides</h2>
-            <p class="text-sm" style="color: var(--fg-muted);">
-              Coding rounds are only part of the interview loop. Each guide below pairs core concepts with a 50-question bank:
-            </p>
-            <div class="grid sm:grid-cols-2 gap-2.5 my-4">
-              <div class="rounded-xl border p-3.5" style="border-color: rgba(200,250,75,0.25); background: rgba(200,250,75,0.04);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Guide 01 · Roadmap</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">MAANG SDE Interview Roadmap</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">Resume screening, round structure, leveling expectations, and an 8-week study schedule.</span>
-              </div>
-              <div class="rounded-xl border p-3.5" style="border-color: rgba(200,250,75,0.25); background: rgba(200,250,75,0.04);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Guide 02 · Core CS</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">OS, Databases, Networks &amp; OOP</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">Processes, indexing, TCP/HTTP lifecycles, and object modeling with 50 Q&amp;As per subject.</span>
-              </div>
-              <div class="rounded-xl border p-3.5" style="border-color: rgba(200,250,75,0.25); background: rgba(200,250,75,0.04);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Guide 03 · System Design</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">High-Level &amp; Low-Level Design</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">Back-of-the-envelope estimation, distributed trade-offs, machine coding, and 50 design prompts.</span>
-              </div>
-              <div class="rounded-xl border p-3.5" style="border-color: rgba(200,250,75,0.25); background: rgba(200,250,75,0.04);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Guide 04 · Behavioral</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">Leadership Principles &amp; Behavioral</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">Amazon's 16 LPs, Google's attributes, Meta's signal rubric, and 8 reusable STAR stories.</span>
-              </div>
-            </div>
-
-            <!-- 5. ROLE & SKILL ROADMAPS -->
-            <h2>Role-based study roadmaps</h2>
-            <p class="text-sm" style="color: var(--fg-muted);">
-              Structured tracks for building production backend and AI engineering skills alongside interview prep:
-            </p>
-            <div class="grid sm:grid-cols-3 gap-2.5 my-4">
-              <div class="rounded-xl border border-[var(--border-soft)] p-3.5" style="background: var(--canvas-sub);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Roadmap · Fresher</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">Fresher JavaScript Path</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">5 phases covering JS internals, core DSA patterns, Postgres/REST APIs, Docker/AWS, and LLM basics.</span>
-              </div>
-              <div class="rounded-xl border border-[var(--border-soft)] p-3.5" style="background: var(--canvas-sub);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Roadmap · Mid-Level</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">Mid-Level Backend &amp; Scale</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">4 domains covering distributed systems, Redis/Kafka/Kubernetes, production RAG pipelines, and AI security.</span>
-              </div>
-              <div class="rounded-xl border border-[var(--border-soft)] p-3.5" style="background: var(--canvas-sub);">
-                <span class="block text-[10px] font-mono uppercase tracking-widest" style="color: var(--accent);">Roadmap · AI Era</span>
-                <span class="block text-sm font-semibold mt-1" style="color: var(--fg);">Modern Engineer Skills</span>
-                <span class="block text-xs mt-0.5 leading-relaxed" style="color: var(--fg-muted);">4 modules on constraint specification, agentic workflows, code auditing, and system boundaries.</span>
-              </div>
-            </div>
-
-            <!-- 6. COMPACT ENGINEERING CALLOUT -->
-            <div class="mt-8 pt-6 border-t border-[var(--border-soft)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl p-4" style="background: var(--canvas-sub);">
-              <div>
-                <div class="text-xs font-mono uppercase tracking-wider" style="color: var(--accent);">Under the Hood · Engineering Spec</div>
-                <div class="text-sm font-semibold mt-0.5" style="color: var(--fg);">Curious how Invariant verifies traces and runs code safely?</div>
-                <p class="text-xs mt-0.5 mb-0" style="color: var(--fg-muted);">
-                  Read the 15 Architecture Decision Records (QuickJS WASM sandbox, AST trace probing, SSE fencing) and the 24-chapter edge-case matrix.
-                </p>
-              </div>
-              <div class="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
-                <span class="px-3 py-2 rounded-lg border border-[var(--border-soft)] text-xs font-mono whitespace-nowrap" style="background: var(--canvas); color: var(--fg);">🏛️ 15 ADRs</span>
-                <span class="px-3 py-2 rounded-lg border border-[var(--border-soft)] text-xs font-mono whitespace-nowrap" style="background: var(--canvas); color: var(--fg);">🧪 24-Ch Matrix</span>
-              </div>
-            </div>
-
-          </main>
+          </div>
         </div>
       </div>
     </section>
 
+    <footer class="mt-12 pt-8 pb-6 border-t border-[var(--border-soft)] text-xs font-mono space-y-3" style="color: var(--fg-muted);">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <a href="index.html" class="inline-flex items-center gap-2 brand-lockup" style="text-decoration: none; color: inherit;">
+          <svg class="w-4 h-4 shrink-0 brand-logo-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+            <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+            <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+          </svg>
+          <span><strong class="font-display" style="color: var(--fg);">Invariant</strong> · Brand Identity Showcase</span>
+        </a>
+        <div class="flex flex-wrap items-center gap-4">
+          <a href="index.html" class="hover:underline">Manual</a>
+          <span aria-hidden="true">·</span>
+          <a href="ARCHITECTURE_AND_DECISIONS.html" class="hover:underline">Architecture</a>
+        </div>
+      </div>
+      <div class="pt-3 border-t border-[var(--border-soft)] flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 text-[11px] leading-relaxed">
+        <div class="shrink-0">&copy; 2026 Invariant. All rights reserved.</div>
+        <div class="sm:text-right max-w-2xl">Independently developed for educational purposes; not affiliated with, endorsed by, or sponsored by LeetCode or any mentioned company. All trademarks and brand names are the property of their respective owners.</div>
+      </div>
+    </footer>
+
   </div>
 
   <script>
-    const LOGOS = {
+    const OPTIONS = {
       1: {
-        name: '01 · The Halmos Proof Block (∎)',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5 7C5 5.89543 5.89543 5 7 5H25C26.1046 5 27 5.89543 27 7V25C27 26.1046 26.1046 27 25 27H14.5L19.5 16L14.5 16L9.5 27H7C5.89543 27 5 26.1046 5 25V7ZM14 11.5C14 10.6716 14.6716 10 15.5 10H20.5C21.3284 10 22 10.6716 22 11.5C22 12.3284 21.3284 13 20.5 13H15.5C14.6716 13 14 12.3284 14 11.5Z" fill="currentColor"/></svg>`
+        name: 'Option 01 · The Noether Symmetry Weave',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/><path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/><path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="currentColor"/><path d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="currentColor"/><path d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="currentColor"/></svg>`
       },
       2: {
-        name: '02 · The Fixpoint Monogram (Negative-Space I)',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M6 6H22L18 11H13.5V21H9.5L6 25V6Z" fill="currentColor"/><path d="M26 26H10L14 21H18.5V11H22.5L26 7V26Z" fill="currentColor" fill-opacity="0.72"/></svg>`
+        name: 'Option 02 · The Isometric Möbius Rotor',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="var(--accent)"/><path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="var(--fg)"/><path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="var(--accent)" fill-opacity="0.72"/><path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M12.36 4.6L16 2.5L27.69 9.25L27.69 16.45L23.71 14.15L23.71 11.55L16 7.1L12.36 9.2Z" fill="currentColor"/><path d="M27.69 18.55L27.69 22.75L16 29.5L9.76 25.9L13.75 23.6L16 24.9L23.71 20.45L23.71 16.25Z" fill="currentColor"/><path d="M7.95 24.85L4.31 22.75L4.31 9.25L10.54 5.65L10.54 10.25L8.29 11.55L8.29 20.45L11.93 22.55Z" fill="currentColor"/><path d="M16 12.4L19.12 14.2V17.8L16 19.6L12.88 17.8V14.2L16 12.4Z" fill="currentColor"/></svg>`
       },
       3: {
-        name: '03 · The Binary Partition (O(log n))',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M16 3L26.5 13.5L13.5 13.5L13.5 26.5L3 16L16 3Z" fill="currentColor"/><path d="M29 16L16 29L16 18.5L26.5 18.5L29 16Z" fill="currentColor" fill-opacity="0.6"/><rect x="16" y="13.2" width="4" height="4" transform="rotate(45 16 13.2)" fill="currentColor"/></svg>`
+        name: 'Option 03 · The Gyroscopic Gimbal',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="var(--accent)"/><path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="var(--fg)"/><rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M5.2 21.2C2.5 15.4 4.8 8.4 10.6 5.4C15.6 2.8 21.7 4.2 25.1 8.5L21.5 11.4C19.3 8.6 15.5 7.7 12.3 9.4C8.7 11.3 7.2 15.7 9 19.3L5.2 21.2Z" fill="currentColor"/><path d="M26.8 10.8C29.5 16.6 27.2 23.6 21.4 26.6C16.4 29.2 10.3 27.8 6.9 23.5L10.5 20.6C12.7 23.4 16.5 24.3 19.7 22.6C23.3 20.7 24.8 16.3 23 12.7L26.8 10.8Z" fill="currentColor"/><rect x="16" y="10.8" width="7.35" height="7.35" rx="1.2" transform="rotate(45 16 10.8)" fill="currentColor"/></svg>`
       },
       4: {
-        name: '04 · The Isometric Torus (3D Loop)',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M16 3L27 9.5L22.5 12.2L16 8.4L9.5 12.2L9.5 20L5 22.5L5 9.5L16 3Z" fill="currentColor"/><path d="M27 9.5V22.5L16 29L16 23.6L22.5 19.8V12.2L27 9.5Z" fill="currentColor" fill-opacity="0.68"/><path d="M16 29L5 22.5L9.5 20L16 23.6V29Z" fill="currentColor" fill-opacity="0.42"/><path d="M13.8 12.5H18.2V19.5H13.8V12.5Z" fill="currentColor"/></svg>`
+        name: 'Option 04 · The Cross-Ratio Caliper',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="var(--accent)"/><path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="var(--accent)"/><path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="var(--fg)"/><path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="var(--fg)"/><rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="var(--accent)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path d="M4 4H14.5L11.5 11.5L4 14.5V4Z" fill="currentColor"/><path d="M28 28H17.5L20.5 20.5L28 17.5V28Z" fill="currentColor"/><path d="M28 4V14.5L20.5 11.5L17.5 4H28Z" fill="currentColor"/><path d="M4 28V17.5L11.5 20.5L14.5 28H4Z" fill="currentColor"/><rect x="16" y="13.1" width="4.1" height="4.1" transform="rotate(45 16 13.1)" fill="currentColor"/></svg>`
       },
       5: {
-        name: '05 · The Two-Pointer Pillar',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M4 7.5L12.5 16L4 24.5V19.2L7.2 16L4 12.8V7.5Z" fill="currentColor" fill-opacity="0.72"/><path d="M28 7.5L19.5 16L28 24.5V19.2L24.8 16L28 12.8V7.5Z" fill="currentColor" fill-opacity="0.72"/><rect x="13.75" y="4" width="4.5" height="24" rx="1.5" fill="currentColor"/></svg>`
-      },
-      6: {
-        name: '06 · The 3-Level Keystone (L1→L2→L3)',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/><path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/><path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/></svg>`
-      },
-      7: {
-        name: '07 · The Orbital Fixpoint',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path d="M6.2 18.5C4.8 12.2 8.8 6 15.2 4.8C20.2 3.9 25 6.4 27 10.8L23.2 12.4C21.8 9.5 18.6 8 15.3 8.6C11.1 9.4 8.5 13.4 9.4 17.6L6.2 18.5Z" fill="currentColor"/><path d="M25.8 13.5C27.2 19.8 23.2 26 16.8 27.2C11.8 28.1 7 25.6 5 21.2L8.8 19.6C10.2 22.5 13.4 24 16.7 23.4C20.9 22.6 23.5 18.6 22.6 14.4L25.8 13.5Z" fill="currentColor" fill-opacity="0.65"/><rect x="16" y="11.2" width="6.8" height="6.8" rx="1.2" transform="rotate(45 16 11.2)" fill="currentColor"/></svg>`
-      },
-      8: {
-        name: '08 · The Equivalence Seal (I≡)',
-        svg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 8C4 5.79086 5.79086 4 8 4H24C26.2091 4 28 5.79086 28 8V24C28 26.2091 26.2091 28 24 28H8C5.79086 28 4 26.2091 4 24V8ZM8.5 9V23H12V9H8.5ZM15.5 9H23.5V12.2H15.5V9ZM15.5 14.4H23.5V17.6H15.5V14.4ZM15.5 19.8H23.5V23H15.5V19.8Z" fill="currentColor"/></svg>`
+        name: 'Option 05 · The Phase-Lock Attractor',
+        openSvg: `<svg class="w-6 h-6" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="var(--accent)"/><path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="var(--fg)"/></svg>`,
+        solidSvg: `<svg class="w-5 h-5" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 9.5L10.2 4.5L19 16L10.2 27.5L2 22.5V9.5ZM6.4 12.2V19.8L10.2 22.1L13.6 16L10.2 9.9L6.4 12.2Z" fill="currentColor"/><path d="M17.8 9.8L21.8 4.5L30 9.5V22.5L21.8 27.5L17.8 22.2L20.5 18.7L21.8 22.1L25.6 19.8V12.2L21.8 9.9L20.5 13.3L17.8 9.8Z" fill="currentColor"/></svg>`
       }
     };
 
-    const LOCKUPS = {
-      'invariant': `Invariant`,
-      'invariant-150': `Invariant <span style="color: var(--accent);">150</span>`,
-      'invariant-tag': `Invariant <span class="font-mono text-[11px] font-medium px-1.5 py-0.5 rounded ml-1" style="background: var(--accent-soft); color: var(--accent);">JS·150</span>`
+    const CASES = {
+      title: 'Invariant',
+      dot: 'Invariant<span style="color: var(--accent);">.</span>',
+      lower: 'invariant'
     };
 
-    let currentLogo = 1;
-    let currentLockup = 'invariant';
-    let currentStyle = 'standalone';
+    let selectedOption = 1;
+    let mountMode = 'open';
+    let caseMode = 'title';
 
-    function renderBrandPreview() {
-      const markEl = document.getElementById('previewHeaderMark');
-      markEl.innerHTML = LOGOS[currentLogo].svg;
-      if (currentStyle === 'standalone') {
-        markEl.style.background = 'transparent';
-        markEl.style.color = 'var(--accent)';
-        markEl.style.border = 'none';
+    function syncUI() {
+      const opt = OPTIONS[selectedOption];
+      const liveMark = document.getElementById('liveHeaderMark');
+      if (mountMode === 'open') {
+        liveMark.innerHTML = opt.openSvg;
+        liveMark.style.background = 'transparent';
+        liveMark.style.color = 'var(--accent)';
+        liveMark.style.border = 'none';
       } else {
-        markEl.style.background = 'var(--accent)';
-        markEl.style.color = 'var(--accent-ink)';
+        liveMark.innerHTML = opt.solidSvg;
+        liveMark.style.background = 'var(--accent)';
+        liveMark.style.color = 'var(--accent-ink)';
       }
 
-      document.getElementById('previewHeaderWordmark').innerHTML = LOCKUPS[currentLockup];
-      document.getElementById('activeLogoLabel').textContent = LOGOS[currentLogo].name;
+      document.querySelectorAll('.wordmark-text').forEach(el => {
+        el.innerHTML = CASES[caseMode];
+      });
 
-      document.querySelectorAll('[data-logo-option]').forEach(card => {
-        const id = Number(card.dataset.logoOption);
-        const selected = id === currentLogo;
-        card.classList.toggle('is-selected', selected);
-        const label = card.querySelector('.select-label');
-        if (label) {
-          label.textContent = selected ? '● Active' : 'Preview';
-          label.style.color = selected ? 'var(--accent)' : 'var(--fg-muted)';
-          label.style.fontWeight = selected ? '600' : '400';
+      document.getElementById('activeOptionLabel').textContent = opt.name;
+
+      document.querySelectorAll('[data-option]').forEach(card => {
+        const id = Number(card.dataset.option);
+        const active = id === selectedOption;
+        card.classList.toggle('is-selected', active);
+        const ind = card.querySelector('.select-indicator');
+        if (ind) {
+          ind.textContent = active ? '● Active in Header' : 'Click to preview';
+          ind.style.color = active ? 'var(--accent)' : 'var(--fg-muted)';
+          ind.style.fontWeight = active ? '600' : '400';
         }
       });
 
-      document.querySelectorAll('[data-lockup]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lockup === currentLockup);
+      document.querySelectorAll('[data-mount]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mount === mountMode);
       });
 
-      document.querySelectorAll('[data-style]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.style === currentStyle);
+      document.querySelectorAll('[data-case]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.case === caseMode);
       });
     }
 
-    document.querySelectorAll('[data-logo-option]').forEach(card => {
+    document.querySelectorAll('[data-option]').forEach(card => {
       card.addEventListener('click', () => {
-        currentLogo = Number(card.dataset.logoOption);
-        renderBrandPreview();
+        selectedOption = Number(card.dataset.option);
+        syncUI();
       });
     });
 
-    document.querySelectorAll('[data-lockup]').forEach(btn => {
+    document.querySelectorAll('[data-mount]').forEach(btn => {
       btn.addEventListener('click', () => {
-        currentLockup = btn.dataset.lockup;
-        renderBrandPreview();
+        mountMode = btn.dataset.mount;
+        syncUI();
       });
     });
 
-    document.querySelectorAll('[data-style]').forEach(btn => {
+    document.querySelectorAll('[data-case]').forEach(btn => {
       btn.addEventListener('click', () => {
-        currentStyle = btn.dataset.style;
-        renderBrandPreview();
+        caseMode = btn.dataset.case;
+        syncUI();
       });
     });
 
@@ -1038,7 +890,8 @@
       root.classList.toggle('dark', next === 'dark');
     });
 
-    renderBrandPreview();
+    syncUI();
   </script>
+  <script src="assets/cursor.js"></script>
 </body>
 </html>

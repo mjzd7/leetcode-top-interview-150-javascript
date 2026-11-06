@@ -6,7 +6,7 @@
   <title>Architecture, Decisions & Governance — Invariant</title>
   <meta name="description" content="Master architectural specification, technical decision records (ADRs), 240Hz Euler physics simulation, and engineering governance for Invariant.">
   <meta name="theme-color" content="#08090D">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M4 7H28L25.5 12H6.5L4 7Z' fill='%23C8FA4B' fill-opacity='0.38'/%3E%3Cpath d='M7.5 14H24.5L22 19H10L7.5 14Z' fill='%23C8FA4B' fill-opacity='0.68'/%3E%3Cpath d='M11 21H21L19 26.5H13L11 21Z' fill='%23C8FA4B'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2308090D'/%3E%3Cpath d='M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z' fill='%23C8FA4B'/%3E%3Cpath d='M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z' fill='%23E9EDF4'/%3E%3Cpath d='M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z' fill='%23C8FA4B'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -287,7 +287,7 @@
       color: var(--accent);
     }
 
-    /* Tools Ecosystem */
+    /* Tools Ecosystem & Filter Pills */
     .filter-pill {
       cursor: pointer; transition: all 0.15s ease;
     }
@@ -295,6 +295,47 @@
       background: rgba(200, 250, 75, 0.12) !important;
       border-color: rgba(200, 250, 75, 0.35) !important;
       color: var(--accent) !important;
+    }
+
+    #difficultyFilters .filter-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      color: var(--muted);
+      min-height: 32px !important;
+      font-size: 11.5px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+    }
+    #difficultyFilters .filter-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--fg);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+    #difficultyFilters .filter-pill.active {
+      background: rgba(200, 250, 75, 0.14) !important;
+      border-color: rgba(200, 250, 75, 0.4) !important;
+      color: var(--accent) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    html[data-theme="light"] #difficultyFilters .filter-pill {
+      background: #F1F5F9;
+      border-color: #E2E8F0;
+      color: #475467;
+    }
+    html[data-theme="light"] #difficultyFilters .filter-pill:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+    html[data-theme="light"] #difficultyFilters .filter-pill.active {
+      background: rgba(67, 56, 202, 0.1) !important;
+      border-color: #4338CA !important;
+      color: #4338CA !important;
     }
 
     /* Rules Cards */
@@ -329,22 +370,125 @@
     }
 
     /* --- Left Nav Collapse (3 stages: 0=320px, 1=200px, 2=56px) & Dual Rail Modes --- */
+    #sidebar {
+      container-type: inline-size;
+      container-name: sidebar;
+    }
     .nav-group-rule { display: none; }
     .nav-cat-btn, .nav-group-rule { display: none; }
+
+    /* Nav Item Badges */
+    .nav-badge {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      font-variant-numeric: tabular-nums;
+    }
+    #sidebar[data-stage="1"] .nav-badge,
+    #sidebar[data-stage="2"] .nav-badge,
+    #sidebar[data-nav-compact="true"] .nav-badge {
+      display: none !important;
+    }
+    @container sidebar (max-width: 270px) {
+      .nav-badge {
+        display: none !important;
+      }
+    }
+
+    /* Category Group Headers */
+    .nav-group-toggle {
+      min-width: 0;
+    }
+    .nav-group-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .nav-group-count {
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    /* Progress Ring & Subtitle */
+    #ringSub {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #sidebar[data-stage="1"] .sidebar-header > div:first-child,
+    #sidebar[data-nav-compact="true"] .sidebar-header > div:first-child {
+      gap: 0.5rem;
+    }
+    #sidebar[data-stage="1"] #ringSvg,
+    #sidebar[data-nav-compact="true"] #ringSvg {
+      width: 44px;
+      height: 44px;
+    }
+    #sidebar[data-stage="1"] #ringPct,
+    #sidebar[data-nav-compact="true"] #ringPct {
+      font-size: 1.125rem;
+    }
+    #sidebar[data-stage="1"] #ringSub,
+    #sidebar[data-nav-compact="true"] #ringSub {
+      font-size: 10px;
+      letter-spacing: -0.01em;
+    }
+    @container sidebar (max-width: 250px) {
+      #ringSvg { width: 44px; height: 44px; }
+      #ringPct { font-size: 1.125rem; }
+      #ringSub { font-size: 10px; letter-spacing: -0.01em; }
+    }
+
+    /* Compact Filter Pills Grid (2x2) */
+    #sidebar[data-stage="1"] #difficultyFilters,
+    #sidebar[data-nav-compact="true"] #difficultyFilters {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 6px !important;
+    }
+    @container sidebar (max-width: 250px) {
+      #difficultyFilters {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+      }
+    }
+
     @media (min-width: 768px) {
       #sidebar[data-stage="1"] { width: 200px; }
       #sidebar[data-stage="2"] { width: 56px; }
-      #sidebar[data-stage="1"] .nav-badge,
-      #sidebar[data-stage="2"] .nav-badge { display: none; }
       #sidebar[data-stage="2"] .nav-title,
       #sidebar[data-stage="2"] .nav-group-label,
       #sidebar[data-stage="2"] .nav-group-count { display: none; }
       /* At 56px these collapse, so they hide */
+      #sidebar[data-stage="2"] .nav-search-box,
       #sidebar[data-stage="2"] #searchInput,
+      #sidebar[data-stage="2"] #ringSvg,
+      #sidebar[data-stage="2"] #ringBlock,
       #sidebar[data-stage="2"] #difficultyFilters,
-      #sidebar[data-stage="2"] .mod-bar { display: none; }
-      #sidebar[data-stage="2"] > div:first-child { padding-left: 0; padding-right: 0; gap: 0; }
-      #sidebar[data-stage="2"] > div:first-child > div { justify-content: center; }
+      #sidebar[data-stage="2"] .mod-bar { display: none !important; }
+      #sidebar[data-stage="2"] .sidebar-header,
+      #sidebar[data-stage="2"] > div:first-child {
+        padding: 0.65rem 0 !important;
+        min-height: 56px;
+        gap: 0;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.13);
+      }
+      #sidebar[data-stage="2"] .sidebar-header > div:first-child,
+      #sidebar[data-stage="2"] > div:first-child > div {
+        justify-content: center !important;
+        width: 100%;
+      }
+      #sidebar[data-stage="2"] #ltNavCollapse {
+        display: flex !important;
+        margin: 0 auto !important;
+        width: 36px !important;
+        height: 36px !important;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 9px;
+        align-items: center;
+        justify-content: center;
+      }
       #ltNavCollapse { display: flex; }
 
       /* ---- the 56px rail has two modes, toggled with Alt+V ---- */
@@ -410,53 +554,42 @@
     .nav-tip.is-shown { opacity: 1; visibility: visible; }
     @media (prefers-reduced-motion: reduce) { .nav-tip { transition: none; } }
 
-    /* Assistant rail / chatbox styles (exact parity with index.html) */
-    .ltc-panel {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-      height: var(--ltc-panel-h, 72dvh); display: flex; flex-direction: column; min-height: 0;
-      background: var(--surface); border-top: 1px solid var(--line);
-      box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
-      transform: translateY(101%);
-      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
-      visibility: hidden;
-    }
-    .ltc-panel.is-open { transform: translateY(0); visibility: visible; }
-    .lt-rail { display: contents; }
-    #ltRailResizer { display: none; }
-    .ltc-backdrop {
-      position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.6);
-      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-    }
-    .ltc-backdrop.is-open { opacity: 1; pointer-events: auto; }
-    @media (min-width: 1280px) {
-      .ltc-backdrop { display: none; }
-      .lt-rail {
-        display: flex; flex-direction: column; min-height: 0;
-        position: sticky; top: 3.5rem; align-self: flex-start;
-        flex: 0 0 var(--lt-rail-w, 380px); width: var(--lt-rail-w, 380px);
-        height: calc(100dvh - 3.5rem);
-        border-left: 1px solid var(--line);
-      }
-      #ltRailResizer {
-        display: block; position: absolute; left: -9px; top: 0; bottom: 0;
+    /* Drag-to-Resize Left Nav & Collapsible Categories */
+    #ltNavResizer { display: none; }
+    @media (min-width: 768px) {
+      #ltNavResizer {
+        display: block; position: absolute; right: 0; top: 0; bottom: 0;
         width: 9px; cursor: col-resize; touch-action: none; background: none;
-        user-select: none; -webkit-user-select: none; z-index: 20;
+        user-select: none; -webkit-user-select: none; z-index: 25;
       }
-      #ltRailResizer::after {
+      #ltNavResizer::after {
         content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
         background: transparent; transition: background 0.15s ease;
       }
-      #ltRailResizer:hover::after,
-      #ltRailResizer:focus-visible::after,
-      #ltRailResizer.is-dragging::after { background: var(--accent); }
-      #ltRailResizer:focus-visible { outline: none; }
-      .ltc-panel {
-        position: relative; top: auto; left: auto; right: auto; bottom: auto;
-        flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
-        transform: none; visibility: visible; box-shadow: none; border-left: none;
-        background: var(--rail-bg);
-      }
-      .ltc-panel[data-resized] { flex: 0 0 var(--ltc-panel-h); margin-top: auto; }
+      #ltNavResizer:hover::after,
+      #ltNavResizer:focus-visible::after,
+      #ltNavResizer.is-dragging::after { background: var(--accent); }
+      #ltNavResizer:focus-visible { outline: none; }
+      #sidebar[data-nav-resized="true"] { width: var(--lt-nav-w, 320px); max-width: none; }
+      #sidebar.is-resizing { transition: none !important; }
+    }
+
+    #sidebar:not([data-stage="2"]) .nav-group[data-cat-collapsed="true"] .nav-group-items {
+      display: none;
+    }
+    .nav-group-chevron {
+      transition: transform 0.16s ease;
+    }
+    .nav-group[data-cat-collapsed="true"] .nav-group-chevron {
+      transform: rotate(-90deg);
+    }
+    .nav-group-toggle:hover .nav-group-label {
+      color: var(--fg);
+    }
+    .nav-group-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -473,12 +606,12 @@
       <button id="menuBtn" aria-label="Open navigation" class="md:hidden shrink-0 w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5 active:bg-white/10">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
-      <a href="index.html" id="brandHome" class="flex items-center gap-2.5 shrink-0 min-w-0">
-        <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-rim);">
-          <svg class="h-5 w-5" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <path d="M4 7H28L25.5 12H6.5L4 7Z" fill="currentColor" fill-opacity="0.38"/>
-            <path d="M7.5 14H24.5L22 19H10L7.5 14Z" fill="currentColor" fill-opacity="0.68"/>
-            <path d="M11 21H21L19 26.5H13L11 21Z" fill="currentColor"/>
+      <a href="index.html" id="brandHome" class="brand-lockup flex items-center gap-2.5 shrink-0 min-w-0">
+        <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0">
+          <svg class="brand-logo-svg h-6 w-6" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+            <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+            <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
           </svg>
         </span>
         <span class="font-display font-bold tracking-tight text-[15px] md:text-base truncate">Invariant</span>
@@ -496,7 +629,6 @@
       <button id="themeToggleBtn" type="button" aria-label="Switch colour theme" class="inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] text-slate-300">
         <span id="themeBtnIcon">☀️</span>
       </button>
-      <a href="index.html" id="guidesBtn" title="Return to LeetCode Solutions Manual" class="hidden sm:flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,250,75,.35)] bg-[rgba(200,250,75,.07)] hover:bg-[rgba(200,250,75,.14)] active:bg-[rgba(200,250,75,.2)] px-3 h-10 text-sm font-semibold shrink-0 whitespace-nowrap" style="color:var(--accent);">Manual</a>
       <button id="paletteBtn" aria-label="Jump to a section" class="flex items-center justify-center gap-2 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 pl-3 pr-2 h-10 text-sm text-slate-400 shrink-0 whitespace-nowrap">
         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         <span class="hidden md:inline">Jump to…</span>
@@ -511,7 +643,8 @@
 
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[var(--canvas-sub)] md:bg-transparent flex flex-col overflow-hidden">
-      <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
+      <div id="ltNavResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the navigation sidebar" title="Drag to resize · Double-click to reset"></div>
+      <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0 sidebar-header">
         <div class="flex items-center gap-3">
           <svg id="ringSvg" width="52" height="52" viewBox="0 0 64 64" class="shrink-0 -rotate-90" aria-hidden="true">
             <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
@@ -530,7 +663,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
-        <div class="relative mt-3">
+        <div class="relative mt-3 nav-search-box">
           <input id="searchInput" type="search" placeholder="Filter architecture & tools…" autocomplete="off"
                   role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="curriculumNav"
                   class="w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg pl-3 pr-8 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
@@ -546,19 +679,20 @@
       <nav aria-label="Architecture Suite Navigation" class="flex-1 min-h-0 flex flex-col">
         <div id="curriculumNav" class="sidebar p-3 space-y-4 flex-1 overflow-y-auto" role="listbox">
           <!-- Group 1: Architecture Core -->
-          <div class="nav-group" data-group-cat="arch">
+          <div class="nav-group" data-group-cat="arch" data-cat-key="arch-suite">
             <button type="button" class="nav-cat-btn" data-cat="arch" data-tip="Architecture Suite" aria-label="Architecture Suite">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg>
               <span class="ltc-sr-only">Architecture Suite</span>
             </button>
-            <div class="px-2 pt-1 nav-group-text">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">Architecture Suite</span>
-                <span class="nav-group-count text-[10px] font-mono text-slate-500">3/3</span>
-              </div>
-            </div>
+            <button type="button" class="w-full text-left px-2 pt-1 nav-group-text nav-group-toggle flex items-baseline justify-between gap-2 cursor-pointer" aria-expanded="true" aria-label="Toggle Architecture Suite category (3 items)">
+              <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display flex items-center gap-1.5">
+                <svg class="nav-group-chevron w-3 h-3 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                <span>Architecture Suite</span>
+              </span>
+              <span class="nav-group-count text-[10px] font-mono text-slate-500">3/3</span>
+            </button>
             <div class="nav-group-rule"></div>
-            <div class="space-y-0.5 mt-1">
+            <div class="nav-group-items space-y-0.5 mt-1">
               <a href="#overview" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch" data-tip="00. Master Dossier & Metrics">
                 <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:var(--accent);"></span>
                 <span class="nav-code" aria-hidden="true">00</span>
@@ -581,19 +715,20 @@
           </div>
 
           <!-- Group 2: Architecture Decisions -->
-          <div class="nav-group" data-group-cat="adrs">
+          <div class="nav-group" data-group-cat="adrs" data-cat-key="adrs">
             <button type="button" class="nav-cat-btn" data-cat="adrs" data-tip="Architecture Decisions (15 ADRs)" aria-label="Architecture Decisions">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.6"/><path d="M4 12h16M12 4v16"/></svg>
               <span class="ltc-sr-only">Architecture Decisions</span>
             </button>
-            <div class="px-2 pt-1 nav-group-text">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">Architecture Decisions</span>
-                <span class="nav-group-count text-[10px] font-mono text-slate-500">15 ADRs</span>
-              </div>
-            </div>
+            <button type="button" class="w-full text-left px-2 pt-1 nav-group-text nav-group-toggle flex items-baseline justify-between gap-2 cursor-pointer" aria-expanded="true" aria-label="Toggle Architecture Decisions category (15 ADRs)">
+              <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display flex items-center gap-1.5">
+                <svg class="nav-group-chevron w-3 h-3 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                <span>Architecture Decisions</span>
+              </span>
+              <span class="nav-group-count text-[10px] font-mono text-slate-500">15 ADRs</span>
+            </button>
             <div class="nav-group-rule"></div>
-            <div class="space-y-0.5 mt-1">
+            <div class="nav-group-items space-y-0.5 mt-1">
               <a href="#decisions" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="adrs" data-tip="03. 15 Architecture Records (ADRs)">
                 <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#FBBF24;"></span>
                 <span class="nav-code" aria-hidden="true">03</span>
@@ -604,19 +739,20 @@
           </div>
 
           <!-- Group 3: Physics Lab -->
-          <div class="nav-group" data-group-cat="lab">
+          <div class="nav-group" data-group-cat="lab" data-cat-key="physics-lab">
             <button type="button" class="nav-cat-btn" data-cat="lab" data-tip="240Hz Euler Physics Lab" aria-label="Physics Lab">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22"/></svg>
               <span class="ltc-sr-only">Physics Lab</span>
             </button>
-            <div class="px-2 pt-1 nav-group-text">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">Physics Lab</span>
-                <span class="nav-group-count text-[10px] font-mono text-slate-500">240Hz</span>
-              </div>
-            </div>
+            <button type="button" class="w-full text-left px-2 pt-1 nav-group-text nav-group-toggle flex items-baseline justify-between gap-2 cursor-pointer" aria-expanded="true" aria-label="Toggle Physics Lab category (1 item)">
+              <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display flex items-center gap-1.5">
+                <svg class="nav-group-chevron w-3 h-3 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                <span>Physics Lab</span>
+              </span>
+              <span class="nav-group-count text-[10px] font-mono text-slate-500">240Hz</span>
+            </button>
             <div class="nav-group-rule"></div>
-            <div class="space-y-0.5 mt-1">
+            <div class="nav-group-items space-y-0.5 mt-1">
               <a href="#physics-lab" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="lab" data-tip="04. 240Hz Euler Physics Lab">
                 <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#F43F5E;"></span>
                 <span class="nav-code" aria-hidden="true">04</span>
@@ -627,19 +763,20 @@
           </div>
 
           <!-- Group 4: Governance & Verification -->
-          <div class="nav-group" data-group-cat="arch">
+          <div class="nav-group" data-group-cat="arch" data-cat-key="governance">
             <button type="button" class="nav-cat-btn" data-cat="arch" data-tip="Governance & Verification" aria-label="Governance & Verification">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
               <span class="ltc-sr-only">Governance & Verification</span>
             </button>
-            <div class="px-2 pt-1 nav-group-text">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">Governance & Verification</span>
-                <span class="nav-group-count text-[10px] font-mono text-slate-500">3/3</span>
-              </div>
-            </div>
+            <button type="button" class="w-full text-left px-2 pt-1 nav-group-text nav-group-toggle flex items-baseline justify-between gap-2 cursor-pointer" aria-expanded="true" aria-label="Toggle Governance & Verification category (3 items)">
+              <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display flex items-center gap-1.5">
+                <svg class="nav-group-chevron w-3 h-3 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                <span>Governance & Verification</span>
+              </span>
+              <span class="nav-group-count text-[10px] font-mono text-slate-500">3/3</span>
+            </button>
             <div class="nav-group-rule"></div>
-            <div class="space-y-0.5 mt-1">
+            <div class="nav-group-items space-y-0.5 mt-1">
               <a href="#tools-ecosystem" class="nav-item nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors" data-cat="arch" data-tip="05. Tools & Skills Matrix">
                 <span class="nav-mark shrink-0 w-2 h-2 rounded-full" style="background:#A78BFA;"></span>
                 <span class="nav-code" aria-hidden="true">05</span>
@@ -662,19 +799,20 @@
           </div>
 
           <!-- Group 5: Manual Portal -->
-          <div class="nav-group pt-2 border-t border-[rgba(148,163,184,0.12)]" data-group-cat="portal">
+          <div class="nav-group pt-2 border-t border-[rgba(148,163,184,0.12)]" data-group-cat="portal" data-cat-key="portal">
             <button type="button" class="nav-cat-btn" data-cat="portal" data-tip="LeetCode Manual Portal" aria-label="LeetCode Manual Portal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               <span class="ltc-sr-only">LeetCode Manual Portal</span>
             </button>
-            <div class="px-2 pt-1 nav-group-text">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display">LeetCode Manual Portal</span>
-                <span class="nav-group-count text-[10px] font-mono text-slate-500">3 Links</span>
-              </div>
-            </div>
+            <button type="button" class="w-full text-left px-2 pt-1 nav-group-text nav-group-toggle flex items-baseline justify-between gap-2 cursor-pointer" aria-expanded="true" aria-label="Toggle LeetCode Manual Portal category (3 links)">
+              <span class="nav-group-label text-[11px] font-bold text-slate-400 uppercase tracking-widest font-display flex items-center gap-1.5">
+                <svg class="nav-group-chevron w-3 h-3 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                <span>LeetCode Manual Portal</span>
+              </span>
+              <span class="nav-group-count text-[10px] font-mono text-slate-500">3 Links</span>
+            </button>
             <div class="nav-group-rule"></div>
-            <div class="space-y-0.5 mt-1">
+            <div class="nav-group-items space-y-0.5 mt-1">
               <a href="index.html" class="nav-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors" data-cat="portal" data-tip="All 150 Problems Manual">
                 <span class="nav-mark shrink-0">📖</span>
                 <span class="nav-code" aria-hidden="true">M1</span>
@@ -1837,7 +1975,7 @@
             </div>
           </div>
 
-        </div></div>
+        </div>
       
 </section>
 
@@ -1902,25 +2040,27 @@
 
           </div>
 
-          <footer class="mt-12 pt-8 pb-10 border-t border-[var(--border-soft)] text-xs text-slate-500 font-mono">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-              <div>
-                <span class="font-bold text-slate-300">Invariant</span> · Visual JS Manual & Architecture Suite
+          <footer class="mt-12 pt-8 pb-10 border-t border-[var(--border-soft)] text-xs text-slate-500 font-mono space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="inline-flex items-center gap-2 brand-lockup">
+                <svg class="w-4 h-4 shrink-0 brand-logo-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                  <path class="logo-part-accent" d="M3 16L16 3L24.5 11.5L21.5 14.5L16 9L6 19L3 16Z" fill="var(--accent)"/>
+                  <path class="logo-part-fg" d="M29 16L16 29L7.5 20.5L10.5 17.5L16 23L26 13L29 16Z" fill="var(--fg)"/>
+                  <path class="logo-part-accent" d="M16 12.6L19.4 16L16 19.4L12.6 16L16 12.6Z" fill="var(--accent)"/>
+                </svg>
+                <span><span class="font-bold text-slate-300 font-display">Invariant</span> · Visual JS Manual &amp; Architecture Suite</span>
               </div>
-              <div class="flex flex-wrap items-center gap-3 text-slate-400">
-                <a href="index.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-soft)] bg-white/[0.03] hover:bg-white/[0.07] hover:text-[var(--accent)] text-slate-300 transition-colors">
-                  <span>📖</span>
-                  <span>Solutions Manual</span>
-                </a>
-                <a href="index.html#architecture-spec" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
-                  <span>In-Reader Spec</span>
-                </a>
-                <a href="index.html#edge-cases-matrix" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-soft)] hover:bg-white/[0.05] hover:text-slate-200 transition-colors">
-                  <span>24-Ch Matrix</span>
-                </a>
+              <div class="flex flex-wrap items-center gap-4 text-slate-400">
+                <a id="footerArchSuiteLink" href="ARCHITECTURE_AND_DECISIONS.html" class="hover:text-slate-200 transition-colors">Architecture</a>
+                <span class="text-slate-600" aria-hidden="true">·</span>
+                <span>developed by <a id="footerAuthorLink" href="https://github.com/mjzd7/leetcode-top-interview-150-javascript" target="_blank" rel="noopener noreferrer" class="hover:text-slate-200 transition-colors">mjzd7</a></span>
               </div>
             </div>
             <div class="text-[11px] text-slate-600">Built from executable guides · QuickJS WASM sandbox · Zero-dependency vanilla DOM</div>
+            <div class="pt-3 border-t border-[var(--border-soft)] flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 text-[11px] text-slate-500 leading-relaxed">
+              <div class="shrink-0">&copy; 2026 Invariant. All rights reserved.</div>
+              <div class="text-slate-600 sm:text-right max-w-2xl">Independently developed for educational purposes; not affiliated with, endorsed by, or sponsored by LeetCode or any mentioned company. All trademarks and brand names are the property of their respective owners.</div>
+            </div>
           </footer>
         </article>
       </div>
@@ -1928,10 +2068,10 @@
 
     <!-- Right rail: the study assistant, and nothing else. -->
     <div id="ltcBackdrop" class="ltc-backdrop"></div>
-    <aside id="ltRail" class="lt-rail" aria-label="Study assistant">
+    <aside id="ltRail" class="lt-rail" data-collapsed="true" aria-label="Study assistant">
       <div id="ltRailResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the study assistant"></div>
 
-      <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-label="AI study assistant">
+      <aside id="ltcPanel" class="ltc-panel" role="complementary" aria-hidden="true" aria-label="AI study assistant">
         <div id="ltcPanelResizer" class="ltc-panel-resizer" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Resize the assistant" aria-valuemin="0" aria-valuenow="0"></div>
         <div class="ltc-head">
           <span class="ltc-drag-grip" aria-hidden="true" title="Drag to undock or move">
@@ -2112,6 +2252,17 @@
       ];
       const stage = ((s % 3) + 3) % 3;
       el.dataset.stage = String(stage);
+      if (stage !== 0) {
+        el.removeAttribute('data-nav-compact');
+      }
+      const si = $('searchInput');
+      if (si) {
+        si.placeholder = stage === 1 ? 'Filter architecture…' : 'Filter architecture & tools…';
+      }
+      const rSub = $('ringSub');
+      if (rSub) {
+        rSub.textContent = stage === 1 ? '15/15 active' : '15 / 15 ADRs active';
+      }
       if (btn) {
         btn.setAttribute('aria-label', STAGE_LABELS[stage]);
         btn.title = STAGE_LABELS[stage];
@@ -2135,10 +2286,187 @@
       try { const v = parseInt(localStorage.getItem(KEY), 10); if (v >= 0 && v <= 2) stage = v; } catch (e) {}
       setNavStage(stage, false);
       btn.onclick = () => {
+        el.removeAttribute('data-nav-resized');
+        el.removeAttribute('data-nav-compact');
+        el.style.removeProperty('--lt-nav-w');
+        try { localStorage.removeItem('lt150-nav-w'); } catch (e) {}
         stage = parseInt(el.dataset.stage, 10) || 0;
         setNavStage(stage + 1, true);
       };
     })();
+
+    // Left Navigation drag-to-resize controller (#ltNavResizer)
+    (function initNavResize() {
+      const el = $('sidebar'), handle = $('ltNavResizer');
+      if (!el || !handle) return;
+      const KEY = 'lt150-nav-w';
+      const DEF = 320;
+
+      const maxAllowedWidth = () => {
+        const rail = $('ltRail');
+        const railW = (rail && rail.dataset.collapsed !== 'true' && window.innerWidth >= 1280) ? rail.offsetWidth : 0;
+        return Math.min(480, Math.max(DEF, window.innerWidth - railW - 520));
+      };
+
+      const apply = (w, persist) => {
+        const maxW = maxAllowedWidth();
+        w = Math.max(56, Math.min(maxW, Math.round(w)));
+
+        if (w < 110) {
+          el.removeAttribute('data-nav-resized');
+          el.removeAttribute('data-nav-compact');
+          el.style.removeProperty('--lt-nav-w');
+          setNavStage(2, persist);
+          return 56;
+        } else if (w <= 230) {
+          el.removeAttribute('data-nav-resized');
+          el.removeAttribute('data-nav-compact');
+          el.style.removeProperty('--lt-nav-w');
+          setNavStage(1, persist);
+          return 200;
+        } else {
+          setNavStage(0, false);
+          el.setAttribute('data-nav-resized', 'true');
+          if (w < 280) {
+            el.setAttribute('data-nav-compact', 'true');
+          } else {
+            el.removeAttribute('data-nav-compact');
+          }
+          el.style.setProperty('--lt-nav-w', w + 'px');
+          handle.setAttribute('aria-valuemin', '56');
+          handle.setAttribute('aria-valuemax', String(maxW));
+          handle.setAttribute('aria-valuenow', String(w));
+          if (persist) {
+            try { localStorage.setItem(KEY, String(w)); } catch (e) {}
+          }
+          return w;
+        }
+      };
+
+      let saved = null;
+      try {
+        const v = parseInt(localStorage.getItem(KEY), 10);
+        if (v && v >= 230) saved = v;
+      } catch (e) {}
+      if (saved) {
+        apply(saved, false);
+      }
+
+      let dragging = false, startX = 0, startW = 0, moved = false;
+
+      const onMove = (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        if (Math.abs(dx) < 3 && !moved) return;
+        moved = true;
+        apply(startW + dx, true);
+      };
+
+      const onUp = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('is-dragging');
+        el.classList.remove('is-resizing');
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        if (moved) {
+          apply(startW + (e.clientX - startX), true);
+        }
+      };
+
+      handle.addEventListener('pointerdown', (e) => {
+        if (window.innerWidth < 768) return;
+        dragging = true;
+        moved = false;
+        startX = e.clientX;
+        startW = el.getBoundingClientRect().width;
+        handle.classList.add('is-dragging');
+        el.classList.add('is-resizing');
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      });
+
+      handle.addEventListener('dblclick', () => {
+        el.removeAttribute('data-nav-resized');
+        el.removeAttribute('data-nav-compact');
+        el.style.removeProperty('--lt-nav-w');
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        setNavStage(0, true);
+      });
+
+      handle.addEventListener('keydown', (e) => {
+        const curW = el.getBoundingClientRect().width;
+        if (e.key === 'ArrowRight') {
+          apply(curW + 24, true);
+          e.preventDefault();
+        } else if (e.key === 'ArrowLeft') {
+          apply(curW - 24, true);
+          e.preventDefault();
+        } else if (e.key === 'Home') {
+          el.removeAttribute('data-nav-resized');
+          el.removeAttribute('data-nav-compact');
+          el.style.removeProperty('--lt-nav-w');
+          try { localStorage.removeItem(KEY); } catch (e) {}
+          setNavStage(0, true);
+          e.preventDefault();
+        }
+      });
+    })();
+
+    // Collapsible navigation category groups
+    let collapsedCats = new Set();
+    try {
+      const raw = localStorage.getItem('lt150-collapsed-cats');
+      if (raw) collapsedCats = new Set(JSON.parse(raw));
+    } catch (e) {}
+
+    function saveCollapsedCats() {
+      try {
+        localStorage.setItem('lt150-collapsed-cats', JSON.stringify([...collapsedCats]));
+      } catch (e) {}
+    }
+
+    function setCatCollapsed(group, collapsed, persist) {
+      const key = group.dataset.catKey;
+      if (!key) return;
+      const toggle = group.querySelector('.nav-group-toggle');
+      if (collapsed) {
+        group.setAttribute('data-cat-collapsed', 'true');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        collapsedCats.add(key);
+      } else {
+        group.removeAttribute('data-cat-collapsed');
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+        collapsedCats.delete(key);
+      }
+      if (persist) saveCollapsedCats();
+    }
+
+    function initCollapsibleCategories() {
+      const groups = document.querySelectorAll('#curriculumNav .nav-group[data-cat-key]');
+      groups.forEach(group => {
+        const key = group.dataset.catKey;
+        const toggle = group.querySelector('.nav-group-toggle');
+        const isCollapsed = collapsedCats.has(key);
+        if (isCollapsed) {
+          group.setAttribute('data-cat-collapsed', 'true');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        } else {
+          group.removeAttribute('data-cat-collapsed');
+          if (toggle) toggle.setAttribute('aria-expanded', 'true');
+        }
+        if (toggle) {
+          toggle.onclick = (e) => {
+            e.preventDefault();
+            const currentlyCollapsed = group.hasAttribute('data-cat-collapsed');
+            setCatCollapsed(group, !currentlyCollapsed, true);
+          };
+        }
+      });
+    }
+    initCollapsibleCategories();
 
     // Stage 2 dual rail modes: category glyphs ('cat') or section numbers ('num') via Alt+V
     (function initRailMode() {
@@ -2173,8 +2501,11 @@
       requestAnimationFrame(() => {
         if (!nav) return;
         const group = [...nav.querySelectorAll('.nav-group')]
-          .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === category || g.dataset.groupCat === category);
+          .find(g => g.querySelector('.nav-cat-btn')?.dataset.cat === category || g.dataset.groupCat === category || g.dataset.catKey === category);
         if (!group) return;
+        if (group.hasAttribute('data-cat-collapsed')) {
+          setCatCollapsed(group, false, true);
+        }
         nav.scrollTo({
           top: nav.scrollTop + group.getBoundingClientRect().top - nav.getBoundingClientRect().top,
           behavior: 'smooth',
@@ -2531,6 +2862,26 @@
           }
         });
         group.style.display = groupMatches > 0 ? '' : 'none';
+
+        if (q) {
+          if (groupMatches > 0) {
+            group.removeAttribute('data-cat-collapsed');
+            const toggle = group.querySelector('.nav-group-toggle');
+            if (toggle) toggle.setAttribute('aria-expanded', 'true');
+          }
+        } else {
+          const key = group.dataset.catKey;
+          const shouldBeCollapsed = key && collapsedCats.has(key);
+          if (shouldBeCollapsed) {
+            group.setAttribute('data-cat-collapsed', 'true');
+            const toggle = group.querySelector('.nav-group-toggle');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+          } else {
+            group.removeAttribute('data-cat-collapsed');
+            const toggle = group.querySelector('.nav-group-toggle');
+            if (toggle) toggle.setAttribute('aria-expanded', 'true');
+          }
+        }
       });
 
       let emptyMsg = $('navEmptyState');
@@ -2560,7 +2911,7 @@
     if (searchInput) {
       searchInput.addEventListener('input', filterNav);
       searchInput.addEventListener('keydown', (e) => {
-        const visibleItems = Array.from(document.querySelectorAll('#curriculumNav .nav-item')).filter(el => el.style.display !== 'none');
+        const visibleItems = Array.from(document.querySelectorAll('#curriculumNav .nav-item')).filter(el => el.offsetParent !== null && el.style.display !== 'none');
         if (e.key === 'ArrowDown') {
           e.preventDefault();
           if (!visibleItems.length) return;
@@ -3003,6 +3354,47 @@
       }, { passive: true });
       setTimeout(onScrollSpy, 200);
     }
+
+    /* ---------- GitHub Auth Parity ---------- */
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let judgeUser = null;
+
+    async function refreshAuth() {
+      const area = $('authArea');
+      if (!area) return;
+      const paintLoggedOut = () => {
+        judgeUser = null;
+        area.innerHTML =
+          '<a id="loginBtn" href="/api/auth/login" class="btn inline-flex items-center justify-center gap-2 px-3.5 h-10 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 text-[13px] font-semibold text-slate-300 hover:text-slate-100 whitespace-nowrap">' +
+          '<svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>' +
+          '<span class="hidden sm:inline">Login with GitHub</span><span class="sm:hidden">Login</span>' +
+          '</a>';
+      };
+      let me = null;
+      try {
+        const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        if (r.ok) me = await r.json();
+      } catch (e) { /* API unreachable (local file preview): stay logged out */ }
+      if (!me || typeof me.githubId !== 'number') { paintLoggedOut(); return; }
+      judgeUser = me;
+      area.innerHTML =
+        '<div class="flex items-center gap-2">' +
+        '<button id="logoutBtn" type="button" title="Logged in as ' + esc(me.login || 'github') + ' · Click to logout" class="btn inline-flex items-center justify-center gap-2 px-3 h-10 rounded-lg border border-[rgba(148,163,184,0.2)] bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/10 text-[13px] font-semibold text-slate-300 hover:text-slate-100 whitespace-nowrap">' +
+        '<svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>' +
+        '<span class="hidden sm:inline font-mono text-xs max-w-[110px] truncate" style="color:var(--accent)">' + esc(me.login || 'github') + '</span>' +
+        '<span class="hidden sm:inline text-slate-600" aria-hidden="true">·</span>' +
+        '<span>Logout</span>' +
+        '</button>' +
+        '</div>';
+      const logoutBtn = $('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.onclick = async () => {
+          try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
+          paintLoggedOut();
+        };
+      }
+    }
+    refreshAuth();
   </script>
   <script src="chat-widget.js"></script>
   <script src="assets/cursor.js"></script>

@@ -98,9 +98,21 @@ for (const g of GUIDE_DIRS) {
   if (fs.existsSync(full)) scanDirectory(full, g.category);
 }
 
-// Structured sidebar order: primers first, then MAANG interview guides,
-// then study roadmaps, then problem tracks.
-const orderKey = (name) => name === 'FOUNDATIONS' ? 0 : name === 'MAANG GUIDES' ? 1 : (name === 'MODERN ENGINEER SKILLS' || name === 'FRESHER ROADMAP' || name === 'MID-LEVEL ROADMAP' ? 2 : 3);
+// Structured sidebar order requested:
+// 1. FOUNDATIONS
+// 2. MODERN ENGINEER SKILLS
+// 3. MAANG GUIDES
+// 4. FRESHER ROADMAP
+// 5. MID-LEVEL ROADMAP
+// 6. Question categories in track order (01-array-string .. 23-kadanes-algorithm)
+const CATEGORY_ORDER = {
+  'FOUNDATIONS': 0,
+  'MODERN ENGINEER SKILLS': 1,
+  'MAANG GUIDES': 2,
+  'FRESHER ROADMAP': 3,
+  'MID-LEVEL ROADMAP': 4,
+};
+const orderKey = (name) => (name in CATEGORY_ORDER ? CATEGORY_ORDER[name] : 5);
 curriculum.sort((a, b) => orderKey(a.category) - orderKey(b.category));
 
 // Architecture & Decisions + Verification Matrix Ingestion

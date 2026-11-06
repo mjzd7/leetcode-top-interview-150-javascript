@@ -2285,18 +2285,22 @@ function initMode() {
   var mode = getCurrentMode();
 
   if (isDesktop()) {
-    state.open = true;
-    el.panel.classList.add('is-open');
-    el.panel.removeAttribute('aria-hidden');
     try {
       if (localStorage.getItem(MODE_KEY) === 'snap-bottom') {
         localStorage.setItem(MODE_KEY, 'docked');
       }
     } catch (e) {}
-  } else {
-    state.open = false;
+  }
+
+  state.open = false;
+  if (el.panel) {
     el.panel.classList.remove('is-open');
     el.panel.setAttribute('aria-hidden', 'true');
+  }
+  if (el.fab) {
+    el.fab.classList.remove('is-tucked');
+    el.fab.setAttribute('aria-expanded', 'false');
+    el.fab.removeAttribute('aria-hidden');
   }
 
   setMode(mode, false);
@@ -2751,13 +2755,22 @@ function init() {
         }
       } else if (isDesktop() && state.mode === 'snap-bottom') {
         setMode('docked', false);
-        state.open = true;
-        el.panel.classList.add('is-open');
-        el.panel.removeAttribute('aria-hidden');
-        if (el.fab) {
-          el.fab.classList.add('is-tucked');
-          el.fab.setAttribute('aria-expanded', 'true');
-          el.fab.setAttribute('aria-hidden', 'true');
+        if (state.open) {
+          el.panel.classList.add('is-open');
+          el.panel.removeAttribute('aria-hidden');
+          if (el.fab) {
+            el.fab.classList.add('is-tucked');
+            el.fab.setAttribute('aria-expanded', 'true');
+            el.fab.setAttribute('aria-hidden', 'true');
+          }
+        } else {
+          el.panel.classList.remove('is-open');
+          el.panel.setAttribute('aria-hidden', 'true');
+          if (el.fab) {
+            el.fab.classList.remove('is-tucked');
+            el.fab.setAttribute('aria-expanded', 'false');
+            el.fab.removeAttribute('aria-hidden');
+          }
         }
       }
       if (state.mode === 'floating') {

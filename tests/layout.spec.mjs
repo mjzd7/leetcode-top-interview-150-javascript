@@ -50,6 +50,7 @@ test('the header is exactly the height every column is offset by', async ({ page
 });
 
 test('every header control shares one height and one baseline', async ({ page }) => {
+  expect(await page.locator('#guidesBtn').count(), 'guidesBtn is removed from header').toBe(0);
   const ctrls = await page.evaluate(() => {
     const pick = (sel) => {
       const el = document.querySelector(sel);
@@ -57,7 +58,7 @@ test('every header control shares one height and one baseline', async ({ page })
       const b = el.getBoundingClientRect();
       return b.width > 0 ? { h: Math.round(b.height), y: Math.round(b.y) } : null;
     };
-    return { auth: pick('#authArea'), guides: pick('#guidesBtn'), palette: pick('#paletteBtn'), row: Math.round(document.querySelector('header > div').getBoundingClientRect().height) };
+    return { auth: pick('#authArea'), theme: pick('#themeToggle'), palette: pick('#paletteBtn'), row: Math.round(document.querySelector('header > div').getBoundingClientRect().height) };
   });
   const visible = Object.entries(ctrls).filter(([k, v]) => k !== 'row' && v).map(([k, v]) => [k, v]);
   expect(visible.length, 'at least two header controls rendered').toBeGreaterThanOrEqual(2);
@@ -66,6 +67,88 @@ test('every header control shares one height and one baseline', async ({ page })
     expect(v.y, `${k} shares the baseline`).toBe(visible[0][1].y);
     expect(v.h, `${k} fits inside the 56px header row`).toBeLessThanOrEqual(ctrls.row);
   }
+});
+
+test('#brandHome:hover inverts logo accent/foreground facets in both dark and light modes', async ({ page }) => {
+  const brand = page.locator('#brandHome');
+  await expect(brand).toBeVisible();
+
+  // 1. Dark Mode: lime green rgb(200, 250, 75) <-> white (--fg)
+  await page.evaluate(() => {
+    localStorage.setItem('lt150-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('dark');
+  });
+  await page.mouse.move(10, 200);
+  await page.waitForTimeout(220);
+
+  const darkRest = await page.evaluate(() => {
+    const accentPart = document.querySelector('#brandHome .logo-part-accent');
+    const fgPart = document.querySelector('#brandHome .logo-part-fg');
+    return {
+      accentFill: accentPart ? getComputedStyle(accentPart).fill : null,
+      fgFill: fgPart ? getComputedStyle(fgPart).fill : null,
+    };
+  });
+  expect(darkRest.accentFill).toBe('rgb(200, 250, 75)');
+
+  await brand.hover();
+  await page.waitForTimeout(220);
+  const darkHover = await page.evaluate(() => {
+    const el = document.querySelector('#brandHome .font-display');
+    const accentPart = document.querySelector('#brandHome .logo-part-accent');
+    const fgPart = document.querySelector('#brandHome .logo-part-fg');
+    return {
+      color: el ? getComputedStyle(el).color : null,
+      accentFill: accentPart ? getComputedStyle(accentPart).fill : null,
+      fgFill: fgPart ? getComputedStyle(fgPart).fill : null,
+    };
+  });
+  expect(darkHover.color).toBe('rgb(200, 250, 75)');
+  expect(darkHover.fgFill).toBe('rgb(200, 250, 75)');
+  expect(darkHover.accentFill).toBe(darkRest.fgFill);
+
+  // 2. Light Mode: indigo rgb(67, 56, 202) <-> deep ink rgb(16, 24, 40)
+  await page.mouse.move(10, 200);
+  await page.evaluate(() => {
+    localStorage.setItem('lt150-theme', 'light');
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.remove('dark');
+  });
+  await page.waitForTimeout(220);
+
+  const lightRest = await page.evaluate(() => {
+    const accentPart = document.querySelector('#brandHome .logo-part-accent');
+    const fgPart = document.querySelector('#brandHome .logo-part-fg');
+    return {
+      accentFill: accentPart ? getComputedStyle(accentPart).fill : null,
+      fgFill: fgPart ? getComputedStyle(fgPart).fill : null,
+    };
+  });
+  expect(lightRest.accentFill).toBe('rgb(67, 56, 202)');
+  expect(lightRest.fgFill).toBe('rgb(16, 24, 40)');
+
+  await brand.hover();
+  await page.waitForTimeout(220);
+  const lightHover = await page.evaluate(() => {
+    const el = document.querySelector('#brandHome .font-display');
+    const accentPart = document.querySelector('#brandHome .logo-part-accent');
+    const fgPart = document.querySelector('#brandHome .logo-part-fg');
+    return {
+      color: el ? getComputedStyle(el).color : null,
+      accentFill: accentPart ? getComputedStyle(accentPart).fill : null,
+      fgFill: fgPart ? getComputedStyle(fgPart).fill : null,
+    };
+  });
+  expect(lightHover.color).toBe('rgb(67, 56, 202)');
+  expect(lightHover.fgFill).toBe('rgb(67, 56, 202)');
+  expect(lightHover.accentFill).toBe('rgb(16, 24, 40)');
+});
+
+test('#authArea login control carries .btn class with physical hover styling', async ({ page }) => {
+  const authBtn = page.locator('#authArea a, #authArea button').first();
+  await expect(authBtn).toBeVisible();
+  await expect(authBtn).toHaveClass(/btn/);
 });
 
 test('the ⌘K chips read as keycaps, not as a nested control', async ({ page }) => {
@@ -78,6 +161,17 @@ test('the ⌘K chips read as keycaps, not as a nested control', async ({ page })
 
 test('the rail and its composer stay inside the viewport', async ({ page }) => {
   test.skip(!(await isRailColumn(page)), 'the assistant is a bottom sheet below 1024px, not a rail column');
+  // Verify chat starts closed by default on desktop
+  const isInitiallyCollapsed = await page.evaluate(() => {
+    const rail = document.getElementById('ltRail');
+    return rail?.getAttribute('data-collapsed') === 'true';
+  });
+  expect(isInitiallyCollapsed, 'chat starts closed by default').toBe(true);
+
+  // Click #ltcFab to open the rail
+  await page.click('#ltcFab');
+  await page.waitForTimeout(400);
+
   const rail = await box(page, '#ltRail');
   const form = await box(page, '#ltcForm');
   const hint = await box(page, '.ltc-hint');
@@ -306,6 +400,17 @@ test.describe('the right rail', () => {
     await page.waitForSelector('#curriculumNav .nav-item', { state: 'attached' });
     await page.waitForTimeout(600);
 
+    // Verify chat starts closed by default on desktop
+    const initiallyCollapsed = await page.evaluate(() => {
+      const rail = document.getElementById('ltRail');
+      return rail?.getAttribute('data-collapsed') === 'true';
+    });
+    expect(initiallyCollapsed, 'rail starts closed by default on desktop').toBe(true);
+
+    // Click #ltcFab to open the rail
+    await page.click('#ltcFab');
+    await page.waitForTimeout(400);
+
     const r = await page.evaluate(() => {
       const rail = document.getElementById('ltRail');
       const panel = document.getElementById('ltcPanel');
@@ -314,6 +419,7 @@ test.describe('the right rail', () => {
       return {
         tocBlocks: document.querySelectorAll('.lt-rail-toc, #tocNav').length,
         heading: [...document.querySelectorAll('#ltRail *')].some((e) => e.textContent.trim() === 'On this page'),
+        railW: Math.round(rb.width),
         railH: Math.round(rb.height),
         panelH: Math.round(pb.height),
         panelTopGap: Math.round(pb.top - rb.top),
@@ -326,6 +432,8 @@ test.describe('the right rail', () => {
     expect(r.tocBlocks, 'no table-of-contents markup survives').toBe(0);
     expect(r.heading, 'and no "On this page" label').toBe(false);
     expect(r.order, 'the rail is the resizer and the assistant, nothing else').toEqual(['ltRailResizer', 'ltcPanel']);
+    expect(r.railW, 'the docked rail width is around 380px or 384px').toBeGreaterThanOrEqual(380);
+    expect(r.railW, 'the docked rail width is around 380px or 384px').toBeLessThanOrEqual(384);
     expect(r.panelTopGap, 'the assistant starts at the top of the rail').toBe(0);
     expect(r.panelH, 'and fills its height').toBe(r.railH);
     expect(r.formOver, 'with the composer still inside the viewport').toBeLessThanOrEqual(1);
