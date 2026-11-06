@@ -835,6 +835,17 @@ async function main() {
     'a prefix-tree question does NOT return the LRU guide',
     JSON.stringify(trie.hits.map((h) => h.title)));
 
+  // Ranking must prioritize questions ahead of non-question guides (primers, MAANG guides, roadmaps)
+  const interviewSearch = await searchGuides('interview');
+  check(interviewSearch.ok === true, 'interview search finds guides');
+  const firstNonQuestionIdx = interviewSearch.hits.findIndex(h => h.difficulty !== 'Easy' && h.difficulty !== 'Medium' && h.difficulty !== 'Hard');
+  const firstQuestionIdx = interviewSearch.hits.findIndex(h => h.difficulty === 'Easy' || h.difficulty === 'Medium' || h.difficulty === 'Hard');
+  if (firstQuestionIdx !== -1 && firstNonQuestionIdx !== -1) {
+    check(firstQuestionIdx < firstNonQuestionIdx, 'questions rank ahead of non-question guides in chat retrieval');
+  } else if (firstQuestionIdx !== -1) {
+    check(firstQuestionIdx === 0, 'questions occupy the top search results');
+  }
+
   // Cross-question between two different tracks, which is exactly what the old
   // page-scoped prompt made impossible.
   const cross = await searchGuides('compare the 3Sum approach with two pointers');

@@ -1273,7 +1273,7 @@
   function emptyState() {
     var entry = currentEntry();
     var kind = pageKind();
-    var title = entry ? cleanHeading(entry.item.title) : 'Top Interview 150';
+    var title = entry ? cleanHeading(entry.item.title) : 'Invariant';
 
     var badge = '';
     if (entry) {

@@ -659,9 +659,60 @@ test.describe('keyboard navigation in the sidebar search', () => {
     const value = await page.locator('#searchInput').inputValue();
     expect(value, 'slash key was not typed into the input').toBe('');
   });
+
+  test('sidebar search prioritizes question categories over primers, guides, and roadmaps', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.fill('#searchInput', 'interview');
+    await page.waitForTimeout(300);
+    const catOrder = await page.evaluate(() => {
+      const groups = [...document.querySelectorAll('#curriculumNav .nav-group')];
+      return groups.map(g => g.querySelector('.nav-cat-btn')?.dataset.cat).filter(Boolean);
+    });
+    const nonQuestions = new Set(['FOUNDATIONS', 'MAANG GUIDES', 'MODERN ENGINEER SKILLS', 'FRESHER ROADMAP', 'MID-LEVEL ROADMAP']);
+    const firstNonQIndex = catOrder.findIndex(cat => nonQuestions.has(cat));
+    const firstQIndex = catOrder.findIndex(cat => !nonQuestions.has(cat));
+    expect(firstQIndex, 'at least one question category matched').toBeGreaterThanOrEqual(0);
+    if (firstNonQIndex !== -1) {
+      expect(firstQIndex, 'questions render before non-question categories in sidebar search').toBeLessThan(firstNonQIndex);
+    }
+  });
 });
 
 test.describe('keyboard navigation in the command palette', () => {
+  test('command palette prioritizes questions before primers, guides, and roadmaps', async ({ page }) => {
+    await open(page, PROBLEM_01);
+    await page.click('#paletteBtn');
+    await page.waitForTimeout(200);
+
+    const initialDifficulties = await page.evaluate(() => {
+      const items = [...document.querySelectorAll('#paletteList .pal-item')];
+      return items.map(el => {
+        const id = el.dataset.optId;
+        const entry = window.CURRICULUM_DATA?.flatMap(c => c.items).find(i => i.id === id);
+        return entry?.difficulty || '';
+      });
+    });
+    expect(initialDifficulties.length, 'palette lists results').toBeGreaterThan(0);
+    expect(initialDifficulties.every(d => ['Easy', 'Medium', 'Hard'].includes(d)), 'initial palette results are all questions').toBe(true);
+
+    await page.fill('#paletteInput', 'system');
+    await page.waitForTimeout(300);
+    const searchDifficulties = await page.evaluate(() => {
+      const items = [...document.querySelectorAll('#paletteList .pal-item')];
+      return items.map(el => {
+        const id = el.dataset.optId;
+        const entry = window.CURRICULUM_DATA?.flatMap(c => c.items).find(i => i.id === id);
+        return entry?.difficulty || '';
+      });
+    });
+    const firstQuestion = searchDifficulties.findIndex(d => ['Easy', 'Medium', 'Hard'].includes(d));
+    const firstNonQuestion = searchDifficulties.findIndex(d => !['Easy', 'Medium', 'Hard'].includes(d));
+    expect(firstQuestion, 'matching questions are found').toBe(0);
+    if (firstNonQuestion !== -1) {
+      expect(firstQuestion, 'questions precede non-questions in palette search').toBeLessThan(firstNonQuestion);
+    }
+  });
+
   test('End jumps to the last option and Home back to the first', async ({ page }) => {
     await open(page, PROBLEM_01);
     await page.click('#paletteBtn');

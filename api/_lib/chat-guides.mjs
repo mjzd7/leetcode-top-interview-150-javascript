@@ -129,7 +129,12 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
     };
   }
 
-  scored.sort((a, b) => b.score - a.score);
+  scored.sort((a, b) => {
+    const aQ = (a.g.difficulty === 'Easy' || a.g.difficulty === 'Medium' || a.g.difficulty === 'Hard') ? 1 : 0;
+    const bQ = (b.g.difficulty === 'Easy' || b.g.difficulty === 'Medium' || b.g.difficulty === 'Hard') ? 1 : 0;
+    if (aQ !== bQ) return bQ - aQ;
+    return b.score - a.score;
+  });
   const top = scored.slice(0, Math.max(1, maxGuides));
 
   // Each cited guide gets a guaranteed SHARE of the budget, so a long first hit
