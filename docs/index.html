@@ -319,17 +319,24 @@
       #sidebar[data-stage="2"] .nav-title,
       #sidebar[data-stage="2"] .nav-group-label,
       #sidebar[data-stage="2"] .nav-group-count { display: none; }
-      /* At 56px these collapse to unusable slivers, so they go too. */
+      /* At 56px these collapse to unusable slivers, so they go too — including
+         the relative wrapper and `/` keycap badge around #searchInput. */
       #sidebar[data-stage="2"] #searchInput,
+      #sidebar[data-stage="2"] #searchInput + kbd,
+      #sidebar[data-stage="2"] div:has(> #searchInput),
       #sidebar[data-stage="2"] #difficultyFilters,
       #sidebar[data-stage="2"] .mod-bar { display: none; }
       /* 16px of padding plus the 12px flex gap pushed the 32px collapse button
-         to x=28..60 inside a 56px rail, so it hung 4px over the content edge. */
-      #sidebar[data-stage="2"] > div:first-child { padding-left: 0; padding-right: 0; gap: 0; }
+         to x=28..60 inside a 56px rail, so it hung 4px over the content edge.
+         Match both :first-child and #ltNavResizer + div so the resizer node
+         at index 0 does not break the header selector. */
+      #sidebar[data-stage="2"] > div:first-child,
+      #sidebar[data-stage="2"] > #ltNavResizer + div { padding-left: 0; padding-right: 0; gap: 0; }
       /* And the row inside it, which the rule above cannot reach: with the ring
          block gone the button is the row's only child, so it centres on the
          icon column's line instead of starting at the rail's left edge. */
-      #sidebar[data-stage="2"] > div:first-child > div { justify-content: center; }
+      #sidebar[data-stage="2"] > div:first-child > div,
+      #sidebar[data-stage="2"] > #ltNavResizer + div > div { justify-content: center; }
       #ltNavCollapse { display: flex; }
 
       /* ---- the 56px rail has two modes, toggled with the option key ----
@@ -339,7 +346,11 @@
          number. Both are learnable, which a dot is not. */
       #sidebar[data-stage="2"] .nav-group-text { display: none; }
       #sidebar[data-stage="2"] .nav-cat-btn { display: flex; }
-      #sidebar[data-stage="2"] #curriculumNav { padding-left: 0; padding-right: 0; }
+      #sidebar[data-stage="2"] #curriculumNav {
+        padding-left: 0; padding-right: 0;
+        scrollbar-width: none; -ms-overflow-style: none;
+      }
+      #sidebar[data-stage="2"] #curriculumNav::-webkit-scrollbar { display: none; }
 
       /* Category mode: one accent glyph per category, the guide list hidden. */
       #sidebar[data-stage="2"][data-rail-mode="cat"] .nav-item { display: none; }
@@ -853,9 +864,17 @@ body[data-resizing] * { user-select: none !important; }
     .ltc-icon-btn:active {
       transform: translateY(0) scale(0.96);
     }
-    /* Proportional scaling scoped to desktop floating window mode */
-    .ltc-panel[data-mode="floating"] .ltc-icon-btn {
+    /* Proportional scaling scoped to desktop floating and docked window modes
+       (mobile snap-bottom keeps 44x44px touch targets). */
+    .ltc-panel[data-mode="floating"] .ltc-icon-btn,
+    .ltc-panel[data-mode="docked"] .ltc-icon-btn {
       width: 32px; height: 32px; border-radius: 7px;
+    }
+    .ltc-panel[data-mode="docked"] .ltc-head {
+      gap: 0.45rem; padding: 0.65rem 0.6rem 0.65rem 0.7rem;
+    }
+    .ltc-panel[data-mode="docked"] .ltc-head-actions {
+      gap: 0.15rem;
     }
     .ltc-panel[data-mode="floating"] .ltc-send,
     .ltc-panel[data-mode="floating"] .ltc-stop {

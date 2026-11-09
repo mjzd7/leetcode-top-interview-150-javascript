@@ -353,6 +353,17 @@
 
     // Clone so we can strip noise without touching the live DOM.
     var clone = root.cloneNode(true);
+    // Preserve Mermaid diagram source text if available before stripping SVG chrome.
+    clone.querySelectorAll('.mermaid').forEach(function (m) {
+      var src = m.getAttribute('data-mermaid-src');
+      if (src) {
+        var pre = document.createElement('pre');
+        pre.textContent = src;
+        m.replaceWith(pre);
+      } else {
+        m.remove();
+      }
+    });
     var junk = [
       'script', 'style', 'noscript', 'svg', 'button', 'iframe', 'form',
       '.mermaid', '.copy-btn', '.copy-flash', '.chat-code-copy', '.no-context',
@@ -363,10 +374,11 @@
     });
 
     // Text nodes carry the guide; attributes carry the noise (long hrefs, ids).
+    // Preserve 2–8 space code block indentation while collapsing pathological runs.
     var text = clone.textContent || '';
     text = text
-      .replace(/ /g, ' ')
-      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[ \t]{12,}/g, '  ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
@@ -585,11 +597,13 @@
     return store;
   }
 
-  function saveStore() {
+  function saveStore(articleIdOverride, messagesOverride) {
+    var targetId = articleIdOverride || state.articleId;
+    var targetMsgs = messagesOverride || state.messages;
     var store = readStore();
-    store[state.articleId] = {
+    store[targetId] = {
       updatedAt: Date.now(),
-      messages: state.messages.slice(-MAX_MESSAGES),
+      messages: targetMsgs.slice(-MAX_MESSAGES),
     };
     pruneStore(store);
     writeStore(store);
@@ -691,8 +705,13 @@
     if (!nodes.length) return;
 
     // Captured before run(): Mermaid overwrites the node's contents with an
-    // <svg>, so the source is only readable up to this point.
-    var sources = nodes.map(function (n) { return n.textContent; });
+    // <svg>, so the source is only readable up to this point. Persist it in
+    // data-mermaid-src so theme toggles can re-render existing chat diagrams.
+    var sources = nodes.map(function (n) {
+      var saved = n.getAttribute('data-mermaid-src') || n.textContent;
+      n.setAttribute('data-mermaid-src', saved);
+      return saved;
+    });
 
     try {
       var isLight = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light';
@@ -708,12 +727,13 @@
     } catch (e) { /* handled by the check below, which covers both cases */ }
 
     // A parse failure is NOT always a throw: Mermaid injects an <svg> tagged
-    // aria-roledescription="error" that collapses to zero height. Checking only
-    // for a missing <svg> therefore left a blank box in the bubble, so the
-    // error marker is what decides a fallback to the source.
+    // aria-roledescription="error" (or containing .error-icon / .error-text in
+    // Mermaid v10) that collapses or renders an error bomb. Checking only for a
+    // missing <svg> therefore left a broken box in the bubble, so the error
+    // markers decide a fallback to the source.
     nodes.forEach(function (n, i) {
       if (n.parentNode === null) return; // already replaced, or detached by a re-render
-      var failed = n.querySelector('[aria-roledescription="error"]') || !n.querySelector('svg');
+      var failed = n.querySelector('[aria-roledescription="error"], .error-icon, .error-text') || !n.querySelector('svg');
       if (!failed) return;
       var pre = document.createElement('pre');
       pre.className = 'ltc-mermaid-error';
@@ -1026,7 +1046,23 @@
    */
   function renderMarkdown(src) {
     if (!(window.marked && window.marked.parse)) return '<pre>' + esc(src) + '</pre>';
-    var md = window.marked.parse(String(src || ''), { renderer: getRenderer() });
+    // Protect LaTeX math spans ($...$ and $$...$$) outside code blocks so
+    // marked.parse() does not turn subscripts (`_`) or asterisks (`*`) inside
+    // formulas like `$O(N_1 + N_2)$` into `<em>` tags before KaTeX runs (Bug 13).
+    var mathSlots = [];
+    var raw = String(src || '');
+    var protectedSrc = raw.replace(/(```[\s\S]*?```|`[^`\n]+`)|(\$\$[\s\S]+?\$\$|\$(?!\s)[^\n$]+?(?<!\s)\$)/g, function (match, codeSpan, mathSpan) {
+      if (codeSpan) return codeSpan;
+      var idx = mathSlots.length;
+      mathSlots.push(mathSpan);
+      return '@@LTCMATH' + idx + '@@';
+    });
+    var md = window.marked.parse(protectedSrc, { renderer: getRenderer() });
+    if (mathSlots.length) {
+      md = md.replace(/@@LTCMATH(\d+)@@/g, function (_m, n) {
+        return esc(mathSlots[Number(n)] || '');
+      });
+    }
     if (window.DOMPurify && window.DOMPurify.sanitize) {
       return window.DOMPurify.sanitize(md, { USE_PROFILES: { html: true } });
     }
@@ -1447,6 +1483,7 @@
       // measured to be worse: the prefix re-renders once per paragraph, so
       // every paragraph holding math would show raw LaTeX and snap at turn end.
       renderMath(r.md);
+      renderMermaid(r.md);
     }
     r.tail.textContent = text.slice(r.stable > 0 ? r.stable : 0);
     if (state.pinScroll) el.log.scrollTop = el.log.scrollHeight;
@@ -1628,6 +1665,7 @@
     state.streaming = on;
     el.input.disabled = on;
     el.send.disabled = on || !el.input.value.trim();
+    el.send.hidden = on;
     el.send.setAttribute('data-busy', on ? 'true' : 'false');
     el.send.setAttribute('aria-label', on ? 'Sending' : 'Send message');
     el.stop.hidden = !on;
@@ -1650,8 +1688,10 @@
     if (el.statusTxt) el.statusTxt.textContent = text;
   }
 
-  function failTurn(message, rateLimited) {
-    var last = state.messages[state.messages.length - 1];
+  function failTurn(message, rateLimited, targetArticleId, targetMessages) {
+    var aid = targetArticleId || state.articleId;
+    var msgs = targetMessages || state.messages;
+    var last = msgs[msgs.length - 1];
     if (last && last.role === 'assistant') {
       last.status = 'error';
       last.error = message;
@@ -1659,10 +1699,10 @@
     } else {
       var failed = { role: 'assistant', content: '', error: message, ts: nowLabel(), status: 'error' };
       if (rateLimited) failed.gate = true;
-      state.messages.push(failed);
+      msgs.push(failed);
     }
-    saveStore();
-    renderLog();
+    saveStore(aid, msgs);
+    if (aid === state.articleId) renderLog();
   }
 
   /** Mount the live assistant bubble the green composer line is announcing. */
@@ -1682,8 +1722,12 @@
 
     clearTimeout(state.firstTokenTimer);
 
-    state.messages.push({ role: 'user', content: userText, ts: nowLabel() });
-    var userIndex = state.messages.length - 1;
+    var turnArticleId = state.articleId;
+    var turnMessages = state.messages;
+
+    turnMessages.push({ role: 'user', content: userText, ts: nowLabel() });
+    saveStore(turnArticleId, turnMessages);
+    var userIndex = turnMessages.length - 1;
     el.input.value = '';
     autoGrow();
     setStreaming(true);
@@ -1692,25 +1736,33 @@
     if (state.pinScroll) el.log.scrollTop = el.log.scrollHeight;
 
     var assistantMsg = { role: 'assistant', content: '', ts: nowLabel() };
-    state.messages.push(assistantMsg);
+    turnMessages.push(assistantMsg);
 
     state.controller = new AbortController();
 
-    // First-token watchdog: distinguishes "slow model" from "hung connection".
-    state.firstTokenTimer = setTimeout(function () {
-      if (!assistantMsg.content) {
-        try { state.controller.abort(); } catch (e) { /* ignore */ }
-        setStreaming(false);
-        failTurn('The assistant did not respond in time. Please try again.');
-      }
-    }, FIRST_TOKEN_TIMEOUT_MS);
+    function armWatchdog() {
+      clearTimeout(state.firstTokenTimer);
+      state.firstTokenTimer = setTimeout(function () {
+        if (!assistantMsg.content) {
+          try { if (state.controller) state.controller.abort(); } catch (e) { /* ignore */ }
+          setStreaming(false);
+          failTurn('The assistant did not respond in time. Please try again.', false, turnArticleId, turnMessages);
+        }
+      }, FIRST_TOKEN_TIMEOUT_MS);
+    }
 
-    // Snapshot the outgoing history BEFORE the assistant placeholder is pushed.
-    // Including that empty turn would make it the last message, and the route
-    // requires the final message to be a non-empty user turn.
-    var outgoing = state.messages
-      .filter(function (m) {
-        return m.status !== 'error' && typeof m.content === 'string' && m.content.trim() !== '';
+    // First-token watchdog: distinguishes "slow model" from "hung connection".
+    armWatchdog();
+
+    // Snapshot the outgoing history BEFORE the assistant placeholder is pushed,
+    // excluding both errored assistant turns and any user message whose paired
+    // assistant response errored out (so failed turns do not leave orphaned
+    // consecutive user messages in the payload).
+    var outgoing = turnMessages
+      .filter(function (m, idx, arr) {
+        if (m.status === 'error' || typeof m.content !== 'string' || m.content.trim() === '') return false;
+        if (m.role === 'user' && arr[idx + 1] && arr[idx + 1].status === 'error') return false;
+        return true;
       })
       .map(function (m) { return { role: m.role, content: m.content }; });
 
@@ -1756,6 +1808,7 @@
         function (chunk) {
           if (first) { first = false; clearTimeout(state.firstTokenTimer); }
           assistantMsg.content += chunk;
+          if (state.articleId !== turnArticleId) return;
           // The bubble appears with the first token, not before it: no empty
           // card sitting there pretending to be an answer.
           if (!state.reveal.node) mountStreamingBubble();
@@ -1771,15 +1824,15 @@
           clearTimeout(state.firstTokenTimer);
           if (streamError === 'stopped') {
             // User pressed Stop. Keep whatever arrived, drop the empty turn.
-            if (!assistantMsg.content) state.messages.pop();
+            if (!assistantMsg.content) turnMessages.pop();
           } else if (streamError) {
             setStreaming(false);
-            failTurn(streamError);
+            failTurn(streamError, false, turnArticleId, turnMessages);
             return;
           } else if (!assistantMsg.content) {
-            state.messages.pop();
+            turnMessages.pop();
             setStreaming(false);
-            failTurn('The assistant returned an empty answer.');
+            failTurn('The assistant returned an empty answer.', false, turnArticleId, turnMessages);
             return;
           }
           // The turn is not over until the text has been read out. Handing the
@@ -1791,21 +1844,19 @@
             // saveStore() — the restore path has nothing special to do for it.
             if (wasTruncated) assistantMsg.truncated = true;
             setStreaming(false);
-            saveStore();
-            renderLog();
+            saveStore(turnArticleId, turnMessages);
+            if (state.articleId === turnArticleId) renderLog();
           });
         },
         function (message) {
           clearTimeout(state.firstTokenTimer);
           setStreaming(false);
-          failTurn(message);
+          failTurn(message, false, turnArticleId, turnMessages);
         },
         function (status) {
-          // A tool is running. This is proof the request is alive, so stand the
-          // watchdog down — otherwise a slow retrieval reads as a hang and we
-          // abort a request that was about to succeed.
-          clearTimeout(state.firstTokenTimer);
-          state.firstTokenTimer = null;
+          // A tool is running. This is proof the request is alive, so reset the
+          // watchdog for a fresh window rather than disabling it permanently.
+          armWatchdog();
           showStatus(status);
         },
         function () {
@@ -1821,19 +1872,19 @@
         // Stop was pressed while the request was still in flight, so the
         // rejection arrives here instead of inside readSse. The UI must still
         // be released, and an empty turn must not linger.
-        if (!assistantMsg.content) state.messages.pop();
+        if (!assistantMsg.content) turnMessages.pop();
         setStreaming(false);
-        saveStore();
-        renderLog();
+        saveStore(turnArticleId, turnMessages);
+        if (state.articleId === turnArticleId) renderLog();
       } else if (assistantMsg.content) {
         assistantMsg.status = 'error';
         assistantMsg.error = e && e.message ? e.message : 'The response stream was interrupted.';
         setStreaming(false);
-        saveStore();
-        renderLog();
+        saveStore(turnArticleId, turnMessages);
+        if (state.articleId === turnArticleId) renderLog();
       } else {
         setStreaming(false);
-        failTurn(e && e.message ? e.message : 'Could not reach the assistant.', !!(e && e.rateLimited));
+        failTurn(e && e.message ? e.message : 'Could not reach the assistant.', !!(e && e.rateLimited), turnArticleId, turnMessages);
       }
     } finally {
       state.controller = null;
@@ -1959,6 +2010,8 @@
     var wasStreaming = state.streaming;
     if (wasStreaming) stop();
     state.articleId = id;
+    state.articleTitle = currentTitle();
+    if (el.panel) el.panel.setAttribute('data-context', state.articleId);
     if (el.panelTitle) {
       el.panelTitle.textContent = state.articleTitle;
       el.panelTitle.title = state.articleTitle;
@@ -2599,7 +2652,8 @@ function init() {
         updateScrollDown();
       });
     }
-    // Single window state button: Attach to side (docked) <-> Fullscreen
+    // Single window state button: Attach to side (docked) <-> Fullscreen, or
+    // toggle 40dvh <-> 90dvh sheet height in snap-bottom mode.
     if ($('ltcPin')) {
       $('ltcPin').addEventListener('click', function (e) {
         e.stopPropagation();
@@ -2607,6 +2661,10 @@ function init() {
         if (current === 'docked') {
           state.prevMode = 'docked';
           setMode('fullscreen', true);
+        } else if (current === 'snap-bottom') {
+          state.snapStep = state.snapStep === '90dvh' ? '40dvh' : '90dvh';
+          el.panel.setAttribute('data-snap-step', state.snapStep);
+          saveSnapStep(state.snapStep);
         } else {
           setMode(isDesktop() ? 'docked' : 'snap-bottom', true);
         }
@@ -2686,6 +2744,11 @@ function init() {
           if (scroller) scroller.focus();
           return;
         }
+        if (state.streaming) {
+          e.stopPropagation();
+          stop();
+          return;
+        }
         el.input.blur();
         if (scroller) scroller.focus();
         return;
@@ -2730,6 +2793,26 @@ function init() {
     // The portal dispatches this from openArticle(); DOM re-read is the source of
     // truth, so a missed event only costs a stale header label.
     document.addEventListener('lt150:article', function () { syncArticle(false); });
+
+    // Detect openHome() transitions where #articleContent is replaced with #homeStart
+    // via history.replaceState without firing lt150:article or hashchange.
+    var articleHost = $('articleContent');
+    if (articleHost && typeof MutationObserver !== 'undefined') {
+      new MutationObserver(function () {
+        syncArticle(false);
+      }).observe(articleHost, { childList: true });
+    }
+
+    // Re-render Mermaid diagrams in the chat log when the portal toggles dark/light theme.
+    window.addEventListener('themechange', function () {
+      if (!el.log) return;
+      var mermaids = el.log.querySelectorAll('.ltc-mermaid[data-mermaid-src]');
+      for (var i = 0; i < mermaids.length; i++) {
+        mermaids[i].removeAttribute('data-processed');
+        mermaids[i].textContent = mermaids[i].getAttribute('data-mermaid-src');
+      }
+      if (mermaids.length) renderMermaid(el.log);
+    });
 
     // The portal reads location.hash only at boot, so a hash-only URL change
     // (pasted link, hand-edited address bar, back/forward between articles)
