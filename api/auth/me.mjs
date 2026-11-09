@@ -2,6 +2,17 @@ import { getSession } from '../_lib/session.mjs';
 import { readProgress } from '../_lib/kv.mjs';
 
 /**
+ * Determine if an unauthenticated request is a browser session probe.
+ * Browser fetch requests send `sec-fetch-mode` (or client sets `x-soft-auth: 1`).
+ * These receive 200 with unauthenticated payload rather than 401 to prevent
+ * noisy browser console errors on anonymous page loads.
+ */
+export function isBrowserSessionProbe(req) {
+  const headers = req?.headers || {};
+  return Boolean(headers['sec-fetch-mode'] || headers['x-soft-auth'] === '1');
+}
+
+/**
  * GET /api/auth/me — identity + synced progress.
  * 401 without a valid session. KV failures degrade to `done: []`
  * (identity is proven by the session itself, not the store).
@@ -12,8 +23,15 @@ export default async function handler(req, res) {
   }
   const session = getSession(req);
   if (!session) {
-    if (req.headers && (req.headers['sec-fetch-mode'] || req.headers['x-soft-auth'] === '1')) {
-      return res.status(200).json({ authenticated: false, githubId: null, login: '', done: [] });
+    if (isBrowserSessionProbe(req)) {
+      return res.status(200).json({
+        authenticated: false,
+        user: null,
+        progress: null,
+        githubId: null,
+        login: '',
+        done: [],
+      });
     }
     return res.status(401).json({ error: 'Unauthorized' });
   }

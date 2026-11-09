@@ -150,15 +150,17 @@ function matchesAllowlist(origin, allowlist) {
  *
  * Returns { ok, reason, origin }.
  */
-const DEFAULT_PRODUCTION_ORIGINS = [
+export const DEFAULT_PRODUCTION_ORIGINS = [
   'https://invariant-js.vercel.app',
+  'https://invariant-manual.vercel.app',
   'https://leetcode-top-interview-150-javascript.vercel.app',
 ];
 
 export function checkOrigin(req, options = {}) {
-  const allowlist = options.allowlist !== undefined
+  const customAllowlist = options.allowlist !== undefined
     ? options.allowlist
-    : [...new Set([...allowedOrigins(), ...DEFAULT_PRODUCTION_ORIGINS])];
+    : allowedOrigins();
+  const allowlist = [...new Set([...customAllowlist, ...DEFAULT_PRODUCTION_ORIGINS])];
   const headers = req?.headers || {};
   const origin = typeof headers.origin === 'string' && headers.origin ? headers.origin : null;
   const referer = typeof headers.referer === 'string' && headers.referer ? headers.referer : null;
@@ -196,6 +198,8 @@ const CONTROL_TOKENS = [
   /<<\/?SYS>>/gi,
   /\[\/?INST\]/g,
   /<\/?s>/gi,
+  /<\/?page_context\b[^>]*>/gi,
+  /<\/?web_result\b[^>]*>/gi,
 ];
 
 function escapeRegexLiteral(str) {
@@ -270,9 +274,9 @@ export function sanitizeContext(input, { maxChars = 60_000 } = {}) {
     return `${nl}${indent}[${role}-role-marker removed]`;
   });
 
-  // 5. Whitespace: collapse pathological horizontal runs (16+ spaces/tabs) while
-  //    preserving 2–12 space code block indentation; cap blank-line runs.
-  text = text.replace(/[ \t]{16,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim();
+  // 5. Whitespace: collapse pathological horizontal runs (12+ spaces/tabs) while
+  //    preserving 2–8 space code block indentation; cap blank-line runs.
+  text = text.replace(/[ \t]{12,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim();
 
   // 6. Absolute character ceiling as a last-resort bound (token trimming runs
   //    after this, in chat-tokens.mjs).
