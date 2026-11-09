@@ -132,9 +132,10 @@ function fence(text) {
 }
 
 /** Trim, scrub, then fence — in that order, and always all three. */
-function finish(rawText, { maxTokens, model, query }) {
+async function finish(rawText, { maxTokens, model, query }) {
   const clean = sanitizeContext(String(rawText || ''), { maxChars: maxTokens * 8 });
-  return fence(clean.text);
+  const trimmed = await truncateRelevant(clean.text, maxTokens, query, model);
+  return fence(trimmed);
 }
 
 function failure(label, reason) {
@@ -171,7 +172,7 @@ export async function runTool(name, rawArgs, { env = process.env, model, maxToke
       return {
         ok: true,
         label: 'search_guides',
-        content: finish(r.text, { maxTokens, model, query: q }),
+        content: await finish(r.text, { maxTokens, model, query: q }),
         sources: r.hits,
       };
     }
@@ -184,7 +185,7 @@ export async function runTool(name, rawArgs, { env = process.env, model, maxToke
       return {
         ok: true,
         label: 'web_search',
-        content: finish(r.text, { maxTokens, model, query: q }),
+        content: await finish(r.text, { maxTokens, model, query: q }),
         sources: r.sources,
       };
     }
@@ -197,7 +198,7 @@ export async function runTool(name, rawArgs, { env = process.env, model, maxToke
       return {
         ok: true,
         label: 'fetch_page',
-        content: finish(r.text, { maxTokens, model, query: url }),
+        content: await finish(r.text, { maxTokens, model, query: url }),
         sources: r.sources,
       };
     }

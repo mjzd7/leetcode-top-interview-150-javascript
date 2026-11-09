@@ -192,6 +192,11 @@ for (const cat of curriculum) {
 const INDEX_DIR = path.join(ROOT_DIR, 'api', '_lib');
 fs.mkdirSync(INDEX_DIR, { recursive: true });
 const indexPath = path.join(INDEX_DIR, 'guide-index.json');
+const { createHash } = await import('node:crypto');
+guideIndex.corpusHash = createHash('sha256')
+  .update(JSON.stringify(guideIndex.guides))
+  .digest('hex')
+  .slice(0, 16);
 // Compact on purpose: this is read at runtime, not read by humans.
 fs.writeFileSync(indexPath, JSON.stringify(guideIndex), 'utf-8');
 

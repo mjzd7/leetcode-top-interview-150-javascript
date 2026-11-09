@@ -74,6 +74,7 @@ function prepare(guide) {
     _title: new Set(queryTerms(guide.title)),
     _category: new Set(queryTerms(guide.category)),
     _headings: new Set(queryTerms((guide.headings || []).join(' '))),
+    _body: new Set(queryTerms((guide.sections || []).join(' '))),
   };
 }
 
@@ -111,15 +112,20 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
   }
 
   // Title weighted highest (a guide is named after its problem), then section
-  // headings, then the category. A raw hit count alone would let a long guide
-  // with a generic category outrank an exact title match.
+  // headings, then the category, plus body term hits so deep technical concepts
+  // inside Foundations Primers ("Cantor pairing", "PACKED_SMI_ELEMENTS") are
+  // discoverable even when they only appear in section bodies.
+  const minBodyOnlyHits = Math.max(1, Math.ceil(terms.size * 0.5));
   const scored = [];
   for (const g of guides) {
     const titleHits = countHits(g._title, terms);
     const headingHits = countHits(g._headings, terms);
     const categoryHits = countHits(g._category, terms);
-    if (titleHits === 0 && headingHits === 0 && categoryHits === 0) continue;
-    scored.push({ g, score: titleHits * 4 + headingHits * 2 + categoryHits });
+    const bodyHits = countHits(g._body, terms);
+    const metaHits = titleHits + headingHits + categoryHits;
+    if (metaHits === 0 && bodyHits < minBodyOnlyHits) continue;
+    const score = titleHits * 5 + headingHits * 3 + categoryHits * 2 + bodyHits;
+    scored.push({ g, score, titleHits, headingHits, bodyHits });
   }
 
   if (scored.length === 0) {
@@ -132,20 +138,28 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
   scored.sort((a, b) => {
     const aQ = (a.g.difficulty === 'Easy' || a.g.difficulty === 'Medium' || a.g.difficulty === 'Hard') ? 1 : 0;
     const bQ = (b.g.difficulty === 'Easy' || b.g.difficulty === 'Medium' || b.g.difficulty === 'Hard') ? 1 : 0;
-    if (aQ !== bQ) return bQ - aQ;
-    return b.score - a.score;
+    // Prefer problem guides over Primers/MAANG guides on ties or close scores (<= 5),
+    // but let a strongly-matched Primer/Guide rank #1 when its relevance score
+    // clearly dominates (Bug 2 fix).
+    if (aQ !== bQ && Math.abs(a.score - b.score) <= 5) return bQ - aQ;
+    return b.score - a.score || bQ - aQ;
   });
   const top = scored.slice(0, Math.max(1, maxGuides));
 
-  // Each cited guide gets a guaranteed SHARE of the budget, so a long first hit
-  // cannot starve the other two. Relevance trimming then decides which sections
-  // of each guide survive — the same Level-3-preserving behaviour the page
-  // context already relies on.
-  const share = Math.max(120, Math.floor(maxTokens / top.length));
+  // Allocate token budget across top hits: give the #1 hit up to 60% of maxTokens
+  // when multiple guides are returned so its matched Level 3 / technical section
+  // fits comfortably without starving hits #2 and #3 (Bug 15 fix).
+  const evenShare = Math.max(120, Math.floor(maxTokens / top.length));
   const blocks = [];
   const hits = [];
 
-  for (const { g } of top) {
+  for (let idx = 0; idx < top.length; idx++) {
+    const { g } = top[idx];
+    const share = top.length > 1 && idx === 0
+      ? Math.max(evenShare, Math.floor(maxTokens * 0.55))
+      : top.length > 1
+        ? Math.max(120, Math.floor((maxTokens * 0.45) / (top.length - 1)))
+        : maxTokens;
     const body = g.sections.join('\n\n');
     const excerpt = await truncateRelevant(body, share, query);
     if (!excerpt) continue;
