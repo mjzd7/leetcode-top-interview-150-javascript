@@ -170,11 +170,12 @@ export async function buildChatRequest({
   const { text: clean, removed: markersRemoved } = sanitizeContext(context);
   // Relevance-scoped, not head+tail: the reader's own question decides which
   // guide sections survive, which is the only way the canonical Level 3 answer
-  // outranks the preamble for a "what is optimal" question.
-  const lastUser = [...(Array.isArray(history) ? history : [])]
-    .reverse()
-    .find((m) => m && m.role === 'user' && typeof m.content === 'string');
-  const query = lastUser ? lastUser.content : '';
+  // outranks the preamble for a "what is optimal" question. Carry anchor terms
+  // from the immediately preceding user turn so multi-turn follow-ups ("Why does
+  // that loop condition use >= 0?") retain the section retrieved in Turn 1.
+  const userTurns = (Array.isArray(history) ? history : [])
+    .filter((m) => m && m.role === 'user' && typeof m.content === 'string' && m.content.trim() !== '');
+  const query = userTurns.slice(-2).map((m) => m.content).join(' ');
   const trimmedContext = await truncateRelevant(clean, maxContextTokens, query, model);
   const system = buildSystemPrompt({ title, category, context: trimmedContext, tools });
 

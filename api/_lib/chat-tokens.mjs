@@ -120,36 +120,40 @@ export const ELISION_MARKER = '\n\n[... guide content elided to fit the context 
 
 const VALID_ROLES = new Set(['user', 'assistant']);
 
-let encoderPromise;
+const encoderCache = new Map();
 
 /**
  * Resolve the tiktoken encoder for `model`, or null if unavailable.
- * Memoised across calls within an instance.
+ * Memoised per-model within an instance so switching models resolves the proper vocab.
  */
-async function resolveEncoder(model) {
-  if (encoderPromise === undefined) {
-    encoderPromise = (async () => {
-      try {
-        const tiktoken = await import('tiktoken');
-        // encoding_for_model tracks per-model vocab (gpt-4o* is o200k_base,
-        // gpt-3.5/gpt-4 are cl100k_base). Fall back to a known-good encoding
-        // if the model string is unknown rather than throwing.
+async function resolveEncoder(model = 'gpt-4o-mini') {
+  const key = String(model || 'gpt-4o-mini');
+  if (!encoderCache.has(key)) {
+    encoderCache.set(
+      key,
+      (async () => {
         try {
-          return tiktoken.encoding_for_model(model);
+          const tiktoken = await import('tiktoken');
+          // encoding_for_model tracks per-model vocab (gpt-4o* is o200k_base,
+          // gpt-3.5/gpt-4 are cl100k_base). Fall back to a known-good encoding
+          // if the model string is unknown rather than throwing.
+          try {
+            return tiktoken.encoding_for_model(key);
+          } catch {
+            return tiktoken.get_encoding('cl100k_base');
+          }
         } catch {
-          return tiktoken.get_encoding('cl100k_base');
+          return null; // encoder unavailable -> heuristic path
         }
-      } catch {
-        return null; // encoder unavailable -> heuristic path
-      }
-    })();
+      })(),
+    );
   }
-  return encoderPromise;
+  return encoderCache.get(key);
 }
 
-/** Test seam: drop the memoised encoder so a suite can re-resolve it. */
+/** Test seam: drop the memoised encoders so a suite can re-resolve them. */
 export function resetEncoderCache() {
-  encoderPromise = undefined;
+  encoderCache.clear();
 }
 
 const utf8 = new TextDecoder('utf-8', { fatal: false });
@@ -288,7 +292,7 @@ export function findHeadings(text) {
   let m;
   const markdown = /^##[ \t]+.+$/gm;
   while ((m = markdown.exec(text)) !== null) marks.push(m.index);
-  const rendered = /^[0-9]{1,2}\.[ \t]+\S[^\n]{0,90}$/gm;
+  const rendered = /^[0-9]{1,2}\.[ \t]+\S[^\n]{0,180}$/gm;
   while ((m = rendered.exec(text)) !== null) {
     if (/[.,;:]$/.test(m[0])) continue;
     marks.push(m.index);
@@ -320,18 +324,37 @@ export function splitSections(text) {
   return out.length >= 2 ? out : null;
 }
 
+/**
+ * Domain-critical 2-char and 3-char DSA / JS runtime abbreviations that must
+ * survive token filtering (`w.length > 2` would otherwise strip `dp`, `js`, `v8`,
+ * `gc`, `l1..l3`, `1d..3d`, and complexity/level compounds).
+ */
+export const SHORT_DSA_TOKENS = new Set([
+  'dp', 'js', 'v8', 'gc', 'l1', 'l2', 'l3', '1d', '2d', '3d',
+  'bfs', 'dfs', 'bst', 'lca', 'dsu', 'lru', 'dag', 'tle', 'mle', 'oom', 'smi', 'ast', 'ssa', 'xor', 'msb', 'lsb',
+]);
+
 export function words(s) {
-  return String(s).toLowerCase().match(/[a-z0-9]+/g) || [];
+  const lower = String(s).toLowerCase();
+  const base = lower.match(/[a-z0-9]+/g) || [];
+  const compounds = [];
+  if (/\blevel[\s_-]*1\b|\bl1\b/.test(lower)) compounds.push('level1');
+  if (/\blevel[\s_-]*2\b|\bl2\b/.test(lower)) compounds.push('level2');
+  if (/\blevel[\s_-]*3\b|\bl3\b/.test(lower)) compounds.push('level3');
+  return compounds.length ? base.concat(compounds) : base;
 }
 
 /**
- * Query terms worth scoring on: lowercased, stopword-free, length > 2.
+ * Query terms worth scoring on: lowercased, stopword-free, length > 2 or in
+ * SHORT_DSA_TOKENS.
  *
  * The same filter `truncateRelevant` applies, exported so guide retrieval ranks
  * guides by exactly the terms that section selection would later keep.
  */
 export function queryTerms(query) {
-  return new Set(words(query || '').filter((w) => w.length > 2 && !QUERY_STOPWORDS.has(w)));
+  return new Set(
+    words(query || '').filter((w) => (w.length > 2 || SHORT_DSA_TOKENS.has(w)) && !QUERY_STOPWORDS.has(w)),
+  );
 }
 
 /**
@@ -353,7 +376,7 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
   if ((await countTokens(text, model)) <= maxTokens) return text;
 
   const sections = splitSections(text);
-  const terms = new Set(words(query || '').filter((w) => w.length > 2 && !QUERY_STOPWORDS.has(w)));
+  const terms = queryTerms(query);
   if (!sections || terms.size === 0) return truncateToTokens(text, maxTokens, model);
 
   const encoder = await resolveEncoder(model);
@@ -363,9 +386,15 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
   };
 
   const scored = sections.map((sec, i) => {
-    const seen = new Set(words(sec.text));
+    const firstNl = sec.text.indexOf('\n');
+    const headingLine = firstNl === -1 ? sec.text : sec.text.slice(0, firstNl);
+    const headingWords = new Set(words(headingLine));
+    const bodyWords = new Set(words(sec.text));
     let hits = 0;
-    for (const t of terms) if (seen.has(t)) hits++;
+    for (const t of terms) {
+      if (headingWords.has(t)) hits += 2;
+      else if (bodyWords.has(t)) hits += 1;
+    }
     return { i, tokens: sizeOf(sec.text), hits };
   });
 
@@ -382,9 +411,34 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
   const fits = (n) => used + n + markerTokens <= maxTokens;
 
   const top = byScore.find((s) => s.hits > 0);
-  if (top && fits(top.tokens)) {
-    keep.add(top.i);
-    used += top.tokens;
+  if (top) {
+    if (fits(top.tokens)) {
+      keep.add(top.i);
+      used += top.tokens;
+    } else {
+      // Bug 15 fix: when the single best-matching section exceeds a tight budget
+      // (such as search_guides' 500-token per-guide share), slice `top` to fit
+      // rather than skipping `top` and returning only Section 0!
+      const sliceBudget = Math.max(32, maxTokens - 2 * markerTokens);
+      const slicedTop = await truncateToTokens(sections[top.i].text, sliceBudget, model);
+      sections[top.i] = { text: slicedTop + '\n\n' };
+      top.tokens = sizeOf(sections[top.i].text);
+      keep.add(top.i);
+      used += top.tokens;
+    }
+  }
+  // Keep opening orientation (Section 0) next if it fits.
+  if (!keep.has(0) && fits(scored[0].tokens)) {
+    keep.add(0);
+    used += scored[0].tokens;
+  }
+  // Prioritise other strongly-matched middle sections ahead of the closing section
+  // so a long closing "Follow-Ups" section never starves a strongly-matched Level 3 section.
+  const strongThreshold = top ? Math.max(2, Math.ceil(top.hits * 0.6)) : 2;
+  for (const s of byScore) {
+    if (s.hits < strongThreshold || keep.has(s.i) || !fits(s.tokens)) continue;
+    keep.add(s.i);
+    used += s.tokens;
   }
   for (const i of mandatory) {
     if (keep.has(i) || !fits(scored[i].tokens)) continue;
@@ -453,6 +507,18 @@ export async function buildWindow(history, {
   }
   // A window that opens on an assistant turn reads as a hallucinated opener.
   while (msgs.length > 1 && msgs[0].role === 'assistant') msgs = msgs.slice(1);
+  while (msgs.length > 1 && (await countMessagesTokens(msgs, model)) > budget) {
+    msgs = msgs.slice(1);
+  }
+  // Bug 23 fix: if a single remaining message still exceeds the budget,
+  // token-trim its content so totalTokens never blows past maxTotalTokens.
+  if (msgs.length === 1 && (await countMessagesTokens(msgs, model)) > budget) {
+    const msgBudget = Math.max(16, budget - 4);
+    msgs = [{
+      role: msgs[0].role,
+      content: await truncateToTokens(msgs[0].content, msgBudget, model),
+    }];
+  }
 
   const dropped = normaliseHistory(history).length - msgs.length;
   return { messages: msgs, dropped: Math.max(0, dropped) };
