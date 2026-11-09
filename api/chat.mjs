@@ -232,21 +232,19 @@ export default async function handler(req, res) {
   // anonymous caller — or whenever SESSION_SECRET is unset — and such a
   // request is metered exactly as it was before this existed.
   const session = getSession(req);
-  const ipLimit = await rateLimit(`chat:${ip}`);
-  // The daily budget is a per-IP COST bound, so it applies to everyone — a
-  // session raises the per-minute allowance, it does not buy unlimited spend.
-  // It is charged before the per-minute decision so a reader who is out of
-  // daily budget is told so, and it shares the 429 contract exactly.
-  const dayLimit = await rateLimit(`chat:${ip}`, {
-    limit: DAILY_RATE_LIMIT,
-    windowMs: DAILY_RATE_WINDOW_MS,
-    prefix: DAY_PREFIX,
-  });
-  // Always consumed, even when it does not decide, so toggling the cookie
-  // cannot hand out a fresh per-IP budget.
-  const userLimit = session
-    ? await rateLimit(`chat:u:${session.githubId}`, { limit: SIGNED_IN_RATE_LIMIT })
-    : null;
+  // Execute all three rate-limit bucket checks concurrently (1 network RTT
+  // instead of 3 sequential Upstash REST round-trips).
+  const [ipLimit, dayLimit, userLimit] = await Promise.all([
+    rateLimit(`chat:${ip}`),
+    rateLimit(`chat:${ip}`, {
+      limit: DAILY_RATE_LIMIT,
+      windowMs: DAILY_RATE_WINDOW_MS,
+      prefix: DAY_PREFIX,
+    }),
+    session
+      ? rateLimit(`chat:u:${session.githubId}`, { limit: SIGNED_IN_RATE_LIMIT })
+      : Promise.resolve(null),
+  ]);
   // Which bucket DECIDES. With an identity, the identity decides the per-minute
   // question: that is the whole point, since everyone behind one NAT otherwise
   // shares a single 5/min budget and one reader's rate is everyone else's
@@ -635,8 +633,8 @@ export default async function handler(req, res) {
           msLeft: deadline - Date.now(),
         });
         conversation.push({
-          role: 'assistant',
-          content: 'I have already used my lookup budget for this question; answer from what you have.',
+          role: 'system',
+          content: 'Lookup budget reached for this question. Synthesize your final answer now from the guide context and any tool results already above.',
         });
         const final = await runTurn({ toolChoice: 'none' });
         if (!final.gone && !final.cut) {
@@ -646,11 +644,17 @@ export default async function handler(req, res) {
         return;
       }
 
+      for (let i = 0; i < pending.length; i++) {
+        if (!pending[i].id) {
+          pending[i].id = `call_${stats.toolCalls}_${i}_${Math.random().toString(36).slice(2, 8)}`;
+        }
+      }
+
       conversation.push({
         role: 'assistant',
         content: null,
         tool_calls: pending.map((c) => ({
-          id: c.id || `call_${stats.toolCalls}_${Math.random().toString(36).slice(2, 8)}`,
+          id: c.id,
           type: 'function',
           function: { name: c.name, arguments: c.args || '{}' },
         })),
@@ -686,7 +690,12 @@ export default async function handler(req, res) {
           continue;
         }
 
-        sse(res, { status: `Looking up ${call.name}…` });
+        const statusDetail = typeof args.query === 'string' && args.query.trim()
+          ? ` ("${args.query.trim().slice(0, 40)}")`
+          : typeof args.url === 'string' && args.url.trim()
+            ? ` (${args.url.trim().slice(0, 40)})`
+            : '';
+        sse(res, { status: `Looking up ${call.name}${statusDetail}…` });
         lastBeat = Date.now();
         stats.toolCalls++;
 
