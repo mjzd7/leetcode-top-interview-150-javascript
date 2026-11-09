@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createHash } from 'node:crypto';
 import { splitSections } from '../api/_lib/chat-tokens.mjs';
 import { publishDocTraces } from './gen-doc-traces.mjs';
 
@@ -163,15 +164,12 @@ if (archData.matrix) console.log(`🧪 Bundled Algorithmic Edge-Cases verificati
  * and retrieval would quietly stop matching the sections it was indexed on.
  * ------------------------------------------------------------------ */
 
-const guideIndex = {
-  generated: new Date().toISOString().slice(0, 10),
-  guides: [],
-};
+const guides = [];
 
 for (const cat of curriculum) {
   for (const item of cat.items) {
     const sections = splitSections(item.content);
-    guideIndex.guides.push({
+    guides.push({
       id: item.id,
       title: item.title,
       category: cat.category,
@@ -189,16 +187,22 @@ for (const cat of curriculum) {
   }
 }
 
+const corpusHash = createHash('sha256')
+  .update(JSON.stringify(guides))
+  .digest('hex')
+  .slice(0, 16);
+
+const guideIndexPayload = {
+  corpusHash,
+  guides,
+};
+const guideIndex = guideIndexPayload;
+
 const INDEX_DIR = path.join(ROOT_DIR, 'api', '_lib');
 fs.mkdirSync(INDEX_DIR, { recursive: true });
 const indexPath = path.join(INDEX_DIR, 'guide-index.json');
-const { createHash } = await import('node:crypto');
-guideIndex.corpusHash = createHash('sha256')
-  .update(JSON.stringify(guideIndex.guides))
-  .digest('hex')
-  .slice(0, 16);
 // Compact on purpose: this is read at runtime, not read by humans.
-fs.writeFileSync(indexPath, JSON.stringify(guideIndex), 'utf-8');
+fs.writeFileSync(indexPath, JSON.stringify(guideIndexPayload), 'utf-8');
 
 const sectionCount = guideIndex.guides.reduce((acc, g) => acc + g.sections.length, 0);
 const indexBytes = fs.statSync(indexPath).size;

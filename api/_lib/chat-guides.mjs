@@ -115,17 +115,15 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
   // headings, then the category, plus body term hits so deep technical concepts
   // inside Foundations Primers ("Cantor pairing", "PACKED_SMI_ELEMENTS") are
   // discoverable even when they only appear in section bodies.
-  const minBodyOnlyHits = Math.max(1, Math.ceil(terms.size * 0.5));
   const scored = [];
   for (const g of guides) {
     const titleHits = countHits(g._title, terms);
     const headingHits = countHits(g._headings, terms);
     const categoryHits = countHits(g._category, terms);
     const bodyHits = countHits(g._body, terms);
-    const metaHits = titleHits + headingHits + categoryHits;
-    if (metaHits === 0 && bodyHits < minBodyOnlyHits) continue;
-    const score = titleHits * 5 + headingHits * 3 + categoryHits * 2 + bodyHits;
-    scored.push({ g, score, titleHits, headingHits, bodyHits });
+    const score = titleHits * 5 + headingHits * 3 + categoryHits * 2 + bodyHits * 3;
+    if (score <= 0) continue;
+    scored.push({ g, score });
   }
 
   if (scored.length === 0) {
@@ -176,6 +174,7 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
       category: g.category,
       difficulty: g.difficulty,
       leetcodeLink: g.leetcodeLink,
+      share,
     });
   }
 
@@ -188,5 +187,7 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
   // reassembly and marker insertion can both overshoot it slightly.
   const trimmed = (await countTokens(text)) <= maxTokens ? text : await truncateRelevant(text, maxTokens, query);
 
-  return { ok: true, text: trimmed, hits, tokens: await countTokens(trimmed), reason: '' };
+  return { ok: true, text: trimmed, hits, tokens: await countTokens(trimmed), shares: hits.map((h) => h.share), reason: '' };
 }
+
+export { searchGuides as selectGuides };

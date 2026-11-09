@@ -213,3 +213,5 @@ export async function runTool(name, rawArgs, { env = process.env, model, maxToke
     return failure(String(name).slice(0, 40) || 'tool', `it errored: ${String(e?.message || e).slice(0, 160)}`);
   }
 }
+
+export { runTool as runToolCall };
