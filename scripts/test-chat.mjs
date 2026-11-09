@@ -35,7 +35,7 @@ import { buildSystemPrompt, buildChatRequest } from '../api/_lib/chat-prompt.mjs
 import { searchGuides, loadGuideIndex, resetGuideIndexCache } from '../api/_lib/chat-guides.mjs';
 import { isBlockedUrl, tavilySearch, tavilyScrape, webConfigured } from '../api/_lib/chat-web.mjs';
 import { TOOL_SCHEMAS, runTool, createToolBudget } from '../api/_lib/chat-tools.mjs';
-import chatHandler, { resetProviderClient, toolSignature } from '../api/chat.mjs';
+import chatHandler, { resetProviderClient, toolSignature, formatToolStatus } from '../api/chat.mjs';
 import { appBaseUrl, sessionCookieHeader, signSession, verifySession, getSession } from '../api/_lib/session.mjs';
 import loginHandler from '../api/auth/login.mjs';
 import callbackHandler from '../api/auth/callback.mjs';
@@ -1080,6 +1080,21 @@ async function main() {
   await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: '   ' }] } }), blank);
   check(blank.statusCode === 400, 'blank user message -> 400');
 
+  // Bug 24: malformed 400 requests do not consume rate-limit quota
+  resetLimiterCache();
+  const quotaIp = '203.0.113.99';
+  for (let i = 0; i < 7; i++) {
+    const badReqRes = mockRes();
+    await chatHandler(mockReq({ headers: { 'x-forwarded-for': quotaIp }, body: '{invalid-json' }), badReqRes);
+    check(badReqRes.statusCode === 400, `malformed request ${i + 1} -> 400 without rate-limit consumption`);
+  }
+  // The rate limit ceiling is 5/min. If malformed requests consumed quota, this would be 429.
+  // Instead, since quota was NOT consumed, a subsequent valid request passes rate limiting.
+  const afterBadRes = mockRes();
+  await chatHandler(mockReq({ headers: { 'x-forwarded-for': quotaIp }, body: { messages: [{ role: 'user', content: 'hi' }] } }), afterBadRes);
+  check(afterBadRes.statusCode !== 429,
+    'malformed 400 requests do not consume rate-limit quota (Bug 24)', `got status ${afterBadRes.statusCode}`);
+
   // 503 when the provider is not configured. The client is memoised, so the seam
   // must be reset or the cached client from an earlier request would be reused.
   resetLimiterCache();
@@ -1506,6 +1521,12 @@ async function main() {
   check(stopRun.logs.find((l) => l.event === 'chat.completed')?.finishReason === 'stop',
     'a complete answer logs finishReason=stop',
     JSON.stringify(stopRun.logs.at(-1)));
+  const stopLog = stopRun.logs.find((l) => l.event === 'chat.completed');
+  check(typeof stopLog?.outputTokens === 'number' && stopLog.outputTokens > 0,
+    'chat.completed structured log includes outputTokens (Flaw 9)', `outputTokens=${stopLog?.outputTokens}`);
+  check(stopLog?.totalTokens === (stopLog?.systemTokens + stopLog?.historyTokens + stopLog?.outputTokens),
+    'chat.completed includes accurate totalTokens (prompt + output) (Flaw 9)',
+    `totalTokens=${stopLog?.totalTokens} vs expected=${stopLog?.systemTokens + stopLog?.historyTokens + stopLog?.outputTokens}`);
 
   // The distinction the brief is most emphatic about. `cut` is the internal
   // DEADLINE flag: the reader is told the time limit was exceeded and nothing
@@ -1626,7 +1647,47 @@ async function main() {
   check(!/tool_calls/.test(withTool.text), 'raw tool_call frames are never forwarded to the client');
   check((withTool.text.match(/data: \[DONE\]/g) || []).length === 1, 'a tool round still ends with exactly one [DONE]');
   check(/data: \{"status":/.test(withTool.text), 'a status frame tells the client a tool is running');
-  check(/search_guides/.test(withTool.text), 'the status frame names the tool');
+  check(/Searching guides/.test(withTool.text), 'the status frame names the tool');
+  check(/Searching guides for \\"LRU cache\\"/.test(withTool.text),
+    'enriched SSE status frames include the search query (Bug 7)');
+  check(formatToolStatus({ name: 'search_guides', args: JSON.stringify({ query: 'two sum' }) }) === 'Searching guides for "two sum"…',
+    'formatToolStatus formats search_guides with query (Bug 7)');
+  check(formatToolStatus({ name: 'web_search', args: JSON.stringify({ query: 'sliding window' }) }) === 'Searching the web for "sliding window"…',
+    'formatToolStatus formats web_search with query (Bug 7)');
+  check(formatToolStatus({ name: 'fetch_page', args: JSON.stringify({ url: 'https://en.wikipedia.org/wiki/Algorithm' }) }) === 'Fetching en.wikipedia.org…',
+    'formatToolStatus formats fetch_page with hostname (Bug 7)');
+
+  // --- Bug 18: missing id in upstream stream deltas gets normalized fallback id
+  const missingIdRequests = [];
+  await withStubbedFetch(
+    async (url, init) => {
+      const body = JSON.parse(init.body);
+      missingIdRequests.push(body);
+      if (body.messages.length === 2) {
+        // Return tool delta frames with NO id
+        const argsJson = JSON.stringify({ query: 'two sum' });
+        const framesWithoutId = [
+          JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, type: 'function', function: { name: 'search_guides', arguments: argsJson } }] } }] }),
+          JSON.stringify({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }),
+        ];
+        return new Response(sseBody(framesWithoutId)(), { status: 200 });
+      }
+      return new Response(sseBody([delta('Two sum uses a hash map.')])(), { status: 200 });
+    },
+    async () => {
+      const res = mockRes();
+      await chatHandler(mockReq({ body: { messages: [{ role: 'user', content: 'two sum' }] } }), res);
+      return res;
+    },
+  );
+  const missingIdRound2 = missingIdRequests[1]?.messages || [];
+  const missingIdAssistantTurn = missingIdRound2.find((m) => m.role === 'assistant' && Array.isArray(m.tool_calls));
+  const missingIdToolTurn = missingIdRound2.find((m) => m.role === 'tool');
+  const fallbackId = missingIdAssistantTurn?.tool_calls?.[0]?.id;
+  check(typeof fallbackId === 'string' && fallbackId.startsWith('call_'),
+    'tool call with missing id gets normalized fallback id on assistant turn (Bug 18)', `got ${fallbackId}`);
+  check(missingIdToolTurn?.tool_call_id === fallbackId,
+    'corresponding tool turn gets matching normalized fallback id (Bug 18)', `got ${missingIdToolTurn?.tool_call_id}`);
 
   // The truncation notice (0.3) belongs to the FINAL answer, not to whatever
   // round happened to be running. Round 1 here ends on `finish_reason:
@@ -1707,6 +1768,13 @@ async function main() {
   check(looped.writableEnded === true, 'the response still ends cleanly after the budget stops the loop');
   check((looped.text.match(/data: \[DONE\]/g) || []).length === 1, 'the cut-off still emits exactly one [DONE]');
   check(!/data: \{"error":/.test(looped.text), 'hitting the budget is not reported as an error', looped.text.slice(-200));
+
+  const finalLoopMessages = loopRequests.at(-1)?.messages || [];
+  const synthDirective = finalLoopMessages.find((m) => m.content?.includes('Lookup budget reached'));
+  check(synthDirective?.role === 'system',
+    'exhausting MAX_TOOL_ROUNDS injects a role: system synthesis directive (Bug 19)', `got role=${synthDirective?.role}`);
+  check(!finalLoopMessages.some((m) => m.role === 'assistant' && m.content?.includes('Lookup budget reached')),
+    'exhausting MAX_TOOL_ROUNDS does not inject a fake assistant turn (Bug 19)');
 
   // --- A turn that cannot afford another tool round must not start one. The
   // model does not know how much of the request budget is left, so the route has
