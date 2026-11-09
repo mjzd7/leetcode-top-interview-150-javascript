@@ -150,7 +150,15 @@ function matchesAllowlist(origin, allowlist) {
  *
  * Returns { ok, reason, origin }.
  */
-export function checkOrigin(req, { allowlist = allowedOrigins() } = {}) {
+const DEFAULT_PRODUCTION_ORIGINS = [
+  'https://invariant-js.vercel.app',
+  'https://leetcode-top-interview-150-javascript.vercel.app',
+];
+
+export function checkOrigin(req, options = {}) {
+  const allowlist = options.allowlist !== undefined
+    ? options.allowlist
+    : [...new Set([...allowedOrigins(), ...DEFAULT_PRODUCTION_ORIGINS])];
   const headers = req?.headers || {};
   const origin = typeof headers.origin === 'string' && headers.origin ? headers.origin : null;
   const referer = typeof headers.referer === 'string' && headers.referer ? headers.referer : null;
@@ -190,16 +198,27 @@ const CONTROL_TOKENS = [
   /<\/?s>/gi,
 ];
 
-/** Our own fence. Unconditional: a guide containing it could break out early. */
-const FENCE_BREAK = new RegExp(CONTEXT_OPEN.split('').map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(''), 'gi');
+function escapeRegexLiteral(str) {
+  return str.split('').map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('');
+}
+
+/** Our own guide fence (both open and close). Unconditional: a guide containing either could break out early. */
+const FENCE_BREAK = new RegExp(
+  `${escapeRegexLiteral(CONTEXT_OPEN)}|${escapeRegexLiteral(CONTEXT_CLOSE)}`,
+  'gi',
+);
 
 /**
- * The tool fence needs the same protection, and for a sharper reason: a fetched
- * web page is fully attacker-controlled, so a page whose text contained our own
- * delimiter could otherwise close the fence early and have the remainder of its
- * contents read as trusted conversation.
+ * The tool fence needs the same protection on both open and close delimiters,
+ * and for a sharper reason: a fetched web page is fully attacker-controlled,
+ * so a page whose text contained our closing delimiter (<<<END_TOOL_CONTENT>>>)
+ * could otherwise close the fence early and have the remainder of its contents
+ * read as trusted conversation.
  */
-const FENCE_BREAK_TOOL = new RegExp(WEB_OPEN.split('').map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(''), 'gi');
+const FENCE_BREAK_TOOL = new RegExp(
+  `${escapeRegexLiteral(WEB_OPEN)}|${escapeRegexLiteral(WEB_CLOSE)}`,
+  'gi',
+);
 
 // Line-leading conversational role turns: "System: ...", "assistant: ...".
 // The lookahead deliberately skips matches where the value is a quoted string,
@@ -251,8 +270,9 @@ export function sanitizeContext(input, { maxChars = 60_000 } = {}) {
     return `${nl}${indent}[${role}-role-marker removed]`;
   });
 
-  // 5. Whitespace: collapse runs of spaces/tabs, cap blank-line runs.
-  text = text.replace(/[ \t]{3,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim();
+  // 5. Whitespace: collapse pathological horizontal runs (16+ spaces/tabs) while
+  //    preserving 2–12 space code block indentation; cap blank-line runs.
+  text = text.replace(/[ \t]{16,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim();
 
   // 6. Absolute character ceiling as a last-resort bound (token trimming runs
   //    after this, in chat-tokens.mjs).
