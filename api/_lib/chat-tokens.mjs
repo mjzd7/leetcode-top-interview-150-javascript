@@ -292,9 +292,9 @@ export function findHeadings(text) {
   let m;
   const markdown = /^##[ \t]+.+$/gm;
   while ((m = markdown.exec(text)) !== null) marks.push(m.index);
-  const rendered = /^[0-9]{1,2}\.[ \t]+\S[^\n]{0,180}$/gm;
+  const rendered = /^(?:[0-9]{1,2}\.[ \t]+\S[^\n]{0,180}|Level\s+[123][^\n]{0,180})$/gim;
   while ((m = rendered.exec(text)) !== null) {
-    if (/[.,;:]$/.test(m[0])) continue;
+    if (/^[0-9]/.test(m[0]) && /[.,;:]$/.test(m[0])) continue;
     marks.push(m.index);
   }
   return [...new Set(marks)].sort((a, b) => a - b);
@@ -330,19 +330,40 @@ export function splitSections(text) {
  * `gc`, `l1..l3`, `1d..3d`, and complexity/level compounds).
  */
 export const SHORT_DSA_TOKENS = new Set([
-  'dp', 'js', 'v8', 'gc', 'l1', 'l2', 'l3', '1d', '2d', '3d',
+  'dp', 'js', 'v8', 'gc', 'l1', 'l2', 'l3', '1d', '2d', '3d', 'o1', 'on',
   'bfs', 'dfs', 'bst', 'lca', 'dsu', 'lru', 'dag', 'tle', 'mle', 'oom', 'smi', 'ast', 'ssa', 'xor', 'msb', 'lsb',
 ]);
 
 export function words(s) {
   const lower = String(s).toLowerCase();
-  const base = lower.match(/[a-z0-9]+/g) || [];
   const compounds = [];
-  if (/\blevel[\s_-]*1\b|\bl1\b/.test(lower)) compounds.push('level1');
-  if (/\blevel[\s_-]*2\b|\bl2\b/.test(lower)) compounds.push('level2');
-  if (/\blevel[\s_-]*3\b|\bl3\b/.test(lower)) compounds.push('level3');
+
+  // Extract Big-O complexity tokens before splitting
+  const bigORe = /\bo\s*\(\s*(?:1|n\s*log\s*n|log\s*n|n\^2|n|v\s*\+\s*e|h|k)\s*\)/gi;
+  const bigOMatches = lower.match(bigORe);
+  if (bigOMatches) {
+    for (const raw of bigOMatches) {
+      const norm = raw
+        .replace(/\s+/g, ' ')
+        .replace(/o\s*\(\s*/i, 'o(')
+        .replace(/\s*\)/, ')')
+        .toLowerCase();
+      compounds.push(norm);
+    }
+  }
+
+  // Level compounds (Level 1/2/3, l1/l2/l3)
+  for (const lvl of ['1', '2', '3']) {
+    if (new RegExp(`\\blevel[\\s_-]*${lvl}\\b|\\bl${lvl}\\b`, 'i').test(lower)) {
+      compounds.push(`level${lvl}`);
+    }
+  }
+
+  const base = lower.match(/[a-z0-9]+/g) || [];
   return compounds.length ? base.concat(compounds) : base;
 }
+
+export const queryWords = words;
 
 /**
  * Query terms worth scoring on: lowercased, stopword-free, length > 2 or in
@@ -353,7 +374,7 @@ export function words(s) {
  */
 export function queryTerms(query) {
   return new Set(
-    words(query || '').filter((w) => (w.length > 2 || SHORT_DSA_TOKENS.has(w)) && !QUERY_STOPWORDS.has(w)),
+    words(query || '').filter((w) => (w.length > 2 || SHORT_DSA_TOKENS.has(w) || w.includes('(')) && !QUERY_STOPWORDS.has(w)),
   );
 }
 
@@ -388,12 +409,20 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
   const scored = sections.map((sec, i) => {
     const firstNl = sec.text.indexOf('\n');
     const headingLine = firstNl === -1 ? sec.text : sec.text.slice(0, firstNl);
+    const hLower = headingLine.toLowerCase();
+    const bLower = sec.text.toLowerCase();
     const headingWords = new Set(words(headingLine));
     const bodyWords = new Set(words(sec.text));
     let hits = 0;
     for (const t of terms) {
-      if (headingWords.has(t)) hits += 2;
-      else if (bodyWords.has(t)) hits += 1;
+      if (t.includes('(')) {
+        if (headingWords.has(t) || hLower.includes(t)) hits += 3.5;
+        else if (bodyWords.has(t) || bLower.includes(t)) hits += 1;
+      } else if (headingWords.has(t)) {
+        hits += 3.5;
+      } else if (bodyWords.has(t)) {
+        hits += 1;
+      }
     }
     return { i, tokens: sizeOf(sec.text), hits };
   });
@@ -410,6 +439,8 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
   let used = markerTokens;
   const fits = (n) => used + n + markerTokens <= maxTokens;
 
+  const sectionTexts = sections.map((s) => s.text);
+
   const top = byScore.find((s) => s.hits > 0);
   if (top) {
     if (fits(top.tokens)) {
@@ -420,9 +451,9 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
       // (such as search_guides' 500-token per-guide share), slice `top` to fit
       // rather than skipping `top` and returning only Section 0!
       const sliceBudget = Math.max(32, maxTokens - 2 * markerTokens);
-      const slicedTop = await truncateToTokens(sections[top.i].text, sliceBudget, model);
-      sections[top.i] = { text: slicedTop + '\n\n' };
-      top.tokens = sizeOf(sections[top.i].text);
+      const slicedTop = await truncateToTokens(sectionTexts[top.i], sliceBudget, model);
+      sectionTexts[top.i] = slicedTop + '\n\n';
+      top.tokens = sizeOf(sectionTexts[top.i]);
       keep.add(top.i);
       used += top.tokens;
     }
@@ -458,7 +489,7 @@ export async function truncateRelevant(text, maxTokens, query, model = 'gpt-4o-m
   let prev = -1;
   for (const i of [...keep].sort((a, b) => a - b)) {
     if (prev !== -1 && i !== prev + 1) out += ELISION_MARKER;
-    out += sections[i].text.trimEnd() + '\n\n';
+    out += sectionTexts[i].trimEnd() + '\n\n';
     prev = i;
   }
   out = out.trim();
