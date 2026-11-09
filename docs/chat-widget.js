@@ -23,8 +23,8 @@
  *   2. `paintReveal` splits the revealed text at the last block boundary that
  *      cannot still change (`stableSplit`), renders that prefix as real
  *      markdown, and the unfinished remainder as escaped text with a caret.
- *   3. The turn end does a full render, so Mermaid/viz-array/table passes that
- *      are not worth running on every frame still land.
+ *   3. Mermaid diagrams render progressively as complete fences settle
+ *      and re-render on theme toggle, while full-pass transforms finalize at turn end.
  *
  * The network can outrun the eye, so the pump sprints when its backlog grows
  * and the turn end never leaves the reader waiting for an animation to finish.
@@ -355,10 +355,10 @@
     var clone = root.cloneNode(true);
     // Preserve Mermaid diagram source text if available before stripping SVG chrome.
     clone.querySelectorAll('.mermaid').forEach(function (m) {
-      var src = m.getAttribute('data-mermaid-src');
+      var src = m.getAttribute('data-src') || m.getAttribute('data-mermaid-src');
       if (src) {
         var pre = document.createElement('pre');
-        pre.textContent = src;
+        pre.textContent = '```mermaid\n' + src.trim() + '\n```';
         m.replaceWith(pre);
       } else {
         m.remove();
@@ -597,9 +597,9 @@
     return store;
   }
 
-  function saveStore(articleIdOverride, messagesOverride) {
-    var targetId = articleIdOverride || state.articleId;
-    var targetMsgs = messagesOverride || state.messages;
+  function saveStore(turn) {
+    var targetId = (turn && turn.articleId) || state.articleId;
+    var targetMsgs = (turn && turn.messages) || state.messages;
     var store = readStore();
     store[targetId] = {
       updatedAt: Date.now(),
@@ -1051,7 +1051,7 @@
     // formulas like `$O(N_1 + N_2)$` into `<em>` tags before KaTeX runs (Bug 13).
     var mathSlots = [];
     var raw = String(src || '');
-    var protectedSrc = raw.replace(/(```[\s\S]*?```|`[^`\n]+`)|(\$\$[\s\S]+?\$\$|\$(?!\s)[^\n$]+?(?<!\s)\$)/g, function (match, codeSpan, mathSpan) {
+    var protectedSrc = raw.replace(/(```[\s\S]*?```|`[^`\n]+`)|(\$\$[\s\S]+?\$\$|\$(?!\s)(?:[^\n$]*[^\s$])?\$)/g, function (match, codeSpan, mathSpan) {
       if (codeSpan) return codeSpan;
       var idx = mathSlots.length;
       mathSlots.push(mathSpan);
@@ -1257,6 +1257,14 @@
       retry.setAttribute('aria-label', 'Ask this question again');
       retry.addEventListener('click', function () { retryLast(index); });
       wrap.appendChild(retry);
+
+      var restore = document.createElement('button');
+      restore.className = 'ltc-retry ltc-restore';
+      restore.type = 'button';
+      restore.textContent = 'Restore to input';
+      restore.setAttribute('aria-label', 'Restore question to input');
+      restore.addEventListener('click', function () { restoreToInput(index); });
+      wrap.appendChild(restore);
     }
     return wrap;
   }
@@ -1688,9 +1696,9 @@
     if (el.statusTxt) el.statusTxt.textContent = text;
   }
 
-  function failTurn(message, rateLimited, targetArticleId, targetMessages) {
-    var aid = targetArticleId || state.articleId;
-    var msgs = targetMessages || state.messages;
+  function failTurn(message, rateLimited, turn) {
+    var aid = (turn && turn.articleId) || state.articleId;
+    var msgs = (turn && turn.messages) || state.messages;
     var last = msgs[msgs.length - 1];
     if (last && last.role === 'assistant') {
       last.status = 'error';
@@ -1701,7 +1709,7 @@
       if (rateLimited) failed.gate = true;
       msgs.push(failed);
     }
-    saveStore(aid, msgs);
+    saveStore(turn);
     if (aid === state.articleId) renderLog();
   }
 
@@ -1722,12 +1730,11 @@
 
     clearTimeout(state.firstTokenTimer);
 
-    var turnArticleId = state.articleId;
-    var turnMessages = state.messages;
+    var turn = { articleId: state.articleId, messages: state.messages };
 
-    turnMessages.push({ role: 'user', content: userText, ts: nowLabel() });
-    saveStore(turnArticleId, turnMessages);
-    var userIndex = turnMessages.length - 1;
+    turn.messages.push({ role: 'user', content: userText, ts: nowLabel() });
+    saveStore(turn);
+    var userIndex = turn.messages.length - 1;
     el.input.value = '';
     autoGrow();
     setStreaming(true);
@@ -1736,7 +1743,7 @@
     if (state.pinScroll) el.log.scrollTop = el.log.scrollHeight;
 
     var assistantMsg = { role: 'assistant', content: '', ts: nowLabel() };
-    turnMessages.push(assistantMsg);
+    turn.messages.push(assistantMsg);
 
     state.controller = new AbortController();
 
@@ -1746,7 +1753,7 @@
         if (!assistantMsg.content) {
           try { if (state.controller) state.controller.abort(); } catch (e) { /* ignore */ }
           setStreaming(false);
-          failTurn('The assistant did not respond in time. Please try again.', false, turnArticleId, turnMessages);
+          failTurn('The assistant did not respond in time. Please try again.', false, turn);
         }
       }, FIRST_TOKEN_TIMEOUT_MS);
     }
@@ -1758,7 +1765,7 @@
     // excluding both errored assistant turns and any user message whose paired
     // assistant response errored out (so failed turns do not leave orphaned
     // consecutive user messages in the payload).
-    var outgoing = turnMessages
+    var outgoing = turn.messages
       .filter(function (m, idx, arr) {
         if (m.status === 'error' || typeof m.content !== 'string' || m.content.trim() === '') return false;
         if (m.role === 'user' && arr[idx + 1] && arr[idx + 1].status === 'error') return false;
@@ -1808,7 +1815,7 @@
         function (chunk) {
           if (first) { first = false; clearTimeout(state.firstTokenTimer); }
           assistantMsg.content += chunk;
-          if (state.articleId !== turnArticleId) return;
+          if (state.articleId !== turn.articleId) return;
           // The bubble appears with the first token, not before it: no empty
           // card sitting there pretending to be an answer.
           if (!state.reveal.node) mountStreamingBubble();
@@ -1824,15 +1831,15 @@
           clearTimeout(state.firstTokenTimer);
           if (streamError === 'stopped') {
             // User pressed Stop. Keep whatever arrived, drop the empty turn.
-            if (!assistantMsg.content) turnMessages.pop();
+            if (!assistantMsg.content) turn.messages.pop();
           } else if (streamError) {
             setStreaming(false);
-            failTurn(streamError, false, turnArticleId, turnMessages);
+            failTurn(streamError, false, turn);
             return;
           } else if (!assistantMsg.content) {
-            turnMessages.pop();
+            turn.messages.pop();
             setStreaming(false);
-            failTurn('The assistant returned an empty answer.', false, turnArticleId, turnMessages);
+            failTurn('The assistant returned an empty answer.', false, turn);
             return;
           }
           // The turn is not over until the text has been read out. Handing the
@@ -1844,14 +1851,14 @@
             // saveStore() — the restore path has nothing special to do for it.
             if (wasTruncated) assistantMsg.truncated = true;
             setStreaming(false);
-            saveStore(turnArticleId, turnMessages);
-            if (state.articleId === turnArticleId) renderLog();
+            saveStore(turn);
+            if (state.articleId === turn.articleId) renderLog();
           });
         },
         function (message) {
           clearTimeout(state.firstTokenTimer);
           setStreaming(false);
-          failTurn(message, false, turnArticleId, turnMessages);
+          failTurn(message, false, turn);
         },
         function (status) {
           // A tool is running. This is proof the request is alive, so reset the
@@ -1872,19 +1879,19 @@
         // Stop was pressed while the request was still in flight, so the
         // rejection arrives here instead of inside readSse. The UI must still
         // be released, and an empty turn must not linger.
-        if (!assistantMsg.content) turnMessages.pop();
+        if (!assistantMsg.content) turn.messages.pop();
         setStreaming(false);
-        saveStore(turnArticleId, turnMessages);
-        if (state.articleId === turnArticleId) renderLog();
+        saveStore(turn);
+        if (state.articleId === turn.articleId) renderLog();
       } else if (assistantMsg.content) {
         assistantMsg.status = 'error';
         assistantMsg.error = e && e.message ? e.message : 'The response stream was interrupted.';
         setStreaming(false);
-        saveStore(turnArticleId, turnMessages);
-        if (state.articleId === turnArticleId) renderLog();
+        saveStore(turn);
+        if (state.articleId === turn.articleId) renderLog();
       } else {
         setStreaming(false);
-        failTurn(e && e.message ? e.message : 'Could not reach the assistant.', !!(e && e.rateLimited), turnArticleId, turnMessages);
+        failTurn(e && e.message ? e.message : 'Could not reach the assistant.', !!(e && e.rateLimited), turn);
       }
     } finally {
       state.controller = null;
@@ -1911,6 +1918,23 @@
         state.messages = state.messages.slice(0, i);
         renderLog();
         send(q);
+        return;
+      }
+    }
+  }
+
+  /** Restore the failed user question back into the composer input. */
+  function restoreToInput(errorIndex) {
+    for (var i = errorIndex - 1; i >= 0; i--) {
+      if (state.messages[i] && state.messages[i].role === 'user') {
+        var q = state.messages[i].content;
+        el.input.value = q;
+        state.messages.splice(errorIndex, 1);
+        state.messages.splice(i, 1);
+        saveStore();
+        renderLog();
+        autoGrow();
+        el.input.focus();
         return;
       }
     }
