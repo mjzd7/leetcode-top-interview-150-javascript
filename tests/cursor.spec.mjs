@@ -380,6 +380,95 @@ test.describe('Apple-Motion Custom Cursor & Magnetic Lens Engine', () => {
     expect(Math.abs(ringY - expectedY)).toBeLessThanOrEqual(2);
   });
 
+  test('hovering over category buttons (modern engineer skills, maang guides) snaps circle to right center (not top right)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Magnetic snap applies to fine pointer devices');
+
+    await page.goto('/index.html');
+    await page.waitForSelector('#curriculumNav', { state: 'attached' });
+
+    // Test categories mentioned in request: MODERN ENGINEER SKILLS and MAANG GUIDES
+    const catLabels = ['MODERN ENGINEER SKILLS', 'MAANG GUIDES'];
+
+    for (const catName of catLabels) {
+      const catBtn = page.locator('#curriculumNav .nav-group-text').filter({ hasText: catName }).first();
+      await expect(catBtn).toBeAttached();
+
+      await catBtn.scrollIntoViewIfNeeded();
+      const box = await catBtn.boundingBox();
+      expect(box).toBeTruthy();
+
+      // 1. Hover when category button is hovered
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+      await page.waitForFunction(
+        () =>
+          document.documentElement.getAttribute('data-cursor-mode') === 'link' &&
+          window.__cursorSpringSleeping === true,
+        null,
+        { timeout: 5000 }
+      );
+
+      let rect = await catBtn.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          left: r.left,
+          top: r.top,
+          right: r.right,
+          bottom: r.bottom,
+          width: r.width,
+          height: r.height,
+          centerY: r.top + r.height / 2,
+        };
+      });
+
+      let targetX = await page.evaluate(() => window.__cursorTargetX);
+      let targetY = await page.evaluate(() => window.__cursorTargetY);
+
+      // Must snap to right center (vertical middle of right edge)
+      expect(Math.abs(targetX - rect.right)).toBeLessThanOrEqual(2);
+      expect(Math.abs(targetY - rect.centerY)).toBeLessThanOrEqual(2);
+
+      // Must NOT snap to top right corner
+      expect(Math.abs(targetY - rect.top)).toBeGreaterThan(4);
+
+      // 2. Click to open category, and verify cursor still snaps to right center
+      await catBtn.click();
+      await page.waitForTimeout(100);
+
+      const boxOpen = await catBtn.boundingBox();
+      expect(boxOpen).toBeTruthy();
+      await page.mouse.move(boxOpen.x + boxOpen.width / 2, boxOpen.y + boxOpen.height / 2);
+
+      await page.waitForFunction(
+        () =>
+          document.documentElement.getAttribute('data-cursor-mode') === 'link' &&
+          window.__cursorSpringSleeping === true,
+        null,
+        { timeout: 5000 }
+      );
+
+      rect = await catBtn.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          left: r.left,
+          top: r.top,
+          right: r.right,
+          bottom: r.bottom,
+          width: r.width,
+          height: r.height,
+          centerY: r.top + r.height / 2,
+        };
+      });
+
+      targetX = await page.evaluate(() => window.__cursorTargetX);
+      targetY = await page.evaluate(() => window.__cursorTargetY);
+
+      expect(Math.abs(targetX - rect.right)).toBeLessThanOrEqual(2);
+      expect(Math.abs(targetY - rect.centerY)).toBeLessThanOrEqual(2);
+      expect(Math.abs(targetY - rect.top)).toBeGreaterThan(4);
+    }
+  });
+
   test('hovering over inline links removes circle ring and underlines link for highlight', async ({ page, isMobile }) => {
     test.skip(isMobile, 'Desktop only');
 

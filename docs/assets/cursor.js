@@ -9,7 +9,7 @@
 
   // Interactive targets selector
   const INTERACTIVE_SELECTOR =
-    'a, button, [role="button"], [role="tab"], [role="option"], [role="menuitem"], summary, label[for], input, select, .nav-item, .pal-item, .decision-card-head, .option-card, .showcase-card, #paletteBtn, #guidesBtn, #themeToggle, #authArea a, #authArea button, [data-cur="link"], .ltc-chip';
+    'a, button, [role="button"], [role="tab"], [role="option"], [role="menuitem"], summary, label[for], input, select, .nav-item, .nav-group-text, .nav-group-toggle, .nav-cat-btn, .pal-item, .decision-card-head, .option-card, .showcase-card, #paletteBtn, #guidesBtn, #themeToggle, #authArea a, #authArea button, [data-cur="link"], .ltc-chip';
 
   const TEXT_SELECTOR =
     '.prose p, .prose li, .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6, .prose blockquote, .prose td, .prose th, pre, pre code, textarea, input[type="text"], input:not([type]), input[type="search"], [contenteditable="true"], [data-cursor-text]';
@@ -116,8 +116,12 @@
   function isInlineLinkOrTag(el) {
     if (!el || !(el instanceof Element)) return false;
 
-    // Sidebar navigation items follow Rule 2 (.nav-item)
-    if (el.closest('.nav-item')) {
+    // Sidebar navigation items & category buttons follow Rule 2 (.nav-item)
+    if (
+      el.closest(
+        '.nav-item, .nav-group-text, .nav-group-toggle, .nav-cat-btn, .nav-group > button, #curriculumNav button, #curriculumNav a'
+      )
+    ) {
       return false;
     }
 
@@ -129,7 +133,7 @@
     // Explicit buttons, controls, chips, and toggles follow Rule 3 (corner snap)
     if (
       el.closest(
-        'button, [role="button"], #themeToggle, #paletteBtn, #guidesBtn, #brandHome, #authArea a, #authArea button, .btn, .copy-btn, .nav-cat-btn, .ltc-chip, [data-cur="button"]'
+        'button, [role="button"], #themeToggle, #paletteBtn, #guidesBtn, #brandHome, #authArea a, #authArea button, .btn, .copy-btn, .ltc-chip, [data-cur="button"]'
       )
     ) {
       return false;
@@ -270,9 +274,14 @@
       return;
     }
 
-    // 1. Sidebar navigation items: circle geometry is vertically centered,
+    // 1. Sidebar navigation items & category buttons: circle geometry is vertically centered,
     // and the centre point of the circle rests on the right border middle of the vertical height of the element
-    const navItem = targetEl instanceof Element ? targetEl.closest('.nav-item') : null;
+    const navItem =
+      targetEl instanceof Element
+        ? targetEl.closest(
+            '.nav-item, .nav-group-text, .nav-group-toggle, .nav-cat-btn, .nav-group > button, #curriculumNav button, #curriculumNav a'
+          )
+        : null;
     if (navItem) {
       const rect = navItem.getBoundingClientRect();
       if (rect.width > 0 || rect.height > 0) {
