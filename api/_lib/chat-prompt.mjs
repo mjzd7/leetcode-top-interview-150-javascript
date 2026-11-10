@@ -170,11 +170,17 @@ export async function buildChatRequest({
   const { text: clean, removed: markersRemoved } = sanitizeContext(context);
   // Relevance-scoped, not head+tail: the reader's own question decides which
   // guide sections survive, which is the only way the canonical Level 3 answer
-  // outranks the preamble for a "what is optimal" question.
-  const lastUser = [...(Array.isArray(history) ? history : [])]
-    .reverse()
-    .find((m) => m && m.role === 'user' && typeof m.content === 'string');
-  const query = lastUser ? lastUser.content : '';
+  // outranks the preamble for a "what is optimal" question. Carry anchor terms
+  // from the last 2 turns (including recent user turns and the last assistant
+  // turn's key line/first 200 chars so multi-turn follow-ups like "Why does that fail?"
+  // resolve against the previous assistant explanation as well as user question).
+  const validHistory = (Array.isArray(history) ? history : [])
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim() !== '');
+  const userTurns = validHistory.filter((m) => m.role === 'user');
+  const recentUser = userTurns.slice(-2).map((m) => m.content);
+  const lastAssistant = [...validHistory].reverse().find((m) => m.role === 'assistant');
+  const assistantAnchor = lastAssistant ? lastAssistant.content.slice(0, 200) : '';
+  const query = [...recentUser, assistantAnchor].filter(Boolean).join(' ');
   const trimmedContext = await truncateRelevant(clean, maxContextTokens, query, model);
   const system = buildSystemPrompt({ title, category, context: trimmedContext, tools });
 

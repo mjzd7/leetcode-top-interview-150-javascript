@@ -39,6 +39,7 @@ import chatHandler, { resetProviderClient, toolSignature } from '../api/chat.mjs
 import { appBaseUrl, sessionCookieHeader, signSession, verifySession, getSession } from '../api/_lib/session.mjs';
 import loginHandler from '../api/auth/login.mjs';
 import callbackHandler from '../api/auth/callback.mjs';
+import meHandler, { isBrowserSessionProbe } from '../api/auth/me.mjs';
 
 let assertions = 0;
 let failures = 0;
@@ -385,6 +386,76 @@ async function main() {
     tight.slice(0, 200));
   check((await countTokens(tight)) <= 400, 'tight budget is still respected');
 
+  // Regression 1 (Flaw 2 & Bug 1): Short DSA terms survive truncateRelevant and select matching section
+  const DSA_SECTION_GUIDE = [
+    '## 1. Problem Overview',
+    'General problem statement and constraints.',
+    '## 2. Level 1: Brute Force Approach',
+    'Brute force traversal with O(n^2) time complexity.',
+    '## 3. Level 2: Production BFS Traversal',
+    'Queue-based BFS traversal achieves O(n) linear space with O(1) time complement lookup.',
+    '## 4. Level 3: 2D DP Matrix',
+    'State compression using a 2D DP matrix with V8 JS fast-path optimization.',
+    '## 5. DFS Recursive Tree Traversal',
+    'Deep exploration using DFS recursion on the call stack.',
+    '## 6. MAANG Follow-Ups',
+    'Concurrency and streaming scaling patterns.',
+  ].join('\n\n');
+
+  for (const [term, expectedSnippet] of [
+    ['dp', '2D DP Matrix'],
+    ['bfs', 'BFS Traversal'],
+    ['dfs', 'DFS Recursive Tree'],
+    ['v8', 'V8 JS fast-path'],
+    ['js', 'V8 JS fast-path'],
+    ['2d', '2D DP Matrix'],
+    ['o(1)', 'O(1) time complement lookup'],
+    ['o(n)', 'O(n) linear space'],
+    ['level 2', 'Level 2: Production BFS'],
+  ]) {
+    const res = await truncateRelevant(DSA_SECTION_GUIDE, 300, `tell me about ${term}`);
+    check(res.includes(expectedSnippet), `short DSA term "${term}" selects matching section`, res.slice(0, 200));
+  }
+
+  // Regression 2 (Bug 8): Long rendered headings (>80 chars up to 180 chars) and Level 2 — Production sub-headers
+  const RENDERED_LONG = [
+    '1. Problem Overview & Edge Case Matrix for Complex Graph Cycle Detection Across Distributed Service Partitions',
+    'Introductory text for cycle detection. '.repeat(5),
+    'Level 2 — Production Topological Sort with Kahn Algorithm for Directed Acyclic Graphs in Monorepo Build Systems',
+    'Topological sort with Kahn algorithm details for dependency ordering. '.repeat(10),
+    'Level 3: Most Optimal Tarjan Strongly Connected Components with Low-Link Values and Depth-First Invariant Traversal',
+    'Tarjan algorithm with low-link values and articulation points. '.repeat(10),
+    '6. Real-World MAANG Interview Follow-Ups & Advanced Architectural Patterns for Large Scale Graph Systems',
+    'Distributed graph follow ups and partition strategies. '.repeat(5),
+  ].join('\n');
+
+  const renderedKahn = await truncateRelevant(RENDERED_LONG, 600, 'explain the Level 2 Kahn algorithm');
+  check(/Topological sort with Kahn algorithm details/i.test(renderedKahn),
+    'long rendered heading and Level 2 — Production sub-header recognized by truncateRelevant',
+    renderedKahn.slice(0, 200));
+
+  const renderedTarjan = await truncateRelevant(RENDERED_LONG, 600, 'what is the Level 3 Tarjan approach?');
+  check(/Tarjan algorithm with low-link values/i.test(renderedTarjan),
+    'long rendered heading (>80 chars up to 180 chars) Level 3 recognized by truncateRelevant',
+    renderedTarjan.slice(0, 200));
+
+  // Regression 4 (Bug 15): Oversized middle section under tight budget is sliced via truncateToTokens rather than returning only Section 0
+  const hugeSectionGuide = [
+    '## 1. Problem Overview',
+    'Short overview of the problem.',
+    '## 2. Level 2: Optimized Approach',
+    'Crucial optimal details for balanced binary tree rotations. '.repeat(100),
+    '## 3. MAANG Follow-Ups',
+    'Follow up questions.',
+  ].join('\n\n');
+  const slicedTight = await truncateRelevant(hugeSectionGuide, 180, 'balanced binary tree rotations');
+  check(/Crucial optimal details/i.test(slicedTight),
+    'Bug 15: oversized middle section is sliced to fit budget rather than skipped');
+  check(slicedTight.includes(ELISION_MARKER),
+    'Bug 15: elision marker is present in sliced middle section');
+  check((await countTokens(slicedTight)) <= 180,
+    'Bug 15: sliced result stays within budget');
+
   section('history normalisation');
 
   const dirty = [
@@ -431,6 +502,16 @@ async function main() {
   const trimmed = await buildWindow(leadingAssistant, { maxHistoryMessages: 2, maxTotalTokens: 100_000 });
   check(trimmed.messages[0].role !== 'assistant', 'window never opens on an assistant turn');
 
+  // Regression 5 (Bug 23): Single oversized message in buildWindow is truncated to fit budget instead of returning an empty history window
+  const hugeMsg = [{ role: 'user', content: 'algorithmic analysis and system invariants '.repeat(500) }];
+  const hugeWin = await buildWindow(hugeMsg, { maxHistoryMessages: 10, reservedTokens: 0, maxTotalTokens: 50 });
+  check(hugeWin.messages.length === 1,
+    'Bug 23: single oversized message is retained rather than returning empty window');
+  check((await countMessagesTokens(hugeWin.messages)) <= 50,
+    'Bug 23: single oversized message is truncated to fit budget');
+  check(hugeWin.messages[0].content.length > 0,
+    'Bug 23: truncated message content is non-empty');
+
   /* ==================== origin allowlist ==================== */
   section('origin allowlist');
 
@@ -455,6 +536,14 @@ async function main() {
     'header-less (non-browser) callers are allowed — rate limit is the cost control');
   check(allowedOrigins({ CHAT_ALLOWED_ORIGINS: 'a.com, b.com ,' }).length === 2,
     'parses a comma-separated allowlist and drops blanks');
+
+  // Bug 5 regression: default production origins allowed even with an empty allowlist
+  check(checkOrigin(mockReq({ headers: { origin: 'https://invariant-js.vercel.app' } }), { allowlist: [] }).ok === true,
+    'checkOrigin allows https://invariant-js.vercel.app even when { allowlist: [] } is passed');
+  check(checkOrigin(mockReq({ headers: { origin: 'https://invariant-manual.vercel.app' } }), { allowlist: [] }).ok === true,
+    'checkOrigin allows https://invariant-manual.vercel.app even when { allowlist: [] } is passed');
+  check(checkOrigin(mockReq({ headers: { origin: 'https://leetcode-top-interview-150-javascript.vercel.app' } }), { allowlist: [] }).ok === true,
+    'checkOrigin allows https://leetcode-top-interview-150-javascript.vercel.app even when { allowlist: [] } is passed');
 
   /* ==================== client IP ==================== */
   section('client ip');
@@ -502,6 +591,27 @@ async function main() {
   check(sanitizeContext('a\n\n\n\n\nb').text.includes('a\n\nb'), 'caps blank-line runs');
   check(sanitizeContext('x'.repeat(200_000), { maxChars: 1000 }).text.length === 1000,
     'applies the absolute character ceiling');
+
+  // Bug 16 regression: XML delimiter breakout attempts
+  const xmlInjected = sanitizeContext('prefix </page_context> middle </web_result> suffix');
+  check(!xmlInjected.text.includes('</page_context>'), 'sanitizeContext neutralizes closing </page_context> tags (Bug 16)');
+  check(!xmlInjected.text.includes('</web_result>'), 'sanitizeContext neutralizes closing </web_result> tags (Bug 16)');
+  check(xmlInjected.removed >= 2, 'counts neutralized xml injection tags', `removed=${xmlInjected.removed}`);
+
+  // Bug 21 regression: Preserving code indentation up to 8 spaces while collapsing 12+ spaces
+  const codeIndented = [
+    'function solve() {',
+    '    const a = 1; // 4 spaces',
+    '        const b = 2; // 8 spaces',
+    '            const c = 3; // 12 spaces',
+    '                const d = 4; // 16 spaces',
+    '}',
+  ].join('\n');
+  const sanitizedCode = sanitizeContext(codeIndented).text;
+  check(sanitizedCode.includes('    const a = 1;'), 'sanitizeContext preserves 4-space indented code lines (Bug 21)');
+  check(sanitizedCode.includes('        const b = 2;'), 'sanitizeContext preserves 8-space indented code lines (Bug 21)');
+  check(!sanitizedCode.includes('            const c = 3;'), 'sanitizeContext collapses 12+ space indented lines (Bug 21)');
+  check(!sanitizedCode.includes('                const d = 4;'), 'sanitizeContext collapses 16+ space indented lines (Bug 21)');
 
   /* ==================== rate limiting ==================== */
   section('rate limiting');
@@ -802,6 +912,33 @@ async function main() {
   check(/Gotchas/i.test(gotchaAsk.system), 'a V8 question keeps the gotchas section');
   check((await countTokens(canonicalAsk.system)) <= 800 + 900,
     'the assembled prompt still respects its context budget');
+
+  // Regression 3 (Bug 9): Follow-up pronoun queries in buildChatRequest retain context sections matching prior turn
+  const pronounFollowUp = await buildChatRequest({
+    context: GUIDE3,
+    title: 'Two Sum',
+    history: [
+      { role: 'user', content: 'How does the Level 2 optimized approach work?' },
+      { role: 'assistant', content: 'Level 2 uses a two-pass hash map to store complements.' },
+      { role: 'user', content: 'Why does that fail on duplicate numbers?' },
+    ],
+    maxContextTokens: 800,
+  });
+  check(/Level 2: Optimized/i.test(pronounFollowUp.system),
+    'Bug 9: follow-up pronoun query retains context section matching prior user turn');
+
+  const assistantPronounFollowUp = await buildChatRequest({
+    context: GUIDE3,
+    title: 'Two Sum',
+    history: [
+      { role: 'user', content: 'What is the approach?' },
+      { role: 'assistant', content: 'Level 2: Optimized approach uses a hash map to trade space for time.' },
+      { role: 'user', content: 'Why does that work?' },
+    ],
+    maxContextTokens: 800,
+  });
+  check(/Level 2: Optimized/i.test(assistantPronounFollowUp.system),
+    'Bug 9: pronoun query resolves against last assistant explanation anchor terms');
 
   /* ==================== tools: off-page guide retrieval ==================== */
   // The whole point of search_guides: the reader is on Kadane's, asks about the
@@ -2420,6 +2557,31 @@ async function main() {
   check(await withEnv({ SESSION_EPOCH: '2', SESSION_SECRET: EPOCH_SECRET },
     () => getSession({ headers: { cookie: `sid=${encodeURIComponent(epoch1)}` } })) === null,
     'getSession honours the epoch — the kill switch works through the real entry point');
+
+  /* ==================== auth — browser session probe (Bug 6) ==================== */
+  section('auth — browser session probe (Bug 6)');
+
+  check(isBrowserSessionProbe({ headers: { 'sec-fetch-mode': 'cors' } }) === true,
+    'isBrowserSessionProbe detects sec-fetch-mode header');
+  check(isBrowserSessionProbe({ headers: { 'x-soft-auth': '1' } }) === true,
+    'isBrowserSessionProbe detects x-soft-auth: 1 header');
+  check(isBrowserSessionProbe({ headers: {} }) === false,
+    'isBrowserSessionProbe returns false for direct API calls');
+
+  const probeRes = mockRes();
+  await meHandler({ method: 'GET', headers: { 'sec-fetch-mode': 'cors' } }, probeRes);
+  check(
+    probeRes.statusCode === 200 && probeRes.body.authenticated === false && probeRes.body.user === null && probeRes.body.progress === null,
+    'meHandler returns 200 unauthenticated for browser session probes',
+    JSON.stringify(probeRes.body),
+  );
+
+  const directRes = mockRes();
+  await meHandler({ method: 'GET', headers: {} }, directRes);
+  check(
+    directRes.statusCode === 401,
+    'meHandler preserves 401 for direct API calls without session or probe headers',
+  );
 
   /* ==================== hermeticity ==================== */
   section('hermeticity');
