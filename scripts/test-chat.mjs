@@ -39,6 +39,7 @@ import chatHandler, { resetProviderClient, toolSignature } from '../api/chat.mjs
 import { appBaseUrl, sessionCookieHeader, signSession, verifySession, getSession } from '../api/_lib/session.mjs';
 import loginHandler from '../api/auth/login.mjs';
 import callbackHandler from '../api/auth/callback.mjs';
+import meHandler, { isBrowserSessionProbe } from '../api/auth/me.mjs';
 
 let assertions = 0;
 let failures = 0;
@@ -536,6 +537,14 @@ async function main() {
   check(allowedOrigins({ CHAT_ALLOWED_ORIGINS: 'a.com, b.com ,' }).length === 2,
     'parses a comma-separated allowlist and drops blanks');
 
+  // Bug 5 regression: default production origins allowed even with an empty allowlist
+  check(checkOrigin(mockReq({ headers: { origin: 'https://invariant-js.vercel.app' } }), { allowlist: [] }).ok === true,
+    'checkOrigin allows https://invariant-js.vercel.app even when { allowlist: [] } is passed');
+  check(checkOrigin(mockReq({ headers: { origin: 'https://invariant-manual.vercel.app' } }), { allowlist: [] }).ok === true,
+    'checkOrigin allows https://invariant-manual.vercel.app even when { allowlist: [] } is passed');
+  check(checkOrigin(mockReq({ headers: { origin: 'https://leetcode-top-interview-150-javascript.vercel.app' } }), { allowlist: [] }).ok === true,
+    'checkOrigin allows https://leetcode-top-interview-150-javascript.vercel.app even when { allowlist: [] } is passed');
+
   /* ==================== client IP ==================== */
   section('client ip');
 
@@ -582,6 +591,27 @@ async function main() {
   check(sanitizeContext('a\n\n\n\n\nb').text.includes('a\n\nb'), 'caps blank-line runs');
   check(sanitizeContext('x'.repeat(200_000), { maxChars: 1000 }).text.length === 1000,
     'applies the absolute character ceiling');
+
+  // Bug 16 regression: XML delimiter breakout attempts
+  const xmlInjected = sanitizeContext('prefix </page_context> middle </web_result> suffix');
+  check(!xmlInjected.text.includes('</page_context>'), 'sanitizeContext neutralizes closing </page_context> tags (Bug 16)');
+  check(!xmlInjected.text.includes('</web_result>'), 'sanitizeContext neutralizes closing </web_result> tags (Bug 16)');
+  check(xmlInjected.removed >= 2, 'counts neutralized xml injection tags', `removed=${xmlInjected.removed}`);
+
+  // Bug 21 regression: Preserving code indentation up to 8 spaces while collapsing 12+ spaces
+  const codeIndented = [
+    'function solve() {',
+    '    const a = 1; // 4 spaces',
+    '        const b = 2; // 8 spaces',
+    '            const c = 3; // 12 spaces',
+    '                const d = 4; // 16 spaces',
+    '}',
+  ].join('\n');
+  const sanitizedCode = sanitizeContext(codeIndented).text;
+  check(sanitizedCode.includes('    const a = 1;'), 'sanitizeContext preserves 4-space indented code lines (Bug 21)');
+  check(sanitizedCode.includes('        const b = 2;'), 'sanitizeContext preserves 8-space indented code lines (Bug 21)');
+  check(!sanitizedCode.includes('            const c = 3;'), 'sanitizeContext collapses 12+ space indented lines (Bug 21)');
+  check(!sanitizedCode.includes('                const d = 4;'), 'sanitizeContext collapses 16+ space indented lines (Bug 21)');
 
   /* ==================== rate limiting ==================== */
   section('rate limiting');
@@ -2479,6 +2509,31 @@ async function main() {
   check(await withEnv({ SESSION_EPOCH: '2', SESSION_SECRET: EPOCH_SECRET },
     () => getSession({ headers: { cookie: `sid=${encodeURIComponent(epoch1)}` } })) === null,
     'getSession honours the epoch — the kill switch works through the real entry point');
+
+  /* ==================== auth — browser session probe (Bug 6) ==================== */
+  section('auth — browser session probe (Bug 6)');
+
+  check(isBrowserSessionProbe({ headers: { 'sec-fetch-mode': 'cors' } }) === true,
+    'isBrowserSessionProbe detects sec-fetch-mode header');
+  check(isBrowserSessionProbe({ headers: { 'x-soft-auth': '1' } }) === true,
+    'isBrowserSessionProbe detects x-soft-auth: 1 header');
+  check(isBrowserSessionProbe({ headers: {} }) === false,
+    'isBrowserSessionProbe returns false for direct API calls');
+
+  const probeRes = mockRes();
+  await meHandler({ method: 'GET', headers: { 'sec-fetch-mode': 'cors' } }, probeRes);
+  check(
+    probeRes.statusCode === 200 && probeRes.body.authenticated === false && probeRes.body.user === null && probeRes.body.progress === null,
+    'meHandler returns 200 unauthenticated for browser session probes',
+    JSON.stringify(probeRes.body),
+  );
+
+  const directRes = mockRes();
+  await meHandler({ method: 'GET', headers: {} }, directRes);
+  check(
+    directRes.statusCode === 401,
+    'meHandler preserves 401 for direct API calls without session or probe headers',
+  );
 
   /* ==================== hermeticity ==================== */
   section('hermeticity');
