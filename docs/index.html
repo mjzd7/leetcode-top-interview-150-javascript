@@ -321,23 +321,38 @@
       #sidebar[data-stage="2"] .nav-group-count { display: none; }
       /* At 56px these collapse to unusable slivers, so they go too — including
          the relative wrapper and `/` keycap badge around #searchInput. */
+      #sidebar[data-stage="2"] #navSearchWrapper,
       #sidebar[data-stage="2"] #searchInput,
       #sidebar[data-stage="2"] #searchInput + kbd,
       #sidebar[data-stage="2"] div:has(> #searchInput),
       #sidebar[data-stage="2"] #difficultyFilters,
-      #sidebar[data-stage="2"] .mod-bar { display: none; }
+      #sidebar[data-stage="2"] .mod-bar { display: none !important; }
       /* 16px of padding plus the 12px flex gap pushed the 32px collapse button
          to x=28..60 inside a 56px rail, so it hung 4px over the content edge.
          Match both :first-child and #ltNavResizer + div so the resizer node
          at index 0 does not break the header selector. */
+      #sidebar[data-stage="2"] #sidebarHeader,
       #sidebar[data-stage="2"] > div:first-child,
-      #sidebar[data-stage="2"] > #ltNavResizer + div { padding-left: 0; padding-right: 0; gap: 0; }
+      #sidebar[data-stage="2"] > #ltNavResizer + div {
+        padding: 12px 0 10px 0;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+      }
       /* And the row inside it, which the rule above cannot reach: with the ring
          block gone the button is the row's only child, so it centres on the
          icon column's line instead of starting at the rail's left edge. */
+      #sidebar[data-stage="2"] #sidebarHeader > div:first-child,
       #sidebar[data-stage="2"] > div:first-child > div,
-      #sidebar[data-stage="2"] > #ltNavResizer + div > div { justify-content: center; }
+      #sidebar[data-stage="2"] > #ltNavResizer + div > div {
+        width: 100%;
+        justify-content: center;
+        gap: 0;
+      }
       #ltNavCollapse { display: flex; }
+      #sidebar[data-stage="2"] #ltNavCollapse { margin: 0 auto; }
+      #sidebar:not([data-stage="2"]) #ltNavSearchBtn { display: none !important; }
+      #sidebar[data-stage="2"] #ltNavSearchBtn { display: flex; margin: 0 auto; }
 
       /* ---- the 56px rail has two modes, toggled with the option key ----
          A collapsed rail of 175 identical dots is a memory test: nothing says
@@ -1536,7 +1551,7 @@ body[data-resizing] * { user-select: none !important; }
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed md:sticky top-14 bottom-0 md:bottom-auto left-0 z-40 md:z-auto w-[86vw] max-w-[320px] md:w-80 shrink-0 h-[calc(100dvh-3.5rem)] -translate-x-full md:translate-x-0 border-r border-[rgba(148,163,184,0.13)] bg-[var(--canvas-sub)] md:bg-transparent flex flex-col overflow-hidden">
       <div id="ltNavResizer" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize the navigation sidebar" title="Drag to resize · Double-click to reset"></div>
-      <div class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
+      <div id="sidebarHeader" class="p-4 border-b border-[rgba(148,163,184,0.13)] shrink-0">
         <div class="flex items-center gap-3">
           <svg id="ringSvg" width="52" height="52" viewBox="0 0 64 64" class="shrink-0 -rotate-90" aria-hidden="true">
             <circle cx="32" cy="32" r="26" fill="none" stroke="#1C2333" stroke-width="7"/>
@@ -1558,12 +1573,16 @@ body[data-resizing] * { user-select: none !important; }
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
-        <div class="relative mt-3">
+        <div id="navSearchWrapper" class="relative mt-3">
           <input id="searchInput" type="search" placeholder="Filter this list…" autocomplete="off"
                   role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="curriculumNav" aria-activedescendant=""
                   class="w-full bg-white/[0.04] border border-[rgba(148,163,184,0.2)] rounded-lg pl-3 pr-8 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--accent-rim)] min-h-[44px]">
           <kbd class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] font-mono text-slate-400 select-none shadow-sm" aria-hidden="true">/</kbd>
         </div>
+        <button id="ltNavSearchBtn" type="button" aria-label="Search curriculum (/)" title="Search curriculum (/)"
+                class="hidden shrink-0 w-8 h-8 rounded-lg items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
         <div class="flex gap-1.5 mt-2.5" id="difficultyFilters" role="group" aria-label="Difficulty filter">
           <button data-diff="ALL" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">All</button>
           <button data-diff="Easy" class="filter-btn flex-1 text-xs px-2 py-2 rounded-md font-semibold min-h-[40px]">Easy</button>
@@ -2959,7 +2978,7 @@ body[data-resizing] * { user-select: none !important; }
 
     /* ---------- left nav collapse, two stages (item E) ---------- */
     (function initNavCollapse() {
-      const el = $('sidebar'), btn = $('ltNavCollapse');
+      const el = $('sidebar'), btn = $('ltNavCollapse'), searchBtn = $('ltNavSearchBtn');
       if (!el || !btn) return;
       if (window.innerWidth >= 768) el.classList.remove('-translate-x-full');
       const KEY = 'lt150-nav-stage';
@@ -2973,6 +2992,18 @@ body[data-resizing] * { user-select: none !important; }
         stage = parseInt(el.dataset.stage, 10) || 0;
         setNavStage(stage + 1, true);
       };
+      if (searchBtn) {
+        searchBtn.onclick = () => {
+          delete el.dataset.navResized;
+          el.style.removeProperty('--lt-nav-w');
+          try { localStorage.removeItem('lt150-nav-w'); } catch (e) {}
+          setNavStage(0, true);
+          setTimeout(() => {
+            const input = $('searchInput');
+            if (input) { input.focus(); input.select(); }
+          }, 60);
+        };
+      }
     })();
 
     /* ---------- left nav drag-to-resize ---------- */
