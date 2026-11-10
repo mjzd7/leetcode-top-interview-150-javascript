@@ -208,12 +208,21 @@ test('the collapsed navigation rail holds its own controls', async ({ page }) =>
       const c = e.getBoundingClientRect();
       return c.width > 0 && (c.right > b.right + 1 || c.left < b.left - 1);
     });
-    return { stage: sb.dataset.stage, w: Math.round(b.width), spills: spills.length, ovf: sb.scrollWidth > sb.clientWidth + 1 };
+    const kbd = sb.querySelector('#searchInput + kbd');
+    const kbdHidden = !kbd || kbd.offsetWidth === 0 || window.getComputedStyle(kbd).display === 'none';
+    return {
+      stage: sb.dataset.stage,
+      w: Math.round(b.width),
+      spills: spills.length,
+      ovf: sb.scrollWidth > sb.clientWidth + 1,
+      kbdHidden,
+    };
   });
   expect(r.stage, 'two clicks land on the fully collapsed stage').toBe('2');
   expect(r.w, 'the collapsed rail is 56px').toBe(56);
   expect(r.spills, 'no control hangs outside the rail').toBe(0);
   expect(r.ovf, 'the rail does not scroll sideways').toBe(false);
+  expect(r.kbdHidden, 'the / shortcut kbd badge is hidden in collapsed rail stage 2').toBe(true);
 });
 
 /* The three below are one defect seen three ways, and every one of them was
