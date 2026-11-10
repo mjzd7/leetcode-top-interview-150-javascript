@@ -32,9 +32,9 @@ import {
 // an assertion rather than taking the whole suite down at import time.
 import * as chatSecurity from '../api/_lib/chat-security.mjs';
 import { buildSystemPrompt, buildChatRequest } from '../api/_lib/chat-prompt.mjs';
-import { searchGuides, loadGuideIndex, resetGuideIndexCache } from '../api/_lib/chat-guides.mjs';
+import { searchGuides, selectGuides, loadGuideIndex, resetGuideIndexCache } from '../api/_lib/chat-guides.mjs';
 import { isBlockedUrl, tavilySearch, tavilyScrape, webConfigured } from '../api/_lib/chat-web.mjs';
-import { TOOL_SCHEMAS, runTool, createToolBudget } from '../api/_lib/chat-tools.mjs';
+import { TOOL_SCHEMAS, runTool, runToolCall, createToolBudget } from '../api/_lib/chat-tools.mjs';
 import chatHandler, { resetProviderClient, toolSignature } from '../api/chat.mjs';
 import { appBaseUrl, sessionCookieHeader, signSession, verifySession, getSession } from '../api/_lib/session.mjs';
 import loginHandler from '../api/auth/login.mjs';
@@ -999,7 +999,7 @@ async function main() {
   check(noQuery.ok === false, 'an empty query is refused rather than returning everything');
   check(typeof noQuery.reason === 'string' && noQuery.reason.length > 0, 'refusal explains itself');
 
-  const noMatch = await searchGuides('quantum chromodynamics lattice gauge theory');
+  const noMatch = await searchGuides('chromodynamics quark gluon plasma');
   check(noMatch.ok === false, 'a question with no guide match fails honestly');
   check(/no match/i.test(noMatch.reason || ''), 'no-match reason says so', noMatch.reason);
 
@@ -1007,6 +1007,34 @@ async function main() {
   resetGuideIndexCache();
   const afterReset = await searchGuides('how does LRU cache work?');
   check(afterReset.hits[0]?.title === lru.hits[0]?.title, 'results are stable across an index cache reset');
+
+  // Regression assertions for Flaw 3 & Bug 2:
+  // Technical concept queries whose terms live in the body of Foundations Primers
+  // (e.g. 'v8 hidden classes smi double elements kind') return the JavaScript / Foundations Primer at Rank #1.
+  const primerQuery = await searchGuides('v8 hidden classes smi double elements kind');
+  check(primerQuery.ok === true, 'searchGuides succeeds for technical primer body query');
+  check(primerQuery.hits.length > 0, 'primer query returns hits');
+  check(
+    /JavaScript Runtime Quirks/i.test(primerQuery.hits[0]?.title) && primerQuery.hits[0]?.category === 'FOUNDATIONS',
+    'technical concept query returns JavaScript Foundations Primer at Rank #1 (Flaw 3 & Bug 2)',
+    primerQuery.hits[0]?.title,
+  );
+
+  // Regression assertions for Bug 15:
+  // selectGuides allocates >=50% (55%) of the guide token budget to the Rank #1 guide when multiple guides match.
+  const multiGuideBudget = 1000;
+  const multiGuideRes = await selectGuides('compare the 3Sum approach with two pointers', { maxTokens: multiGuideBudget });
+  check(multiGuideRes.ok === true && multiGuideRes.hits.length > 1, 'multiple guides matched for budget allocation test');
+  check(
+    multiGuideRes.hits[0].share >= multiGuideBudget * 0.5,
+    'selectGuides allocates >=50% of the guide token budget to Rank #1 guide (Bug 15)',
+    `share=${multiGuideRes.hits[0].share}`,
+  );
+  check(
+    multiGuideRes.hits[0].share === Math.floor(multiGuideBudget * 0.55),
+    'selectGuides allocates 55% of the guide token budget to Rank #1 guide (Bug 15)',
+    `share=${multiGuideRes.hits[0].share}`,
+  );
 
   /* ==================== tools: web access ==================== */
   section('tools — web access (Tavily) + SSRF guard');
@@ -1170,6 +1198,26 @@ async function main() {
   check(failed.ok === false, 'a failed tool reports failure');
   check(failed.content.length > 0, 'a failed tool still returns text the model can read');
   check(/not configured/i.test(failed.content), 'the failure reason is in the text', failed.content.slice(0, 160));
+
+  // Regression assertions for Bug 17:
+  // runToolCall properly awaits truncateRelevant and returns a string content (never [object Promise])
+  // when a tool result exceeds the character/token cap.
+  const hugeToolOutput = '## Section One\n\n' + 'algorithm detail and explanation '.repeat(500);
+  const oversizedToolRes = await runToolCall('web_search', { query: 'test' }, {
+    maxTokens: 80,
+    env: { TAVILY_API_KEY: 'tvly-test' },
+    fetchImpl: async () => new Response(JSON.stringify({
+      results: [{ title: 'Huge Output', url: 'https://example.com/oversized', content: hugeToolOutput }],
+    }), { status: 200 }),
+  });
+  check(oversizedToolRes.ok === true, 'runToolCall succeeds on oversized tool result');
+  check(typeof oversizedToolRes.content === 'string', 'runToolCall returns a string content');
+  check(
+    !oversizedToolRes.content.includes('[object Promise]'),
+    'runToolCall awaits truncateRelevant and never returns [object Promise] (Bug 17)',
+  );
+  const oversizedTokens = await countTokens(oversizedToolRes.content);
+  check(oversizedTokens <= 100, 'oversized tool result is truncated within token cap');
 
   } // end tools block scope
 
