@@ -121,9 +121,13 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
     const headingHits = countHits(g._headings, terms);
     const categoryHits = countHits(g._category, terms);
     const bodyHits = countHits(g._body, terms);
-    const score = titleHits * 5 + headingHits * 3 + categoryHits * 2 + bodyHits * 3;
+    let distinctHits = 0;
+    for (const t of terms) {
+      if (g._title.has(t) || g._headings.has(t) || g._category.has(t) || g._body.has(t)) distinctHits++;
+    }
+    const score = titleHits * 5 + headingHits * 3 + categoryHits * 2 + bodyHits * 3 + distinctHits * 4;
     if (score <= 0) continue;
-    scored.push({ g, score });
+    scored.push({ g, score, distinctHits });
   }
 
   if (scored.length === 0) {
@@ -136,10 +140,8 @@ export async function searchGuides(query, { maxTokens = MAX_TOOL_RESULT_TOKENS, 
   scored.sort((a, b) => {
     const aQ = (a.g.difficulty === 'Easy' || a.g.difficulty === 'Medium' || a.g.difficulty === 'Hard') ? 1 : 0;
     const bQ = (b.g.difficulty === 'Easy' || b.g.difficulty === 'Medium' || b.g.difficulty === 'Hard') ? 1 : 0;
-    // Prefer problem guides over Primers/MAANG guides on ties or close scores (<= 5),
-    // but let a strongly-matched Primer/Guide rank #1 when its relevance score
-    // clearly dominates (Bug 2 fix).
-    if (aQ !== bQ && Math.abs(a.score - b.score) <= 5) return bQ - aQ;
+    if (a.distinctHits !== b.distinctHits && terms.size >= 3) return b.distinctHits - a.distinctHits;
+    if (aQ !== bQ && a.distinctHits === b.distinctHits && Math.abs(a.score - b.score) <= 5) return bQ - aQ;
     return b.score - a.score || bQ - aQ;
   });
   const top = scored.slice(0, Math.max(1, maxGuides));

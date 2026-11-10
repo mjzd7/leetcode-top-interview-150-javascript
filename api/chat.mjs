@@ -6,9 +6,9 @@
  *
  *   405  method guard
  *   403  origin / referer allowlist
- *   429  rate limit (Upstash sliding window + in-memory floor)
  *   400  malformed body, oversized payload, or no question to answer
  *   503  provider not configured
+ *   429  rate limit (Upstash sliding window + in-memory floor)
  *   502  provider refused or returned non-2xx
  *   504  provider timed out before the first byte
  *   200  text/event-stream — upstream OpenAI SSE forwarded byte-for-byte
@@ -21,7 +21,7 @@
 
 import { buildChatRequest, DEFAULT_MODEL } from './_lib/chat-prompt.mjs';
 import { checkOrigin, rateLimit, clientIp, allowedOrigins, SIGNED_IN_RATE_LIMIT, DAILY_RATE_LIMIT, DAILY_RATE_WINDOW_MS, DAY_PREFIX } from './_lib/chat-security.mjs';
-import { MAX_COMPLETION_TOKENS, MAX_TOOL_ROUNDS, MAX_TOOL_RESULT_TOKENS, completionParams, unknownModelHint } from './_lib/chat-tokens.mjs';
+import { MAX_COMPLETION_TOKENS, MAX_TOOL_ROUNDS, MAX_TOOL_RESULT_TOKENS, completionParams, unknownModelHint, countTokens } from './_lib/chat-tokens.mjs';
 import { availableTools, createToolBudget, runTool } from './_lib/chat-tools.mjs';
 import { getSession } from './_lib/session.mjs';
 
@@ -107,6 +107,44 @@ export function toolSignature(name, args) {
     // it is treated as its own call rather than guessed at.
     return `${name}:${String(args)}`;
   }
+}
+
+/**
+ * Format a human-readable status string for an SSE status frame while a tool executes (Bug 7).
+ */
+export function formatToolStatus(call) {
+  let args = {};
+  if (typeof call?.args === 'string') {
+    try { args = JSON.parse(call.args); } catch { args = {}; }
+  } else if (call?.args && typeof call.args === 'object') {
+    args = call.args;
+  }
+  const name = call?.name || '';
+  if (name === 'search_guides') {
+    const q = typeof args.query === 'string' ? args.query.trim().slice(0, 40) : '';
+    return q ? `Searching guides for "${q}"…` : 'Searching guides…';
+  }
+  if (name === 'web_search') {
+    const q = typeof args.query === 'string' ? args.query.trim().slice(0, 40) : '';
+    return q ? `Searching the web for "${q}"…` : 'Searching the web…';
+  }
+  if (name === 'fetch_page') {
+    if (typeof args.url === 'string' && args.url.trim()) {
+      try {
+        const u = new URL(args.url.trim());
+        return `Fetching ${u.hostname}…`;
+      } catch {
+        return `Fetching ${args.url.trim().slice(0, 40)}…`;
+      }
+    }
+    return 'Fetching page…';
+  }
+  const detail = typeof args.query === 'string' && args.query.trim()
+    ? ` ("${args.query.trim().slice(0, 40)}")`
+    : typeof args.url === 'string' && args.url.trim()
+      ? ` (${args.url.trim().slice(0, 40)})`
+      : '';
+  return `Looking up ${name}${detail}…`;
 }
 
 let keyPool = null; // resolved once per instance; array of keys, or null if unconfigured
@@ -225,28 +263,46 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
+  const raw = readBody(req);
+  if (!raw.ok) return res.status(400).json({ error: 'Invalid JSON body' });
+  if (Buffer.byteLength(JSON.stringify(raw.value ?? {}), 'utf8') > MAX_BODY_BYTES) {
+    return res.status(400).json({ error: 'Request body too large' });
+  }
+
+  const { messages, pageContext, pageTitle, pageCategory } = raw.value || {};
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'messages must be a non-empty array' });
+  }
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'user' || typeof last.content !== 'string' || !last.content.trim()) {
+    return res.status(400).json({ error: 'Last message must be a non-empty user message' });
+  }
+
   const ip = clientIp(req);
+  if (!resolveKeyPool()) {
+    log('chat.unconfigured', { ip });
+    return res.status(503).json({ error: 'Chat is not configured' });
+  }
+
   const startedAt = Date.now();
   // A session RAISES the limit, it never gates it (D-6 amends abuse handling
   // only). There is deliberately no 401 path: getSession returns null for an
   // anonymous caller — or whenever SESSION_SECRET is unset — and such a
   // request is metered exactly as it was before this existed.
   const session = getSession(req);
-  const ipLimit = await rateLimit(`chat:${ip}`);
-  // The daily budget is a per-IP COST bound, so it applies to everyone — a
-  // session raises the per-minute allowance, it does not buy unlimited spend.
-  // It is charged before the per-minute decision so a reader who is out of
-  // daily budget is told so, and it shares the 429 contract exactly.
-  const dayLimit = await rateLimit(`chat:${ip}`, {
-    limit: DAILY_RATE_LIMIT,
-    windowMs: DAILY_RATE_WINDOW_MS,
-    prefix: DAY_PREFIX,
-  });
-  // Always consumed, even when it does not decide, so toggling the cookie
-  // cannot hand out a fresh per-IP budget.
-  const userLimit = session
-    ? await rateLimit(`chat:u:${session.githubId}`, { limit: SIGNED_IN_RATE_LIMIT })
-    : null;
+  // Execute all three rate-limit bucket checks concurrently (1 network RTT
+  // instead of 3 sequential Upstash REST round-trips).
+  const [ipLimit, dayLimit, userLimit] = await Promise.all([
+    rateLimit(`chat:${ip}`),
+    rateLimit(`chat:${ip}`, {
+      limit: DAILY_RATE_LIMIT,
+      windowMs: DAILY_RATE_WINDOW_MS,
+      prefix: DAY_PREFIX,
+    }),
+    session
+      ? rateLimit(`chat:u:${session.githubId}`, { limit: SIGNED_IN_RATE_LIMIT })
+      : Promise.resolve(null),
+  ]);
   // Which bucket DECIDES. With an identity, the identity decides the per-minute
   // question: that is the whole point, since everyone behind one NAT otherwise
   // shares a single 5/min budget and one reader's rate is everyone else's
@@ -270,26 +326,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests. Please slow down.' });
   }
 
-  const raw = readBody(req);
-  if (!raw.ok) return res.status(400).json({ error: 'Invalid JSON body' });
-  if (Buffer.byteLength(JSON.stringify(raw.value ?? {}), 'utf8') > MAX_BODY_BYTES) {
-    return res.status(400).json({ error: 'Request body too large' });
-  }
-
-  const { messages, pageContext, pageTitle, pageCategory } = raw.value || {};
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ error: 'messages must be a non-empty array' });
-  }
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== 'user' || typeof last.content !== 'string' || !last.content.trim()) {
-    return res.status(400).json({ error: 'Last message must be a non-empty user message' });
-  }
-
   const model = process.env.AI_MODEL || DEFAULT_MODEL;
-  if (!resolveKeyPool()) {
-    log('chat.unconfigured', { ip });
-    return res.status(503).json({ error: 'Chat is not configured' });
-  }
 
   let prepared;
   const tools = availableTools();
@@ -453,6 +490,7 @@ export default async function handler(req, res) {
     /** index -> { id, name, args } accumulated across deltas. */
     const calls = new Map();
     let released = false;
+    let turnText = '';
     // Upstream says how a turn ended on its LAST payload line. `length` means the
     // model hit the completion ceiling mid-sentence — the text is good, it just
     // stops. Unread, that is indistinguishable from a finished answer, both to
@@ -471,7 +509,7 @@ export default async function handler(req, res) {
         const remaining = deadline - Date.now();
         if (remaining <= 0) {
           sse(res, { error: 'Response exceeded the time limit.' });
-          return { gone: false, cut: true, calls };
+          return { gone: false, cut: true, calls, text: turnText };
         }
         // The read is raced against a heartbeat timer so a silent provider can
         // still be pinged and our own deadline noticed. While the first payload
@@ -508,13 +546,13 @@ export default async function handler(req, res) {
           // first delta — so the replacement cannot duplicate a single byte.
           if (!sawPayload && Date.now() - turnStartedAt >= firstTokenMs()) {
             attemptAbort.abort();
-            return { gone: false, slow: true, waitedMs: Date.now() - turnStartedAt };
+            return { gone: false, slow: true, waitedMs: Date.now() - turnStartedAt, text: turnText };
           }
           continue;
         }
 
         if (step.done) break;
-        if (upstreamAbort.signal.aborted) return { gone: true, calls };
+        if (upstreamAbort.signal.aborted) return { gone: true, calls, text: turnText };
         sawPayload = true;
 
         buffer += decoder.decode(step.value, { stream: true });
@@ -550,7 +588,10 @@ export default async function handler(req, res) {
             continue; // never forwarded
           }
 
-          if (typeof delta?.content === 'string' && delta.content) released = true;
+          if (typeof delta?.content === 'string' && delta.content) {
+            released = true;
+            turnText += delta.content;
+          }
           if (released) res.write(`data: ${line}\n\n`);
         }
       }
@@ -561,14 +602,14 @@ export default async function handler(req, res) {
       // it as an interruption would spend the reader's turn on a model that was
       // merely slow.
       if (attemptAbort.signal.aborted && !upstreamAbort.signal.aborted) {
-        return { gone: false, slow: true, waitedMs: Date.now() - turnStartedAt };
+        return { gone: false, slow: true, waitedMs: Date.now() - turnStartedAt, text: turnText };
       }
       if (!upstreamAbort.signal.aborted) {
         log('chat.stream_error', { ip, error: String(e?.message || e) });
         sse(res, { error: 'The response stream was interrupted.' });
-        return { gone: false, cut: true, calls };
+        return { gone: false, cut: true, calls, text: turnText };
       }
-      return { gone: true, calls };
+      return { gone: true, calls, text: turnText };
     }
 
     return {
@@ -582,9 +623,11 @@ export default async function handler(req, res) {
       truncated: finishReason === 'length',
       finishReason,
       calls: [...calls.values()].filter((c) => c.name),
+      text: turnText,
     };
   }
 
+  let totalStreamedText = '';
   try {
     let slowDraws = 0;
     for (;;) {
@@ -612,6 +655,7 @@ export default async function handler(req, res) {
         }
         turn = await runTurn({ toolChoice: 'auto' });
       }
+      if (turn.text) totalStreamedText += turn.text;
       if (turn.gone) return;
       if (turn.cut) return;
       // Only a turn that actually reached the reader sets these; `gone` and
@@ -635,10 +679,11 @@ export default async function handler(req, res) {
           msLeft: deadline - Date.now(),
         });
         conversation.push({
-          role: 'assistant',
-          content: 'I have already used my lookup budget for this question; answer from what you have.',
+          role: 'system',
+          content: 'Lookup budget reached for this question. Synthesize your final answer now from the guide context and any tool results already above.',
         });
         const final = await runTurn({ toolChoice: 'none' });
+        if (final.text) totalStreamedText += final.text;
         if (!final.gone && !final.cut) {
           truncatedAnswer = final.truncated === true;
           stats.finishReason = final.finishReason;
@@ -646,11 +691,17 @@ export default async function handler(req, res) {
         return;
       }
 
+      for (let i = 0; i < pending.length; i++) {
+        if (!pending[i].id) {
+          pending[i].id = `call_${stats.toolCalls}_${i}_${Math.random().toString(36).slice(2, 8)}`;
+        }
+      }
+
       conversation.push({
         role: 'assistant',
         content: null,
         tool_calls: pending.map((c) => ({
-          id: c.id || `call_${stats.toolCalls}_${Math.random().toString(36).slice(2, 8)}`,
+          id: c.id,
           type: 'function',
           function: { name: c.name, arguments: c.args || '{}' },
         })),
@@ -686,7 +737,7 @@ export default async function handler(req, res) {
           continue;
         }
 
-        sse(res, { status: `Looking up ${call.name}…` });
+        sse(res, { status: formatToolStatus(call) });
         lastBeat = Date.now();
         stats.toolCalls++;
 
@@ -723,6 +774,7 @@ export default async function handler(req, res) {
       res.write('data: [DONE]\n\n');
       res.end();
     }
+    const outputTokens = await countTokens(totalStreamedText, model);
     log('chat.completed', {
       ip,
       scope: ipLimit.scope,
@@ -734,6 +786,8 @@ export default async function handler(req, res) {
       toolsUsed: stats.toolsUsed.join(','),
       finishReason: stats.finishReason,
       ...prepared.meta,
+      outputTokens,
+      totalTokens: (prepared.meta?.totalTokens ?? 0) + outputTokens,
     });
   }
 }
